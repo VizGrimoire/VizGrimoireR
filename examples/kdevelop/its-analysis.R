@@ -49,7 +49,7 @@ SetDBChannel (user, password, database)
 #
 
 # Closed tickets: time ticket was open, first closed, time-to-first-close
-q <- new ("query", sql = "SELECT issue_id, issue,
+q <- new ("QueryTimeSerie", sql = "SELECT issue_id, issue,
      	submitted_on AS time_open,
         YEAR (submitted_on) AS year_open,
         time_closed,
