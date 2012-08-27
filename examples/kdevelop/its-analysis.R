@@ -42,18 +42,14 @@ startyear <- startdatesplit[[1]][1]
 startmonth <- startdatesplit[[1]][2]
 startdate <- paste (c("'", startdate, "'"), collapse='')
 
-library(RMySQL)
-#
-# Connect to the database and prepare...
-#
-mychannel <- dbConnect(MySQL(), user=user, password=password, host="localhost", db=database)
+SetDBChannel (user, password, database)
 
 #
 # Time to close and related times
 #
 
 # Closed tickets: time ticket was open, first closed, time-to-first-close
-q <- "SELECT issue_id, issue,
+q <- new ("query", sql = "SELECT issue_id, issue,
      	submitted_on AS time_open,
         YEAR (submitted_on) AS year_open,
         time_closed,
@@ -73,8 +69,8 @@ q <- "SELECT issue_id, issue,
          WHERE (new_value='RESOLVED' OR new_value='CLOSED')
          GROUP BY issue_id) ch
       WHERE issues.id = ch.issue_id
-      ORDER BY submitted_on"
-issues_closed <- query(q)
+      ORDER BY submitted_on")
+issues_closed <- run (q)
 
 time_to_fix <- issues_closed$ttofix
 time_to_fix_last <- issues_closed$ttofix
