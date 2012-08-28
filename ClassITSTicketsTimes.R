@@ -30,10 +30,10 @@ query <- "SELECT issue_id, issue,
 setClass(Class="ITSTicketsTimes",
          contains="data.frame",
          representation=representation(
-           tofix = "data.frame",
-           tofix.last = "data.frame",
-           tofix.hours = "data.frame",
-           tofix.minutes = "data.frame"
+           tofix = "vector",
+           tofix.last = "vector",
+           tofix.hours = "vector",
+           tofix.minutes = "vector"
            )
          )
 # Initialize by running the query that gets times for each ticket,
@@ -52,42 +52,3 @@ setMethod(f="initialize",
             return(.Object)
           }
           )
-
-##
-## Plot distribution of times
-##
-## Plots several charts:
-##  - Histogram and density of probability for all tickets
-##  - Histogram and density of probability for quickly closed tickets
-##  - Histogram and density of probability for slowly closed tickets
-## Threshold is for splitting in quick/slow (in days)
-##
-setGeneric (
-  name= "PlotTimeDist",
-  def=function(object,...){standardGeneric("PlotTimeDist")}
-  )
-setMethod(
-  "PlotTimeDist", "ITSTicketsTimes",
-  function(object, filename, unit = 'days', threshold = 30,
-                          variable = 'Time') {
-    data <- as(object,"data.frame")
-    label <- paste (c(variable, ' (', unit, ')'), collapse='')
-    ## All tickets
-    plotHistogramTime (data, filename, label)
-    plotBoxPlot (data, paste (c (filename, '-boxplot'), collapse=''))
-    ## Quickly closed tickets
-    quickly <- data[data <= threshold]
-    if (length(quickly) > 0) {
-      plotHistogramTime (quickly, paste (c (filename, '-quick'), collapse=''),
-                         label)
-      plotBoxPlot (quickly, paste (c (filename, '-quick-boxplot'), collapse=''))
-    }
-    ## Slowly closed tickets
-    slowly <- data[data > threshold]
-    if (length(slowly) > 0) {
-      plotHistogramTime (slowly, paste (c (filename, '-slow'), collapse=''),
-                         label)
-      plotBoxPlot (slowly, paste (c (filename, '-slow-boxplot'), collapse=''))
-    }
-  }
-  )

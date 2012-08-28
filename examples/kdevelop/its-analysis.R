@@ -19,6 +19,8 @@ source("../../ClassQuery.R")
 source("../../ClassQueryTimeSerie.R")
 # Get ITSTicketsTimes class
 source("../../ClassITSTicketsTimes.R")
+# Get Times class
+source("../../ClassTimes.R")
 
 source("../../vizgrimoire.R")
 
@@ -87,9 +89,13 @@ time_to_fix_hours <- issues_closed$ttofixh
 time_to_fix_minutes <- issues_closed$ttofixm
 
 # Distribution of time to fix (first close)
-plotTimeDist (time_to_fix, 'its-distrib_time_to_fix',
-              variable = 'Time to fix, first close')
+#plotTimeDist (time_to_fix, 'its-distrib_time_to_fix',
+#              variable = 'Time to fix, first close')
 
+tofix <- new ("Times", issues_closed$ttofix)
+PlotDist (tofix, 'its-distrib_time_to_fix',
+          variable = 'Time to fix, first close')
+              
 # Distribution of time to fix (last close)
 plotTimeDist (time_to_fix_last, 'its-distrib_time_to_fix_last',
               variable = 'Time to fix, last close')
