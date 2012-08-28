@@ -23,6 +23,22 @@
 #	Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 #
 
+
+#
+# Database-related classes & functions
+#
+
+library(RMySQL)
+#
+# Connect to the database and prepare...
+#
+
+SetDBChannel <- function (user, password, database, host="localhost") {
+  mychannel <<- dbConnect(MySQL(), user=user, password=password,
+                          db=database, host="localhost")
+}
+
+
 # To install RColorBrewer
 # $sudo R
 # > install.packages('RColorBrewer', dep = T)
@@ -366,9 +382,3 @@ createJSON <- function (data, filename) {
   sink()
 }
 
-#
-# Database-related functions
-#
-
-  
-query <- function(...) dbGetQuery(mychannel, ...)

@@ -13,6 +13,13 @@
 #
 # Note: this script works with bicho databases obtained from Bugzilla
 
+# Get Query class
+source("../../ClassQuery.R")
+# Get QueryTimeSerie class
+source("../../ClassQueryTimeSerie.R")
+# Get ITSTicketsTimes class
+source("../../ClassITSTicketsTimes.R")
+
 source("../../vizgrimoire.R")
 
 # Get command line args, and produce variables for the script
@@ -49,28 +56,30 @@ SetDBChannel (user, password, database)
 #
 
 # Closed tickets: time ticket was open, first closed, time-to-first-close
-q <- new ("QueryTimeSerie", sql = "SELECT issue_id, issue,
-     	submitted_on AS time_open,
-        YEAR (submitted_on) AS year_open,
-        time_closed,
-	time_closed_last,
-	TIMESTAMPDIFF (DAY, submitted_on, ch.time_closed) AS ttofix,
-        TIMESTAMPDIFF (DAY, submitted_on, ch.time_closed_last) AS ttofixlast,
-	TIMESTAMPDIFF (HOUR, submitted_on, ch.time_closed) AS ttofixh,
-        TIMESTAMPDIFF (HOUR, submitted_on, ch.time_closed_last) AS ttofixlasth,
-	TIMESTAMPDIFF (MINUTE, submitted_on, ch.time_closed) AS ttofixm,
-        TIMESTAMPDIFF (MINUTE, submitted_on, ch.time_closed_last) AS ttofixlastm
-      FROM issues, (
-         SELECT
-           issue_id,
-           MIN(changed_on) AS time_closed,
-           MAX(changed_on) AS time_closed_last
-         FROM changes
-         WHERE (new_value='RESOLVED' OR new_value='CLOSED')
-         GROUP BY issue_id) ch
-      WHERE issues.id = ch.issue_id
-      ORDER BY submitted_on")
-issues_closed <- run (q)
+## q <- new ("QueryTimeSerie", sql = "SELECT issue_id, issue,
+##      	submitted_on AS time_open,
+##         YEAR (submitted_on) AS year_open,
+##         time_closed,
+## 	time_closed_last,
+## 	TIMESTAMPDIFF (DAY, submitted_on, ch.time_closed) AS ttofix,
+##         TIMESTAMPDIFF (DAY, submitted_on, ch.time_closed_last) AS ttofixlast,
+## 	TIMESTAMPDIFF (HOUR, submitted_on, ch.time_closed) AS ttofixh,
+##         TIMESTAMPDIFF (HOUR, submitted_on, ch.time_closed_last) AS ttofixlasth,
+## 	TIMESTAMPDIFF (MINUTE, submitted_on, ch.time_closed) AS ttofixm,
+##         TIMESTAMPDIFF (MINUTE, submitted_on, ch.time_closed_last) AS ttofixlastm
+##       FROM issues, (
+##          SELECT
+##            issue_id,
+##            MIN(changed_on) AS time_closed,
+##            MAX(changed_on) AS time_closed_last
+##          FROM changes
+##          WHERE (new_value='RESOLVED' OR new_value='CLOSED')
+##          GROUP BY issue_id) ch
+##       WHERE issues.id = ch.issue_id
+##       ORDER BY submitted_on")
+## ic <- run (q)
+
+issues_closed <- new ("ITSTicketsTimes")
 
 time_to_fix <- issues_closed$ttofix
 time_to_fix_last <- issues_closed$ttofix

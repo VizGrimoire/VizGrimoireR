@@ -5,7 +5,8 @@
 #
 setClass(Class="Query",
          representation=representation(
-           sql="character")
+           sql="character"
+           )
          )
 
 # New method run, for class Query
