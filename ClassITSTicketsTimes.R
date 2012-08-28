@@ -30,10 +30,10 @@ query <- "SELECT issue_id, issue,
 setClass(Class="ITSTicketsTimes",
          contains="data.frame",
          representation=representation(
-           tofix = "vector",
-           tofix.last = "vector",
-           tofix.hours = "vector",
-           tofix.minutes = "vector"
+           tofix = "Times",
+           tofix.last = "Times",
+           tofix.hours = "Times",
+           tofix.minutes = "Times"
            )
          )
 # Initialize by running the query that gets times for each ticket,
@@ -45,10 +45,14 @@ setMethod(f="initialize",
             cat("~~~ ITSTicketsTimes: initializator ~~~ \n")
             q <- new ("QueryTimeSerie", sql = query)
             as(.Object,"data.frame") <- run (q)
-            tofix <- .Object$ttofix
-            tofix.last <- .Object$ttofix
-            tofix.hours <- .Object$ttofixh
-            tofix.minutes <- .Object$ttofixm
+            tofix <- new ("Times", .Object$ttofix,
+                          "Time to fix, first close")
+            tofix.last <- new ("Times", .Object$ttofixlast,
+                               "Time to fix, last close")
+            tofix.hours <- new ("Times", .Object$ttofixh,
+                                "Time to fix, first close")
+            tofix.minutes <- new ("Times", .Object$ttofixm,
+                                  "Time to fix, first close")
             return(.Object)
           }
           )

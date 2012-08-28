@@ -13,14 +13,14 @@
 #
 # Note: this script works with bicho databases obtained from Bugzilla
 
-# Get Query class
-source("../../ClassQuery.R")
-# Get QueryTimeSerie class
-source("../../ClassQueryTimeSerie.R")
-# Get ITSTicketsTimes class
-source("../../ClassITSTicketsTimes.R")
-# Get Times class
+# Times class
 source("../../ClassTimes.R")
+# Query class
+source("../../ClassQuery.R")
+# QueryTimeSerie class
+source("../../ClassQueryTimeSerie.R")
+# ITSTicketsTimes class
+source("../../ClassITSTicketsTimes.R")
 
 source("../../vizgrimoire.R")
 
@@ -58,62 +58,27 @@ SetDBChannel (user, password, database)
 #
 
 # Closed tickets: time ticket was open, first closed, time-to-first-close
-## q <- new ("QueryTimeSerie", sql = "SELECT issue_id, issue,
-##      	submitted_on AS time_open,
-##         YEAR (submitted_on) AS year_open,
-##         time_closed,
-## 	time_closed_last,
-## 	TIMESTAMPDIFF (DAY, submitted_on, ch.time_closed) AS ttofix,
-##         TIMESTAMPDIFF (DAY, submitted_on, ch.time_closed_last) AS ttofixlast,
-## 	TIMESTAMPDIFF (HOUR, submitted_on, ch.time_closed) AS ttofixh,
-##         TIMESTAMPDIFF (HOUR, submitted_on, ch.time_closed_last) AS ttofixlasth,
-## 	TIMESTAMPDIFF (MINUTE, submitted_on, ch.time_closed) AS ttofixm,
-##         TIMESTAMPDIFF (MINUTE, submitted_on, ch.time_closed_last) AS ttofixlastm
-##       FROM issues, (
-##          SELECT
-##            issue_id,
-##            MIN(changed_on) AS time_closed,
-##            MAX(changed_on) AS time_closed_last
-##          FROM changes
-##          WHERE (new_value='RESOLVED' OR new_value='CLOSED')
-##          GROUP BY issue_id) ch
-##       WHERE issues.id = ch.issue_id
-##       ORDER BY submitted_on")
-## ic <- run (q)
-
 issues_closed <- new ("ITSTicketsTimes")
 
-time_to_fix <- issues_closed$ttofix
-time_to_fix_last <- issues_closed$ttofix
-time_to_fix_hours <- issues_closed$ttofixh
-time_to_fix_minutes <- issues_closed$ttofixm
-
 # Distribution of time to fix (first close)
-
-tofix <- new ("Times", issues_closed$ttofix,
+tofix <- new ("Times", issues_closed$ttofix, "days",
               "Time to fix, first close")
 PlotDist (tofix, 'its-distrib_time_to_fix')
               
 # Distribution of time to fix (last close)
-tofix.last <- new ("Times", issues_closed$ttofixlast,
+tofix.last <- new ("Times", issues_closed$ttofixlast, "days",
               "Time to fix, last close")
 PlotDist (tofix.last, 'its-distrib_time_to_fix_last')
-#plotTimeDist (time_to_fix_last, 'its-distrib_time_to_fix_last',
-#              variable = 'Time to fix, last close')
 
 # Distribution of time to fix (first close, hours)
-tofix.hours <- new ("Times", issues_closed$ttofixh,
+tofix.hours <- new ("Times", issues_closed$ttofixh, "hours",
                     "Time to fix, first close")
-PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours', 'hours')
-#plotTimeDist (time_to_fix_hours, 'its-distrib_time_to_fix_hours', 'hours',
-#              variable = 'Time to fix, first close')
+PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours')
 
 # Distribution of time to fix (first close, minutes)
-tofix.minutes <- new ("Times", issues_closed$ttofixm,
+tofix.minutes <- new ("Times", issues_closed$ttofixm, "minutes",
                       "Time to fix, first close")
-PlotDist (tofix.last, 'its-distrib_time_to_fix_min', 'minutes')
-#plotTimeDist (time_to_fix_minutes, 'its-distrib_time_to_fix_min', 'minutes',
-#              variable = 'Time to fix, first close')
+PlotDist (tofix.last, 'its-distrib_time_to_fix_min')
 
 # Which quantiles we're interested in
 #quantiles_spec = c(1,.99,.95,.9,.75,.5,.25,.1,0)
