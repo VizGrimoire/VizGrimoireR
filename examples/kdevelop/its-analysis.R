@@ -89,24 +89,31 @@ time_to_fix_hours <- issues_closed$ttofixh
 time_to_fix_minutes <- issues_closed$ttofixm
 
 # Distribution of time to fix (first close)
-#plotTimeDist (time_to_fix, 'its-distrib_time_to_fix',
-#              variable = 'Time to fix, first close')
 
-tofix <- new ("Times", issues_closed$ttofix)
-PlotDist (tofix, 'its-distrib_time_to_fix',
-          variable = 'Time to fix, first close')
+tofix <- new ("Times", issues_closed$ttofix,
+              "Time to fix, first close")
+PlotDist (tofix, 'its-distrib_time_to_fix')
               
 # Distribution of time to fix (last close)
-plotTimeDist (time_to_fix_last, 'its-distrib_time_to_fix_last',
-              variable = 'Time to fix, last close')
+tofix.last <- new ("Times", issues_closed$ttofixlast,
+              "Time to fix, last close")
+PlotDist (tofix.last, 'its-distrib_time_to_fix_last')
+#plotTimeDist (time_to_fix_last, 'its-distrib_time_to_fix_last',
+#              variable = 'Time to fix, last close')
 
 # Distribution of time to fix (first close, hours)
-plotTimeDist (time_to_fix_hours, 'its-distrib_time_to_fix_hours', 'hours',
-              variable = 'Time to fix, first close')
+tofix.hours <- new ("Times", issues_closed$ttofixh,
+                    "Time to fix, first close")
+PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours', 'hours')
+#plotTimeDist (time_to_fix_hours, 'its-distrib_time_to_fix_hours', 'hours',
+#              variable = 'Time to fix, first close')
 
 # Distribution of time to fix (first close, minutes)
-plotTimeDist (time_to_fix_minutes, 'its-distrib_time_to_fix_min', 'minutes',
-              variable = 'Time to fix, first close')
+tofix.minutes <- new ("Times", issues_closed$ttofixm,
+                      "Time to fix, first close")
+PlotDist (tofix.last, 'its-distrib_time_to_fix_min', 'minutes')
+#plotTimeDist (time_to_fix_minutes, 'its-distrib_time_to_fix_min', 'minutes',
+#              variable = 'Time to fix, first close')
 
 # Which quantiles we're interested in
 #quantiles_spec = c(1,.99,.95,.9,.75,.5,.25,.1,0)

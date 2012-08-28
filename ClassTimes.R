@@ -7,7 +7,21 @@
 
 setClass(Class="Times",
          contains="vector",
+         representation=representation(
+           label="character"
+           )
          )
+
+setMethod(f="initialize",
+          signature="Times",
+          definition=function(.Object, times, label="Time"){
+            cat("~~~ Times: initializator ~~~ \n")
+            as(.Object,"vector") <- times
+            .Object@label <- label
+            return(.Object)
+          }
+          )
+
 ##
 ## Plot distribution of times
 ##
@@ -23,10 +37,9 @@ setGeneric (
   )
 setMethod(
   "PlotDist", "Times",
-  function(object, filename, unit = 'days', threshold = 30,
-                          variable = 'Time') {
+  function(object, filename, unit = 'days', threshold = 30) {
     data <- as(object,"vector")
-    label <- paste (c(variable, ' (', unit, ')'), collapse='')
+    label <- paste (c(object@label, ' (', unit, ')'), collapse='')
     ## All tickets
     plotHistogramTime (data, filename, label)
     plotBoxPlot (data, paste (c (filename, '-boxplot'), collapse=''))
