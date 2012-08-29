@@ -53,41 +53,43 @@ startdate <- paste (c("'", startdate, "'"), collapse='')
 
 SetDBChannel (user, password, database)
 
-#
-# Time to close and related times
-#
+##
+## Time to close and related times
+##
 
-# Closed tickets: time ticket was open, first closed, time-to-first-close
+## Closed tickets: time ticket was open, first closed, time-to-first-close
 issues_closed <- new ("ITSTicketsTimes")
 
-# Distribution of time to fix (first close)
+## Distribution of time to fix (first close)
 tofix <- new ("Times", issues_closed$ttofix, "days",
               "Time to fix, first close")
 PlotDist (tofix, 'its-distrib_time_to_fix')
               
-# Distribution of time to fix (last close)
+## Distribution of time to fix (last close)
 tofix.last <- new ("Times", issues_closed$ttofixlast, "days",
               "Time to fix, last close")
 PlotDist (tofix.last, 'its-distrib_time_to_fix_last')
 
-# Distribution of time to fix (first close, hours)
+## Distribution of time to fix (first close, hours)
 tofix.hours <- new ("Times", issues_closed$ttofixh, "hours",
                     "Time to fix, first close")
 PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours')
 
-# Distribution of time to fix (first close, minutes)
+## Distribution of time to fix (first close, minutes)
 tofix.minutes <- new ("Times", issues_closed$ttofixm, "minutes",
                       "Time to fix, first close")
 PlotDist (tofix.minutes, 'its-distrib_time_to_fix_min')
 
-# Which quantiles we're interested in
-#quantiles_spec = c(1,.99,.95,.9,.75,.5,.25,.1,0)
+## Which quantiles we're interested in
+##quantiles_spec = c(1,.99,.95,.9,.75,.5,.25,.1,0)
 quantiles_spec = c(.99,.95,.5,.25)
 
-# Yearly quantiles of time to fix (minutes)
-quantiles_ttofixm_year <- toQuantilesYear (issues_closed, quantiles_spec)
+## Yearly quantiles of time to fix (minutes)
+#quantiles_ttofixm_year <- toQuantilesYear (issues_closed, quantiles_spec)
+quantiles_ttofixm_year <- QuantilizeYears (issues_closed, quantiles_spec)
 plotTimeSerieYearN (quantiles_ttofixm_year, as.character(quantiles_spec),
                     'its-quantiles-year-time_to_fix_min')
+
 # Yearly distributions of time to fix (minutes)
 plotTimeDistYear(issues_closed, 'its-distrib_time_to_fix_min')
 
