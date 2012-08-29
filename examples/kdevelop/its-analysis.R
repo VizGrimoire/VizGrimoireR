@@ -78,7 +78,7 @@ PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours')
 # Distribution of time to fix (first close, minutes)
 tofix.minutes <- new ("Times", issues_closed$ttofixm, "minutes",
                       "Time to fix, first close")
-PlotDist (tofix.last, 'its-distrib_time_to_fix_min')
+PlotDist (tofix.minutes, 'its-distrib_time_to_fix_min')
 
 # Which quantiles we're interested in
 #quantiles_spec = c(1,.99,.95,.9,.75,.5,.25,.1,0)
