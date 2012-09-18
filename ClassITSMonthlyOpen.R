@@ -9,6 +9,27 @@ setClass(Class="ITSMonthlyOpen",
          )
 
 ##
+## Query method, resturns SQL string to get tickets open per month.
+##
+setMethod(
+  f="Query",
+  signature="ITSMonthlyOpen",
+  definition=function(.Object) {
+    query <- "
+      SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
+        year(submitted_on) AS year,
+        month(submitted_on) AS month,
+        DATE_FORMAT (submitted_on, '%b %Y') as date,
+        count(submitted_by) AS open,
+        count(distinct(submitted_by)) AS openers
+      FROM issues
+      GROUP BY year,month
+      ORDER BY year,month"
+    return (query)
+  }
+  )
+
+##
 ## Initialize by running the query that gets tickets open per month
 ##
 setMethod(f="initialize",
@@ -16,15 +37,7 @@ setMethod(f="initialize",
           definition=function(.Object){
             cat("~~~ ITSMonthlyOpen: initializator ~~~ \n")
             # New tickets per week
-            query <- "
-             SELECT YEAR (submitted_on) * 52 + WEEK (submitted_on) AS yearweek,
-               DATE_FORMAT(submitted_on, '%Y %V') AS year_week,
-	       YEAR (submitted_on) AS year,
-               WEEK (submitted_on) AS week,
-               COUNT(*) AS open
-             FROM issues
-             GROUP BY yearweek"
-            q <- new ("QueryTimeSerie", sql = query)
+            q <- new ("QueryTimeSerie", sql = Query(.Object))
             as(.Object,"data.frame") <- run (q)
             print (.Object)
           }
