@@ -15,6 +15,8 @@
 
 # Times class
 source("../../ClassTimes.R")
+# TimeSeriesYears class
+source("../../ClassTimeSeriesYears.R")
 # Query class
 source("../../ClassQuery.R")
 # QueryTimeSerie class
@@ -87,11 +89,19 @@ quantiles_spec = c(.99,.95,.5,.25)
 ## Yearly quantiles of time to fix (minutes)
 #quantiles_ttofixm_year <- toQuantilesYear (issues_closed, quantiles_spec)
 quantiles_ttofixm_year <- QuantilizeYears (issues_closed, quantiles_spec)
-plotTimeSerieYearN (quantiles_ttofixm_year, as.character(quantiles_spec),
-                    'its-quantiles-year-time_to_fix_min')
+#plotTimeSerieYearN (quantiles_ttofixm_year, as.character(quantiles_spec),
+#                    'its-quantiles-year-time_to_fix_min')
 
 # Yearly distributions of time to fix (minutes)
 plotTimeDistYear(issues_closed, 'its-distrib_time_to_fix_min')
+
+
+quantiles <- new ("TimeSeriesYears", quantiles_ttofixm_year, c(.99,.95))
+Plot(quantiles, 'its-quantiles-year-time_to_fix_min')
+JSON(quantiles, 'its-quantiles-year-time_to_fix_min.json')
+print (quantiles)
+
+print quanties
 
 # Time-to-attention (from open to first change or first comment)
 q <- "SELECT issue_id, issue,
