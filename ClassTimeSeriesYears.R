@@ -104,11 +104,8 @@ setMethod(
   signature="TimeSeriesYears",
   definition=function(.Object, filename) {
     years <- seq (start(.Object)[1], end(.Object)[1])
-    df <- data.frame(years=years, data.frame (as.ts(.Object),check.names=FALSE))
+    df <- data.frame(years=years, data.frame (as.ts(.Object)))
     data <- list (data = df, labels = .Object@labels)
-    print ("--------------JSON")
-    print (data)
-    print ("--------------JSON")
     sink(filename)
     cat(toJSON(data))
     sink()

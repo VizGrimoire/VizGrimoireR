@@ -58,13 +58,42 @@ setMethod(f="initialize",
           )
 
 ##
-## Obtain a data frame with yearly quantiles data 
+## Create a JSON file out of a ITSTicketsTimes object
 ##
-## The produced data frame will have one column per quantile,
-## plus one 'year' column, and one row per year
-## The parameter 'data' will be a data frame with information about issues
-## (tickets), with a column 'year_open' which will be used as
-## the year of the issue.
+## Parameters:
+##  - filename: name of the JSON file to write
+##
+library(rjson)
+#setGeneric (
+#  name= "JSON",
+#  def=function(.Object,...){standardGeneric("JSON")}
+#  )
+setMethod(
+  f="JSON",
+  signature="ITSTicketsTimes",
+  definition=function(.Object, filename) {
+    ## df <- data.frame(years=years, data.frame (as.ts(.Object)))
+    ## data <- list (data = df, labels = .Object@labels)
+    sink(filename)
+    cat(toJSON(list(tickets=as.data.frame(.Object),
+                    tofix=.Object@tofix,
+                    tofix.last=.Object@tofix.last,
+                    tofix.hours=.Object@tofix.hours,
+                    tofix.minutes=.Object@tofix.minutes)))
+                    
+    sink()
+  }
+  )
+
+##
+## Obtain a TimeSeriesYears with yearly quantiles data 
+##
+## Parameters:
+##  - qspec: List with quantiles to consider. Eg: c(.99,.95)
+##  - firstYear: First year to consider
+##  - lastYear: Last year to consider
+## Returns:
+##  TimeSeriesYears object
 ##
 setGeneric (
   name= "QuantilizeYears",
@@ -90,9 +119,11 @@ setMethod(
       quantiles[as.character(year),] <- quantile(time_to_fix_minutes,
                                                  qspec, names = FALSE)
     }
-    ## Now, build a data frame out of the matrix, and return it
+    ## Now, build a data frame out of the matrix, with
+    ## one column per quantile, plus one 'year' column, and one row per year
     quantilesdf <- as.data.frame(quantiles,row.names=FALSE)
     quantilesdf$year <- years
-    return (quantilesdf)
+    ## Creat a TimeSeriesYears object, and return it
+    return (new ("TimeSeriesYears",quantilesdf,qspec))
   }
   )

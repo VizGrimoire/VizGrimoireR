@@ -25,7 +25,10 @@ This class, when initialized, makes a query on an ITS (issue tracking system) da
 
 * initalize (constructor): Accepts a query (by default uses its own one, which should work). Stores as columns in the dataset several times: time to fix (first fix), time to fix (last fix), time to fix (in hours), etc.
 
+* JSON: Dumps a JSON file
+
 * QuantilizeYears: Obtains a data frame with yearly quantiles data. Each column in the data frame will correspond to the quantiles for each year.
+
 
 #### Example:
 
@@ -50,7 +53,11 @@ Inherits from ts (should inherit from TimeSeries)
 
 #### Methods
 
-* initalize (constructor): accepts time serie to initialize, along with the list of columns and the labels to use for those columns.
+* initalize (constructor): Accepts time serie to initialize, along with the list of columns and the labels to use for those columns.
+
+* Plot: Plots columns in object, using labels (if specified)
+
+* JSON: Dumps objet to file, as JSON
 
 Times class hierarchy
 ---------------------

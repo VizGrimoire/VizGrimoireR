@@ -61,6 +61,7 @@ SetDBChannel (user, password, database)
 
 ## Closed tickets: time ticket was open, first closed, time-to-first-close
 issues_closed <- new ("ITSTicketsTimes")
+JSON(issues_closed, 'its-issues_closed.json')
 
 ## Distribution of time to fix (first close)
 tofix <- new ("Times", issues_closed$ttofix, "days",
@@ -88,9 +89,9 @@ quantiles_spec = c(.99,.95,.5,.25)
 
 ## Yearly quantiles of time to fix (minutes)
 #quantiles_ttofixm_year <- toQuantilesYear (issues_closed, quantiles_spec)
-quantiles_ttofixm_year <- QuantilizeYears (issues_closed, quantiles_spec)
+quantiles <- QuantilizeYears (issues_closed, quantiles_spec)
 
-quantiles <- new ("TimeSeriesYears", quantiles_ttofixm_year, c(.99,.95))
+#quantiles <- new ("TimeSeriesYears", quantiles_ttofixm_year, c(.99,.95))
 Plot(quantiles, 'its-quantiles-year-time_to_fix_min')
 JSON(quantiles, 'its-quantiles-year-time_to_fix_min.json')
 
