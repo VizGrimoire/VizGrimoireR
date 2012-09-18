@@ -270,39 +270,20 @@ JSON(all.monthly, "its-all-monthly.json")
 
 
 # Tickets open and closed (first close) per month
-#issues_open_closed_month <- mergeMonthly (issues_open_monthly,
-#                                          issues_closed_monthly)
-#plotTimeSerieMonthN (issues_open_closed_month, c("open", "closed"),
-#                     "its-open-closed-month", c("Tickets open", "closed"))
 Plot (all.monthly, c("open", "closed"),
       "its-open-closed-month", c("Tickets open", "closed"))
 
-print Error
-
-
 # Tickets open and closed (last close) per month
-issues_open_closed_last_month <- mergeMonthly (issues_open_monthly,
-                                               issues_closed_monthly_last)
-plotTimeSerieMonthN (issues_open_closed_last_month, c("open", "closed_last"),
-                     "its-open-closed-last-month", c("Tickets open", "closed"))
+Plot (all.monthly, c("open", "lastclosed"),
+      "its-open-lastclosed-month", c("Tickets open", "closed"))
 
 # Tickets closed (first and last close) per month
-issues_closed_month <- mergeMonthly (issues_closed_monthly,
-                                     issues_closed_monthly_last)
-plotTimeSerieMonthN (issues_closed_month, c("closed", "closed_last"),
-                     "its-closed-month",
-                     c("Tickets closed first", "last"))
+Plot (all.monthly, c("closed", "lastclosed"),
+      "its-closed-month", c("Tickets closed first", "last"))
 
 # Tickets changed per month
-issues_changed_closed_month <- mergeMonthly (issues_changed_monthly,
-                                             issues_closed_monthly)
-plotTimeSerieMonthN (issues_changed_closed_month, c("changed", "closed"),
-                     "its-changed-month",
-                     c("Tickets changed", "closed"))
-
-issues_monthly <- mergeMonthly (issues_changed_closed_month,
-                                issues_open_monthly)
-createJSON (issues_monthly, "its-timeserie.json")
+Plot (all.monthly, c("changed", "closed"),
+      "its-changed-month", c("Tickets changed", "closed"))
 
 #
 # Number of changes, comments per issue
