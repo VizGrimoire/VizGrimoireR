@@ -85,6 +85,18 @@ Object with information about tickets closed (first close) per month.
 * Query: returns the SQL query to obtain the data for the object
 
 
+### ITSMonthlyVarious: class for all monthly parameters related to tickets
+
+Inherits from ITSMonthly.
+
+Object with information about all monthly parameters related to tickets. Internally, it instantiated objects of all the sister classes, and merges them. Therefore, no query is done directly by this class: sister classes are the ones actually querying the database.
+
+#### Methods
+
+* initalize (constructor): Instatiates objects of the sister classes, and merges them to obtain a data frame with all monthly parameters relevant to tickets.
+
+
+
 Time series class hierarchy
 ---------------------------
 
