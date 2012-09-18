@@ -29,7 +29,6 @@ This class, when initialized, makes a query on an ITS (issue tracking system) da
 
 * QuantilizeYears: Obtains a data frame with yearly quantiles data. Each column in the data frame will correspond to the quantiles for each year.
 
-
 #### Example:
 
     issues_closed <- new ("ITSTicketsTimes")
@@ -37,6 +36,33 @@ This class, when initialized, makes a query on an ITS (issue tracking system) da
     plotTimeSerieYearN (quantiles_ttofixm_year, as.character(quantiles_spec),
                     'its-quantiles-year-time_to_fix_min')
 
+
+### ITSMonthly: class for dealing with monthly parameters
+
+This class provides a framework for quering a database looking for aggregated monthly parameters (such as tickets open and ticker openers per month). Most of the functionality is here (initialize the object, create JSON files, etc.), but each child specializes its particularities, which are mainly the query needed to extract the data from the database.
+
+#### Methods
+
+* initalize (constructor): uses the query in the children to get a monthly data frame. Each row corresponds to the data for a month. Each column is either one of the parameters queried, or some auxiliary value: id (year*12+month), year, month and a char format to show the month (such as Jun 2001).
+
+* Query: just a void class, a placeholder for children specifying the query to be performed for the specific data they contain
+
+* JSON: writes the object into a JSON file
+
+### ITSMonthlyOpen: class for tickets open, openers per month
+
+Inherits from ITSMonthly.
+
+Object with information about tickets opens, and ticket openers, per month.
+
+#### Methods
+
+* Query: returns the SQL query to obtain the data for the object
+
+#### Example of use
+
+    open.monthly <- new ("ITSMonthlyOpen")
+    JSON(open.monthly, "its-open-monthly.json")
 
 Time series class hierarchy
 ---------------------------
