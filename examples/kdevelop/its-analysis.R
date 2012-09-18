@@ -23,6 +23,10 @@ source("../../ClassQuery.R")
 source("../../ClassQueryTimeSerie.R")
 # ITSTicketsTimes class
 source("../../ClassITSTicketsTimes.R")
+# ITSMonthly class
+source("../../ClassITSMonthly.R")
+# ITSMonthlyOpen class
+source("../../ClassITSMonthlyOpen.R")
 
 source("../../vizgrimoire.R")
 
@@ -99,141 +103,142 @@ JSON(quantiles, 'its-quantiles-year-time_to_fix_min.json')
 plotTimeDistYear(issues_closed, 'its-distrib_time_to_fix_min')
 
 
-print quanties
+## # Time-to-attention (from open to first change or first comment)
+## q <- "SELECT issue_id, issue,
+##      	issues.submitted_on as time_open,
+##         MIN(ch.time_first) AS time_attention,
+## 	TIMESTAMPDIFF (DAY, submitted_on, MIN(ch.time_first)) AS tattention,
+## 	TIMESTAMPDIFF (HOUR, submitted_on, MIN(ch.time_first)) AS tattentionh,
+## 	TIMESTAMPDIFF (MINUTE, submitted_on, MIN(ch.time_first)) AS tattentionm
+##       FROM issues, (
+##          SELECT
+##            issue_id,
+##            MIN(changed_on) AS time_first
+##          FROM changes
+##          GROUP BY issue_id
+##         UNION
+##          SELECT
+##            issue_id,
+##            MIN(submitted_on) AS time_first
+##          FROM comments
+##          GROUP BY issue_id
+##          ) ch
+##       WHERE issues.id = ch.issue_id
+##       GROUP BY issue_id
+##       ORDER BY issue_id"
+## issues_attended <- query (q)
 
-# Time-to-attention (from open to first change or first comment)
-q <- "SELECT issue_id, issue,
-     	issues.submitted_on as time_open,
-        MIN(ch.time_first) AS time_attention,
-	TIMESTAMPDIFF (DAY, submitted_on, MIN(ch.time_first)) AS tattention,
-	TIMESTAMPDIFF (HOUR, submitted_on, MIN(ch.time_first)) AS tattentionh,
-	TIMESTAMPDIFF (MINUTE, submitted_on, MIN(ch.time_first)) AS tattentionm
-      FROM issues, (
-         SELECT
-           issue_id,
-           MIN(changed_on) AS time_first
-         FROM changes
-         GROUP BY issue_id
-        UNION
-         SELECT
-           issue_id,
-           MIN(submitted_on) AS time_first
-         FROM comments
-         GROUP BY issue_id
-         ) ch
-      WHERE issues.id = ch.issue_id
-      GROUP BY issue_id
-      ORDER BY issue_id"
-issues_attended <- query (q)
+## time_to_attention <- issues_attended$tattention
+## time_to_attention_hours <- issues_attended$tattentionh
+## time_to_attention_minutes <- issues_attended$tattentionm
 
-time_to_attention <- issues_attended$tattention
-time_to_attention_hours <- issues_attended$tattentionh
-time_to_attention_minutes <- issues_attended$tattentionm
-
-# Distribution of time to attention
-plotTimeDist (time_to_attention, 'its-distrib_time_to_attention',
-              variable = 'Time to attention')
-plotTimeDist (time_to_attention_hours,
-              'its-distrib_time_to_attention_hours', 'hours',
-              variable = 'Time to attention')
-plotTimeDist (time_to_attention_minutes,
-              'its-distrib_time_to_attention_min', 'minutes',
-              variable = 'Time to attention')
+## # Distribution of time to attention
+## plotTimeDist (time_to_attention, 'its-distrib_time_to_attention',
+##               variable = 'Time to attention')
+## plotTimeDist (time_to_attention_hours,
+##               'its-distrib_time_to_attention_hours', 'hours',
+##               variable = 'Time to attention')
+## plotTimeDist (time_to_attention_minutes,
+##               'its-distrib_time_to_attention_min', 'minutes',
+##               variable = 'Time to attention')
 
 
-#
-# Open, closed issues per week
-#
+## #
+## # Open, closed issues per week
+## #
 
-# New tickets per week
-q <- "SELECT YEAR (submitted_on) * 52 + WEEK (submitted_on) AS yearweek,
-        DATE_FORMAT(submitted_on, '%Y %V') AS year_week,
-	YEAR (submitted_on) AS year,
-        WEEK (submitted_on) AS week,
-        COUNT(*) AS open
-      FROM issues
-      GROUP BY yearweek"
-issues_open_weekly <- query(q)
+## # New tickets per week
+## q <- "SELECT YEAR (submitted_on) * 52 + WEEK (submitted_on) AS yearweek,
+##         DATE_FORMAT(submitted_on, '%Y %V') AS year_week,
+## 	YEAR (submitted_on) AS year,
+##         WEEK (submitted_on) AS week,
+##         COUNT(*) AS open
+##       FROM issues
+##       GROUP BY yearweek"
+## issues_open_weekly <- query(q)
 
-# Changed tickets per week
-q <- "SELECT year(changed_on) * 52 + WEEK (changed_on) AS yearweek,
-        DATE_FORMAT(changed_on, '%Y %V') AS year_week,
-	YEAR (changed_on) AS year,
-        WEEK (changed_on) AS week,
-        count(changed_by) AS changed,
-        count(distinct(changed_by)) AS changers
-      FROM changes
-      GROUP BY yearweek"
-issues_changed_weekly <- query(q)
+## # Changed tickets per week
+## q <- "SELECT year(changed_on) * 52 + WEEK (changed_on) AS yearweek,
+##         DATE_FORMAT(changed_on, '%Y %V') AS year_week,
+## 	YEAR (changed_on) AS year,
+##         WEEK (changed_on) AS week,
+##         count(changed_by) AS changed,
+##         count(distinct(changed_by)) AS changers
+##       FROM changes
+##       GROUP BY yearweek"
+## issues_changed_weekly <- query(q)
 
-# Closed tickets per week (using first closing date)
-q <- "SELECT YEAR (time_closed) * 52 + WEEK (time_closed) AS yearweek,
-        DATE_FORMAT(time_closed, '%Y %V') AS year_week,
-	YEAR (time_closed) AS year,
-        WEEK (time_closed) AS week,
-        COUNT(*) as closed
-      FROM (
-         SELECT issue_id, MIN(changed_on) time_closed
-         FROM changes 
-         WHERE new_value='RESOLVED' OR new_value='CLOSED' 
-         GROUP BY issue_id) ch 
-      GROUP BY yearweek"
-issues_closed_weekly <- query(q)
+## # Closed tickets per week (using first closing date)
+## q <- "SELECT YEAR (time_closed) * 52 + WEEK (time_closed) AS yearweek,
+##         DATE_FORMAT(time_closed, '%Y %V') AS year_week,
+## 	YEAR (time_closed) AS year,
+##         WEEK (time_closed) AS week,
+##         COUNT(*) as closed
+##       FROM (
+##          SELECT issue_id, MIN(changed_on) time_closed
+##          FROM changes 
+##          WHERE new_value='RESOLVED' OR new_value='CLOSED' 
+##          GROUP BY issue_id) ch 
+##       GROUP BY yearweek"
+## issues_closed_weekly <- query(q)
 
-# Closed tickets per week (using last closing date)
-q <- "SELECT YEAR (time_closed) * 52 + WEEK (time_closed) AS yearweek,
-        DATE_FORMAT(time_closed, '%Y %V') AS year_week,
-	YEAR (time_closed) AS year,
-        WEEK (time_closed) AS week,
-        COUNT(*) as closed_last
-      FROM (
-         SELECT issue_id, MAX(changed_on) time_closed
-         FROM changes 
-         WHERE new_value='RESOLVED' OR new_value='CLOSED' 
-         GROUP BY issue_id) ch 
-      GROUP BY yearweek"
-issues_closed_weekly_last <- query(q)
+## # Closed tickets per week (using last closing date)
+## q <- "SELECT YEAR (time_closed) * 52 + WEEK (time_closed) AS yearweek,
+##         DATE_FORMAT(time_closed, '%Y %V') AS year_week,
+## 	YEAR (time_closed) AS year,
+##         WEEK (time_closed) AS week,
+##         COUNT(*) as closed_last
+##       FROM (
+##          SELECT issue_id, MAX(changed_on) time_closed
+##          FROM changes 
+##          WHERE new_value='RESOLVED' OR new_value='CLOSED' 
+##          GROUP BY issue_id) ch 
+##       GROUP BY yearweek"
+## issues_closed_weekly_last <- query(q)
 
-# Tickets open and closed (first close) per week
-issues_open_closed_week <- mergeWeekly (issues_open_weekly, issues_closed_weekly)
-plotTimeSerieWeekN (issues_open_closed_week, c("open", "closed"),
-                    "its-open-closed-week", c("Tickets open", "closed"))
+## # Tickets open and closed (first close) per week
+## issues_open_closed_week <- mergeWeekly (issues_open_weekly, issues_closed_weekly)
+## plotTimeSerieWeekN (issues_open_closed_week, c("open", "closed"),
+##                     "its-open-closed-week", c("Tickets open", "closed"))
 
-# Tickets open and closed (last close) per week
-issues_open_closed_last_week <- mergeWeekly (issues_open_weekly,
-			     		     issues_closed_weekly_last)
-plotTimeSerieWeekN (issues_open_closed_last_week, c("open", "closed_last"),
-                    "its-open-closed-last-week", c("Tickets open", "closed"))
+## # Tickets open and closed (last close) per week
+## issues_open_closed_last_week <- mergeWeekly (issues_open_weekly,
+## 			     		     issues_closed_weekly_last)
+## plotTimeSerieWeekN (issues_open_closed_last_week, c("open", "closed_last"),
+##                     "its-open-closed-last-week", c("Tickets open", "closed"))
 
-# Tickets closed (first and last close) per week
-issues_closed_week <- mergeWeekly (issues_closed_weekly,
-			     		     issues_closed_weekly_last)
-plotTimeSerieWeekN (issues_closed_week, c("closed", "closed_last"),
-                    "its-closed-week",
-		    c("Tickets closed first", "last"))
+## # Tickets closed (first and last close) per week
+## issues_closed_week <- mergeWeekly (issues_closed_weekly,
+## 			     		     issues_closed_weekly_last)
+## plotTimeSerieWeekN (issues_closed_week, c("closed", "closed_last"),
+##                     "its-closed-week",
+## 		    c("Tickets closed first", "last"))
 
-# Tickets changed per week
-issues_changed_closed_week <- mergeWeekly (issues_changed_weekly,
-                                           issues_closed_weekly)
-plotTimeSerieMonthN (issues_changed_closed_week, c("changed", "closed"),
-                     "its-changed-week",
-                     c("Tickets changed", "closed"))
+## # Tickets changed per week
+## issues_changed_closed_week <- mergeWeekly (issues_changed_weekly,
+##                                            issues_closed_weekly)
+## plotTimeSerieMonthN (issues_changed_closed_week, c("changed", "closed"),
+##                      "its-changed-week",
+##                      c("Tickets changed", "closed"))
 
 #
 # Open, closed, changed issues per month
 #
 
 # New tickets per month
-q <- "SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
-        year(submitted_on) AS year,
-        month(submitted_on) AS month,
-        DATE_FORMAT (submitted_on, '%b %Y') as date,
-        count(submitted_by) AS open,
-        count(distinct(submitted_by)) AS openers
-      FROM issues
-      GROUP BY year,month
-      ORDER BY year,month"
-issues_open_monthly <- query(q)
+## q <- "SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
+##         year(submitted_on) AS year,
+##         month(submitted_on) AS month,
+##         DATE_FORMAT (submitted_on, '%b %Y') as date,
+##         count(submitted_by) AS open,
+##         count(distinct(submitted_by)) AS openers
+##       FROM issues
+##       GROUP BY year,month
+##       ORDER BY year,month"
+## issues_open_monthly <- query(q)
+open.monthly <- new ("ITSMonthlyOpen")
+
+print Error
 
 # Changed tickets per month
 q <- "SELECT year(changed_on) * 12 + month (changed_on) AS id,
