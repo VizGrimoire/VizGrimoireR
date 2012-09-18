@@ -26,6 +26,8 @@ setMethod(f="initialize",
                                                new ("ITSMonthlyChanged"))
             as(.Object,"data.frame") <- merge (.Object,
                                                new ("ITSMonthlyClosed"))
+            as(.Object,"data.frame") <- merge (.Object,
+                                               new ("ITSMonthlyLastClosed"))
             ## Complete months not present
             ## This is important, because although previous objects don't
             ## have holes, they could start / end at different months

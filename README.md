@@ -74,11 +74,21 @@ Object with information about tickets changed, and ticket changers, per month.
 
 * Query: returns the SQL query to obtain the data for the object
 
-### ITSMonthlyClosed: class for tickets closed per month
+### ITSMonthlyClosed: class for tickets closed (first close) per month
 
 Inherits from ITSMonthly.
 
 Object with information about tickets closed (first close) per month.
+
+#### Methods
+
+* Query: returns the SQL query to obtain the data for the object
+
+### ITSMonthlyLastClosed: class for tickets closed (last close) per month
+
+Inherits from ITSMonthly.
+
+Object with information about tickets closed (last close) per month.
 
 #### Methods
 
