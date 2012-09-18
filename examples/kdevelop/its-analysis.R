@@ -31,6 +31,8 @@ source("../../ClassITSMonthlyOpen.R")
 source("../../ClassITSMonthlyChanged.R")
 # ITSMonthlyClosed class
 source("../../ClassITSMonthlyClosed.R")
+# ITSMonthlyClosed class
+source("../../ClassITSMonthlyVarious.R")
 
 source("../../vizgrimoire.R")
 
@@ -225,32 +227,25 @@ plotTimeDistYear(issues_closed, 'its-distrib_time_to_fix_min')
 ##                      "its-changed-week",
 ##                      c("Tickets changed", "closed"))
 
-#
-# Open, closed, changed issues per month
-#
+##
+## Open, closed, changed issues per month
+##
 
+## Open tickets per month
 open.monthly <- new ("ITSMonthlyOpen")
 JSON(open.monthly, "its-open-monthly.json")
 
+## Changed tickets per month
 changed.monthly <- new ("ITSMonthlyChanged")
 JSON(changed.monthly, "its-changed-monthly.json")
 
-# Closed tickets per month (using first closing date)
-## q <- "SELECT year(time_closed) * 12 + month(time_closed) AS id,
-##         year(time_closed) AS year,
-##         month(time_closed) AS month,
-##         DATE_FORMAT (time_closed, '%b %Y') as date,
-##         COUNT(*) as closed
-##       FROM (
-##          SELECT issue_id, MIN(changed_on) time_closed
-##          FROM changes 
-##          WHERE new_value='RESOLVED' OR new_value='CLOSED' 
-##          GROUP BY issue_id) ch 
-##       GROUP BY year,month"
-## issues_closed_monthly <- query(q)
-
+## Closed tickets per month (using first closing date)
 closed.monthly <- new ("ITSMonthlyClosed")
 JSON(closed.monthly, "its-closed-monthly.json")
+
+## All parameters about tickets per month
+all.monthly <- new ("ITSMonthlyVarious")
+JSON(all.monthly, "its-all-monthly.json")
 
 print Error
 
