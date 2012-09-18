@@ -268,14 +268,17 @@ JSON(lastclosed.monthly, "its-lastclosed-monthly.json")
 all.monthly <- new ("ITSMonthlyVarious")
 JSON(all.monthly, "its-all-monthly.json")
 
-print Error
-
 
 # Tickets open and closed (first close) per month
-issues_open_closed_month <- mergeMonthly (issues_open_monthly,
-                                          issues_closed_monthly)
-plotTimeSerieMonthN (issues_open_closed_month, c("open", "closed"),
-                     "its-open-closed-month", c("Tickets open", "closed"))
+#issues_open_closed_month <- mergeMonthly (issues_open_monthly,
+#                                          issues_closed_monthly)
+#plotTimeSerieMonthN (issues_open_closed_month, c("open", "closed"),
+#                     "its-open-closed-month", c("Tickets open", "closed"))
+Plot (all.monthly, c("open", "closed"),
+      "its-open-closed-month", c("Tickets open", "closed"))
+
+print Error
+
 
 # Tickets open and closed (last close) per month
 issues_open_closed_last_month <- mergeMonthly (issues_open_monthly,

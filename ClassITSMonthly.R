@@ -63,3 +63,62 @@ setMethod(
     sink()
   }
   )
+
+##
+## Plot a monthly chart with data in the object
+##
+
+## setGeneric (
+##   name= "Plot",
+##   def=function(.Object,...){standardGeneric("Plot")}
+##   )
+
+setMethod(
+  f="Plot",
+  signature="ITSMonthly",
+  definition=function(.Object, columns, filename, labels=columns) {
+    pdffilename <- paste (c(filename, ".pdf"), collapse='')
+    pdffilenamediff <- paste (c(filename, "-diff.pdf"), collapse='')
+    pdffilenamecum <- paste (c(filename, "-cumsum.pdf"), collapse='')
+  
+    ## Build label for Y axis
+    label <- ""
+    for (col in 1:length(columns)) {
+      if (col != 1) {
+        label <- paste (c(label, " / "), collapse='')
+      }
+      label = paste (c(label, labels[col], " (", colors[col] ,")"),
+        collapse='')
+    }
+  
+    ## Regular plot
+    pdf(file=pdffilename, height=3.5, width=5)
+    timeserie <- ts (.Object[columns[1]],
+                     start=c(.Object$year[1],.Object$month[1]), frequency=12)
+    ts.plot (timeserie, col=colors[1], ylab=label)
+    if (length (columns) > 1) {
+      for (col in 2:length(columns)) {
+        timeserie <- ts (.Object[columns[col]],
+                         start=c(.Object$year[1],.Object$month[1]),
+                         frequency=12)
+        lines (timeserie, col=colors[col])
+      }
+    }
+    dev.off()
+
+    ## Cummulative plot
+    pdf(file=pdffilenamecum, height=3.5, width=5)
+    timeserie <- ts (cumsum(.Object[columns[1]]),
+                     start=c(.Object$year[1],.Object$month[1]), frequency=12)
+    ts.plot (timeserie, col=colors[1], ylab=label)
+    if (length (columns) > 1) {
+      for (col in 2:length(columns)) {
+        timeserie <- ts (cumsum(.Object[columns[col]]),
+                         start=c(.Object$year[1],.Object$month[1]),
+                         frequency=12)
+        lines (timeserie, col=colors[col])
+      }
+    }
+    dev.off()
+  }
+  )
