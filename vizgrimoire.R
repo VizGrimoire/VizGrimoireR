@@ -1,37 +1,70 @@
-# Copyright (C) 2012 Bitergia
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# vizgrimoire.R
-#
-# R library for the vizgrimoire system
-#
-# Authors:
-#       Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
-#	Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
-#
+## Copyright (C) 2012 Bitergia
+##
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+##
+## This file is a part of the vizGrimoire.R package
+##
+## vizgrimoire.R
+##
+## R library for the vizgrimoire system
+##
+## Authors:
+##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
+##
+
+ConfFromCommandLine <- function () {
+  ## Get command line args, and produce variables for the script
+  args <- commandArgs(trailingOnly = TRUE)
+
+  if (length(args) > 3) {
+    enddate <- args[4]
+  } else {
+    enddate <- "2100-01-01"
+  }
+  enddatesplit <- strsplit(enddate,'-')
+  endyear <- enddatesplit[[1]][1]
+  endmonth <- enddatesplit[[1]][2]
+  enddate <- paste (c("'", enddate, "'"), collapse='')
+  
+  if (length(args) > 4) {
+    startdate <- args[5]
+  } else {
+    startdate <- "1900-01-01"
+  }
+  startdatesplit <- strsplit(startdate,'-')
+  startyear <- startdatesplit[[1]][1]
+  startmonth <- startdatesplit[[1]][2]
+  startdate <- paste (c("'", startdate, "'"), collapse='')
+
+  conf <- list (database = args[1],
+                user = args[2],
+                password = args[3],
+                startdate = startdate,
+                enddate = enddate)
+  return (conf)
+}
 
 
-#
-# Database-related classes & functions
-#
+##
+## Database-related classes & functions
+##
 
 library(RMySQL)
-#
-# Connect to the database and prepare...
-#
+##
+## Connect to the database and prepare...
+##
 
 SetDBChannel <- function (user, password, database, host="localhost") {
   mychannel <<- dbConnect(MySQL(), user=user, password=password,

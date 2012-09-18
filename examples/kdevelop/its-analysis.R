@@ -59,34 +59,10 @@ source("../../ClassITSMonthlyVarious.R")
 
 source("../../vizgrimoire.R")
 
-## Get command line args, and produce variables for the script
-args <- commandArgs(trailingOnly = TRUE)
-
-database <- args[1]
-user <- args[2]
-password <- args[3]
-
-if (length(args) > 3) {
-  enddate <- args[4]
-} else {
-  enddate <- "2100-01-01"
-}
-enddatesplit <- strsplit(enddate,'-')
-endyear <- enddatesplit[[1]][1]
-endmonth <- enddatesplit[[1]][2]
-enddate <- paste (c("'", enddate, "'"), collapse='')
-
-if (length(args) > 4) {
-   startdate <- args[5]
-} else {
-   startdate <- "1900-01-01"
-}
-startdatesplit <- strsplit(startdate,'-')
-startyear <- startdatesplit[[1]][1]
-startmonth <- startdatesplit[[1]][2]
-startdate <- paste (c("'", startdate, "'"), collapse='')
-
-SetDBChannel (user, password, database)
+## Analyze command line args, and produce config params from them
+conf <- ConfFromCommandLine()
+## Connect to the database
+SetDBChannel (conf$user, conf$password, conf$database)
 
 ##
 ## Time to close and related times
