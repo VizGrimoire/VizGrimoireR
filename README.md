@@ -35,6 +35,23 @@ This class, when initialized, makes a query on an ITS (issue tracking system) da
                     'its-quantiles-year-time_to_fix_min')
 
 
+Time series class hierarchy
+---------------------------
+
+Hierarchy for dealing with specialized time series
+
+### TimeSeries: Root of the hierarchy
+
+Still to be written
+
+### TimeSeriesYears: Class for annual time series
+
+Inherits from ts (should inherit from TimeSeries)
+
+#### Methods
+
+* initalize (constructor): accepts time serie to initialize, along with the list of columns and the labels to use for those columns.
+
 Times class hierarchy
 ---------------------
 
