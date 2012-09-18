@@ -40,7 +40,7 @@ setMethod(
 ##  - date (as text, eg: "Feb 2012")
 ##
 setMethod(f="initialize",
-          signature="ITSMonthlyOpen",
+          signature="ITSMonthly",
           definition=function(.Object){
             cat("~~~ ITSMonthly: initializator ~~~ \n")
             ## Query() should dispatch to the child

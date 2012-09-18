@@ -53,7 +53,7 @@ This class provides a framework for quering a database looking for aggregated mo
 
 Inherits from ITSMonthly.
 
-Object with information about tickets opens, and ticket openers, per month.
+Object with information about tickets open, and ticket openers, per month.
 
 #### Methods
 
@@ -63,6 +63,27 @@ Object with information about tickets opens, and ticket openers, per month.
 
     open.monthly <- new ("ITSMonthlyOpen")
     JSON(open.monthly, "its-open-monthly.json")
+
+### ITSMonthlyChanged: class for tickets changed, changers per month
+
+Inherits from ITSMonthly.
+
+Object with information about tickets changed, and ticket changers, per month.
+
+#### Methods
+
+* Query: returns the SQL query to obtain the data for the object
+
+### ITSMonthlyClosed: class for tickets closed per month
+
+Inherits from ITSMonthly.
+
+Object with information about tickets closed (first close) per month.
+
+#### Methods
+
+* Query: returns the SQL query to obtain the data for the object
+
 
 Time series class hierarchy
 ---------------------------

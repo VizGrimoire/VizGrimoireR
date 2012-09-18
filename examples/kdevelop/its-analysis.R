@@ -27,6 +27,10 @@ source("../../ClassITSTicketsTimes.R")
 source("../../ClassITSMonthly.R")
 # ITSMonthlyOpen class
 source("../../ClassITSMonthlyOpen.R")
+# ITSMonthlyChanged class
+source("../../ClassITSMonthlyChanged.R")
+# ITSMonthlyClosed class
+source("../../ClassITSMonthlyClosed.R")
 
 source("../../vizgrimoire.R")
 
@@ -225,47 +229,30 @@ plotTimeDistYear(issues_closed, 'its-distrib_time_to_fix_min')
 # Open, closed, changed issues per month
 #
 
-# New tickets per month
-## q <- "SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
-##         year(submitted_on) AS year,
-##         month(submitted_on) AS month,
-##         DATE_FORMAT (submitted_on, '%b %Y') as date,
-##         count(submitted_by) AS open,
-##         count(distinct(submitted_by)) AS openers
-##       FROM issues
-##       GROUP BY year,month
-##       ORDER BY year,month"
-## issues_open_monthly <- query(q)
 open.monthly <- new ("ITSMonthlyOpen")
 JSON(open.monthly, "its-open-monthly.json")
 
-print Error
-
-# Changed tickets per month
-q <- "SELECT year(changed_on) * 12 + month (changed_on) AS id,
-        year(changed_on) AS year,
-        month(changed_on) AS month,
-	DATE_FORMAT (changed_on, '%b %Y') as date,
-        count(changed_by) AS changed,
-        count(distinct(changed_by)) AS changers
-      FROM changes
-      GROUP BY year,month
-      ORDER BY year,month"
-issues_changed_monthly <- query(q)
+changed.monthly <- new ("ITSMonthlyChanged")
+JSON(changed.monthly, "its-changed-monthly.json")
 
 # Closed tickets per month (using first closing date)
-q <- "SELECT year(time_closed) * 12 + month(time_closed) AS id,
-        year(time_closed) AS year,
-        month(time_closed) AS month,
-        DATE_FORMAT (time_closed, '%b %Y') as date,
-        COUNT(*) as closed
-      FROM (
-         SELECT issue_id, MIN(changed_on) time_closed
-         FROM changes 
-         WHERE new_value='RESOLVED' OR new_value='CLOSED' 
-         GROUP BY issue_id) ch 
-      GROUP BY year,month"
-issues_closed_monthly <- query(q)
+## q <- "SELECT year(time_closed) * 12 + month(time_closed) AS id,
+##         year(time_closed) AS year,
+##         month(time_closed) AS month,
+##         DATE_FORMAT (time_closed, '%b %Y') as date,
+##         COUNT(*) as closed
+##       FROM (
+##          SELECT issue_id, MIN(changed_on) time_closed
+##          FROM changes 
+##          WHERE new_value='RESOLVED' OR new_value='CLOSED' 
+##          GROUP BY issue_id) ch 
+##       GROUP BY year,month"
+## issues_closed_monthly <- query(q)
+
+closed.monthly <- new ("ITSMonthlyClosed")
+JSON(closed.monthly, "its-closed-monthly.json")
+
+print Error
 
 # Closed tickets per month (using last closing date)
 q <- "SELECT year(time_closed) * 12 + month(time_closed) AS id,
