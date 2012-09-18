@@ -27,13 +27,39 @@ setMethod(
   }
   )
 
+##
+## Initialize, by running the query for the object
+##  and returning the corresponding data frame.
+##
+## Rows produced by the query should include one called "id",
+##  which must be, for each month, year*12+month, as integer
+##
+## Initialization fills in missing months, and adds some columns:
+##  - year (as integer, XXXX)
+##  - month (as integer, 1-12)
+##  - date (as text, eg: "Feb 2012")
+##
 setMethod(f="initialize",
           signature="ITSMonthlyOpen",
           definition=function(.Object){
-            cat("~~~ ITSMonthlyOpen: initializator ~~~ \n")
-            # New tickets per week
+            cat("~~~ ITSMonthly: initializator ~~~ \n")
+            ## Query() should dispatch to the child
             q <- new ("QueryTimeSerie", sql = Query(.Object))
-            as(.Object,"data.frame") <- run (q)
-            print (.Object)
+            ## Complete months not present
+            as(.Object,"data.frame") <- completeZeroMonthly (run (q))
+            .Object$year <- (.Object$id - 1) %/% 12
+            .Object$month <- ((.Object$id - 1) %% 12) + 1
+            .Object$date <- toTextDate(.Object$year, .Object$month)
+            return(.Object)
           }
           )
+
+setMethod(
+  f="JSON",
+  signature="ITSMonthly",
+  definition=function(.Object, filename) {
+    sink(filename)
+    cat(toJSON(.Object))
+    sink()
+  }
+  )

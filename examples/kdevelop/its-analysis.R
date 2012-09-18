@@ -237,6 +237,7 @@ plotTimeDistYear(issues_closed, 'its-distrib_time_to_fix_min')
 ##       ORDER BY year,month"
 ## issues_open_monthly <- query(q)
 open.monthly <- new ("ITSMonthlyOpen")
+JSON(open.monthly, "its-open-monthly.json")
 
 print Error
 

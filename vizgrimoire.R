@@ -112,6 +112,19 @@ mergeMonthly <- function (d1, d2) {
   return (d)
 }
 
+##
+## toTextDate: convert two vectors with integers for year, month into
+##  a vector with text
+##
+## Example: 2012, 2 -> Feb 2012
+##
+toTextDate <- function (year, month) {
+  abb.months <- c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+  text <- paste (abb.months[month], as.character(year))
+  return (text)
+}
+
 
 #
 # Plot several columns of a timeserie
