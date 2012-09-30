@@ -66,24 +66,29 @@ issues_closed <- new ("ITSTicketsTimes")
 JSON(issues_closed, 'its-issues_closed.json')
 
 ## Distribution of time to fix (first close)
-tofix <- new ("Times", issues_closed$ttofix, "days",
+tofix <- new ("Times", issues_closed$tofix,
               "Time to fix, first close")
-PlotDist (tofix, 'its-distrib_time_to_fix')
-              
+PlotDist (tofix, 'its-distrib_tofix_days', "days")
+PlotDist (tofix, 'its-distrib_tofix_hours', "hours")
+PlotDist (tofix, 'its-distrib_tofix_mins', "mins")
+PlotDist (tofix, 'its-distrib_tofix_weeks', "weeks")
+
 ## Distribution of time to fix (last close)
-tofix.last <- new ("Times", issues_closed$ttofixlast, "days",
-              "Time to fix, last close")
-PlotDist (tofix.last, 'its-distrib_time_to_fix_last')
+#tofixlast <- new ("Times", issues_closed$tofixlast,
+#                  "Time to fix, last close")
+#PlotDist (tofixlast, 'its-distrib_tofixlast_days', "days")
+#PlotDist (tofixlast, 'its-distrib_tofixlast_hours', "hours")
+#PlotDist (tofixlast, 'its-distrib_tofixlast_mins', "mins")
 
 ## Distribution of time to fix (first close, hours)
-tofix.hours <- new ("Times", issues_closed$ttofixh, "hours",
-                    "Time to fix, first close")
-PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours')
+## tofix.hours <- new ("Times", issues_closed$ttofixh, "hours",
+##                     "Time to fix, first close")
+## PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours')
 
 ## Distribution of time to fix (first close, minutes)
-tofix.minutes <- new ("Times", issues_closed$ttofixm, "minutes",
-                      "Time to fix, first close")
-PlotDist (tofix.minutes, 'its-distrib_time_to_fix_min')
+## tofix.minutes <- new ("Times", issues_closed$ttofixm, "minutes",
+##                       "Time to fix, first close")
+## PlotDist (tofix.minutes, 'its-distrib_time_to_fix_min')
 
 ## Which quantiles we're interested in
 ##quantiles_spec = c(1,.99,.95,.9,.75,.5,.25,.1,0)
