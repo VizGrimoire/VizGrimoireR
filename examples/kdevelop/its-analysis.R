@@ -35,6 +35,8 @@ source("../../ClassQuery.R")
 source("../../ClassQueryTimeSerie.R")
 ## ITSTicketsTimes class
 source("../../ClassITSTicketsTimes.R")
+## TimedEvents class
+source("../../ClassTimedEvents.R")
 ## ITSMonthly class
 source("../../ClassITSMonthly.R")
 ## ITSMonthlyOpen class
@@ -74,11 +76,11 @@ PlotDist (tofix, 'its-distrib_tofix_mins', "mins")
 PlotDist (tofix, 'its-distrib_tofix_weeks', "weeks")
 
 ## Distribution of time to fix (last close)
-#tofixlast <- new ("Times", issues_closed$tofixlast,
-#                  "Time to fix, last close")
-#PlotDist (tofixlast, 'its-distrib_tofixlast_days', "days")
-#PlotDist (tofixlast, 'its-distrib_tofixlast_hours', "hours")
-#PlotDist (tofixlast, 'its-distrib_tofixlast_mins', "mins")
+tofixlast <- new ("Times", issues_closed$tofixlast,
+                  "Time to fix, last close")
+PlotDist (tofixlast, 'its-distrib_tofixlast_days', "days")
+PlotDist (tofixlast, 'its-distrib_tofixlast_hours', "hours")
+PlotDist (tofixlast, 'its-distrib_tofixlast_mins', "mins")
 
 ## Distribution of time to fix (first close, hours)
 ## tofix.hours <- new ("Times", issues_closed$ttofixh, "hours",
@@ -91,14 +93,13 @@ PlotDist (tofix, 'its-distrib_tofix_weeks', "weeks")
 ## PlotDist (tofix.minutes, 'its-distrib_time_to_fix_min')
 
 ## Which quantiles we're interested in
-##quantiles_spec = c(1,.99,.95,.9,.75,.5,.25,.1,0)
 quantiles_spec = c(.99,.95,.5,.25)
 
 ## Yearly quantiles of time to fix (minutes)
-#quantiles_ttofixm_year <- toQuantilesYear (issues_closed, quantiles_spec)
-quantiles <- QuantilizeYears (issues_closed, quantiles_spec)
+events.tofix <- new ("TimedEvents",
+                     issues_closed$open, issues_closed$tofix %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
 
-#quantiles <- new ("TimeSeriesYears", quantiles_ttofixm_year, c(.99,.95))
 Plot(quantiles, 'its-quantiles-year-time_to_fix_min')
 JSON(quantiles, 'its-quantiles-year-time_to_fix_min.json')
 
