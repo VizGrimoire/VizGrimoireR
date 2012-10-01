@@ -67,6 +67,10 @@ ConfFromCommandLine <- function () {
   return (conf)
 }
 
+##
+## Penalize scientific notation by 10 chars
+##
+options(scipen=10)
 
 ##
 ## Database-related classes & functions
@@ -383,17 +387,17 @@ plotTimeDist <- function (data, filename, unit = 'days', threshold = 30,
 #  dev.off()
 }
 
-#
-# Plot time distributions and boxplots for time to fix in all years
-#
-plotTimeDistYear <- function (data, filename) {
-  for (year in data$year_open[1] : data$year_open[nrow(data)]) {
-    filename = paste(c(filename, '-',year), collapse='')
-    yearData <- data[data$year_open == year,]
-    plotTimeDist (yearData$ttofixm, filename, 'minutes',
-                  variable = 'Time to fix, first close')
-  }
-}
+## #
+## # Plot time distributions and boxplots for time to fix in all years
+## #
+## plotTimeDistYear <- function (data, filename) {
+##   for (year in data$year_open[1] : data$year_open[nrow(data)]) {
+##     filename = paste(c(filename, '-',year), collapse='')
+##     yearData <- data[data$year_open == year,]
+##     plotTimeDist (yearData$ttofixm, filename, 'minutes',
+##                   variable = 'Time to fix, first close')
+##   }
+## }
 
 library(rjson)
 #
@@ -405,3 +409,11 @@ createJSON <- function (data, filename) {
   sink()
 }
 
+##
+## GetYear
+##
+## Get the year of a datetime object
+##
+GetYear <- function (time) {
+  return (1900 + as.POSIXlt(time)$year)
+}

@@ -35,6 +35,8 @@ source("../../ClassQuery.R")
 source("../../ClassQueryTimeSerie.R")
 ## ITSTicketsTimes class
 source("../../ClassITSTicketsTimes.R")
+## ITSTicketsChangesTimes class
+source("../../ClassITSTicketsChangesTimes.R")
 ## TimedEvents class
 source("../../ClassTimedEvents.R")
 ## ITSMonthly class
@@ -64,11 +66,11 @@ SetDBChannel (conf$user, conf$password, conf$database)
 ##
 
 ## Closed tickets: time ticket was open, first closed, time-to-first-close
-issues_closed <- new ("ITSTicketsTimes")
-JSON(issues_closed, 'its-issues_closed.json')
+closed <- new ("ITSTicketsTimes")
+JSON(closed, 'its-issues_closed.json')
 
 ## Distribution of time to fix (first close)
-tofix <- new ("Times", issues_closed$tofix,
+tofix <- new ("Times", closed$tofix,
               "Time to fix, first close")
 PlotDist (tofix, 'its-distrib_tofix_days', "days")
 PlotDist (tofix, 'its-distrib_tofix_hours', "hours")
@@ -76,36 +78,42 @@ PlotDist (tofix, 'its-distrib_tofix_mins', "mins")
 PlotDist (tofix, 'its-distrib_tofix_weeks', "weeks")
 
 ## Distribution of time to fix (last close)
-tofixlast <- new ("Times", issues_closed$tofixlast,
+tofixlast <- new ("Times", closed$tofixlast,
                   "Time to fix, last close")
 PlotDist (tofixlast, 'its-distrib_tofixlast_days', "days")
 PlotDist (tofixlast, 'its-distrib_tofixlast_hours', "hours")
 PlotDist (tofixlast, 'its-distrib_tofixlast_mins', "mins")
-
-## Distribution of time to fix (first close, hours)
-## tofix.hours <- new ("Times", issues_closed$ttofixh, "hours",
-##                     "Time to fix, first close")
-## PlotDist (tofix.hours, 'its-distrib_time_to_fix_hours')
-
-## Distribution of time to fix (first close, minutes)
-## tofix.minutes <- new ("Times", issues_closed$ttofixm, "minutes",
-##                       "Time to fix, first close")
-## PlotDist (tofix.minutes, 'its-distrib_time_to_fix_min')
 
 ## Which quantiles we're interested in
 quantiles_spec = c(.99,.95,.5,.25)
 
 ## Yearly quantiles of time to fix (minutes)
 events.tofix <- new ("TimedEvents",
-                     issues_closed$open, issues_closed$tofix %/% 60)
+                     closed$open, closed$tofix %/% 60)
 quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
 
 Plot(quantiles, 'its-quantiles-year-time_to_fix_min')
 JSON(quantiles, 'its-quantiles-year-time_to_fix_min.json')
 
-# Yearly distributions of time to fix (minutes)
-plotTimeDistYear(issues_closed, 'its-distrib_time_to_fix_min')
+## Changed tickets: time ticket was attended, last move
+changed <- new ("ITSTicketsChangesTimes")
+JSON(changed, 'its-issues_changed.json')
 
+## Distribution of time to attention
+toatt <- new ("Times", changed$toattention,
+              "Time to attention")
+PlotDist (toatt, 'its-distrib_toatt_days', "days")
+PlotDist (toatt, 'its-distrib_toatt_hours', "hours")
+PlotDist (toatt, 'its-distrib_toatt_mins', "mins")
+PlotDist (toatt, 'its-distrib_toatt_weeks', "weeks")
+
+## Yearly quantiles of time to attention (minutes)
+events.toatt <- new ("TimedEvents",
+                     changed$open, changed$toattention %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+
+Plot(quantiles, 'its-quantiles-year-time_to_attention_min')
+JSON(quantiles, 'its-quantiles-year-time_to_attention_min.json')
 
 ## # Time-to-attention (from open to first change or first comment)
 ## q <- "SELECT issue_id, issue,

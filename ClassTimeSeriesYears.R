@@ -79,10 +79,11 @@ setMethod(
     
     ## Regular plot
     pdf(file=pdffilename, height=3.5, width=5)
-    ts.plot (.Object, gpars=list(col=colors, ylab=label))
+    ts.plot (.Object, gpars=list(col=colors, ylab=label), yaxt="n")
+    grid()
     dev.off()
     ## Log10 plot
-    pdf(file=pdffilenamelog, height=3.5, width=5)
+    pdf(file=pdffilenamelog, height=4, width=5)
     ts.plot (log10(.Object), gpars=list(col=colors, ylab=label))
     dev.off()
   }
