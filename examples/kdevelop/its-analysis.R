@@ -115,45 +115,6 @@ quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
 Plot(quantiles, 'its-quantiles-year-time_to_attention_min')
 JSON(quantiles, 'its-quantiles-year-time_to_attention_min.json')
 
-## # Time-to-attention (from open to first change or first comment)
-## q <- "SELECT issue_id, issue,
-##      	issues.submitted_on as time_open,
-##         MIN(ch.time_first) AS time_attention,
-## 	TIMESTAMPDIFF (DAY, submitted_on, MIN(ch.time_first)) AS tattention,
-## 	TIMESTAMPDIFF (HOUR, submitted_on, MIN(ch.time_first)) AS tattentionh,
-## 	TIMESTAMPDIFF (MINUTE, submitted_on, MIN(ch.time_first)) AS tattentionm
-##       FROM issues, (
-##          SELECT
-##            issue_id,
-##            MIN(changed_on) AS time_first
-##          FROM changes
-##          GROUP BY issue_id
-##         UNION
-##          SELECT
-##            issue_id,
-##            MIN(submitted_on) AS time_first
-##          FROM comments
-##          GROUP BY issue_id
-##          ) ch
-##       WHERE issues.id = ch.issue_id
-##       GROUP BY issue_id
-##       ORDER BY issue_id"
-## issues_attended <- query (q)
-
-## time_to_attention <- issues_attended$tattention
-## time_to_attention_hours <- issues_attended$tattentionh
-## time_to_attention_minutes <- issues_attended$tattentionm
-
-## # Distribution of time to attention
-## plotTimeDist (time_to_attention, 'its-distrib_time_to_attention',
-##               variable = 'Time to attention')
-## plotTimeDist (time_to_attention_hours,
-##               'its-distrib_time_to_attention_hours', 'hours',
-##               variable = 'Time to attention')
-## plotTimeDist (time_to_attention_minutes,
-##               'its-distrib_time_to_attention_min', 'minutes',
-##               variable = 'Time to attention')
-
 
 ## #
 ## # Open, closed issues per week
