@@ -57,9 +57,11 @@ source("../../vizgrimoire.R")
 ## Analyze command line args, and produce config params from them
 conf <- ConfFromCommandLine()
 ## Kind of repository (Bugzilla, Launchpad, Jira, SourceForge, Allura, GoogleCode, etc.)
-conf$repokind <- 'Bugzilla'
 ## Connect to the database
 SetDBChannel (conf$user, conf$password, conf$database)
+
+## Find out the kind of repository (bugzilla, launchpad, etc.)
+conf$repokind <- FindoutRepoKind ()
 
 ##
 ## Time to close and related times

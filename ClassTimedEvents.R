@@ -87,3 +87,55 @@ setMethod(
     return (new ("TimeSeriesYears",quantilesdf,qspec))
   }
   )
+
+##
+## Obtain a TimeSeriesYears with monthly quantiles data 
+##
+## Parameters:
+##  - qspec: List with quantiles to consider. Eg: c(.99,.95)
+##  - firstYear: First year to consider
+##  - firstMonth: First month to consider (0:11)
+##  - lastYear: Last year to consider
+##  - lastMonth: Last month to consider (0:11)
+## Returns:
+##  TimeSeriesMonths object
+##
+setGeneric (
+  name= "QuantilizeMonths",
+  def=function(object,...){standardGeneric("QuantilizeMonths")}
+  )
+setMethod(
+  "QuantilizeMonths", "TimedEvents",
+  function(object, qspec,
+           firstYear = GetYear(object$timestamps[1]),
+           firstMonth = GetMonth(object$timestamps[1]),
+           lastYear = GetYear(object$timestamps[nrow(object)]),
+           lastMonth = GetMonth(object$timestamps[nrow(object)])) {
+    ## periods.x will be in the format year*12 + month
+    periods.first <- firstYear*12 + firstMonth
+    periods.last <- lastYear*12 + lastMonth
+    ## Prepare the quantiles matrix, with data for the quantiles of
+    ## each year in rows, and data for each quantile in columns
+    ## It will be a matrix of quantiles columns, and years rows
+    ## Column names will be quantiles (as strings), row names will be
+    ## years (as strings)
+    periods <- periods.first:periods.last
+    quantiles <- matrix(nrow=length(periods),ncol=length(qspec))
+    colnames (quantiles) <- qspec
+    rownames (quantiles) <- periods
+    ## Now, fill in the quantiles matrix with data
+    for (period in periods) {
+      period.events <- object[period == (GetYear(object$timestamps)*12 +
+                                         GetMonth(object$timestamps)),
+                              ]
+      quantiles[as.character(period),] <- quantile(period.events$parameters,
+                                                   qspec, names = FALSE)
+    }
+    ## Now, build a data frame out of the matrix, with
+    ## one column per quantile, plus one 'year' column, and one row per year
+    quantilesdf <- as.data.frame(quantiles,row.names=FALSE)
+    quantilesdf$period <- periods
+    ## Creat a TimeSeriesMonths object, and return it
+    return (new ("TimeSeriesMonths",quantilesdf,qspec))
+  }
+  )

@@ -86,6 +86,14 @@ SetDBChannel <- function (user, password, database, host="localhost") {
                           db=database, host="localhost")
 }
 
+##
+## Find out kind of repository (bugzilla, launchad, etc.) and
+##  store it in common configuration list
+##
+FindoutRepoKind <- function () {
+  q <- new ("Query", sql = "SELECT name FROM supported_trackers")
+  return (run (q))
+}
 
 # To install RColorBrewer
 # $sudo R
@@ -414,6 +422,19 @@ createJSON <- function (data, filename) {
 ##
 ## Get the year of a datetime object
 ##
+## Year as four digits (eg: 2012)
+##
 GetYear <- function (time) {
   return (1900 + as.POSIXlt(time)$year)
+}
+
+##
+## GetMonth
+##
+## Get the month of a datetime object
+##
+## Month as an integer 0:11 (eg: Jan is 0)
+##
+GetMonth <- function (time) {
+  return (as.POSIXlt(time)$mon)
 }

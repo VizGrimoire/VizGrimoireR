@@ -26,7 +26,8 @@
 ##  (open, closed, changed, etc.)
 ##
 
-query.closed <- "SELECT issue_id as id,
+query.closed = c (
+  "bugzilla" = "SELECT issue_id as id,
         issue,
      	submitted_on AS open,
         closed,
@@ -40,7 +41,9 @@ query.closed <- "SELECT issue_id as id,
          WHERE (new_value='RESOLVED' OR new_value='CLOSED')
          GROUP BY issue_id) ch
       WHERE issues.id = ch.issue_id
-      ORDER BY submitted_on"
+      ORDER BY submitted_on",
+    "launchpad" = ""
+  )
 
 setClass(Class="ITSTicketsTimes",
          contains="data.frame",
@@ -52,7 +55,7 @@ setMethod(f="initialize",
           signature="ITSTicketsTimes",
           definition=function(.Object){
             cat("~~~ ITSTicketsTimes: initializator ~~~ \n")
-            q <- new ("QueryTimeSerie", sql = query.closed)
+            q <- new ("QueryTimeSerie", sql = query.closed["bugzilla"])
             as(.Object,"data.frame") <- run (q)
             .Object$open <- strptime(.Object$open,
                                      format="%Y-%m-%d %H:%M:%S")
