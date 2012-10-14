@@ -39,9 +39,10 @@ setMethod(
   definition=function(.Object) {
     query <- "
       SELECT year(time_closed) * 12 + month(time_closed) AS id,
-        count(*) AS lastclosed
+        count(*) AS lastclosed,
+        count(distinct(changed_by)) AS lastclosers
       FROM (
-        SELECT issue_id, MAX(changed_on) time_closed
+        SELECT issue_id, MAX(changed_on) time_closed, changed_by
         FROM changes 
         WHERE new_value='RESOLVED' OR new_value='CLOSED' 
         GROUP BY issue_id) closes
