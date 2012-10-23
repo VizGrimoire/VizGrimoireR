@@ -107,11 +107,14 @@ setMethod(
   f="JSON",
   signature="TimeSeriesMonths",
   definition=function(.Object, filename) {
-    ## periods <- seq (start(.Object)[1], end(.Object)[1])
     periods <- seq (start(as.ts(.Object))[1]*12 + start(as.ts(.Object))[2],
                     end(as.ts(.Object))[1]*12 + end(as.ts(.Object))[2])
-    df <- data.frame(period=periods, data.frame (as.ts(.Object)))
-    data <- list (data = df, labels = .Object@labels)
+    df <- data.frame(as.ts(.Object))
+    df$period <- periods
+    df$year <- (periods + 1) %/% 12
+    df$month <- (periods + 1 ) %% 12 + 1
+    df$date <- toTextDate (df$year, df$month)
+    data <- list (data = as.list(df), labels = .Object@labels)
     sink(filename)
     cat(toJSON(data))
     sink()
