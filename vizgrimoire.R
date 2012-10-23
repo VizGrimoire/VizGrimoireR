@@ -340,8 +340,9 @@ plotHistogramTime <- function (data, filename, label, title='') {
 
   pdffilename <- paste (c(filename, ".pdf"), collapse='')
   pdf(pdffilename, height=5, width=5)
-  hist(data, prob= T, breaks='FD', col=blues[3], xlab = label, main = title)
-  lines(density(data), col=reds[3], lwd = 2)
+#  hist(data, prob= T, breaks='FD', col=blues[3], xlab = label, main = title)
+  hist(data, freq=TRUE, breaks=15, col="orange", xlab = label, main = title)
+#  lines(density(data), col=reds[3], lwd = 2)
   dev.off()
 }
 #library(vioplot)
