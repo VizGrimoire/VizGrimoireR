@@ -71,7 +71,8 @@ setMethod(f="initialize",
           signature="ITSTicketsTimes",
           definition=function(.Object){
             cat("~~~ ITSTicketsTimes: initializator ~~~ \n")
-            q <- new ("QueryTimeSerie", sql = query.closed["bugzilla"])
+            print (conf)
+            q <- new ("QueryTimeSerie", sql = query.closed[FindoutRepoKind()])
             as(.Object,"data.frame") <- run (q)
             .Object$open <- strptime(.Object$open,
                                      format="%Y-%m-%d %H:%M:%S")

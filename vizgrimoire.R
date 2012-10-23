@@ -92,7 +92,8 @@ SetDBChannel <- function (user, password, database, host="localhost") {
 ##
 FindoutRepoKind <- function () {
   q <- new ("Query", sql = "SELECT name FROM supported_trackers")
-  return (run (q))
+  kind <- run(q)$name[1]
+  return (kind)
 }
 
 # To install RColorBrewer
