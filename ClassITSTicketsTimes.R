@@ -42,6 +42,22 @@ query.closed = c (
          GROUP BY issue_id) ch
       WHERE issues.id = ch.issue_id
       ORDER BY submitted_on",
+  "jira" = "SELECT issue_id as id,
+        issue,
+     	submitted_on AS open,
+        closed,
+	closedlast
+      FROM issues, (
+         SELECT
+           issue_id,
+           MIN(changed_on) AS closed,
+           MAX(changed_on) AS closedlast
+         FROM changes
+         WHERE new_value IN ('Expired', 'Fixed', 'Invalid',
+                             'Opinion', 'Won''t Fix')
+         GROUP BY issue_id) ch
+      WHERE issues.id = ch.issue_id
+      ORDER BY submitted_on",
     "launchpad" = ""
   )
 
