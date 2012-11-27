@@ -75,6 +75,11 @@ setMethod(f="initialize",
           }
           )
 
+setGeneric (
+ name= "JSON",
+ def=function(.Object,...){standardGeneric("JSON")}
+ )
+
 setMethod(
   f="JSON",
   signature="ITSMonthly",
@@ -89,10 +94,10 @@ setMethod(
 ## Plot a monthly chart with data in the object
 ##
 
-## setGeneric (
-##   name= "Plot",
-##   def=function(.Object,...){standardGeneric("Plot")}
-##   )
+setGeneric (
+  name= "Plot",
+  def=function(.Object,...){standardGeneric("Plot")}
+  )
 
 setMethod(
   f="Plot",

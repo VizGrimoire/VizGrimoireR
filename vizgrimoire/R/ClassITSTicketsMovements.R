@@ -70,10 +70,11 @@ setMethod(f="initialize",
 ##  - filename: name of the JSON file to write
 ##
 library(rjson)
-#setGeneric (
-#  name= "JSON",
-#  def=function(.Object,...){standardGeneric("JSON")}
-#  )
+setGeneric (
+ name= "JSON",
+ def=function(.Object,...){standardGeneric("JSON")}
+ )
+
 setMethod(
   f="JSON",
   signature="ITSTicketsMovements",
@@ -92,10 +93,11 @@ setMethod(
 ##  - Histogram and density of probability for changes per ticket
 ##  - Histogram and density of probability for comments per ticket
 ##
-#setGeneric (
-#  name= "PlotDist",
-#  def=function(object,...){standardGeneric("PlotDist")}
-#  )
+setGeneric (
+ name= "PlotDist",
+ def=function(object,...){standardGeneric("PlotDist")}
+ )
+
 setMethod(
   "PlotDist", "ITSTicketsMovements",
   function(object, filename) {

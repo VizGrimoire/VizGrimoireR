@@ -1,0 +1,27 @@
+exportPattern("^[[:alpha:]]+")
+exportMethods(
+    "initialize",
+    "JSON",
+    "PlotDist",
+    "Plot",
+    "QuantilizeMonths",
+    "QuantilizeYears",
+    "Query",
+    "run",
+    "show" 
+)
+exportClasses(
+    "ITSMonthly",
+     "ITSMonthlyChanged",
+     "ITSMonthlyClosed",
+     "ITSMonthlyLastClosed",
+     "ITSMonthlyOpen",
+     "ITSMonthlyVarious",
+     "ITSTicketsChangesTimes",
+     "ITSTicketsTimes",
+     "Query",
+     "QueryTimeSerie",
+     "TimedEvents",
+     "Times",
+     "TimeSeriesYears" 
+)
