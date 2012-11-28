@@ -53,10 +53,6 @@ setMethod(f="initialize",
 ##  - Values of selected columns over time
 ##  - Log values of selected columns over time
 ##
-setGeneric (
-  name= "Plot",
-  def=function(.Object,...){standardGeneric("Plot")}
-  )
 setMethod(
   f="Plot",
   signature="TimeSeriesYears",
@@ -95,11 +91,6 @@ setMethod(
 ## Parameters:
 ##  - filename: name of the JSON file to write
 ##
-library(rjson)
-setGeneric (
-  name= "JSON",
-  def=function(.Object,...){standardGeneric("JSON")}
-  )
 setMethod(
   f="JSON",
   signature="TimeSeriesYears",

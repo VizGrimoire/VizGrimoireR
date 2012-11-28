@@ -420,6 +420,31 @@ createJSON <- function (data, filename) {
 }
 
 ##
+## Generic JSON function for using it in hierarchies of objects that need it
+##
+setGeneric (
+ name= "JSON",
+ def=function(.Object,...){standardGeneric("JSON")}
+ )
+
+##
+## Generic Plot function for using it in hierarchies of objects that need it
+##
+setGeneric (
+  name= "Plot",
+  def=function(.Object,...){standardGeneric("Plot")}
+  )
+
+##
+## Generic PlotDist function for using it in hierarchies of objects that need it
+##
+setGeneric (
+ name= "PlotDist",
+ def=function(object,...){standardGeneric("PlotDist")}
+ )
+
+
+##
 ## GetYear
 ##
 ## Get the year of a datetime object

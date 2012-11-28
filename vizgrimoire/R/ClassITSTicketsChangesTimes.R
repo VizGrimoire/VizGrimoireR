@@ -88,11 +88,6 @@ setMethod(f="initialize",
 ## Parameters:
 ##  - filename: name of the JSON file to write
 ##
-library(rjson)
-#setGeneric (
-#  name= "JSON",
-#  def=function(.Object,...){standardGeneric("JSON")}
-#  )
 setMethod(
   f="JSON",
   signature="ITSTicketsChangesTimes",

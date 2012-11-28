@@ -25,3 +25,6 @@ exportClasses(
      "Times",
      "TimeSeriesYears" 
 )
+import("RMySQL")
+import("rjson")
+

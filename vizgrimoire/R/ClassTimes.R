@@ -36,10 +36,6 @@ setMethod(f="initialize",
 ##      closed tickets
 ## Quick and slow tickets are split at quantil .5
 ##
-setGeneric (
-  name= "PlotDist",
-  def=function(object,...){standardGeneric("PlotDist")}
-  )
 setMethod(
   "PlotDist", "Times",
   function(object, filename, unit="days") {

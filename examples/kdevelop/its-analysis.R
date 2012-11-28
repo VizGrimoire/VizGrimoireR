@@ -25,37 +25,11 @@
 
 ## Note: this script works with bicho databases obtained from Bugzilla
 
-## Times class
-source("../../ClassTimes.R")
-## TimeSeriesYears class
-source("../../ClassTimeSeriesYears.R")
-## Query class
-source("../../ClassQuery.R")
-## QueryTimeSerie class
-source("../../ClassQueryTimeSerie.R")
-## ITSTicketsTimes class
-source("../../ClassITSTicketsTimes.R")
-## ITSTicketsChangesTimes class
-source("../../ClassITSTicketsChangesTimes.R")
-## TimedEvents class
-source("../../ClassTimedEvents.R")
-## ITSMonthly class
-source("../../ClassITSMonthly.R")
-## ITSMonthlyOpen class
-source("../../ClassITSMonthlyOpen.R")
-## ITSMonthlyChanged class
-source("../../ClassITSMonthlyChanged.R")
-## ITSMonthlyClosed class
-source("../../ClassITSMonthlyClosed.R")
-## ITSMonthlyLastClosed class
-source("../../ClassITSMonthlyLastClosed.R")
-## ITSMonthlyClosed class
-source("../../ClassITSMonthlyVarious.R")
-
-source("../../vizgrimoire.R")
+library("vizgrimoire")
 
 ## Analyze command line args, and produce config params from them
 conf <- ConfFromCommandLine()
+
 ## Kind of repository (Bugzilla, Launchpad, Jira, SourceForge, Allura, GoogleCode, etc.)
 ## Connect to the database
 SetDBChannel (conf$user, conf$password, conf$database)
