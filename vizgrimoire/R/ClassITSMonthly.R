@@ -34,9 +34,8 @@ setGeneric (
   name= "Query",
   def=function(.Object,...){standardGeneric("Query")}
   )
-
 ##
-## Void Query method, resturns an empty string.
+## Void Query method, returns an empty string.
 ## Only descendants of this class, with proper Query functions
 ## should be instantiated, not this one
 ##
@@ -65,7 +64,7 @@ setMethod(f="initialize",
           definition=function(.Object){
             cat("~~~ ITSMonthly: initializator ~~~ \n")
             ## Query() should dispatch to the child
-            q <- new ("QueryTimeSerie", sql = Query(.Object))
+            q <- new ("Query", sql = Query(.Object))
             ## Complete months not present
             as(.Object,"data.frame") <- completeZeroMonthly (run (q))
             .Object$year <- (.Object$id - 1) %/% 12

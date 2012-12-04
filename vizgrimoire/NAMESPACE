@@ -20,11 +20,11 @@ exportClasses(
      "ITSTicketsChangesTimes",
      "ITSTicketsTimes",
      "Query",
-     "QueryTimeSerie",
      "TimedEvents",
      "Times",
      "TimeSeriesYears" 
 )
 import("RMySQL")
 import("rjson")
+import("RColorBrewer")
 

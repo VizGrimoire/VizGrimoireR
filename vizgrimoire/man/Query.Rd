@@ -3,10 +3,11 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
   %%  ~~function to do ... ~~
-  SQL queries
+  Class to perform SQL queries
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+  %%  ~~ A concise (1-5 lines) description of what the function does. ~~
+  This class provides a framework for defining and running SQL queries.
 }
 \usage{
 Query(.Object, ...)

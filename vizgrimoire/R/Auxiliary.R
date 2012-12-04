@@ -104,11 +104,11 @@ FindoutRepoKind <- function () {
 
 # Note use display.brewer.pal(...) to check colors
 # example: display.brewer.pal(9, "Greens")
-#library(RColorBrewer)
+library(RColorBrewer)
 
-#blues = brewer.pal(5,'Blues')
-#reds = brewer.pal(5,'Reds')
-#greens = brewer.pal(5,'Greens')
+blues = brewer.pal(5,'Blues')
+reds = brewer.pal(5,'Reds')
+greens = brewer.pal(5,'Greens')
 
 #
 # List of colors for plots
@@ -361,31 +361,31 @@ GetMonth <- function (time) {
 #
 # Plot histogram and density of probability for data frame (single column)
 #
-## plotHistogramTime <- function (data, filename, label, title='') {
+plotHistogramTime <- function (data, filename, label, title='') {
 
-##   pdffilename <- paste (c(filename, ".pdf"), collapse='')
-##   pdf(pdffilename, height=5, width=5)
-## #  hist(data, prob= T, breaks='FD', col=blues[3], xlab = label, main = title)
-##   hist(data, freq=TRUE, breaks=15, col="orange", xlab = label, main = title)
-## #  lines(density(data), col=reds[3], lwd = 2)
-##   dev.off()
-## }
+  pdffilename <- paste (c(filename, ".pdf"), collapse='')
+  pdf(pdffilename, height=5, width=5)
+#  hist(data, prob= T, breaks='FD', col=blues[3], xlab = label, main = title)
+  hist(data, freq=TRUE, breaks=15, col="orange", xlab = label, main = title)
+#  lines(density(data), col=reds[3], lwd = 2)
+  dev.off()
+}
 #library(vioplot)
 
 #
 # Plot boxplot for data frame
 #
-## plotBoxPlot <- function (data, filename, label = '', title = '') {
+plotBoxPlot <- function (data, filename, label = '', title = '') {
   
-##   pdffilename <- paste (c(filename, ".pdf"), collapse='')
-##   pdf(pdffilename, height=10, width=2)
-##   boxplot(data, col = greens[2], main = title, ylab = "days", xlab = label)
-##   # Mark top 3 outliers
-##   #top3 = rev(sort(data))[1:3]
-##   #print(top3)
-##   #text(rep(1,3), y = top3, label = paste(top3, 'days'), pos = 4)
-##   dev.off()
-## }
+  pdffilename <- paste (c(filename, ".pdf"), collapse='')
+  pdf(pdffilename, height=10, width=2)
+  boxplot(data, col = greens[2], main = title, ylab = "days", xlab = label)
+  # Mark top 3 outliers
+  #top3 = rev(sort(data))[1:3]
+  #print(top3)
+  #text(rep(1,3), y = top3, label = paste(top3, 'days'), pos = 4)
+  dev.off()
+}
 
 #
 # Plot distribution of times

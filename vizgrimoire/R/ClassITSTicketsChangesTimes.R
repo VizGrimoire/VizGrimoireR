@@ -60,7 +60,7 @@ setMethod(f="initialize",
           signature="ITSTicketsChangesTimes",
           definition=function(.Object){
             cat("~~~ ITSTicketsChangesTimes: initializator ~~~ \n")
-            q <- new ("QueryTimeSerie", sql = query.changed)
+            q <- new ("Query", sql = query.changed)
             as(.Object,"data.frame") <- run (q)
             .Object$open <- strptime(.Object$open,
                                      format="%Y-%m-%d %H:%M:%S")

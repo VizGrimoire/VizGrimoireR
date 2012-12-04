@@ -14,11 +14,12 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ##
-## This file is a part of the vizGrimoire.R package
+## This file is a part of the vizgrimoire R package
 ##
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##
+
 ##
 ## ITSMonthlyClosed class
 ##
