@@ -1,7 +1,22 @@
 vizGrimoireR
 ============
 
-Some R code to make life easier to those using Metrics Grimoire tools, and maybe vizGrimoireJS.
+R package vizgrimoire, to make life easier to those using Metrics Grimoire tools, and maybe vizGrimoireJS.
+
+Installation from source
+------------------------
+
+From the parent directory of vizgrimoire:
+
+% R CMD INSTALL vizgrimoire
+
+Or, to produce a tarball, from the vizgrimoire directory:
+
+% R CMD build # To build the package tarball
+% R CMD check # To check the package tarball
+
+General issues
+--------------
 
 Each class is defined in the corresponding file, with a name starting with "Class", followed by the name of the class. For example, class Query is defined in file ClassQuery.
 
