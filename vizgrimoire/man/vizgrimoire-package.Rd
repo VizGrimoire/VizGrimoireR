@@ -3,41 +3,49 @@
 \alias{vizgrimoire}
 \docType{package}
 \title{
-What the package does (short line)
-~~ package title ~~
+  Making life easier to users of Metrics Grimoire tools, and vizGrimoireJS
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+  Metrics Grimoire tools extract information from software development
+  repositories such as git or Bugzilla, and store it in an SQL
+  database. This package assists in analyzing data from that database,
+  with the aim of producing quantitative analysis of several software
+  development aspects. Some of the analysis can be lated visualized with
+  vizGrimoireJS (JSON files are produced with that aim).
 }
 \details{
 \tabular{ll}{
 Package: \tab vizgrimoire\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
-Date: \tab 2012-11-27\cr
-License: \tab What license is it under?\cr
-Depends: \tab methods\cr
+Date: \tab 2012-12-16\cr
+License: \tab GPL version 3 or later\cr
+Depends: \tab RMySQL, rjson, RColorBrewer\cr
 }
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
+The package provides several hierarchies of classes, each one oriented
+towards a certain kind of analysis. Usually, analysis start with
+retrieving some data from databases produced by Metrics Grimoire tools,
+and as a result produce charts, JSON files and other output information.
 }
 \author{
-Who wrote it
+Jesus M. Gonzalez-Barahona
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
-~~ The author and/or maintainer of the package ~~
+%Maintainer: Who to complain to <yourfault@somewhere.net>
+%~~ The author and/or maintainer of the package ~~
 }
-\references{
-~~ Literature or other references for background information ~~
-}
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
-~~ the R documentation directory ~~
-\keyword{ package }
-\seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
-}
+% \references{
+% ~~ Literature or other references for background information ~~
+% }
+% ~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
+% ~~ the R documentation directory ~~
+% \keyword{ package }
+% \seealso{
+% ~~ Optional links to other man pages, e.g. ~~
+% ~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
+% }
 \examples{
-~~ simple examples of the most important functions ~~
+SetDBChannel (conf$user, conf$password, conf$database)
+conf$repokind <- FindoutRepoKind ()
+closed <- new ("ITSTicketsTimes")
+JSON(closed, 'its-issues_closed.json')
 }
