@@ -187,20 +187,6 @@ closed.monthly <- new ("ITSMonthlyClosed")
 JSON(closed.monthly, "its-closed-monthly.json")
 
 
-# Closed tickets per month (using last closing date)
-## q <- "SELECT year(time_closed) * 12 + month(time_closed) AS id,
-##         year(time_closed) AS year,
-##         month(time_closed) AS month,
-##         DATE_FORMAT (time_closed, '%b %Y') as date,
-##         COUNT(*) as closed_last
-##       FROM (
-##          SELECT issue_id, MAX(changed_on) time_closed
-##          FROM changes 
-##          WHERE new_value='RESOLVED' OR new_value='CLOSED' 
-##          GROUP BY issue_id) ch 
-##       GROUP BY year,month"
-## issues_closed_monthly_last <- query(q)
-
 ## Closed tickets per month (using last closing date)
 lastclosed.monthly <- new ("ITSMonthlyLastClosed")
 JSON(lastclosed.monthly, "its-lastclosed-monthly.json")
