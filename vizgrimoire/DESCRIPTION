@@ -6,5 +6,5 @@ Date: 2012-11-27
 Author: Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 Maintainer: Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 Description: R library for the MetricsGrimoire and vizGrimoire systems
-License: What license is it under?
+License: GPL (>= 3)
 Depends: methods

@@ -1,14 +1,14 @@
 exportPattern("^[[:alpha:]]+")
 exportMethods(
-    "initialize",
-    "JSON",
-    "PlotDist",
-    "Plot",
-    "QuantilizeMonths",
-    "QuantilizeYears",
-    "Query",
-    "run",
-    "show" 
+  "initialize",
+  "JSON",
+  "PlotDist",
+  "Plot",
+  "QuantilizeMonths",
+  "QuantilizeYears",
+  "Query",
+  "run",
+  "show" 
 )
 exportClasses(
     "ITSMonthly",
@@ -24,7 +24,7 @@ exportClasses(
      "Times",
      "TimeSeriesYears" 
 )
-import("RMySQL")
-import("rjson")
-import("RColorBrewer")
+#import("RMySQL")
+#import("rjson")
+#import("RColorBrewer")
 

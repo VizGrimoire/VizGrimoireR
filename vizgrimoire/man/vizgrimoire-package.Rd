@@ -44,6 +44,7 @@ Jesus M. Gonzalez-Barahona
 % ~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
 % }
 \examples{
+conf <- ConfFromCommandLine()
 SetDBChannel (conf$user, conf$password, conf$database)
 conf$repokind <- FindoutRepoKind ()
 closed <- new ("ITSTicketsTimes")
