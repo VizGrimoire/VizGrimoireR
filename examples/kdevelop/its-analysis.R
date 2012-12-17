@@ -30,7 +30,6 @@ library("vizgrimoire")
 ## Analyze command line args, and produce config params from them
 conf <- ConfFromCommandLine()
 
-## Kind of repository (Bugzilla, Launchpad, Jira, SourceForge, Allura, GoogleCode, etc.)
 ## Connect to the database
 SetDBChannel (conf$user, conf$password, conf$database)
 
