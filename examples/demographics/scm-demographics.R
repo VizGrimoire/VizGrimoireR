@@ -54,25 +54,8 @@ hist(periods$lastdate, "quarters", freq=TRUE)
 periods$stay <- round (as.numeric(
   difftime(periods$lastdate, periods$firstdate, units="days")))
 hist(periods$stay)
-active2010 <- subset (periods,
-  firstdate <= strptime("2010-01-01", format="%Y-%m-%d") &
-  lastdate >= strptime("2010-01-01", format="%Y-%m-%d"))
-active2010$age <- round (as.numeric (difftime (
-  strptime("2010-01-01", format="%Y-%m-%d"),
-  active2010$firstdate, units="days")))
-active2010$age.years <- floor(active2010$age/365)
-hist(active2010$age)
-
-library("ggplot2")
-ggplot(active2010, aes(x=age)) +
-  geom_histogram(binwidth=365, colour="black", fill="white") +
-  coord_flip()
-
-ggplot(active2010, aes(x=floor(age/365))) +
-  geom_histogram(binwidth=1, colour="black", fill="white") +
-  coord_flip()
-
 
 demos <- new ("Demographics")
+Pyramid (demos, "2010-01-01", "/tmp/demos-pyramid-2010")
 JSON (demos, "demos.json")
 

@@ -4,6 +4,7 @@ exportMethods(
   "JSON",
   "PlotDist",
   "Plot",
+  "Pyramid",
   "QuantilizeMonths",
   "QuantilizeYears",
   "Query",
@@ -28,4 +29,5 @@ exportClasses(
 import("RMySQL")
 import("rjson")
 import("RColorBrewer")
+import("ggplot2")
 

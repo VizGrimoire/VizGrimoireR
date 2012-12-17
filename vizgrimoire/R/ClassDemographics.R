@@ -48,13 +48,13 @@ setMethod(f="initialize",
             cat("~~~ Demographics: initializator ~~~ \n")
             q <- new ("Query", sql = query.scm)
             as(.Object,"data.frame") <- run (q)
-            .Object$firstdate <- strptime(periods$firstdate,
+            .Object$firstdate <- strptime(.Object$firstdate,
                                           format="%Y-%m-%d %H:%M:%S")
-            .Object$lastdate <- strptime(periods$lastdate,
-                              format="%Y-%m-%d %H:%M:%S")
+            .Object$lastdate <- strptime(.Object$lastdate,
+                                         format="%Y-%m-%d %H:%M:%S")
             .Object$stay <- round (as.numeric(
-                                     difftime(periods$lastdate,
-                                              periods$firstdate,
+                                     difftime(.Object$lastdate,
+                                              .Object$firstdate,
                                               units="days")))            
             return(.Object)
           }
@@ -73,5 +73,43 @@ setMethod(
     sink(filename)
     cat(toJSON(list(demography=as.data.frame(.Object))))
     sink()
+  }
+  )
+
+##
+## Generic Pyramid function
+##
+setGeneric (
+  name= "Pyramid",
+  def=function(.Object,...){standardGeneric("Pyramid")}
+  )
+##
+## Pyramid of developers for a certain date
+##
+## The pyramid is built based on how long have they have stayed
+## in the project the developers active at that date
+##
+## - date: date as string (eg: "2010-01-01")
+## - filename: file to write pyramid to
+##
+setMethod(
+  f="Pyramid",
+  signature="Demographics",
+  definition=function(.Object, date, filename) {
+
+    pdffilename <- paste (c(filename, ".pdf"), collapse='')
+    active <- subset (as.data.frame (.Object),
+                      firstdate <= strptime(date, format="%Y-%m-%d") &
+                      lastdate >= strptime(date, format="%Y-%m-%d"))
+    active$age <- round (as.numeric (difftime (
+                                       strptime(date, format="%Y-%m-%d"),
+                                       active$firstdate, units="days")))
+    pdf(file=pdffilename, height=5, width=5)
+    print (ggplot(active, aes(x=floor(age/365))) +
+           geom_histogram(binwidth=1, colour="black", fill="white") +
+           xlab("Age (years)") +
+           ylab("Number of developers") +
+           coord_flip())
+    dev.off()
   }
   )
