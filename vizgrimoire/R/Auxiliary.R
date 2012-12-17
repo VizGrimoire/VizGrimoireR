@@ -120,6 +120,7 @@ library(RMySQL)
 SetDBChannel <- function (user, password, database, host="localhost") {
   mychannel <<- dbConnect(MySQL(), user=user, password=password,
                           db=database, host="localhost")
+  dbGetQuery(mychannel, "SET NAMES 'utf8'")
 }
 
 ##
