@@ -83,9 +83,8 @@ ConfFromCommandLine <- function () {
 ##  - startdate: starting date of the period to analyze. Format: YYYY-MM-DD
 ##
 ##
-ConfFromParameters <- function (dbschema, user, passwd,
-                                enddate = NULL, startdate = NULL) {
-
+ConfFromParameters <- function (dbschema, user = NULL, passwd = NULL,
+                                enddate = NULL, startdate = NULL, group = NULL) {
   if (is.null(enddate)) {
     enddate <- "2100-01-01"
   }
@@ -98,6 +97,7 @@ ConfFromParameters <- function (dbschema, user, passwd,
   conf <- list (database = dbschema,
                 user = user,
                 password = passwd,
+                group = group,
                 startdate = startdate,
                 enddate = enddate)
   return (conf)
@@ -117,9 +117,16 @@ library(RMySQL)
 ## Connect to the database and prepare...
 ##
 
-SetDBChannel <- function (user, password, database, host="localhost") {
-  mychannel <<- dbConnect(MySQL(), user=user, password=password,
-                          db=database, host="localhost")
+SetDBChannel <- function (user=NULL, password=NULL, database,
+                          host="localhost", port=3306,
+                          group=NULL) {
+  if (is.null(group)) {
+    mychannel <<- dbConnect(MySQL(), user=user, password=password,
+                            db=database, host="localhost")
+  } else {
+    mychannel <<- dbConnect(MySQL(), group=group,
+                            db=database)
+  }    
   dbGetQuery(mychannel, "SET NAMES 'utf8'")
 }
 
