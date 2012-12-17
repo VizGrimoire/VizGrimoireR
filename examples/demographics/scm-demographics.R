@@ -71,3 +71,8 @@ ggplot(active2010, aes(x=age)) +
 ggplot(active2010, aes(x=floor(age/365))) +
   geom_histogram(binwidth=1, colour="black", fill="white") +
   coord_flip()
+
+
+demos <- new ("Demographics")
+JSON (demos, "demos.json")
+
