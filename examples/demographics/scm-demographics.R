@@ -21,41 +21,20 @@
 ##
 ##
 ## Usage:
-##  R --no-restore --no-save --args dbschema user passwd < scm-demographics.R
-
-## Note: this script works with cvsanaly databases obtained from git
+##  R --no-restore --no-save < scm-demographics.R
+## or
+##  R CMD BATCH scm-demographics.R
+##
 
 library("vizgrimoire")
 
-## Analyze command line args, and produce config params from them
-conf <- ConfFromParameters("kdevelop", "jgb", "XXX")
-SetDBChannel (conf$user, conf$password, conf$database)
-
-sql <- "SELECT 
-    author_id as id, people.name as name, people.email as email,
-    count(scmlog.id) as commits,
-    MIN(scmlog.date) as firstdate, MAX(scmlog.date) as lastdate
-FROM
-    scmlog, people
-WHERE
-    scmlog.author_id = people.id
-GROUP by author_id"
-
-q <- new ("Query", sql = sql)
-
-periods <- run (q)
-
-periods$firstdate <- strptime(periods$firstdate,
-                              format="%Y-%m-%d %H:%M:%S")
-periods$lastdate <- strptime(periods$lastdate,
-                              format="%Y-%m-%d %H:%M:%S")
-hist(periods$firstdate, "quarters", freq=TRUE)
-hist(periods$lastdate, "quarters", freq=TRUE)
-periods$stay <- round (as.numeric(
-  difftime(periods$lastdate, periods$firstdate, units="days")))
-hist(periods$stay)
+## Analyze args, and produce config params from them
+#conf <- ConfFromParameters("kdevelop", "jgb", "XXX")
+#SetDBChannel (conf$user, conf$password, conf$database)
+conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git", group = "fuego")
+SetDBChannel (database = conf$database, group = conf$group)
 
 demos <- new ("Demographics")
-Pyramid (demos, "2010-01-01", "/tmp/demos-pyramid-2010")
-JSON (demos, "/tmp/demos.json")
-
+ages <- GetAges (demos, "2012-10-01")
+JSON (ages, "/tmp/ages-2012.json")
+Pyramid (ages, "/tmp/ages-2012", 4)
