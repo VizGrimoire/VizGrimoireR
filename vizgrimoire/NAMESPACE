@@ -1,6 +1,7 @@
 exportPattern("^[[:alpha:]]+")
 exportMethods(
   "initialize",
+  "GetAges",
   "JSON",
   "PlotDist",
   "Plot",
@@ -21,6 +22,7 @@ exportClasses(
   "ITSTicketsChangesTimes",
   "ITSTicketsTimes",
   "Demographics",
+  "Ages",
   "Query",
   "TimedEvents",
   "Times",

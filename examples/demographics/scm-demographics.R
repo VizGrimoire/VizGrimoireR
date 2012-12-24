@@ -57,5 +57,5 @@ hist(periods$stay)
 
 demos <- new ("Demographics")
 Pyramid (demos, "2010-01-01", "/tmp/demos-pyramid-2010")
-JSON (demos, "demos.json")
+JSON (demos, "/tmp/demos.json")
 

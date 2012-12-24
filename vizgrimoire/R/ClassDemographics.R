@@ -28,7 +28,7 @@
 query.scm <- "SELECT 
     author_id as id, people.name as name, people.email as email,
     count(scmlog.id) as actions,
-    MIN(scmlog.date) as firstdate, MAX(scmlog.date) as lastdate
+    MIN(scmlog.date) as firstdatestr, MAX(scmlog.date) as lastdatestr
 FROM
     scmlog, people
 WHERE
@@ -48,9 +48,9 @@ setMethod(f="initialize",
             cat("~~~ Demographics: initializator ~~~ \n")
             q <- new ("Query", sql = query.scm)
             as(.Object,"data.frame") <- run (q)
-            .Object$firstdate <- strptime(.Object$firstdate,
+            .Object$firstdate <- strptime(.Object$firstdatestr,
                                           format="%Y-%m-%d %H:%M:%S")
-            .Object$lastdate <- strptime(.Object$lastdate,
+            .Object$lastdate <- strptime(.Object$lastdatestr,
                                          format="%Y-%m-%d %H:%M:%S")
             .Object$stay <- round (as.numeric(
                                      difftime(.Object$lastdate,
@@ -61,7 +61,7 @@ setMethod(f="initialize",
           )
 
 ##
-## Create a JSON file out of a ITSTicketsTimes object
+## Create a JSON file out of an object of this class
 ##
 ## Parameters:
 ##  - filename: name of the JSON file to write
@@ -80,36 +80,27 @@ setMethod(
 ## Generic Pyramid function
 ##
 setGeneric (
-  name= "Pyramid",
-  def=function(.Object,...){standardGeneric("Pyramid")}
+  name= "GetAges",
+  def=function(.Object,...){standardGeneric("GetAges")}
   )
 ##
-## Pyramid of developers for a certain date
-##
-## The pyramid is built based on how long have they have stayed
-## in the project the developers active at that date
+## Ages of developers for a certain date
 ##
 ## - date: date as string (eg: "2010-01-01")
-## - filename: file to write pyramid to
 ##
 setMethod(
-  f="Pyramid",
+  f="GetAges",
   signature="Demographics",
-  definition=function(.Object, date, filename) {
+  definition=function(.Object, date) {
 
-    pdffilename <- paste (c(filename, ".pdf"), collapse='')
     active <- subset (as.data.frame (.Object),
                       firstdate <= strptime(date, format="%Y-%m-%d") &
                       lastdate >= strptime(date, format="%Y-%m-%d"))
-    active$age <- round (as.numeric (difftime (
-                                       strptime(date, format="%Y-%m-%d"),
-                                       active$firstdate, units="days")))
-    pdf(file=pdffilename, height=5, width=5)
-    print (ggplot(active, aes(x=floor(age/365))) +
-           geom_histogram(binwidth=1, colour="black", fill="white") +
-           xlab("Age (years)") +
-           ylab("Number of developers") +
-           coord_flip())
-    dev.off()
+    age <- round (as.numeric (difftime (strptime(date, format="%Y-%m-%d"),
+                                        active$firstdate, units="days")))
+    ages <- new ("Ages", date=date,
+                 id = active$id, name = active$name, email = active$email,
+                 age = age)
+    return (ages)
   }
   )
