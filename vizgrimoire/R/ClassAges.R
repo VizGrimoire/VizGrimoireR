@@ -62,8 +62,8 @@ setMethod(
   signature="Ages",
   definition=function(.Object, filename) {
     sink(filename)
-    cat(toJSON(list(date=.Object@date,
-                    persons=list(persons=as.data.frame(.Object@persons)))))
+    cat(toJSON(list(date = .Object@date,
+                    persons = as.data.frame(.Object@persons))))
     sink()
   }
   )
