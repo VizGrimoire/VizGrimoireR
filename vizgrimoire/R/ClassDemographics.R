@@ -44,9 +44,9 @@ setClass(Class="Demographics",
 ##
 setMethod(f="initialize",
           signature="Demographics",
-          definition=function(.Object){
+          definition=function(.Object, query = query.scm){
             cat("~~~ Demographics: initializator ~~~ \n")
-            q <- new ("Query", sql = query.scm)
+            q <- new ("Query", sql = query)
             as(.Object,"data.frame") <- run (q)
             .Object$firstdate <- strptime(.Object$firstdatestr,
                                           format="%Y-%m-%d %H:%M:%S")
