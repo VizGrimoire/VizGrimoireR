@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2012 Bitergia
 #
@@ -19,17 +20,197 @@
 # Authors :
 #       Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
 
+#
+# unifypeople.py
+#
+# This is just a first try at a code for "unifying" uids in the people
+# table created by CVSAnalY. It creates a new table, upeople, which has
+# id (id in people) and uid (same id if unique, or "cannonical" id if
+# duplicated. Cannonical id is considered to be the lower id in people.
+#
+# Most of the work is actually done by the Identities class, which is
+# designed to store a kind of identities (names, email addresses, etc.)
+# It offers several different methods for finding duplicate identities
+# of that kind
+#
+
 import MySQLdb
 
-# Open database connection
-db = MySQLdb.connect("localhost","jgb","XXX","d2_dic_cvsanaly_webkit_samsung2")
+class Identities:
+    """Keeps track of identities assigned to unique ids.
 
-# prepare a cursor object using cursor() method
+    Allow for storing identities pointing to unique ids,
+    and to check if an identity is already assigned to a unique id.
+    Identities may be names, email addresses, etc.
+    Maintains identities in lowercase, to "unify" them.
+    """
+
+    def find (self, identity):
+        """Returns the unique id for an identity, or 0 if not found"""
+
+        identity = identity.lower()
+        if identity in self.stored:
+            return (self.stored[identity])
+        else:
+            return (0)
+
+    def findDotted (self, identity):
+        """Tries to find likely email addresses.
+
+        Finds the identity lowercased, with dots instear of spaces,
+        and compared to anything before @. We compare only in cases
+        of strings with spaces or dots (otherwise, too much false
+        positives).
+        Returns the unique id for an identity, or 0 if not found"""
+
+        if (' ' in identity) or ('.' in identity):
+            identity = identity.lower().replace(' ', '.')
+        else:
+            print "**Not checking: " + identity
+            return (0)
+        for element in sorted(self.stored):
+            if identity == element.split('@',1)[0]:
+                print "**Found: " + identity + " / " + element
+                return (self.stored[element])
+        return (0)
+
+    def insert (self, identity, uid):
+        """Inserts the unique id for an identity"""
+
+        identity = identity.lower()
+        self.stored[identity] = uid
+
+    def get_all (self):
+        """Get all identities, sorted"""
+
+        return (sorted(self.stored.keys()))
+
+    def print_all (self, tag = ""):
+        """Print all identities, one per line, sorted
+
+        tag: tag to write at the beginning of each line."""
+
+        for identity in self.get_all():
+            print tag + identity + "."
+
+    def __init__ (self):
+        """Create the dictionary for stored identities.
+
+        Key for the dictionary is identity, value is unique id.
+        """
+
+        self.stored = {}
+
+def strPerson (person):
+    """Get a string out of a (name,email) dictionary."""
+
+    return (person['name'] + " / " + person['email'])
+
+# Open database connection and get all data in people table
+# into people list.
+# db = MySQLdb.connect(host = "localhost",
+#                      user = "jgb",
+#                      passwd = "XXX",
+#                      db = "d2_dic_cvsanaly_webkit_samsung2")
+db = MySQLdb.connect(host = "127.0.0.1",
+                     user = "root",
+                     port = 3308,
+                     db = "dic_cvsanaly_linux_git")
+                     #use_unicode = True)
+
 cursor = db.cursor()
+query = """SELECT *
+FROM people, scmlog
+WHERE people.id = scmlog.author_id
+GROUP BY people.id"""
 
+query = "SELECT * FROM people"
+
+# Set all name retrieval in utf8
+cursor.execute("SET NAMES utf8")
 # execute SQL query using execute() method.
-cursor.execute("SELECT * FROM people")
-
+cursor.execute(query)
 people = cursor.fetchall()
 
+# Create objects for checking identities
+identitiesNames = Identities()
+identitiesEmails = Identities()
+# Entries in people, as a dictionary keyed by id
+personsById = {}
+# Ids that are duplicate. Key is the id, value is the "original" id,
+#  which we use as unique id (it is the lower one of the dups)
+dupIds = {}
+
+# Now, check all identities in persons
+for person in people:
+    (id, name, email) = person
+    # In Linux kernel, there are several "???", "", etc. names
+    # Let's substitute them for something meaningful (the id)
+    if name in ("???", "?", ""):
+        name = "**Unknown**" + "%3d" % id
+    personsById[id] = {'name': name, 'email': email}
+    # Is name in names?
+    uidName = identitiesNames.find (name)
+    if uidName == 0:
+        identitiesNames.insert (name, id)
+    # Is name in emails? (probably it is actually an email)
+    uidNameEmail = identitiesEmails.find (name)
+    # Is name, lowercased and dotted, in emails?
+    #uidNameEmailDotted = identitiesEmails.findDotted (name)
+    # Is email in emails?
+    uidEmail = identitiesEmails.find (email)
+    if uidEmail == 0:
+        identitiesEmails.insert (email, id)
+    #foundIds = [uidName, uidNameEmail, uidEmail, uidNameEmailDotted]
+    foundIds = [uidName, uidNameEmail, uidEmail]
+    foundIds = [el for el in foundIds if el != 0]
+    foundIds = sorted (list (set (foundIds)))
+    if len(foundIds) > 0:
+        # There is at least one duplicate. First one is the "unique"
+        duplicates = foundIds[1:]
+        duplicates.append(id)
+        for dup in duplicates:
+            dupIds[dup] = foundIds[0]
+
+
+# Uncomment next lines for debugging results
+
+#for id in sorted(dupIds):
+#    print str(id) + " (" + strPerson(personsById[id]) + \
+#        ") is a duplicate of " + \
+#        str(dupIds[id]) + " (" + strPerson(personsById[dupIds[id]]) + ")"
+#print "== Names =="
+#identitiesNames.print_all("Name: ")
+#print "== Email addresses =="
+#identitiesEmails.print_all(":Email: ")
+print str(len(dupIds)) + " duplicate ids found."
+
+# Create unique people table
+# Each row is a people identifier, and a unique identifier
+# Several people identifiers could have the same unique identifier
+
+print "Now creating upeople table (this may take a while)..."
+cursor.execute("DROP TABLE IF EXISTS upeople")
+cursor.execute("""CREATE TABLE upeople (
+  id int(11) NOT NULL,
+  uid int(11) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8""")
+cursor.execute("ALTER TABLE upeople DISABLE KEYS")
+db.commit()
+
+upeople = []
+for id in sorted(personsById):
+    if id in dupIds:
+        uid = dupIds[id]
+    else:
+        uid = id
+    upeople.append((id, uid))
+
+cursor.executemany("""INSERT INTO upeople (id, uid)
+   VALUES (%s, %s)""", upeople)
+cursor.execute("ALTER TABLE upeople ENABLE KEYS")
+db.commit()
+
 db.close()
+print "Done."
