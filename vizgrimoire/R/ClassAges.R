@@ -20,7 +20,7 @@
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##
 ##
-## Demographics class
+## Ages class
 ##
 ## Class for handling ages of persons (for a certain point in time)
 ##
@@ -34,17 +34,24 @@
 ##
 
 setClass(Class="Ages",
-         representation(date = "character", persons = "data.frame"),
+         representation = representation (date = "character",
+           persons = "data.frame")
          )
+
 ## Initialize by running the query that gets dates for population,
 ## and by initializing the data frames with specialized data
 ##
 setMethod(f="initialize",
           signature="Ages",
-          definition=function(.Object, date, id, name, email, age){
+          definition=function(.Object, date = "",
+                              id = NULL,
+                              name = NULL,
+                              email = NULL,
+                              age =  NULL) {
             cat("~~~ Ages: initializator ~~~ \n")
             .Object@date <- date
-            .Object@persons <- data.frame(id = id, name = name, email=email,
+            .Object@persons <- data.frame(id = id, name = name,
+                                          email=email,
                                           age = age,
                                           stringsAsFactors=FALSE)
             return(.Object)
@@ -52,7 +59,7 @@ setMethod(f="initialize",
           )
 
 ##
-## Generic Pyramid function
+## Generic GetDataFrame function
 ##
 setGeneric (
   name= "GetDataFrame",
@@ -107,7 +114,7 @@ setGeneric (
 setMethod(
   f="Pyramid",
   signature="Ages",
-  definition=function(.Object, filename = NULL, periods = 1,
+  definition=function(.Object, filename = NULL, periods = 4,
     fill="red") {
     # Next is to capture "periods" in .e, needed for the ggplot call below
     .e <- environment()

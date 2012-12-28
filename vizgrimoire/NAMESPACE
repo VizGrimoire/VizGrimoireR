@@ -24,6 +24,7 @@ exportClasses(
   "ITSTicketsTimes",
   "Demographics",
   "Ages",
+  "AgesMulti",
   "Query",
   "TimedEvents",
   "Times",
