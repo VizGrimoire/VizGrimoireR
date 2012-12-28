@@ -122,12 +122,15 @@ setGeneric (
   )
 ##
 ## ProcessAges
-## Produce information and charts for a Demographics object at a certain date
+## Produce information and charts for ages based on a Demographics
+##  object at a certain date
 ##
 ## - date: date at which we consider the time cut
+## - filename: name (prefix) of files produced
+## - periods: periods per year (1: year, 4: quarters, 12: months)
 ## Value: Ages obect for that time cut
 ##
-## For the given date, and ages object is produced, with it as date cut.
+## For the given date, an ages object is produced, with it as date cut.
 ## Produces:
 ##  - JSON file with ages
 ##  - Chart of a demographic pyramid
@@ -135,7 +138,7 @@ setGeneric (
 setMethod(
   f="ProcessAges",
   signature="Demographics",
-  definition=function(.Object, date, filename) {
+  definition=function(.Object, date, filename, periods=4) {
     ages <- GetAges (.Object, date)
     JSON (ages, paste(c(filename, date, ".json"), collapse = ""))
     Pyramid (ages, paste(c(filename, date), collapse = ""), 4)
