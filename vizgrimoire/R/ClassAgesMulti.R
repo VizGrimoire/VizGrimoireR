@@ -137,3 +137,39 @@ setMethod(
     }
   }
   )    
+
+##
+## Generic Pyramid3D function
+##
+setGeneric (
+  name= "Pyramid3D",
+  def=function(.Object,...){standardGeneric("Pyramid3D")}
+  )
+##
+## Plot 3D bar pyramid of persons for a certain date
+##
+## The pyramid is built based on how long have they have stayed
+## in the project the developers active at that date
+##
+## - filename: file to write pyramid to
+## - periods: periods per year (1: year, 4: quarters, 12: months)
+##
+setMethod(
+  f="Pyramid3D",
+  signature="AgesMulti",
+  definition=function(.Object, dirname = NULL, periods = 4) {
+    rgl.open()
+    rgl.bg(col="#cccccc")
+    hist3d(x = .Object@persons$age, y = .Object@persons$date,
+       x.nclass = floor(max(.Object@persons$age)/(365/periods)),
+       y.nclass = "auto",
+       y.scale = 300, z.scale = 10,
+       cols = brewer.pal(8,"Dark2"),
+       alpha = 0.7)
+    if (!is.null(dirname)) {
+      writeWebGL(dir = dirname, width=500, height=500)
+    }
+    rgl.close()
+  }
+  )    
+    
