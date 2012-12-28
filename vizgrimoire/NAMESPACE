@@ -2,6 +2,7 @@ exportPattern("^[[:alpha:]]+")
 exportMethods(
   "initialize",
   "GetAges",
+  "ProcessAges",
   "JSON",
   "PlotDist",
   "Plot",

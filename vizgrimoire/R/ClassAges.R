@@ -52,6 +52,26 @@ setMethod(f="initialize",
           )
 
 ##
+## Generic Pyramid function
+##
+setGeneric (
+  name= "GetDataFrame",
+  def=function(.Object,...){standardGeneric("GetDataFrame")}
+  )
+##
+## Get dataframe with ids and ages
+##
+setMethod(
+  f="GetDataFrame",
+  signature="Ages",
+  definition=function(.Object) {
+    df <- .Object@persons[c("id", "name", "age")]
+    df$date <- .Object@date
+    return (df)
+  }
+  )
+
+##
 ## Create a JSON file out of an object of this class
 ##
 ## Parameters:
@@ -87,19 +107,19 @@ setGeneric (
 setMethod(
   f="Pyramid",
   signature="Ages",
-  definition=function(.Object, filename = NULL, periods = 1) {
-
+  definition=function(.Object, filename = NULL, periods = 1,
+    fill="red") {
     # Next is to capture "periods" in .e, needed for the ggplot call below
     .e <- environment()
     chart <- ggplot(.Object@persons, aes(x=floor(age/(365/periods))),
                     environment = .e) +
-      geom_histogram(binwidth=1, colour="black", fill="white") +
+      geom_histogram(binwidth=1, colour="black", fill=fill) +
       xlab("Age") +
       ylab("Number of developers") +
       coord_flip()
     if (! is.null(filename)) {
       pdffilename <- paste (c(filename, ".pdf"), collapse='')
-      pdf(file=pdffilename, height=5, width=5)
+      pdf(file=pdffilename, height=5, width=4)
     }
     print (chart)
     if (! is.null(filename)) {      

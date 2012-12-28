@@ -77,7 +77,7 @@ setMethod(
   )
 
 ##
-## Generic Pyramid function
+## Generic GetAges function
 ##
 setGeneric (
   name= "GetAges",
@@ -87,20 +87,58 @@ setGeneric (
 ## Ages of developers for a certain date
 ##
 ## - date: date as string (eg: "2010-01-01")
+## - normalize.by: number of days to add to each age (or NULL
+##    for no normalization)
+## Value: an Ages object
 ##
 setMethod(
   f="GetAges",
   signature="Demographics",
-  definition=function(.Object, date) {
+  definition=function(.Object, date, normalize.by = NULL) {
 
     active <- subset (as.data.frame (.Object),
                       firstdate <= strptime(date, format="%Y-%m-%d") &
                       lastdate >= strptime(date, format="%Y-%m-%d"))
     age <- round (as.numeric (difftime (strptime(date, format="%Y-%m-%d"),
                                         active$firstdate, units="days")))
+    if (is.null(normalize.by)) {
+      normalization <- 0
+    } else {
+      normalization <- normalize.by
+    }
     ages <- new ("Ages", date=date,
                  id = active$id, name = active$name, email = active$email,
-                 age = age)
+                 age = age + normalization)
+    return (ages)
+  }
+  )
+
+##
+## Generic ProcessAges function
+##
+setGeneric (
+  name= "ProcessAges",
+  def=function(.Object,...){standardGeneric("ProcessAges")}
+  )
+##
+## ProcessAges
+## Produce information and charts for a Demographics object at a certain date
+##
+## - date: date at which we consider the time cut
+## Value: Ages obect for that time cut
+##
+## For the given date, and ages object is produced, with it as date cut.
+## Produces:
+##  - JSON file with ages
+##  - Chart of a demographic pyramid
+##
+setMethod(
+  f="ProcessAges",
+  signature="Demographics",
+  definition=function(.Object, date, filename) {
+    ages <- GetAges (.Object, date)
+    JSON (ages, paste(c(filename, date, ".json"), collapse = ""))
+    Pyramid (ages, paste(c(filename, date), collapse = ""), 4)
     return (ages)
   }
   )
