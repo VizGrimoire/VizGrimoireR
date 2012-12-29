@@ -71,6 +71,7 @@ ages.merged <- new ("AgesMulti",
                       GetAges (demos.unique, "2011-10-01", 1*365),
                       GetAges (demos.unique, "2012-10-01")))
 
+JSON (ages.merged, "/tmp/linux-merged.json")
 PyramidBar (ages.merged, position="dodge",
             "/tmp/linux-pyramid-dodge")
 PyramidBar (ages.merged, position="identity",
