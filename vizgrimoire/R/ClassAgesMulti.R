@@ -58,6 +58,23 @@ setMethod(f="initialize",
           )
 
 ##
+## Create a JSON file out of an object of this class
+##
+## Parameters:
+##  - filename: name of the JSON file to write
+##
+setMethod(
+  f="JSON",
+  signature="Ages",
+  definition=function(.Object, filename) {
+    sink(filename)
+    cat(toJSON(list(date = .Object@date,
+                    persons = as.data.frame(.Object@persons))))
+    sink()
+  }
+  )
+
+##
 ## Generic PyramidDodged function
 ##
 setGeneric (
@@ -86,14 +103,8 @@ setMethod(
       xlab("Age") +
       ylab("Number of developers") +
       coord_flip()
-    if (! is.null(filename)) {
-      pdffilename <- paste (c(filename, ".pdf"), collapse='')
-      pdf(file=pdffilename, height=5, width=4)
-    }
-    print (chart)
-    if (! is.null(filename)) {      
-      dev.off()
-    }
+    produce.charts (chart = chart, filename = filename,
+                    height = 5, width = 4)
   }
   )    
 
@@ -127,14 +138,8 @@ setMethod(
       xlab("Age (quarters)") +
       ylab("Number of developers") +
       coord_flip()
-    if (! is.null(filename)) {
-      pdffilename <- paste (c(filename, ".pdf"), collapse='')
-      pdf(file=pdffilename, height=5, width=4)
-    }
-    print (chart)
-    if (! is.null(filename)) {      
-      dev.off()
-    }
+    produce.charts (chart = chart, filename = filename,
+                    height = 5, width = 4)
   }
   )    
 
@@ -159,11 +164,11 @@ setMethod(
   signature="AgesMulti",
   definition=function(.Object, dirname = NULL, periods = 4) {
     rgl.open()
-    rgl.bg(col="#cccccc")
+    rgl.bg(col="white")
     hist3d(x = .Object@persons$age, y = .Object@persons$date,
        x.nclass = floor(max(.Object@persons$age)/(365/periods)),
        y.nclass = "auto",
-       y.scale = 300, z.scale = 10,
+       y.scale = 200, z.scale = 5,
        cols = brewer.pal(8,"Dark2"),
        alpha = 0.7)
     if (!is.null(dirname)) {
@@ -172,4 +177,3 @@ setMethod(
     rgl.close()
   }
   )    
-    

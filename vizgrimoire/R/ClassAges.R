@@ -124,13 +124,7 @@ setMethod(
       xlab("Age") +
       ylab("Number of developers") +
       coord_flip()
-    if (! is.null(filename)) {
-      pdffilename <- paste (c(filename, ".pdf"), collapse='')
-      pdf(file=pdffilename, height=5, width=4)
-    }
-    print (chart)
-    if (! is.null(filename)) {      
-      dev.off()
-    }
+    produce.charts (chart = chart, filename = filename,
+                    height = 5, width = 4)
   }
   )

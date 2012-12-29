@@ -58,20 +58,20 @@ group by upeople.uid"
 
 #demos <- new ("Demographics")
 demos.unique <- new ("Demographics",query.unique)
-for (date in c("2008-10-01", "2009-10-01", "2010-10-01",
-               "2011-10-01", "2012-10-01")) {
-  ProcessAges (demos.unique, date, "/tmp/ages-")
+for (date in c("2007-10-01", "2008-10-01", "2009-10-01",
+               "2010-10-01", "2011-10-01", "2012-10-01")) {
+  ProcessAges (demos.unique, date, "/tmp/linux-")
 }
 
-age <- GetAges (demos.unique, "2010-10-01", 4*365)
-agemulti <- new ("AgesMulti")
-
 ages.merged <- new ("AgesMulti",
-                    c(GetAges (demos.unique, "2008-10-01", 4*365),
+                    c(GetAges (demos.unique, "2007-10-01", 5*365),
+                      GetAges (demos.unique, "2008-10-01", 4*365),
+                      GetAges (demos.unique, "2009-10-01", 3*365),
                       GetAges (demos.unique, "2010-10-01", 2*365),
+                      GetAges (demos.unique, "2011-10-01", 1*365),
                       GetAges (demos.unique, "2012-10-01")))
 
-PyramidDodged (ages.merged)
-PyramidFaceted (ages.merged)
-Pyramid3D (ages.merged)
+PyramidDodged (ages.merged, "/tmp/linux-pyramid-dodged")
+PyramidFaceted (ages.merged, "/tmp/linux-pyramid-faceted")
+Pyramid3D (ages.merged, "/tmp/linux-pyramid-3d")
 

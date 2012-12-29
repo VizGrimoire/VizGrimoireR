@@ -477,12 +477,31 @@ plotBoxPlot <- function (data, filename, label = '', title = '') {
 ## }
 
 ##
+## Produce charts in several formats
+##
+produce.charts <- function (chart, filename, height = 4, width = 4) {
+  if (! is.null(filename)) {
+    pdffilename <- paste (c(filename, ".pdf"), collapse='')
+    pdf(file=pdffilename, height=height, width=width)
+    print (chart)
+    dev.off()
+    jpegfilename <- paste (c(filename, ".jpeg"), collapse='')
+    jpeg(file=jpegfilename, height=height, width=width,
+         units="cm", res=300)
+    print (chart)
+    dev.off()
+  } else {
+    print (chart)
+  }
+}
+
+##
 ## binplot.3d
 ##
 ## Plot a bin in 3D, using rgl
 ## Code extracted from the rgl 3D histogram demo
 ##
-binplot.3d<-function(x,y,z,alpha=1,topcol="#ff0000",sidecol="#aaaaaa")
+binplot.3d <- function(x,y,z,alpha=1,topcol="red",sidecol="#aaaaaa")
 {
   save <- par3d(skipRedraw=TRUE)
   on.exit(par3d(save))
@@ -506,7 +525,7 @@ binplot.3d<-function(x,y,z,alpha=1,topcol="#ff0000",sidecol="#aaaaaa")
 ## Code based in the rgl 3D histogram demo
 ##
 hist3d<-function(x,y=NULL,x.nclass="auto",y.nclass="auto",alpha=1,
-                 cols=c("green","red","blue"),y.scale=1, z.scale=10)
+                 cols=c("green","red","blue"),y.scale=200, z.scale=5)
 {
   if (!is.numeric(y)) {
     values.y <- sort(unique(y))
@@ -521,10 +540,10 @@ hist3d<-function(x,y=NULL,x.nclass="auto",y.nclass="auto",alpha=1,
   }
   xy <- xy.coords(x,y)
   x <- xy$x
-  y <- xy$y
   if (x.nclass == "auto") {
     x.nclass<-ceiling(sqrt(nclass.Sturges(x)))
     }
+  y <- xy$y
   breaks.x <- seq(min(x)-1,max(x)+1, length=(x.nclass+1))
   breaks.y <- seq(min(y)-1,max(y)+1,length=(y.nclass+1))
   z<-matrix(0,(x.nclass),(y.nclass))
@@ -534,7 +553,7 @@ hist3d<-function(x,y=NULL,x.nclass="auto",y.nclass="auto",alpha=1,
   {
     for (j in 1:y.nclass) 
     {
-      z[i, j] <- (1/n)*sum(x < breaks.x[i+1] & y < breaks.y[j+1] & 
+      z[i, j] <- sum(x < breaks.x[i+1] & y < breaks.y[j+1] & 
         x >= breaks.x[i] & y >= breaks.y[j])
       binplot.3d(c(breaks.x[i],breaks.x[i+1]),c(breaks.y[j],breaks.y[j+1]),
                  z.scale*z[i,j],alpha=alpha,topcol=cols[j],sidecol=cols[j])
