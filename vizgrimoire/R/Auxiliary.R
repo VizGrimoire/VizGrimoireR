@@ -486,8 +486,7 @@ produce.charts <- function (chart, filename, height = 4, width = 4) {
     print (chart)
     dev.off()
     jpegfilename <- paste (c(filename, ".jpeg"), collapse='')
-    jpeg(file=jpegfilename, height=height, width=width,
-         units="cm", res=300)
+    jpeg(file=jpegfilename, height=height*75, width=width*75, quality=90)
     print (chart)
     dev.off()
   } else {

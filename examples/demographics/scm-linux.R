@@ -71,7 +71,12 @@ ages.merged <- new ("AgesMulti",
                       GetAges (demos.unique, "2011-10-01", 1*365),
                       GetAges (demos.unique, "2012-10-01")))
 
-PyramidDodged (ages.merged, "/tmp/linux-pyramid-dodged")
+PyramidBar (ages.merged, position="dodge",
+            "/tmp/linux-pyramid-dodge")
+PyramidBar (ages.merged, position="identity",
+            "/tmp/linux-pyramid-identity")
 PyramidFaceted (ages.merged, "/tmp/linux-pyramid-faceted")
-Pyramid3D (ages.merged, "/tmp/linux-pyramid-3d")
-
+## Uncomment to use your own HTML template
+## Pyramid3D (ages.merged, dirname="/tmp/linux-pyramid-3d",
+##            template="webgl-template.html")
+Pyramid3D (ages.merged, dirname="/tmp/linux-pyramid-3d")

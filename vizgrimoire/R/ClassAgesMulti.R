@@ -75,31 +75,39 @@ setMethod(
   )
 
 ##
-## Generic PyramidDodged function
+## Generic PyramidBar function
 ##
 setGeneric (
-  name= "PyramidDodged",
-  def=function(.Object,...){standardGeneric("PyramidDodged")}
+  name= "PyramidBar",
+  def=function(.Object,...){standardGeneric("PyramidBar")}
   )
 ##
-## Plot dodged bar pyramid of persons for a certain date
+## Plot bar pyramid of persons for a certain date
 ##
 ## The pyramid is built based on how long have they have stayed
 ## in the project the developers active at that date
 ##
 ## - filename: file to write pyramid to
 ## - periods: periods per year (1: year, 4: quarters, 12: months)
-##
+## - position: position of the bars for the same period
+##    (usually one of "dodge", "identity", "stacked"
 setMethod(
-  f="PyramidDodged",
+  f="PyramidBar",
   signature="AgesMulti",
-  definition=function(.Object, filename = NULL, periods = 4) {
+  definition=function(.Object, filename = NULL, position = "dodge",
+                      periods = 4) {
+    if ((position == "dodge") | (position == "stacked")) {
+      colors <- brewer.pal(8,"Dark2")
+    } else {
+      colors <- rev(brewer.pal(8,"Oranges"))
+    }
     # Next is to capture "periods" in .e, needed for the ggplot call below
     .e <- environment()
     chart <- ggplot(data=.Object@persons, aes(x=floor(age/(365/periods)),
                       fill=date),
                     environment = .e) +
-      geom_histogram(binwidth=1, position="dodge") +
+      geom_histogram(binwidth=1, position=position) +
+      scale_fill_manual(values = colors) +
       xlab("Age") +
       ylab("Number of developers") +
       coord_flip()
@@ -128,7 +136,7 @@ setMethod(
   f="PyramidFaceted",
   signature="AgesMulti",
   definition=function(.Object, filename = NULL, periods = 4,
-    fill="red") {
+                      fill="red") {
     # Next is to capture "periods" in .e, needed for the ggplot call below
     .e <- environment()
     chart <- ggplot(data=.Object@persons, aes(x=floor(age/(365/periods))),
@@ -162,7 +170,10 @@ setGeneric (
 setMethod(
   f="Pyramid3D",
   signature="AgesMulti",
-  definition=function(.Object, dirname = NULL, periods = 4) {
+  definition=function(.Object, dirname = NULL, periods = 4,
+                      template = system.file(file.path("WebGL",
+                                             "template.html"), 
+                                             package = "rgl")) {
     rgl.open()
     rgl.bg(col="white")
     hist3d(x = .Object@persons$age, y = .Object@persons$date,
@@ -172,7 +183,7 @@ setMethod(
        cols = brewer.pal(8,"Dark2"),
        alpha = 0.7)
     if (!is.null(dirname)) {
-      writeWebGL(dir = dirname, width=500, height=500)
+      writeWebGL(dir = dirname, width=400, height=400, template = template)
     }
     rgl.close()
   }
