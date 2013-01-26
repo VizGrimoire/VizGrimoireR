@@ -57,7 +57,7 @@ where
 group by upeople.uid"
 
 #demos <- new ("Demographics")
-demos.unique <- new ("Demographics",query.unique)
+demos.unique <- new ("Demographics", query=query.unique)
 for (date in c("2007-10-01", "2008-10-01", "2009-10-01",
                "2010-10-01", "2011-10-01", "2012-10-01")) {
   ProcessAges (demos.unique, date, "/tmp/linux-")

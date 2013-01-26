@@ -40,28 +40,14 @@ SetDBChannel (database = conf$database,
 #conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git", group = "fuego")
 #SetDBChannel (database = conf$database, group = conf$group)
 
-# Requires upeople table (built with misc/unifypeople.py)
-
-query.unique = "SELECT 
-    upeople.uid as id,
-    people.name as name,
-    people.email as email,
-    count(scmlog.id) as actions,
-    MIN(scmlog.date) as firstdatestr,
-    MAX(scmlog.date) as lastdatestr
-FROM
-    scmlog,
-    people,
-    upeople
-where
-    scmlog.author_id = upeople.id AND
-    people.id = upeople.id
-group by upeople.uid"
-
 # Uncomment the second instantation of demos if upeople table is
-# available. Else, uncomment the first one.
+# available. Else, uncomment the first one
+#unique <- FALSE
+unique <- TRUE
 demos <- new ("Demographics")
-#demos <- new ("Demographics",query.unique)
+#demos <- new ("Demographics",unique)
 ages <- GetAges (demos, "2012-10-01")
 JSON (ages, "/tmp/ages-2012.json")
 Pyramid (ages, "/tmp/ages-2012", 4)
+activity <- new ("SCMPeriodActivity", "2012-01-01", unique=unique)
+JSON (activity, "/tmp/activity-2012.json")

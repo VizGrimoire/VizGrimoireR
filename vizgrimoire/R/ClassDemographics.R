@@ -75,7 +75,6 @@ setMethod(f="initialize",
               q <- new ("Query", sql = query.scm)
             }
             as(.Object,"data.frame") <- run (q)
-            print (length (.Object$firstdate))
             .Object$firstdate <- strptime(.Object$firstdatestr,
                                           format="%Y-%m-%d %H:%M:%S")
             .Object$lastdate <- strptime(.Object$lastdatestr,

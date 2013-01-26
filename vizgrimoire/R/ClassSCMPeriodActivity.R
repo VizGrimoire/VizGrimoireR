@@ -32,17 +32,16 @@
 ## (period >= date), second % is the final date (period<date).
 ## Date in the "2013-01-26" format.
 ##
-format.query <- "SELECT 
+format.query <- 'SELECT 
     author_id as id, people.name as name, people.email as email,
-    count(scmlog.id) as actions,
-    MIN(scmlog.date) as firstdatestr, MAX(scmlog.date) as lastdatestr
+    count(scmlog.id) as actions
 FROM
     scmlog, people
 WHERE
     scmlog.author_id = people.id AND
-    scmlog.date >= %s AND
-    scmlog.date < %s
-GROUP by author_id"
+    scmlog.date >= "%s" AND
+    scmlog.date < "%s"
+GROUP by author_id'
 
 ## Query for getting activity per author for a given period
 ## (format string, first %s is starting date for the period
@@ -50,13 +49,11 @@ GROUP by author_id"
 ## Date in the "2013-01-26" format.
 ## Uses upeople table to consider unique identities.
 ##
-format.query.unique = "SELECT 
+format.query.unique = 'SELECT 
     upeople.uid as id,
     people.name as name,
     people.email as email,
-    count(scmlog.id) as actions,
-    MIN(scmlog.date) as firstdatestr,
-    MAX(scmlog.date) as lastdatestr
+    count(scmlog.id) as actions
 FROM
     scmlog,
     people,
@@ -64,9 +61,9 @@ FROM
 where
     scmlog.author_id = upeople.id AND
     people.id = upeople.id AND
-    scmlog.date >= %s AND
-    scmlog.date < %s
-group by upeople.uid"
+    scmlog.date >= "%s" AND
+    scmlog.date < "%s"
+group by upeople.uid'
 
 setClass(Class="SCMPeriodActivity",
          contains="data.frame",
@@ -92,30 +89,30 @@ setMethod(f="initialize",
             cat("~~~ SCMPeriodActivity: initializator ~~~ \n")
             if (!is.null(query)) {
               ## We have a query, forget about unique
-              q <- new ("Query", sql = sprintf (query, start, date))
+              q <- new ("Query", sql = sprintf (query, start, finish))
             } else if (unique) {
               q <- new ("Query",
-                        sql = sprintf (format.query.unique, start, date))
+                        sql = sprintf (format.query.unique, start, finish))
             } else {
-              q <- new ("Query", sql = sprintf (format.query, start, date))
+              q <- new ("Query", sql = sprintf (format.query, start, finish))
             }
             as(.Object,"data.frame") <- run (q)
-            ## Complete months not present
-            as(.Object,"data.frame") <- completeZeroMonthly (run (q))
-            .Object$year <- (.Object$id - 1) %/% 12
-            .Object$month <- ((.Object$id - 1) %% 12) + 1
-            .Object$date <- toTextDate(.Object$year, .Object$month)
             return(.Object)
           }
           )
 
-
+##
+## Create a JSON file out of an object of this class
+##
+## Parameters:
+##  - filename: name of the JSON file to write
+##
 setMethod(
   f="JSON",
   signature="SCMPeriodActivity",
   definition=function(.Object, filename) {
     sink(filename)
-    cat(toJSON(.Object))
+    cat(toJSON(list(activity=as.data.frame(.Object))))
     sink()
   }
   )
