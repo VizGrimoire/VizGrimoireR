@@ -25,6 +25,8 @@
 ## Class for handling demographics about developers
 ##
 
+## Query for getting first and last date in scmlog for all authors in scmlog
+##
 query.scm <- "SELECT 
     author_id as id, people.name as name, people.email as email,
     count(scmlog.id) as actions,
@@ -35,6 +37,24 @@ WHERE
     scmlog.author_id = people.id
 GROUP by author_id"
 
+## Query for getting first and last date in scmlog for all authors in scmlog,
+## when upeople table (unique identities) is available
+##
+query.scm.unique = "SELECT 
+    upeople.uid as id,
+    people.name as name,
+    people.email as email,
+    count(scmlog.id) as actions,
+    MIN(scmlog.date) as firstdatestr,
+    MAX(scmlog.date) as lastdatestr
+FROM
+    scmlog,
+    people,
+    upeople
+where
+    scmlog.author_id = upeople.id AND
+    people.id = upeople.id
+group by upeople.uid"
 
 setClass(Class="Demographics",
          contains="data.frame",
@@ -44,18 +64,17 @@ setClass(Class="Demographics",
 ##
 setMethod(f="initialize",
           signature="Demographics",
-          definition=function(.Object, query = query.scm){
+          definition=function(.Object, unique = FALSE, query = NULL){
             cat("~~~ Demographics: initializator ~~~ \n")
-            q <- new ("Query", sql = query)
+            if (!is.null(query)) {
+              ## We have a query, forget about unique
+              q <- new ("Query", sql = query)
+            } else if (unique) {
+              q <- new ("Query", sql = query.scm.unique)
+            } else {
+              q <- new ("Query", sql = query.scm)
+            }
             as(.Object,"data.frame") <- run (q)
-            .Object$firstdate <- strptime(.Object$firstdatestr,
-                                          format="%Y-%m-%d %H:%M:%S")
-            .Object$lastdate <- strptime(.Object$lastdatestr,
-                                         format="%Y-%m-%d %H:%M:%S")
-            .Object$stay <- round (as.numeric(
-                                     difftime(.Object$lastdate,
-                                              .Object$firstdate,
-                                              units="days")))            
             return(.Object)
           }
           )
