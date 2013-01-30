@@ -1,4 +1,4 @@
-## Copyright (C) 2012 Bitergia
+## Copyright (C) 2012, 2013 Bitergia
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -585,4 +585,250 @@ setGeneric (
  def=function(object,...){standardGeneric("PlotDist")}
  )
 
+##
+## Code for producing JSON files suitable for vizGrimoire.JS
+##
+## All of this should still be re-coded as classes, but is here
+## now for convenience, as a first step to support vizGrimoire.JS
+##
+library(rjson)
 
+##
+## Create a JSON file with some R object
+##
+createJSON <- function (data, filename) {
+   sink(filename)
+   cat(toJSON(data))
+   sink()
+}
+
+evol_commits <- function(granularity){
+  #Commits evolution
+
+  q<- paste("select m.id as id,
+                  m.year as year,
+                  m.month as month,
+                  DATE_FORMAT(m.date, '%b %Y') as date,
+                  IFNULL(pm.commits, 0) as commits
+           from   months m
+           left join(
+                  select year(s.date) as year, 
+                         month(s.date) as month, 
+                         count(distinct(s.id)) as commits
+                  from   scmlog s 
+                  group by year(s.date),
+                         month(s.date)
+                  order by year(s.date),
+                         month(s.date) ) as pm
+           on (
+                  m.year = pm.year and
+                  m.month = pm.month);")
+
+  query <- new ("Query", sql = q)
+  data_commits <- run(query)
+  return (data_commits)
+}
+
+
+evol_committers <- function(granularity){
+  #Committers evolution
+  q <- paste ("select m.id as id,
+                  m.year as year,
+                  m.month as month,
+                  DATE_FORMAT(m.date, '%b %Y') as date,
+                  IFNULL(pm.committers, 0) as committers
+           from   months m
+           left join(
+                  select year(s.date) as year, 
+                         month(s.date) as month, 
+                         count(distinct(s.committer_id)) as committers
+                  from   scmlog s 
+                  group by year(s.date),
+                         month(s.date)
+                  order by year(s.date),
+                         month(s.date) ) as pm
+           on (
+                  m.year = pm.year and
+                  m.month = pm.month);")
+
+  query <- new ("Query", sql = q)
+  data_committers <- run(query)
+  return (data_committers)
+}
+
+evol_authors <- function(granularity){
+	# Authors evolution
+	q <- paste ("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.authors, 0) as authors
+					from   months m
+					left join(
+					select year(s.date) as year, 
+					month(s.date) as month, 
+					count(distinct(s.author_id)) as authors
+					from   scmlog s 
+					group by year(s.date),
+					month(s.date)
+					order by year(s.date),
+					month(s.date) ) as pm
+					on (
+					m.year = pm.year and
+					m.month = pm.month);")
+	
+        query <- new ("Query", sql = q)
+        data_authors <- run(query)
+	return (data_authors)
+}
+
+
+
+evol_files <- function(granularity){
+
+  #Files per month
+  q <- paste("select m.id as id,
+                  m.year as year,
+                  m.month as month,
+                  DATE_FORMAT(m.date, '%b %Y') as date,
+                  IFNULL(pm.files, 0) as files
+           from   months m
+           left join(
+                  select year(s.date) as year, 
+                         month(s.date) as month, 
+                         count(distinct(a.file_id)) as files
+                  from   scmlog s, 
+                         actions a
+                  where  a.commit_id = s.id
+                  group by year(s.date),
+                         month(s.date)
+                  order by year(s.date),
+                         month(s.date) ) as pm
+           on (
+                  m.year = pm.year and
+                  m.month = pm.month);")
+
+
+  query <- new ("Query", sql = q)
+  data_files <- run(query)
+  return (data_files)
+}
+
+
+evol_branches <- function(granularity){
+
+  #Branches per month
+  q <- paste("select m.id as id,
+                  m.year as year,
+                  m.month as month,
+                  DATE_FORMAT(m.date, '%b %Y') as date,
+                  IFNULL(pm.branches, 0) as branches
+           from   months m
+           left join(
+                  select year(s.date) as year, 
+                         month(s.date) as month, 
+                         count(distinct(a.branch_id)) as branches
+                  from   scmlog s, 
+                         actions a
+                  where  a.commit_id = s.id
+                  group by year(s.date),
+                         month(s.date)
+                  order by year(s.date),
+                         month(s.date) ) as pm
+           on (     
+                  m.year = pm.year and
+                  m.month = pm.month);")
+
+  query <- new ("Query", sql = q)
+  data_branches <- run(query)
+  return (data_branches)
+}
+
+
+evol_repositories <- function(granularity) {
+
+  # Repositories per month
+  q <- paste("select m.id as id,
+                  m.year as year,
+                  m.month as month,
+                  DATE_FORMAT(m.date, '%b %Y') as date,
+                  IFNULL(pm.repositories, 0) as repositories
+           from   months m
+           left join(
+                  select year(s.date) as year,
+                         month(s.date) as month,
+                         count(distinct(s.repository_id)) as repositories
+                  from   scmlog s
+                  group by year(s.date),
+                         month(s.date)
+                  order by year(s.date),
+                         month(s.date) ) as pm
+           on (
+                  m.year = pm.year and
+                  m.month = pm.month);")
+  query <- new ("Query", sql = q)
+  data_repositories <- run(query)
+  return (data_repositories)
+}
+
+evol_info_data <- function() {
+
+	# Get some general stats from the database
+	##
+	q <- paste("SELECT count(id) as commits, 
+				count(distinct(committer_id)) as committers, 
+				count(distinct(author_id)) as authors, 
+				DATE_FORMAT (min(date), '%Y-%m-%d') as first_date, 
+				DATE_FORMAT (max(date), '%Y-%m-%d') as last_date 
+				FROM scmlog;")
+        query <- new ("Query", sql = q)
+        data1 <- run(query)
+	query <- new("Query",
+                     sql = "SELECT count(distinct(name)) as branches from branches")
+	data2 <- run(query)
+	query <- new("Query",
+                     sql = "SELECT count(distinct(file_name)) as files from files")
+	data3 <- run(query)
+        query <- new("Query",
+                     sql = "SELECT count(distinct(uri)) as repositories from repositories")
+	data4 <- run(query)
+        query <- new("Query",
+                     sql = "SELECT count(*) as actions from actions")
+	data5 <- run(query)
+	agg_data = merge(data1, data2)
+	agg_data = merge(agg_data, data3)
+	agg_data = merge(agg_data, data4)
+	agg_data = merge(agg_data, data5)
+	return (agg_data)
+}
+
+top_committers <- function(days = 0) {
+  if (days == 0 ) {
+    q <- "SELECT count(s.id) as commits, p.email as developer
+          FROM scmlog s JOIN people p ON p.id=s.committer_id 
+	  GROUP BY p.email ORDER BY commits DESC 
+	  LIMIT 10;"
+  } else {
+    query <- new("Query",
+                 sql = "SELECT @maxdate:=max(date) from scmlog limit 1")
+    data <- run(query)
+    q <- paste("SELECT count(s.id) as commits, p.email as developer
+	        FROM scmlog s JOIN people p ON p.id=s.committer_id
+		WHERE DATEDIFF(@maxdate,date)<",days," 
+	        GROUP BY p.email ORDER BY commits DESC 
+	        LIMIT 10;")
+  }
+  query <- new("Query", sql = q)
+  data <- run(query)
+  return (data)	
+}
+
+top_files_modified <- function() {
+  q <- paste("select file_name, count(commit_id) as modifications 
+	      from action_files a join files f on a.file_id = f.id 
+	      where action_type='M' group by f.id 
+	      order by modifications desc limit 10; ")	
+  query <- new("Query", sql = q)
+  data <- run(query)
+  return (data)	
+}

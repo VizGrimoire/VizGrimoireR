@@ -44,10 +44,11 @@ SetDBChannel (database = conf$database,
 # available. Else, uncomment the first one
 #unique <- FALSE
 unique <- TRUE
-demos <- new ("Demographics")
-#demos <- new ("Demographics",unique)
+demos <- new ("Demographics", unique=unique)
 ages <- GetAges (demos, "2012-10-01")
 JSON (ages, "/tmp/ages-2012.json")
 Pyramid (ages, "/tmp/ages-2012", 4)
 activity <- new ("SCMPeriodActivity", "2012-01-01", unique=unique)
 JSON (activity, "/tmp/activity-2012.json")
+activity <- GetActivity(demos, "2012-10-01", 90, unique=unique)
+JSON (activity, "/tmp/activity-2012-90.json")

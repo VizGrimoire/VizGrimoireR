@@ -141,6 +141,34 @@ setMethod(
   )
 
 ##
+## Generic GetActivity function
+##
+setGeneric (
+  name= "GetActivity",
+  def=function(.Object,...){standardGeneric("GetActivity")}
+  )
+##
+## Activity (no. of commits) of developers for a certain period before a time
+##
+## - time: end date of the period, as string (eg: "2013-01-26")
+## - period: number of days for the period to consider
+## - unique: consider upeople table for unique identities
+##
+## Value: a SCMPeriodActivity object
+##
+setMethod(
+  f="GetActivity",
+  signature="Demographics",
+  definition=function(.Object, time = "1900-01-01",
+                      period,
+                      unique = FALSE) {
+    activity <- new ("SCMPeriodActivity",
+                     as.Date(time) - period, time, unique)
+    return (activity)
+  }
+  )
+
+##
 ## Generic ProcessAges function
 ##
 setGeneric (

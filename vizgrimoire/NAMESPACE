@@ -3,6 +3,7 @@ exportMethods(
   "initialize",
   "GetAges",
   "ProcessAges",
+  "GetActivity",
   "JSON",
   "PlotDist",
   "Plot",
@@ -28,7 +29,8 @@ exportClasses(
   "Query",
   "TimedEvents",
   "Times",
-  "TimeSeriesYears" 
+  "TimeSeriesYears",
+  "SCMPeriodActivity"
 )
 import("RMySQL")
 import("rjson")
