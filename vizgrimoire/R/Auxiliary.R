@@ -856,3 +856,141 @@ top_closers <- function(days = 0, closed_condition) {
   data <- run(query)
   return (data)	
 }
+
+
+##
+## Data from MLStats database
+##
+
+get.monthly <- function () {
+  ## Sent messages
+  q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
+	        year(first_date) AS year,
+		month(first_date) AS month,
+		DATE_FORMAT (first_date, '%b %Y') as date,
+		count(message_ID) AS sent
+		FROM messages
+		GROUP BY year,month
+		ORDER BY year,month")
+  query <- new ("Query", sql = q)
+  sent_monthly <- run(query)
+	
+  ## Senders
+  q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+		year(first_date) AS year,
+		month(first_date) AS month,
+		DATE_FORMAT (first_date, '%b %Y') as date,
+		count(distinct(email_address)) AS senders
+		FROM messages
+		JOIN messages_people on (messages_people.message_id = messages.message_ID)
+		WHERE type_of_recipient='From'
+		GROUP BY year,month
+		ORDER BY year,month")
+  query <- new ("Query", sql = q)
+  senders_monthly <- run(query)
+	
+  mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
+  mls_monthly[is.na(mls_monthly)] <- 0
+  return (mls_monthly)
+}
+
+analyze.monthly.list <- function (listname, prefix) {
+
+    field = "mailing_list"
+    listname_file = gsub("/","_",listname)
+
+    if(length(i <- grep("http",listname))) {
+        field = "mailing_list_url"
+        cat(listname, " is a URL\n")
+    }
+
+    ## Messages sent	
+    q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
+	          year(first_date) AS year,
+	          month(first_date) AS month,
+		  DATE_FORMAT (first_date, '%b %Y') as date,
+	          count(message_ID) AS sent
+	        FROM messages WHERE ",field,"='",listname,"'
+		GROUP BY year,month
+		ORDER BY year,month",sep = '') 
+    query <- new ("Query", sql = q)
+    sent_monthly <- run(query)	
+    ##print (sent_monthly)
+	
+    ## All subjects	
+    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+	           year(first_date) AS year,
+	           month(first_date) AS month,
+	           DATE_FORMAT (first_date, '%b %Y') as date,
+	           subject
+	         FROM messages  WHERE ",field,"='",listname,"'
+	         ORDER BY year,month", sep = '')
+    query <- new ("Query", sql = q)
+    subjects_monthly <- run(query)
+	
+    ## Senders
+    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+	           year(first_date) AS year,
+	           month(first_date) AS month,
+	           DATE_FORMAT (first_date, '%b %Y') as date,
+	           count(distinct(email_address)) AS senders
+	         FROM messages
+	         JOIN messages_people on (messages_people.message_id = messages.message_ID)
+	         WHERE type_of_recipient='From' AND ",field,"='",listname,"'
+	         GROUP BY year,month
+	         ORDER BY year,month", sep = '')
+    query <- new ("Query", sql = q)
+    senders_monthly <- run(query)
+
+    ## All people monthly
+    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+	           year(first_date) AS year,
+	           month(first_date) AS month,
+	           DATE_FORMAT (first_date, '%b %Y') as date,
+	           email_address
+	         FROM messages
+	         JOIN messages_people on (messages_people.message_id = messages.message_ID)
+	         WHERE type_of_recipient='From' AND ",field,"='",listname,"'
+	         ORDER BY year,month", sep = '')
+    query <- new ("Query", sql = q)
+    emails_monthly <- run(query)
+    
+    mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
+    mls_monthly[is.na(mls_monthly)] <- 0
+    createJSON (mls_monthly, paste(prefix,listname_file,"-milestone0.json",sep=''))
+    ## createJSON (subjects_monthly, paste(prefix,listname,"-subjects-milestone0.json",sep=''))
+    createJSON (emails_monthly, paste(prefix,listname_file,"-emails-milestone0.json",sep=''))
+
+    ## Get some general stats from the database
+    ##
+    q <- paste ("SELECT count(*) as messages,
+                   DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
+                   DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date,
+                   COUNT(DISTINCT(email_address)) as people
+                   FROM messages 
+	           JOIN messages_people on (messages_people.message_id = messages.message_ID)
+                   WHERE ",field,"='",listname,"'",sep='')
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    createJSON (data, paste(prefix,listname_file,"-info-milestone0.json",sep=''))
+}
+
+top_senders <- function(days = 0) {
+  if (days == 0 ) {
+    q <- "SELECT email_address as developer, count(m.message_id) as sent 
+	  FROM messages m
+          JOIN messages_people m_p on m_p.message_id=m.message_ID 
+	  GROUP by email_address ORDER BY sent DESC LIMIT 10;"
+  } else {
+    query <- new ("Query",
+                  sql = "SELECT @maxdate:=max(first_date) from messages limit 1")
+    data <- run(query)
+    q <- paste("SELECT email_address as developer, count(m.message_id) as sent 
+		FROM messages m join messages_people m_p on m_p.message_id=m.message_ID
+ 		WHERE DATEDIFF(@maxdate,first_date)<",days," 
+		GROUP by email_address ORDER BY sent DESC LIMIT 10;")		
+  }
+query <- new ("Query", sql = q)
+data <- run(query)
+return (data)
+}
