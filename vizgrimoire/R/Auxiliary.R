@@ -832,3 +832,27 @@ top_files_modified <- function() {
   data <- run(query)
   return (data)	
 }
+
+##
+## Top ticket closers
+##
+top_closers <- function(days = 0, closed_condition) {
+  if (days == 0 ) {
+    q <- paste("SELECT p.user_id as developer, count(c.id) as closed 
+		FROM changes c JOIN people p ON c.changed_by = p.id 
+		WHERE ", closed_condition, " 
+		GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
+  } else {
+    query <- new ("Query",
+                  sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+    data <- run(query)
+    q <- paste("SELECT p.user_id as developer, count(c.id) as closed 
+		FROM changes c JOIN people p ON c.changed_by = p.id 
+		WHERE ", closed_condition, " 
+		AND c.id in (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,") 
+		GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")		
+  }
+  query <- new ("Query", sql = q)
+  data <- run(query)
+  return (data)	
+}
