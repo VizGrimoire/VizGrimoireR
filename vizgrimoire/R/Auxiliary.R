@@ -135,6 +135,14 @@ SetDBChannel <- function (user=NULL, password=NULL, database,
 }
 
 ##
+## Close connection to the database
+##
+
+CloseDBChannel <- function () {
+  dbDisconnect(mychannel)
+}
+
+##
 ## Find out kind of repository (bugzilla, launchad, etc.) and
 ##  store it in common configuration list
 ##
