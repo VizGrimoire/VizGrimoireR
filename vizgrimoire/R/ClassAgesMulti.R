@@ -171,6 +171,7 @@ setMethod(
   f="Pyramid3D",
   signature="AgesMulti",
   definition=function(.Object, dirname = NULL, periods = 4,
+                      interactive = FALSE,
                       template = system.file(file.path("WebGL",
                                              "template.html"), 
                                              package = "rgl")) {
@@ -184,6 +185,10 @@ setMethod(
        alpha = 0.7)
     if (!is.null(dirname)) {
       writeWebGL(dir = dirname, width=400, height=400, template = template)
+    }
+    if (interactive) {
+      print ("Press RETURN to continue...")
+      readline ()
     }
     rgl.close()
   }
