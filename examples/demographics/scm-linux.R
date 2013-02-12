@@ -35,8 +35,12 @@ library("vizgrimoire")
 ## SetDBChannel (database = conf$database,
 ##               user = conf$user, password = conf$password,
 ##               host = conf$host, port = conf$port)
-conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git", group = "fuego")
-SetDBChannel (database = conf$database, group = conf$group)
+## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git", group = "fuego")
+## SetDBChannel (database = conf$database, group = conf$group)
+conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
+                          user = "jgb", password = "XXX")
+SetDBChannel (database = conf$database,
+             user = conf$user, password = conf$password)
 
 ## Requires upeople table (built with misc/unifypeople.py)
 
@@ -81,3 +85,4 @@ PyramidFaceted (ages.merged, "/tmp/linux-pyramid-faceted")
 ## Pyramid3D (ages.merged, dirname="/tmp/linux-pyramid-3d",
 ##            template="webgl-template.html")
 Pyramid3D (ages.merged, dirname="/tmp/linux-pyramid-3d")
+Pyramid3D (ages.merged, interactive=TRUE)
