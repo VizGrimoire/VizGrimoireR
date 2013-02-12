@@ -41,7 +41,10 @@ setMethod(f="initialize",
           signature="TimedEvents",
           definition=function(.Object,timestamps,parameters){
             cat("~~~ TimedEvents: initializator ~~~ \n")
-            as(.Object,"data.frame") <- data.frame(timestamps, parameters)
+            df <- data.frame(timestamps, parameters)
+            as(.Object,"data.frame") <- df[with(df, order(timestamps)),]
+            ##as(.Object,"data.frame") <- data.frame(timestamps, parameters)
+            ##as(.Object,"data.frame")[with(.Object, order(timestamps)), ]
             return(.Object)
           }
           )
@@ -117,10 +120,10 @@ setMethod(
     periods.first <- firstYear*12 + firstMonth
     periods.last <- lastYear*12 + lastMonth
     ## Prepare the quantiles matrix, with data for the quantiles of
-    ## each year in rows, and data for each quantile in columns
-    ## It will be a matrix of quantiles columns, and years rows
+    ## each month in rows, and data for each quantile in columns
+    ## It will be a matrix of quantiles columns, and month rows
     ## Column names will be quantiles (as strings), row names will be
-    ## years (as strings)
+    ## months (as year*12+month)
     periods <- periods.first:periods.last
     quantiles <- matrix(nrow=length(periods),ncol=length(qspec))
     colnames (quantiles) <- qspec
