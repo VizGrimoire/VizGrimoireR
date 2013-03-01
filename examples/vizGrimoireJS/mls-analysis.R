@@ -36,9 +36,9 @@ library("vizgrimoire")
 ## SetDBChannel (database = conf$database,
 ##               user = conf$user, password = conf$password,
 ##               host = conf$host, port = conf$port)
-conf <- ConfFromParameters(dbschema = "acs_mlstats_allura_all", group = "fuego")
-SetDBChannel (database = conf$database, group = conf$group)
-
+## conf <- ConfFromParameters(dbschema = "acs_mlstats_allura_all", group = "fuego")
+conf <- ConfFromOptParse()
+SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
 # Mailing lists
 query <- new ("Query", sql = "select distinct(mailing_list) from messages")
@@ -52,31 +52,27 @@ if (is.na(mailing_lists$mailing_list)) {
     mailing_lists_files <- run(query)
     mailing_lists_files$mailing_list = gsub("/","_",mailing_lists$mailing_list)
     # print (mailing_lists)
-    createJSON (mailing_lists_files, "mls-lists-milestone0.json")
+    createJSON (mailing_lists_files, "data/json/mls-lists.json")
+	repos <- mailing_lists_files$mailing_list
+	createJSON(repos, "data/json/mls-repos.json")	
 } else {
     print (mailing_lists)
-    createJSON (mailing_lists, "mls-lists-milestone0.json")
+    createJSON (mailing_lists, "data/json/mls-lists.json")
+	repos <- mailing_lists$mailing_list;
+	createJSON(repos, "data/json/mls-repos.json")	
 }
 
 # Aggregated data
-q <- "SELECT count(*) as sent,
-        DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
-        DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date
-        FROM messages"
-query <- new ("Query", sql = q)
-num_msg <- run(query)
-query <- new ("Query", sql = "SELECT count(*) as senders from people")
-num_ppl <- run(query)
-
-agg_data = merge(num_msg,num_ppl)
-
-createJSON (agg_data, paste("mls-info-milestone0.json",sep=''))
+static_data <- mls_static_info()
+createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
 for (mlist in mailing_lists$mailing_list) {
-    analyze.monthly.list(mlist, "mls-")
+	analyze.monthly.list(mlist)
+	# analList(mlist)
 }
+# analAggregated()
 data.monthly <- get.monthly()
-createJSON (agg_data, "mls-milestone0.json")
+createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))	
 
 # Top senders
 top_senders_data <- list()
@@ -84,4 +80,10 @@ top_senders_data[['senders.']]<-top_senders()
 top_senders_data[['senders.last year']]<-top_senders(365)
 top_senders_data[['senders.last month']]<-top_senders(31)
 
-createJSON (top_senders_data, "mls-top-milestone0.json")
+createJSON (top_senders_data, "data/json/mls-top.json")
+
+# People list
+query <- new ("Query", 
+		sql = "select email_address as id, email_address, name, username from people")
+people <- run(query)
+createJSON (people, "data/json/mls-people.json")

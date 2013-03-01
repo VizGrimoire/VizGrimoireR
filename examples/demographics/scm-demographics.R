@@ -33,7 +33,7 @@ library("vizgrimoire")
 #SetDBChannel (conf$user, conf$password, conf$database)
 conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
                            user = "root", password = NULL,
-                           host = "127.0.0.1", port = 3308)
+                           host = "127.0.0.1", port = 3306)
 SetDBChannel (database = conf$database,
               user = conf$user, password = conf$password,
               host = conf$host, port = conf$port)

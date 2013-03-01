@@ -8,7 +8,7 @@
 ## This program is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-## GNU General Public License for more details.
+## GNU General Public License for more details. 
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with this program; if not, write to the Free Software
@@ -23,11 +23,13 @@
 ##
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
+##   Daniel Izquierdo <dizquierdo@bitergia.com>
+##   Alvaro del Castillo <acs@bitergia.com>
 ##
 ## Note: this file should be (alphabetically) the first one in the list
-##  of files with R source code for the package. It ssems that files are
-##  run in alphabetic order, and this one includes facilties needed by
-##  the rest. An laternative would be to use a "Collate" field in the
+##  of files with R source code for the package. It seems that files are
+##  run in alphabetic order, and this one includes facilities needed by
+##  the rest. An alternative would be to use a "Collate" field in the
 ##  DESCRIPTION file.
 ##
 
@@ -71,6 +73,48 @@ ConfFromCommandLine <- function () {
                 startdate = startdate,
                 enddate = enddate)
   return (conf)
+}
+
+library(optparse)
+
+ConfFromOptParse <- function (datasource="") {
+	option_list <- list(			
+			make_option(c("-d", "--database"), dest="database", 
+					help="Database with MLS data"),
+			make_option(c("-u", "--dbuser"), dest="dbuser", 
+					help="Database user", default="root"),
+			make_option(c("-p", "--dbpass"), dest="dbpassword", 
+					help="Database user password", default=""),			
+			make_option(c("-r", "--reports"), dest="reports", default="",
+					help="Reports to be generated (repositories, companies)"),			
+			make_option(c("-s", "--start"), dest="startdate", 
+					help="Start date for the report", default="1900-01-01"),
+			make_option(c("-e", "--end"), dest="enddate", 
+					help="End date for the report", default="2100-01-01")
+	)	
+	if (datasource == 'its') {
+		option_list = c(option_list, make_option(
+			c("-t", "--type"), dest="backend", 
+			help="Type of backend: bugzilla, allura, jira, github", 
+			default="bugzilla"));	
+	}
+	parser <- OptionParser(usage = "%prog [options]", option_list = option_list)
+	options <- parse_args(parser)	
+	if (is.null(options$database)) {		
+		print_help(parser)
+		stop("Database param is required")
+	}
+	enddatesplit <- strsplit(options$enddate,'-')
+	endyear <- enddatesplit[[1]][1]
+	endmonth <- enddatesplit[[1]][2]
+	options$enddate <- paste (c("'", options$enddate, "'"), collapse='')
+	
+	startdatesplit <- strsplit(options$startdate,'-')
+	startyear <- startdatesplit[[1]][1]
+	startmonth <- startdatesplit[[1]][2]
+	options$startdate <- paste (c("'", options$startdate, "'"), collapse='')
+		
+	return (options)
 }
 
 ## Get arguments from parameters to this function
@@ -143,7 +187,7 @@ CloseDBChannel <- function () {
 }
 
 ##
-## Find out kind of repository (bugzilla, launchad, etc.) and
+## Find out kind of repository (bugzilla, launchpad, etc.) and
 ##  store it in common configuration list
 ##
 FindoutRepoKind <- function () {
@@ -779,40 +823,113 @@ evol_repositories <- function(granularity) {
   return (data_repositories)
 }
 
-evol_info_data <- function() {
+evol_companies <- function(){	
+	q <- paste("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.companies, 0) as num_companies
+				from   months m
+				left join(
+					select year(s.date) as year,
+						month(s.date) as month,
+						count(distinct(pc.company_id)) as companies
+					from   scmlog s,
+						people_companies pc
+					where  s.author_id = pc.people_id and
+						s.date>=pc.init and 
+						s.date<=pc.end
+					group by year(s.date), month(s.date)
+					order by year(s.date), month(s.date)) 
+				as pm
+				on (  
+					m.year = pm.year and
+					m.month = pm.month)
+				order by m.id;")	
+	companies<- query(q)
+	return(companies)
+}
 
+evol_info_data <- function() {
 	# Get some general stats from the database
 	##
 	q <- paste("SELECT count(id) as commits, 
-				count(distinct(committer_id)) as committers, 
-				count(distinct(author_id)) as authors, 
-				DATE_FORMAT (min(date), '%Y-%m-%d') as first_date, 
-				DATE_FORMAT (max(date), '%Y-%m-%d') as last_date 
-				FROM scmlog;")
-        query <- new ("Query", sql = q)
-        data1 <- run(query)
-	query <- new("Query",
-                     sql = "SELECT count(distinct(name)) as branches from branches")
-	data2 <- run(query)
-	query <- new("Query",
-                     sql = "SELECT count(distinct(file_name)) as files from files")
-	data3 <- run(query)
-        query <- new("Query",
-                     sql = "SELECT count(distinct(uri)) as repositories from repositories")
-	data4 <- run(query)
-        query <- new("Query",
-                     sql = "SELECT count(*) as actions from actions")
-	data5 <- run(query)
+					count(distinct(committer_id)) as committers, 
+					count(distinct(author_id)) as authors, 
+					DATE_FORMAT (min(date), '%Y-%m-%d') as first_date, 
+					DATE_FORMAT (max(date), '%Y-%m-%d') as last_date 
+					FROM scmlog;")
+	query <- new("Query", sql = q)
+	data1 <- run(query)
+	
+	q <- paste("SELECT count(distinct(name)) as branches from branches")
+	query <- new("Query", sql = q)
+	data2 <- run(query)	
+	
+	q <- paste("SELECT count(distinct(file_name)) as files from files")
+	query <- new("Query", sql = q)
+	data3 <- run(query)	
+	
+	q <- paste("SELECT count(distinct(uri)) as repositories from repositories")
+	query <- new("Query", sql = q)
+	data4 <- run(query)	
+	
+	q <- paste("SELECT count(*) as actions from actions")
+	query <- new("Query", sql = q)
+	data5 <- run(query)	
+	
+	q <- paste("select uri as url,type from repositories limit 1")
+	query <- new("Query", sql = q)
+	data6 <- run(query)	
+	
+	q <- paste("select count(distinct(s.id))/timestampdiff(month,min(s.date),max(s.date)) 
+					as avg_commits_month from scmlog s")
+	query <- new("Query", sql = q)
+	data7 <- run(query)	
+	
+	q <- paste("select count(distinct(a.file_id))/timestampdiff(month,min(s.date),max(s.date)) 
+					as avg_files_month from scmlog s, actions a where a.commit_id=s.id")
+	query <- new("Query", sql = q)
+	data8 <- run(query)	
+	
+	q <- paste("select count(distinct(s.id))/count(distinct(p.id)) 
+					as avg_commits_author from scmlog s, people p where p.id=s.author_id")
+	query <- new("Query", sql = q)
+	data9 <- run(query)	
+	
+	q <- paste("select count(distinct(s.author_id))/timestampdiff(month,min(s.date),max(s.date)) 
+					as avg_authors_month from scmlog s")
+	query <- new("Query", sql = q)
+	data10 <- run(query)	
+	
+	q <- paste("select count(distinct(s.committer_id))/timestampdiff(month,min(s.date),max(s.date)) 
+					as avg_committers_month from scmlog s")
+	query <- new("Query", sql = q)
+	data11 <- run(query)	
+	
+	q <- paste("select count(distinct(a.file_id))/count(distinct(s.author_id)) 
+					as avg_files_author from scmlog s, actions a where a.commit_id=s.id")
+	query <- new("Query", sql = q)
+	data12 <- run(query)	
+	
 	agg_data = merge(data1, data2)
 	agg_data = merge(agg_data, data3)
 	agg_data = merge(agg_data, data4)
 	agg_data = merge(agg_data, data5)
+	agg_data = merge(agg_data, data6)
+	agg_data = merge(agg_data, data7)
+	agg_data = merge(agg_data, data8)
+	agg_data = merge(agg_data, data9)
+	agg_data = merge(agg_data, data10)
+	agg_data = merge(agg_data, data11)
+	agg_data = merge(agg_data, data12)	
+	
 	return (agg_data)
 }
 
 top_committers <- function(days = 0) {
   if (days == 0 ) {
-    q <- "SELECT count(s.id) as commits, p.email as developer
+    q <- "SELECT count(s.id) as commits, p.email as committers
           FROM scmlog s JOIN people p ON p.id=s.committer_id 
 	  GROUP BY p.email ORDER BY commits DESC 
 	  LIMIT 10;"
@@ -820,7 +937,7 @@ top_committers <- function(days = 0) {
     query <- new("Query",
                  sql = "SELECT @maxdate:=max(date) from scmlog limit 1")
     data <- run(query)
-    q <- paste("SELECT count(s.id) as commits, p.email as developer
+    q <- paste("SELECT count(s.id) as commits, p.email as committers
 	        FROM scmlog s JOIN people p ON p.id=s.committer_id
 		WHERE DATEDIFF(@maxdate,date)<",days," 
 	        GROUP BY p.email ORDER BY commits DESC 
@@ -841,30 +958,602 @@ top_files_modified <- function() {
   return (data)	
 }
 
-##
-## Top ticket closers
-##
-top_closers <- function(days = 0, closed_condition) {
-  if (days == 0 ) {
-    q <- paste("SELECT p.user_id as developer, count(c.id) as closed 
-		FROM changes c JOIN people p ON c.changed_by = p.id 
-		WHERE ", closed_condition, " 
-		GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
-  } else {
-    query <- new ("Query",
-                  sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
-    data <- run(query)
-    q <- paste("SELECT p.user_id as developer, count(c.id) as closed 
-		FROM changes c JOIN people p ON c.changed_by = p.id 
-		WHERE ", closed_condition, " 
-		AND c.id in (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,") 
-		GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")		
-  }
-  query <- new ("Query", sql = q)
-  data <- run(query)
-  return (data)	
+## TODO: Follow top_committers implementation
+top_authors <- function() {
+	q <- paste("select p.name as author, count(distinct(s.id)) as commits
+				from people p, scmlog s
+				where  s.author_id = p.id
+				group by p.id
+				order by count(distinct(s.id)) desc
+				limit 10;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)
 }
 
+top_authors_year <- function(year) {
+	q <- paste("select p.name as author, count(distinct(s.id)) as commits
+				from people p,scmlog s
+				where  s.author_id = p.id and year(s.date)=",year," 
+				group by p.id
+				order by count(distinct(s.id)) desc
+				limit 10;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+people <- function() {
+	q <- paste ("select id,name,email from people")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data);
+}
+
+companies_name <- function() {
+	q <- paste ("select c.name 
+					from companies c,
+					people_companies pc,
+					scmlog s
+					where c.id = pc.company_id and
+					pc.people_id = s.author_id
+					group by c.name
+					order by count(distinct(s.id)) desc;")
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)
+}
+
+company_commits <- function(company_name){		
+	print (company_name)
+	q <- paste("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.commits, 0) as commits
+					from   months m
+					left join(
+					select year(s.date) as year,
+					month(s.date) as month,
+					count(distinct(s.id)) as commits
+					from   scmlog s,
+					people_companies pc,
+					companies c
+					where  s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name, "
+					group by year(s.date),
+					month(s.date)
+					order by year(s.date),
+					month(s.date)) as pm
+					on (
+					m.year = pm.year and
+					m.month = pm.month)
+					order by m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)	
+}
+
+company_files <- function(company_name) {
+	
+	q <- paste ("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.files, 0) as files
+					from   months m
+					left join(
+					select year(s.date) as year,
+					month(s.date) as month,
+					count(distinct(a.file_id)) as files
+					from   scmlog s,
+					actions a,
+					people_companies pc,
+					companies c
+					where  a.commit_id = s.id and
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name, "
+					group by year(s.date),
+					month(s.date) 
+					order by year(s.date),
+					month(s.date)) as pm
+					on (
+					m.year = pm.year and
+					m.month = pm.month)
+					order by m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)
+}
+
+company_authors <- function(company_name) {
+	
+	
+	q <- paste ("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.authors, 0) as authors
+					from   months m
+					left join(
+					select year(s.date) as year,
+					month(s.date) as month,
+					count(distinct(s.author_id)) as authors
+					from   scmlog s,
+					people_companies pc,
+					companies c
+					where  s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name, "
+					group by year(s.date),
+					month(s.date) 
+					order by year(s.date),
+					month(s.date) ) as pm
+					on (
+					m.year = pm.year and
+					m.month = pm.month)
+					order by m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)
+}
+
+company_lines <- function(company_name) {
+	
+	q <- paste ("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.added_lines, 0) as added_lines,
+					IFNULL(pm.removed_lines, 0) as removed_lines
+					from   months m
+					left join(
+					select year(s.date) as year,
+					month(s.date) as month,
+					sum(cl.added) as added_lines,
+					sum(cl.removed) as removed_lines
+					from   commits_lines cl,
+					scmlog s,
+					people_companies pc,
+					companies c
+					where  cl.commit_id = s.id and
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name, "
+					group by year(s.date),
+					month(s.date)
+					order by year(s.date),
+					month(s.date)) as pm
+					on (
+					m.year = pm.year and
+					m.month = pm.month)
+					order by m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)	
+}
+
+evol_info_data_company <- function(company_name) {
+	
+	# Get some general stats from the database
+	##
+	q <- paste("SELECT count(s.id) as commits, 
+					count(distinct(s.author_id)) as authors,
+					DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
+					DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
+					FROM scmlog s,
+					people_companies pc,
+					companies c
+					where s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data1 <- run(query)	
+	q <- paste("SELECT count(distinct(file_id)) as files
+					from actions a,
+					scmlog s,
+					people_companies pc,
+					companies c
+					where a.commit_id = s.id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					s.author_id = pc.people_id and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data3 <- run(query)	
+	q <- paste("SELECT count(*) as actions 
+					from actions a, 
+					scmlog s,
+					people_companies pc,
+					companies c
+					where s.id = a.commit_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					s.author_id = pc.people_id and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data5 <- run(query)	
+	q <- paste("select count(s.id)/timestampdiff(month,min(s.date),max(s.date)) as avg_commits_month
+					from scmlog s,
+					people_companies pc,
+					companies c
+					where
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data7 <- run(query)	
+	q <- paste("select count(distinct(a.file_id))/timestampdiff(month,min(s.date),max(s.date)) as avg_files_month
+					from scmlog s, 
+					actions a,
+					people_companies pc,
+					companies c
+					where a.commit_id=s.id and
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data8 <- run(query)	
+	q <- paste("select count(distinct(s.id))/count(distinct(s.author_id)) as avg_commits_author
+					from scmlog s, 
+					identities i,
+					people_companies pc,
+					companies c
+					where
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data9 <- run(query)	
+	q <- paste("select count(distinct(s.author_id))/timestampdiff(month,min(s.date),max(s.date)) as avg_authors_month
+					from scmlog s,
+					people_companies pc,
+					companies c
+					where s.author_id is not null and
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data10 <- run(query)	
+	q <- paste("select count(distinct(a.file_id))/count(distinct(s.author_id)) as avg_files_author
+					from scmlog s, 
+					actions a,
+					people_companies pc,
+					companies c
+					where a.commit_id=s.id and
+					s.author_id is not null and
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name)
+	query <- new("Query", sql = q)
+	data11 <- run(query)
+	
+	agg_data = merge(data1, data3)
+	agg_data = merge(agg_data, data5)
+	agg_data = merge(agg_data, data7)
+	agg_data = merge(agg_data, data8)
+	agg_data = merge(agg_data, data9)
+	agg_data = merge(agg_data, data10)
+	agg_data = merge(agg_data, data11)
+	return (agg_data)
+}
+
+evol_info_data_companies <- function() {
+	
+	q <- paste ("select count(*) as companies from companies")
+	query <- new("Query", sql = q)
+	data13 <- run(query)
+	
+	q <- paste("select count(distinct(c.id)) as companies_2006
+					from scmlog s,
+					people_companies pc,
+					companies c
+					where s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					year(s.date) = 2006")
+	query <- new("Query", sql = q)
+	data14 <- run(query)
+	
+	q <- paste("select count(distinct(c.id)) as companies_2009
+					from scmlog s,
+					people_companies pc,
+					companies c
+					where s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					year(s.date) = 2009")
+	query <- new("Query", sql = q)
+	data15 <- run(query)
+	
+	q <- paste("select count(distinct(c.id)) as companies_2012
+					from scmlog s,
+					people_companies pc,
+					companies c
+					where s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					year(s.date) = 2012")
+	query <- new("Query", sql = q)
+	data16 <- run(query)
+	
+	
+	agg_data = merge(data13, data14)
+	agg_data = merge(agg_data, data15)
+	agg_data = merge(agg_data, data16)
+	return (agg_data)
+}
+
+company_top_authors <- function(company_name) {
+	
+	q <- paste ("select p.name  as author,
+					count(distinct(s.id)) as commits                         
+					from people p,
+					scmlog s,
+					people_companies pc,
+					companies c
+					where  p.id = s.author_id and
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name, "
+					group by p.id
+					order by count(distinct(s.id)) desc
+					limit 10;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+company_top_authors_year <- function(company_name, year){
+	
+	q <- paste ("select p.name as author,
+					count(distinct(s.id)) as commits
+					from people p,
+					scmlog s,
+					people_companies pc,
+					companies c
+					where  p.id = s.author_id and
+					s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name, " and
+					year(s.date)=",year,"
+					group by p.id
+					order by count(distinct(s.id)) desc
+					limit 10;")	
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)	
+}
+
+evol_companies <- function(){	
+	q <- paste("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.companies, 0) as num_companies
+					from   months m
+					left join(
+					select year(s.date) as year,
+					month(s.date) as month,
+					count(distinct(pc.company_id)) as companies
+					from   scmlog s,
+					people_companies pc
+					where  s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end
+					group by year(s.date),
+					month(s.date)
+					order by year(s.date),
+					month(s.date)) as pm
+					on (  
+					m.year = pm.year and
+					m.month = pm.month)
+					order by m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)	
+}
+
+repos_name <- function() {
+	q <- paste ("select name from repositories order by name;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)	
+}
+
+repo_commits <- function(repo_name){		
+	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date, 
+					IFNULL(pm.commits, 0) as commits
+					FROM months m
+					LEFT JOIN (
+					SELECT year(s.date) as year, month(s.date) as month,
+					COUNT(distinct(s.id)) as commits
+					FROM scmlog s, repositories r
+					WHERE r.name =", repo_name, " AND r.id = s.repository_id
+					GROUP BY YEAR(s.date), MONTH(s.date)
+					ORDER BY YEAR(s.date),
+					MONTH(s.date)) 
+					AS pm
+					ON (m.year = pm.year and m.month = pm.month)
+					ORDER BY m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)		
+}
+
+repo_files <- function(repo_name) {		
+	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date, 
+					IFNULL(pm.files, 0) as files
+					FROM months m
+					LEFT JOIN (
+					SELECT year(s.date) as year, month(s.date) as month,
+					COUNT(distinct(a.file_id)) as files
+					FROM scmlog s, actions a, repositories r
+					WHERE r.name =", repo_name, " AND r.id = s.repository_id
+					AND a.commit_id = s.id
+					GROUP BY YEAR(s.date), MONTH(s.date)
+					ORDER BY YEAR(s.date),
+					MONTH(s.date)) 
+					AS pm
+					ON (m.year = pm.year and m.month = pm.month)
+					ORDER BY m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)		
+}
+
+# Unique identities not included
+repo_authors <- function(repo_name) {
+	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date, 
+					IFNULL(pm.authors, 0) as authors
+					FROM months m
+					LEFT JOIN (
+					SELECT year(s.date) as year, month(s.date) as month,
+					COUNT(distinct(p.id)) as authors
+					FROM scmlog s, people p, repositories r
+					WHERE r.name =", repo_name, " AND r.id = s.repository_id
+					AND p.id = s.author_id
+					GROUP BY YEAR(s.date), MONTH(s.date)
+					ORDER BY YEAR(s.date),
+					MONTH(s.date)) 
+					AS pm
+					ON (m.year = pm.year and m.month = pm.month)
+					ORDER BY m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)			
+}
+
+repo_lines <- function(repo_name) {
+	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date, 
+					IFNULL(pm.added_lines, 0) as added_lines,
+					IFNULL(pm.removed_lines, 0) as removed_lines
+					FROM months m
+					LEFT JOIN (
+					SELECT year(s.date) as year, month(s.date) as month,
+					SUM(cl.added) as added_lines,
+					SUM(cl.removed) as removed_lines
+					FROM scmlog s, commits_lines cl, repositories r
+					WHERE r.name =", repo_name, " AND r.id = s.repository_id
+					AND cl.commit_id = s.id
+					GROUP BY YEAR(s.date), MONTH(s.date)
+					ORDER BY YEAR(s.date),
+					MONTH(s.date)) 
+					AS pm
+					ON (m.year = pm.year and m.month = pm.month)
+					ORDER BY m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)				
+}
+
+evol_info_data_repo <- function(repo_name) {
+	
+	# Get some general stats from the database
+	##
+	q <- paste("SELECT count(s.id) as commits, 
+					count(distinct(s.author_id)) as authors,
+					DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
+					DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
+					FROM scmlog s, repositories r
+					WHERE r.id = s.repository_id AND
+					r.name =", repo_name)
+	query <- new("Query", sql = q)
+	data1 <- run(query)
+	
+	q <- paste("SELECT count(distinct(file_id)) as files, count(*) as actions
+					FROM actions a, scmlog s, repositories r
+					WHERE a.commit_id = s.id AND
+					r.id = s.repository_id AND
+					r.name =", repo_name)
+	query <- new("Query", sql = q)
+	data2 <- run(query)
+	
+	q <- paste("select count(s.id)/timestampdiff(month,min(s.date),max(s.date)) 
+					as avg_commits_month
+					FROM scmlog s, repositories r
+					WHERE r.id = s.repository_id AND
+					r.name =", repo_name)
+	query <- new("Query", sql = q)
+	data3 <- run(query)
+	
+	q <- paste("select count(distinct(a.file_id))/timestampdiff(month,min(s.date),max(s.date)) 
+					as avg_files_month
+					FROM scmlog s, actions a, repositories r
+					WHERE a.commit_id=s.id AND
+					r.id = s.repository_id AND
+					r.name =", repo_name)
+	query <- new("Query", sql = q)
+	data4 <- run(query)
+	
+	q <- paste("select count(distinct(s.id))/count(distinct(s.author_id)) 
+					AS avg_commits_author
+					FROM scmlog s, repositories r
+					WHERE r.id = s.repository_id AND
+					r.name =", repo_name)
+	query <- new("Query", sql = q)
+	data5 <- run(query)
+		
+	q <- paste("select count(distinct(s.author_id))/timestampdiff(month,min(s.date),max(s.date)) 
+					AS avg_authors_month
+					FROM scmlog s, repositories r
+					WHERE r.id = s.repository_id AND
+					r.name =", repo_name)
+	query <- new("Query", sql = q)
+	data6 <- run(query)
+	
+	q <- paste("select count(distinct(a.file_id))/count(distinct(s.author_id)) 
+					AS avg_files_author
+					FROM scmlog s, actions a, repositories r
+					WHERE a.commit_id=s.id AND
+					r.id = s.repository_id AND
+					r.name =", repo_name)
+	query <- new("Query", sql = q)
+	data7 <- run(query)
+	
+	agg_data = merge(data1, data2)
+	agg_data = merge(agg_data, data3)
+	agg_data = merge(agg_data, data4)
+	agg_data = merge(agg_data, data5)
+	agg_data = merge(agg_data, data6)
+	agg_data = merge(agg_data, data7)
+	return (agg_data)
+}
 
 ##
 ## Data from MLStats database
@@ -896,13 +1585,34 @@ get.monthly <- function () {
 		ORDER BY year,month")
   query <- new ("Query", sql = q)
   senders_monthly <- run(query)
-	
+  
+  # repositories
+  field = "mailing_list"
+  q <- paste ("select distinct(mailing_list) from messages")
+  query <- new ("Query", sql = q)
+  mailing_lists <- run(query)
+  
+  if (is.na(mailing_lists$mailing_list)) {
+	  field = "mailing_list_url"
+  }		
+  q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+				  year(first_date) AS year,
+				  month(first_date) AS month,
+				  DATE_FORMAT (first_date, '%b %Y') as date,
+				  count(DISTINCT(",field,")) AS repositories
+				  FROM messages
+				  GROUP BY year,month
+				  ORDER BY year,month")
+  query <- new ("Query", sql = q)
+  repos_monthly <- run(query)
+  
   mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
+  mls_monthly <- completeZeroMonthly (merge (mls_monthly, repos_monthly, all = TRUE))  
   mls_monthly[is.na(mls_monthly)] <- 0
   return (mls_monthly)
 }
 
-analyze.monthly.list <- function (listname, prefix) {
+analyze.monthly.list <- function (listname) {
 
     field = "mailing_list"
     listname_file = gsub("/","_",listname)
@@ -950,6 +1660,7 @@ analyze.monthly.list <- function (listname, prefix) {
     query <- new ("Query", sql = q)
     senders_monthly <- run(query)
 
+	## TODO: this query not sure if it is correct. Not same results in VizGrimoireJS
     ## All people monthly
     q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
 	           year(first_date) AS year,
@@ -961,44 +1672,339 @@ analyze.monthly.list <- function (listname, prefix) {
 	         WHERE type_of_recipient='From' AND ",field,"='",listname,"'
 	         ORDER BY year,month", sep = '')
     query <- new ("Query", sql = q)
-    emails_monthly <- run(query)
-    
-    mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
-    mls_monthly[is.na(mls_monthly)] <- 0
-    createJSON (mls_monthly, paste(prefix,listname_file,"-milestone0.json",sep=''))
-    ## createJSON (subjects_monthly, paste(prefix,listname,"-subjects-milestone0.json",sep=''))
-    createJSON (emails_monthly, paste(prefix,listname_file,"-emails-milestone0.json",sep=''))
+    emails_monthly <- run(query)		
 
+	mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
+	mls_monthly[is.na(mls_monthly)] <- 0
+	# TODO: Multilist approach. We will obsolete it in future
+	createJSON (mls_monthly, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
+	# Multirepos filename
+	createJSON (mls_monthly, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
+	# createJSON (subjects_monthly, paste("data/json/mls-",listname,"-subjects-evolutionary.json",sep=''))
+	createJSON (emails_monthly, paste("data/json/mls-",listname_file,"-emails-evolutionary.json",sep=''))
+	
+	
     ## Get some general stats from the database
     ##
-    q <- paste ("SELECT count(*) as messages,
+    q <- paste ("SELECT count(*) as sent,
                    DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
                    DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date,
-                   COUNT(DISTINCT(email_address)) as people
+                   COUNT(DISTINCT(email_address)) as senders
                    FROM messages 
 	           JOIN messages_people on (messages_people.message_id = messages.message_ID)
                    WHERE ",field,"='",listname,"'",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
-    createJSON (data, paste(prefix,listname_file,"-info-milestone0.json",sep=''))
+	# TODO: Multilist approach. We will obsolete it in future
+	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
+	# Multirepos filename
+	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))
 }
 
 top_senders <- function(days = 0) {
-  if (days == 0 ) {
-    q <- "SELECT email_address as developer, count(m.message_id) as sent 
-	  FROM messages m
-          JOIN messages_people m_p on m_p.message_id=m.message_ID 
-	  GROUP by email_address ORDER BY sent DESC LIMIT 10;"
-  } else {
-    query <- new ("Query",
-                  sql = "SELECT @maxdate:=max(first_date) from messages limit 1")
-    data <- run(query)
-    q <- paste("SELECT email_address as developer, count(m.message_id) as sent 
+  	if (days == 0 ) {
+    	q <- "SELECT email_address as senders, count(m.message_id) as sent 
+	  			FROM messages m
+          		JOIN messages_people m_p on m_p.message_id=m.message_ID 
+	  			GROUP by email_address ORDER BY sent DESC LIMIT 10;"
+  	} else {
+    	query <- new ("Query",
+              sql = "SELECT @maxdate:=max(first_date) from messages limit 1")
+    	data <- run(query)
+    	q <- paste("SELECT email_address as senders, count(m.message_id) as sent 
 		FROM messages m join messages_people m_p on m_p.message_id=m.message_ID
  		WHERE DATEDIFF(@maxdate,first_date)<",days," 
 		GROUP by email_address ORDER BY sent DESC LIMIT 10;")		
-  }
-query <- new ("Query", sql = q)
-data <- run(query)
-return (data)
+  	}
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+mls_static_info <- function () {
+	q <- paste ("SELECT count(*) as sent,
+					DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
+					DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date
+					FROM messages")
+	query <- new ("Query", sql = q)
+	num_msg <- run(query)
+	
+	q <- paste ("SELECT count(*) as senders from people")
+	query <- new ("Query", sql = q)
+	num_ppl <- run(query)
+	
+	# num repositories
+	field = "mailing_list"
+	q <- paste ("select distinct(mailing_list) from messages")
+	query <- new ("Query", sql = q)
+	mailing_lists <- run(query)
+	
+	if (is.na(mailing_lists$mailing_list)) {
+		field = "mailing_list_url"
+	}
+	q <- paste("SELECT COUNT(DISTINCT(",field,")) AS repositories FROM messages")
+	query <- new ("Query", sql = q)
+	num_repos <- run(query)
+	
+	q <- paste("SELECT mailing_list_url as url FROM mailing_lists")
+	query <- new ("Query", sql = q)
+	repo_info <- run(query)
+	
+	agg_data = merge(num_msg,num_ppl)
+	agg_data = merge(agg_data, num_repos)
+	agg_data = merge(agg_data, repo_info)
+	return (agg_data)
+}
+
+## VizGrimoireJS ITS library
+evol_closed <- function (closed_condition) {
+	q <- paste ("SELECT YEAR(changed_on) * 12 + MONTH(changed_on) AS id,
+					YEAR(changed_on) as year,
+					MONTH(changed_on) as month,
+					DATE_FORMAT (changed_on, '%b %Y') as date,
+					count(issue_id) AS closed,
+					count(distinct(changed_by)) AS closers
+					FROM changes
+					WHERE ",closed_condition," 
+					GROUP BY year,month
+					ORDER BY year,month")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)	
+}
+
+# Closed tickets: time ticket was open, first closed, time-to-first-close
+#q <- paste("SELECT issue_id, issue,
+#        submitted_on as time_open,
+#        time_closed,
+#    time_closed_last,
+#    TIMESTAMPDIFF (DAY, submitted_on, ch.time_closed) AS ttofix
+#      FROM issues, (
+#         SELECT
+#           issue_id,
+#           MIN(changed_on) AS time_closed,
+#           MAX(changed_on) as time_closed_last
+#         FROM changes
+#         WHERE ",closed_condition,"
+#         GROUP BY issue_id) ch
+#      WHERE issues.id = ch.issue_id")
+#res_issues_closed <- query(q)
+
+evol_changed <- function () {
+	# Changed and changers 
+	q <- paste ("SELECT year(changed_on) * 12 + month (changed_on) AS id,
+					year(changed_on) as year,
+					month(changed_on) as month,
+					DATE_FORMAT (changed_on, '%b %Y') as date,
+					count(changed_by) AS changed,
+					count(distinct(changed_by)) AS changers
+					FROM changes
+					GROUP BY year,month
+					ORDER BY year,month")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)	
+}
+
+evol_opened <- function (closed_condition) {
+	q <- paste ("SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
+					year(submitted_on) AS year,
+					month(submitted_on) AS month,
+					DATE_FORMAT (submitted_on, '%b %Y') as date,
+					count(submitted_by) AS opened,
+					count(distinct(submitted_by)) AS openers
+					FROM issues
+					GROUP BY year,month
+					ORDER BY year,month")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+its_evol_repositories <- function() {
+	q <- paste ("SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
+					year(submitted_on) AS year,
+					month(submitted_on) AS month,
+					DATE_FORMAT (submitted_on, '%b %Y') as date,
+					count(DISTINCT(tracker_id)) AS repositories
+					FROM issues
+					GROUP BY year,month
+					ORDER BY year,month")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+
+its_people <- function() {
+	q <- paste ("select id,name,email,user_id from people")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+its_static_info <- function () {
+	## Get some general stats from the database and url info
+	##
+	q <- paste ("SELECT count(*) as tickets,
+					count(distinct(submitted_by)) as openers,
+					DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
+					DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
+					FROM issues")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	
+	q <- paste ("SELECT count(distinct(changed_by)) as closers FROM changes WHERE ", closed_condition)
+	query <- new ("Query", sql = q)
+	data1 <- run(query)
+
+	q <- paste ("SELECT count(distinct(changed_by)) as changers FROM changes")
+	query <- new ("Query", sql = q)
+	data2 <- run(query)
+
+	q <- paste ("SELECT count(*) as opened FROM issues")
+	query <- new ("Query", sql = q)
+	data3 <- run(query)
+
+	q <- paste ("SELECT count(distinct(issue_id)) as changed FROM changes")
+	query <- new ("Query", sql = q)
+	data4 <- run(query)
+
+	q <- paste ("SELECT count(distinct(issue_id)) as closed FROM changes WHERE", closed_condition)
+	query <- new ("Query", sql = q)
+	data5 <- run(query)
+
+	q <- paste ("SELECT url,name as type FROM trackers t JOIN supported_trackers s ON t.type = s.id limit 1")	
+	query <- new ("Query", sql = q)
+	data6 <- run(query)
+
+	q <- paste ("SELECT count(*) as repositories FROM trackers")
+	query <- new ("Query", sql = q)
+	data7 <- run(query)
+
+	agg_data = merge(data, data1)
+	agg_data = merge(agg_data, data2)
+	agg_data = merge(agg_data, data3)
+	agg_data = merge(agg_data, data4)
+	agg_data = merge(agg_data, data5)
+	agg_data = merge(agg_data, data6)
+	agg_data = merge(agg_data, data7)
+	return(agg_data)
+}
+
+# Top
+top_closers <- function(days = 0) {
+	if (days == 0 ) {
+		q <- paste("SELECT p.user_id as closers, count(c.id) as closed 
+						FROM changes c JOIN people p ON c.changed_by = p.id 
+						WHERE ", closed_condition, " 
+						GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
+	} else {
+		query <- new ("Query", sql ="SELECT @maxdate:=max(changed_on) from changes limit 1;")
+		data <- run(query)
+		q <- paste("SELECT p.user_id as closers, count(c.id) as closed 
+						FROM changes c JOIN people p ON c.changed_by = p.id 
+						WHERE ", closed_condition, " 
+						AND c.id in (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,") 
+						GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")		
+	}
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+
+its_repos_name <- function() {
+	# q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
+	q <- paste ("SELECT url AS name FROM trackers")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+repo_evol_closed <- function(repo, closed_condition){
+	q <- paste ("SELECT YEAR(changed_on) * 12 + MONTH(changed_on) AS id,
+					YEAR(changed_on) as year,
+					MONTH(changed_on) as month,
+					DATE_FORMAT (changed_on, '%b %Y') as date,
+					COUNT(issue_id) AS closed,
+					COUNT(DISTINCT(changed_by)) AS closers ")
+	q <- paste (q, "FROM changes ")
+	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
+	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
+	q <- paste (q, "WHERE ")
+	q <- paste (q, closed_condition, " ")
+	q <- paste (q, "AND trackers.url=",repo)
+	q <- paste (q, "GROUP BY year,month ORDER BY year,month")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+repo_evol_changed <- function(repo){
+	q <- paste ("SELECT YEAR(changed_on) * 12 + MONTH(changed_on) AS id,
+					YEAR(changed_on) as year,
+					MONTH(changed_on) as month,
+					DATE_FORMAT (changed_on, '%b %Y') as date,
+					COUNT(changed_by) AS changed,
+					COUNT(DISTINCT(changed_by)) AS changers")
+	q <- paste (q, "FROM changes ")
+	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
+	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
+	q <- paste (q, "WHERE trackers.url=",repo)
+	q <- paste (q, "GROUP BY year,month ORDER BY year,month")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+repo_evol_opened <- function(repo){
+	q <- paste ("SELECT YEAR(submitted_on) * 12 + MONTH(submitted_on) AS id,
+					YEAR(submitted_on) AS year,
+					MONTH(submitted_on) AS month,
+					DATE_FORMAT (submitted_on, '%b %Y') as date,
+					COUNT(submitted_by) AS opened,
+					COUNT(DISTINCT(submitted_by)) AS openers")
+	q <- paste (q, "FROM issues ")
+	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
+	q <- paste (q, "WHERE trackers.url=",repo)
+	q <- paste (q, "GROUP BY year,month ORDER BY year,month")
+	query <- new ("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+its_static_info_repo <- function (repo) {
+	q <- paste ("SELECT count(distinct(submitted_by)) as openers,
+					count(*) as opened,
+					DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
+					DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
+					FROM issues ")
+	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
+	q <- paste (q, "WHERE trackers.url=",repo)
+	query <- new ("Query", sql = q)
+	data <- run(query)
+
+	q <- paste ("SELECT count(distinct(changed_by)) as closers, ")
+	q <- paste (q, "count(distinct(issue_id)) as closed ")
+	q <- paste (q, "FROM changes ")
+	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
+	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")	
+	q <- paste (q, "WHERE ", closed_condition, " ")	
+	q <- paste (q, "AND trackers.url=",repo)
+	query <- new ("Query", sql = q)
+	data1 <- run(query)
+
+	q <- paste ("SELECT count(distinct(changed_by)) as changers, ")
+	q <- paste (q, "count(distinct(issue_id)) as changed ")
+	q <- paste (q, "FROM changes ")
+	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
+	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")	
+	q <- paste (q, "WHERE trackers.url=",repo)	
+	query <- new ("Query", sql = q)
+	data2 <- run(query)
+
+	agg_data = merge(data, data1)
+	agg_data = merge(agg_data, data2)
+	return(agg_data)
 }
