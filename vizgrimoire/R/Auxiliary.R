@@ -1178,6 +1178,7 @@ evol_info_data_company <- function(company_name) {
 	# Get some general stats from the database
 	##
 	q <- paste("SELECT count(s.id) as commits, 
+					count(distinct(s.committer_id)) as committers,
 					count(distinct(s.author_id)) as authors,
 					DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
 					DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
@@ -1540,6 +1541,7 @@ evol_info_data_repo <- function(repo_name) {
 	# Get some general stats from the database
 	##
 	q <- paste("SELECT count(s.id) as commits, 
+					count(distinct(s.committer_id)) as committers,
 					count(distinct(s.author_id)) as authors,
 					DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
 					DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
