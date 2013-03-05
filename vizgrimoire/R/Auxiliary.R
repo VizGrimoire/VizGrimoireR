@@ -1467,7 +1467,7 @@ repo_files <- function(repo_name) {
 }
 
 # Unique identities not included
-repo_comitters <- function(repo_name) {
+repo_committers <- function(repo_name) {
 	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
 					DATE_FORMAT(m.date, '%b %Y') as date, 
 					IFNULL(pm.committers, 0) as committers
