@@ -1801,7 +1801,7 @@ mls_static_info <- function () {
 	query <- new ("Query", sql = q)
 	num_repos <- run(query)
 	
-	q <- paste("SELECT mailing_list_url as url FROM mailing_lists")
+	q <- paste("SELECT mailing_list_url as url FROM mailing_lists limit 1")
 	query <- new ("Query", sql = q)
 	repo_info <- run(query)
 	
