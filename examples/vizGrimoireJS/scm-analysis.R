@@ -119,19 +119,17 @@ if (conf$reports == 'companies') {
 		company_name = paste(c("'", company, "'"), collapse='')
 		company_aux = paste(c("", company, ""), collapse='')
 		print (company_name)
-		
-		print ("commits") 
+		 
 		commits <- company_commits(company_name)	
-		print ("lines")
 		lines <-company_lines(company_name)
-		print ("files")
 		files <- company_files(company_name)
-		print ("people")
 		authors <- company_authors(company_name)
+		committers <- company_committers(company_name)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
-		agg_data = merge(agg_data, authors, all = TRUE)	
+		agg_data = merge(agg_data, authors, all = TRUE)
+		agg_data = merge(agg_data, committers, all = TRUE)
 		
 		createJSON(agg_data, paste(c("data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 		
@@ -171,10 +169,12 @@ if (conf$reports == 'repositories') {
 		files <- repo_files(repo_name)
 		print ("people")
 		authors <- repo_authors(repo_name)
+		committers <- repo_committers(repo_name)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)	
+		agg_data = merge(agg_data, committers, all = TRUE)
 		
 		createJSON(agg_data, paste(c("data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		

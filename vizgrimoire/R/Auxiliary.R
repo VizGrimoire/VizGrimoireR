@@ -1072,9 +1072,7 @@ company_files <- function(company_name) {
 	return (data)
 }
 
-company_authors <- function(company_name) {
-	
-	
+company_authors <- function(company_name) {		
 	q <- paste ("select m.id as id,
 					m.year as year,
 					m.month as month,
@@ -1089,6 +1087,38 @@ company_authors <- function(company_name) {
 					people_companies pc,
 					companies c
 					where  s.author_id = pc.people_id and
+					s.date>=pc.init and 
+					s.date<=pc.end and
+					pc.company_id = c.id and
+					c.name =", company_name, "
+					group by year(s.date),
+					month(s.date) 
+					order by year(s.date),
+					month(s.date) ) as pm
+					on (
+					m.year = pm.year and
+					m.month = pm.month)
+					order by m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)
+}
+
+company_committers <- function(company_name) {		
+	q <- paste ("select m.id as id,
+					m.year as year,
+					m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date,
+					IFNULL(pm.committers, 0) as committers
+					from   months m
+					left join(
+					select year(s.date) as year,
+					month(s.date) as month,
+					count(distinct(s.committer_id)) as committers
+					from   scmlog s,
+					people_companies pc,
+					companies c
+					where  s.committer_id = pc.people_id and
 					s.date>=pc.init and 
 					s.date<=pc.end and
 					pc.company_id = c.id and
@@ -1433,6 +1463,29 @@ repo_files <- function(repo_name) {
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)		
+}
+
+# Unique identities not included
+repo_comitters <- function(repo_name) {
+	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+					DATE_FORMAT(m.date, '%b %Y') as date, 
+					IFNULL(pm.committers, 0) as committers
+					FROM months m
+					LEFT JOIN (
+					SELECT year(s.date) as year, month(s.date) as month,
+					COUNT(distinct(p.id)) as committers
+					FROM scmlog s, people p, repositories r
+					WHERE r.name =", repo_name, " AND r.id = s.repository_id
+					AND p.id = s.committer_id
+					GROUP BY YEAR(s.date), MONTH(s.date)
+					ORDER BY YEAR(s.date),
+					MONTH(s.date)) 
+					AS pm
+					ON (m.year = pm.year and m.month = pm.month)
+					ORDER BY m.id;")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)			
 }
 
 # Unique identities not included
