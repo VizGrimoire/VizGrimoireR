@@ -19,14 +19,16 @@
 #
 # Authors :
 #       Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
+#	Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
 
 #
 # unifypeople.py
 #
 # This is just a first try at a code for "unifying" uids in the people
-# table created by CVSAnalY. It creates a new table, upeople, which has
+# table created by CVSAnalY. It creates two tables:  upeople_people, which has
 # id (id in people) and uid (same id if unique, or "cannonical" id if
 # duplicated. Cannonical id is considered to be the lower id in people.
+# The second table is upeople which is a list of that "cannonical" ids.
 #
 # Most of the work is actually done by the Identities class, which is
 # designed to store a kind of identities (names, email addresses, etc.)
@@ -108,15 +110,13 @@ def strPerson (person):
 
 # Open database connection and get all data in people table
 # into people list.
+# Uncomment these lines and specify options for the database access
 # db = MySQLdb.connect(host = "localhost",
-#                      user = "jgb",
-#                      passwd = "XXX",
-#                      db = "d2_dic_cvsanaly_webkit_samsung2")
-db = MySQLdb.connect(host = "127.0.0.1",
-                     user = "root",
-                     port = 3308,
-                     db = "dic_cvsanaly_linux_git")
-                     #use_unicode = True)
+#                      user = "db_username",
+#                      port = 3308,
+#                      passwd = "db_password",
+#                      db = "database")
+
 
 cursor = db.cursor()
 query = """SELECT *
@@ -189,14 +189,14 @@ print str(len(dupIds)) + " duplicate ids found."
 # Each row is a people identifier, and a unique identifier
 # Several people identifiers could have the same unique identifier
 
-print "Now creating upeople table (this may take a while)..."
-cursor.execute("DROP TABLE IF EXISTS upeople")
-cursor.execute("""CREATE TABLE upeople (
+print "Now creating upeople_people table (this may take a while)..."
+cursor.execute("DROP TABLE IF EXISTS upeople_people")
+cursor.execute("""CREATE TABLE upeople_people (
   id int(11) NOT NULL,
   uid int(11) NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8""")
-cursor.execute("ALTER TABLE upeople DISABLE KEYS")
+cursor.execute("ALTER TABLE upeople_people DISABLE KEYS")
 db.commit()
 
 upeople = []
@@ -207,10 +207,19 @@ for id in sorted(personsById):
         uid = id
     upeople.append((id, uid))
 
-cursor.executemany("""INSERT INTO upeople (id, uid)
+cursor.executemany("""INSERT INTO upeople_people (id, uid)
    VALUES (%s, %s)""", upeople)
-cursor.execute("ALTER TABLE upeople ENABLE KEYS")
+cursor.execute("ALTER TABLE upeople_people ENABLE KEYS")
 db.commit()
+
+# And finally creating table upeople with a list of unique ids.
+cursor.execute("""CREATE TABLE upeople(uid int(11) NOT NULL,
+                                       PRIMARY KEY (uid))
+                  ENGINE=MyISAM DEFAULT CHARSET=utf8""")
+db.commit()
+cursor.execute("""INSERT INTO upeople(uid) 
+                  SELECT DISTINCT(uid) from upeople_people""")
+
 
 db.close()
 print "Done."
