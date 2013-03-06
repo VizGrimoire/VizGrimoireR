@@ -80,7 +80,7 @@ library(optparse)
 ConfFromOptParse <- function (datasource="") {
 	option_list <- list(			
 			make_option(c("-d", "--database"), dest="database", 
-					help="Database with MLS data"),
+					help="Database with data"),
 			make_option(c("-u", "--dbuser"), dest="dbuser", 
 					help="Database user", default="root"),
 			make_option(c("-p", "--dbpass"), dest="dbpassword", 
