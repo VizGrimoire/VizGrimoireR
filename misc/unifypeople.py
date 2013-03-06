@@ -112,10 +112,10 @@ def strPerson (person):
 # into people list.
 # Uncomment these lines and specify options for the database access
 # db = MySQLdb.connect(host = "localhost",
-#                      user = "db_username",
+#                      user = "db_user",
+#                      passwd = "db_pass",
 #                      port = 3308,
-#                      passwd = "db_password",
-#                      db = "database")
+#                      db = "db_name")
 
 
 cursor = db.cursor()
@@ -192,9 +192,9 @@ print str(len(dupIds)) + " duplicate ids found."
 print "Now creating upeople_people table (this may take a while)..."
 cursor.execute("DROP TABLE IF EXISTS upeople_people")
 cursor.execute("""CREATE TABLE upeople_people (
-  id int(11) NOT NULL,
-  uid int(11) NOT NULL,
-  PRIMARY KEY (id)
+  people_id int(11) NOT NULL,
+  upeople_id int(11) NOT NULL,
+  PRIMARY KEY (people_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8""")
 cursor.execute("ALTER TABLE upeople_people DISABLE KEYS")
 db.commit()
@@ -207,18 +207,19 @@ for id in sorted(personsById):
         uid = id
     upeople.append((id, uid))
 
-cursor.executemany("""INSERT INTO upeople_people (id, uid)
+cursor.executemany("""INSERT INTO upeople_people (people_id, upeople_id)
    VALUES (%s, %s)""", upeople)
 cursor.execute("ALTER TABLE upeople_people ENABLE KEYS")
 db.commit()
 
 # And finally creating table upeople with a list of unique ids.
-cursor.execute("""CREATE TABLE upeople(uid int(11) NOT NULL,
-                                       PRIMARY KEY (uid))
+cursor.execute("DROP TABLE IF EXISTS upeople")
+cursor.execute("""CREATE TABLE upeople(upeople_id int(11) NOT NULL,
+                                       PRIMARY KEY (upeople_id))
                   ENGINE=MyISAM DEFAULT CHARSET=utf8""")
 db.commit()
-cursor.execute("""INSERT INTO upeople(uid) 
-                  SELECT DISTINCT(uid) from upeople_people""")
+cursor.execute("""INSERT INTO upeople(upeople_id) 
+                  SELECT DISTINCT(upeople_id) from upeople_people""")
 
 
 db.close()
