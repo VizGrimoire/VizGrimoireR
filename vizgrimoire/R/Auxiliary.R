@@ -1861,7 +1861,7 @@ evol_changed <- function () {
 	return (data)	
 }
 
-evol_opened <- function (closed_condition) {
+evol_opened <- function () {
 	q <- paste ("SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
 					year(submitted_on) AS year,
 					month(submitted_on) AS month,
@@ -1925,7 +1925,7 @@ its_static_info <- function () {
 	query <- new ("Query", sql = q)
 	data4 <- run(query)
 
-	q <- paste ("SELECT count(distinct(issue_id)) as closed FROM changes WHERE", closed_condition)
+	q <- paste ("SELECT count(distinct(issue_id)) as closed FROM changes WHERE ", closed_condition)
 	query <- new ("Query", sql = q)
 	data5 <- run(query)
 

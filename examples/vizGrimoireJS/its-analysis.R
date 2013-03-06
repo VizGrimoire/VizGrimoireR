@@ -43,10 +43,10 @@ SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpa
 
 if (conf$backend == 'allura') closed_condition <- "new_value='CLOSED'"
 if (conf$backend == 'bugzilla') 
-	closed_condition <- "new_value='RESOLVED' OR new_value='CLOSED'"
+	closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
 if (conf$backend == 'github') closed_condition <- "field='closed'"
 if (conf$backend == 'jira') 
-	closed_condition <- "new_value='RESOLVED' OR new_value='CLOSED'"
+	closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
 
 closed_monthly <- evol_closed(closed_condition)
 changed_monthly <- evol_changed()
