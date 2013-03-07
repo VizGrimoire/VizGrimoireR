@@ -212,7 +212,7 @@ cursor.executemany("""INSERT INTO people_upeople (people_id, upeople_id)
 cursor.execute("ALTER TABLE people_upeople ENABLE KEYS")
 db.commit()
 
-# And finally creating table upeople with a list of unique ids.
+# Creating table upeople with a list of unique ids.
 cursor.execute("DROP TABLE IF EXISTS upeople")
 cursor.execute("""CREATE TABLE upeople(id int(11) NOT NULL,
                                        PRIMARY KEY (id))
@@ -220,6 +220,40 @@ cursor.execute("""CREATE TABLE upeople(id int(11) NOT NULL,
 db.commit()
 cursor.execute("""INSERT INTO upeople(id) 
                   SELECT DISTINCT(upeople_id) from people_upeople""")
+
+# Creating identities table
+cursor.execute("DROP TABLE IF EXISTS identities")
+cursor.execute("""CREATE TABLE identities (id int(11) NOT NULL AUTO_INCREMENT, 
+                                           upeople_id int(11) NOT NULL,
+                                           identity VARCHAR(256) NOT NULL,
+                                           type VARCHAR(24),
+                                           PRIMARY KEY(id))
+                  ENGINE=MyISAM DEFAULT CHARSET=utf8""")
+db.commit()
+cursor.execute("""INSERT INTO identities(upeople_id, identity)
+                         SELECT distinct u.id, 
+                                         p.name 
+                         FROM people p, 
+                              people_upeople pup, 
+                              upeople u 
+                         WHERE p.id=pup.people_id and 
+                               pup.upeople_id=u.id 
+                         ORDER by u.id""")
+cursor.execute("""UPDATE identities set type='name'
+                  WHERE type is null""")
+db.commit()
+cursor.execute("""INSERT INTO identities(upeople_id, identity)
+                         SELECT distinct u.id, 
+                                         p.email 
+                         FROM people p, 
+                              people_upeople pup, 
+                              upeople u 
+                         WHERE p.id=pup.people_id and 
+                               pup.upeople_id=u.id 
+                         ORDER by u.id""")
+cursor.execute("""UPDATE identities set type='email'
+                  WHERE type is null""")
+db.commit()
 
 db.close()
 print "Done."
