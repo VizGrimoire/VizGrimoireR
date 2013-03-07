@@ -111,11 +111,10 @@ def strPerson (person):
 # Open database connection and get all data in people table
 # into people list.
 # Uncomment these lines and specify options for the database access
-# db = MySQLdb.connect(host = "localhost",
-#                      user = "db_user",
-#                      passwd = "db_pass",
-#                      port = 3308,
-#                      db = "db_name")
+db = MySQLdb.connect(host = "localhost",
+                      user = "root",
+                      port = 3308,
+                      db = "dic_cvsanaly_openstack_1289")
 
 
 cursor = db.cursor()
@@ -215,6 +214,7 @@ db.commit()
 # Creating table upeople with a list of unique ids.
 cursor.execute("DROP TABLE IF EXISTS upeople")
 cursor.execute("""CREATE TABLE upeople(id int(11) NOT NULL,
+                                       identifier varchar(128),
                                        PRIMARY KEY (id))
                   ENGINE=MyISAM DEFAULT CHARSET=utf8""")
 db.commit()
@@ -254,6 +254,14 @@ cursor.execute("""INSERT INTO identities(upeople_id, identity)
 cursor.execute("""UPDATE identities set type='email'
                   WHERE type is null""")
 db.commit()
+
+#Finally, updating field identifier in upeople table taking a random name
+cursor.execute("""UPDATE upeople u, 
+                         identities i 
+                  SET u.identifier=i.identity 
+                  WHERE u.id = i.upeople_id and
+                        i.type='name'""")
+db.commit() 
 
 db.close()
 print "Done."
