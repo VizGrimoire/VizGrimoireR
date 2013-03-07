@@ -996,7 +996,7 @@ top_files_modified <- function() {
 
 ## TODO: Follow top_committers implementation
 top_authors <- function() {
-    q <- "SELECT u.identifier as authors,
+    q <- paste("SELECT u.identifier as authors,
                  count(distinct(s.id)) as commits
           FROM scmlog s,
                people_upeople pup,
@@ -1005,14 +1005,14 @@ top_authors <- function() {
                 pup.upeople_id = u.id
           group by u.identifier
           order by commits desc
-	  LIMIT 10;"
+	  LIMIT 10;")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)
 }
 
 top_authors_year <- function(year) {
-    q <- "SELECT u.identifier as authors,
+    q <- paste("SELECT u.identifier as authors,
                  count(distinct(s.id)) as commits
           FROM scmlog s,
                people_upeople pup,
@@ -1022,7 +1022,7 @@ top_authors_year <- function(year) {
                 year(s.date) = ",year,"
           group by u.identifier
           order by commits desc
-	  LIMIT 10;"
+	  LIMIT 10;")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)
