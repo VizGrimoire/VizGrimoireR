@@ -59,9 +59,9 @@ def create_tables(db, connector):
    return
 
 def connect(database):
-   user = 'root'
-   password = ''
-   host = 'localhost'
+   user = 'xxx'
+   password = 'xxx'
+   host = 'xxx'
 
    try:
       db =  MySQLdb.connect(host,user,password,database)

@@ -111,10 +111,10 @@ def strPerson (person):
 # Open database connection and get all data in people table
 # into people list.
 # Uncomment these lines and specify options for the database access
-db = MySQLdb.connect(host = "localhost",
-                      user = "root",
-                      port = 3308,
-                      db = "dic_cvsanaly_openstack_1289")
+# db = MySQLdb.connect(host = "xxx",
+#                      user = "xxx",
+#                      port = 3308,
+#                      db = "xxx")
 
 
 cursor = db.cursor()
