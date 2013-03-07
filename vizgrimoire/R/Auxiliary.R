@@ -1029,7 +1029,7 @@ top_authors_year <- function(year) {
 }
 
 people <- function() {
-	q <- paste ("select upeople_id,identifier from people_upeople")
+	q <- paste ("select upeople_id,identifier from upeople")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data);
