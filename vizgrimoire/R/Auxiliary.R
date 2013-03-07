@@ -716,7 +716,7 @@ evol_authors <- function(granularity){
                   m.year as year,
                   m.month as month,
                   DATE_FORMAT(m.date, '%b %Y') as date,
-                  IFNULL(pm.committers, 0) as authors
+                  IFNULL(pm.authors, 0) as authors
            from   months m
            left join(
                   select year(s.date) as year, 
