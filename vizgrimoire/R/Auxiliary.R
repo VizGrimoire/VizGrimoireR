@@ -1394,7 +1394,7 @@ evol_info_data_companies <- function() {
                           upc.company_id = c.id and
                           year(s.date) = 2009")
 	query <- new("Query", sql = q)
-	data14 <- run(query)
+	data15 <- run(query)
 	
 	q <- paste("select count(distinct(c.id)) as companies_2012
                     from scmlog s,
@@ -1408,7 +1408,7 @@ evol_info_data_companies <- function() {
                           upc.company_id = c.id and
                           year(s.date) = 2012")
 	query <- new("Query", sql = q)
-	data14 <- run(query)
+	data16 <- run(query)
 	
 	
 	agg_data = merge(data13, data14)
