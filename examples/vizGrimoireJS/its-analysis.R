@@ -19,6 +19,7 @@
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
+##   Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
 ##
 ##
 ## Usage:
@@ -47,11 +48,14 @@ if (conf$backend == 'bugzilla')
 if (conf$backend == 'github') closed_condition <- "field='closed'"
 if (conf$backend == 'jira') 
 	closed_condition <- "new_value='CLOSED'"
+if (conf$backend == 'lp')
+        closed_condition <- "(new_value='Fix Released' OR new_value='Invalid' OR new_value='Won''t Fix' OR new_value='Expired')"
+
 
 closed_monthly <- evol_closed(closed_condition)
 changed_monthly <- evol_changed()
 open_monthly <- evol_opened()
-repos_monthly <- its_evol_repositories();
+repos_monthly <- its_evol_repositories()
 
 issues_monthly <- merge (open_monthly, closed_monthly, all = TRUE)
 issues_monthly <- merge (issues_monthly, changed_monthly, all = TRUE)
