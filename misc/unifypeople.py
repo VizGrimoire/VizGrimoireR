@@ -145,7 +145,7 @@ for person in people:
     (id, name, email) = person
     # In Linux kernel, there are several "???", "", etc. names
     # Let's substitute them for something meaningful (the id)
-    if name in ("???", "?", ""):
+    if name in ("???", "?", "", "root"):
         name = "**Unknown**" + "%3d" % id
     personsById[id] = {'name': name, 'email': email}
     # Is name in names?
