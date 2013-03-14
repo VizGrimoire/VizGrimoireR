@@ -157,7 +157,10 @@ for person in people:
     # Is name, lowercased and dotted, in emails?
     #uidNameEmailDotted = identitiesEmails.findDotted (name)
     # Is email in emails?
-    uidEmail = identitiesEmails.find (email)
+    if email == "":
+        uidEmail = 0
+    else:
+        uidEmail = identitiesEmails.find (email)
     if uidEmail == 0:
         identitiesEmails.insert (email, id)
     #foundIds = [uidName, uidNameEmail, uidEmail, uidNameEmailDotted]
