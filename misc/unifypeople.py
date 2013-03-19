@@ -145,7 +145,7 @@ for person in people:
     (id, name, email) = person
     # In Linux kernel, there are several "???", "", etc. names
     # Let's substitute them for something meaningful (the id)
-    if name in ("???", "?", ""):
+    if name in ("???", "?", "", "root"):
         name = "**Unknown**" + "%3d" % id
     personsById[id] = {'name': name, 'email': email}
     # Is name in names?
@@ -157,7 +157,10 @@ for person in people:
     # Is name, lowercased and dotted, in emails?
     #uidNameEmailDotted = identitiesEmails.findDotted (name)
     # Is email in emails?
-    uidEmail = identitiesEmails.find (email)
+    if email == "":
+        uidEmail = 0
+    else:
+        uidEmail = identitiesEmails.find (email)
     if uidEmail == 0:
         identitiesEmails.insert (email, id)
     #foundIds = [uidName, uidNameEmail, uidEmail, uidNameEmailDotted]
