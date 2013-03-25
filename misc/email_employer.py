@@ -178,12 +178,24 @@ def main(database, ee_file):
             continue # simply ignored
          upeople_id = int(results[0][0])
       
-         # Inserting new companies into table
-         query = "insert into upeople_companies(upeople_id, company_id, init, end) " + \
-                  "values("+ str(upeople_id) + ", " + \
-                  str(companies[company.lower()]) + ", " + \
-                  "'" + init_date + "', " + \
-                  "'" + end_date + "');"
+         # Inserting new companies timeframes into table
+
+         # First, checking that this tuple exists:
+         query = "select * from upeople_companies where upeople_id=" + str(upeople_id) +\
+                  " and company_id=" + str(companies[company.lower()]) + ";"
+         results = execute_query(connector, query)
+         if len(results) > 0:
+            # there exist previous data there (ideally initialized to generic values)
+            query = "update upeople_companies set init='" + init_date + "', end='" + end_date + "'" +\
+                    "where upeople_id=" + str(upeople_id) + " and company_id=" + str(companies[company.lower()]) + ";"
+
+         else:
+            query = "insert into upeople_companies(upeople_id, company_id, init, end) " + \
+                     "values("+ str(upeople_id) + ", " + \
+                     str(companies[company.lower()]) + ", " + \
+                     "'" + init_date + "', " + \
+                     "'" + end_date + "');"
+
          execute_query(connector, query)
 
 
