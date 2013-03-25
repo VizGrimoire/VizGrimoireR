@@ -29,14 +29,6 @@
 
 library("vizgrimoire")
 
-## Analyze args, and produce config params from them
-## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
-##                            user = "root", password = NULL,
-##                            host = "127.0.0.1", port = 3308)
-## SetDBChannel (database = conf$database,
-##               user = conf$user, password = conf$password,
-##               host = conf$host, port = conf$port)
-## conf <- ConfFromParameters(dbschema = "acs_mlstats_allura_all", group = "fuego")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
@@ -63,12 +55,13 @@ if (is.na(mailing_lists$mailing_list)) {
 }
 
 # Countries
+country_limit = 30
 q <- paste("SELECT count(m.message_id) as total, country 
-			FROM messages m  
-			JOIN messages_people mp ON mp.message_ID=m.message_id  
-			JOIN people p ON mp.email_address = p.email_address 
-			GROUP BY country 
-			ORDER BY total desc LIMIT 30")
+            FROM messages m  
+            JOIN messages_people mp ON mp.message_ID=m.message_id  
+            JOIN people p ON mp.email_address = p.email_address 
+            GROUP BY country 
+            ORDER BY total desc LIMIT ", country_limit)
 query <- new ("Query", sql = q)
 data <- run(query)
 countries<-data$country
@@ -84,13 +77,16 @@ for (country in countries) {
 static_data <- mls_static_info()
 createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
+if (FALSE) { 
 for (mlist in mailing_lists$mailing_list) {
     analyze.monthly.list(mlist)
     # analList(mlist)
 }
+}
+
 # analAggregated()
 data.monthly <- get.monthly()
-createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))	
+createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders
 top_senders_data <- list()
