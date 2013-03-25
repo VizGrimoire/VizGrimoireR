@@ -72,25 +72,22 @@ q <- paste("SELECT count(m.message_id) as total, country
 query <- new ("Query", sql = q)
 data <- run(query)
 countries<-data$country
+createJSON (countries, paste("data/json/mls-countries.json",sep=''))
 
 for (country in countries) {
-    if (is.na(country)) next 
-    if (country == "") country ="Unknown"
+    if (is.na(country)) next
     print (country)
     analyze.monthly.mls.countries(country)
 }
-exit
-
-	
 
 # Aggregated data
 static_data <- mls_static_info()
 createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
-## for (mlist in mailing_lists$mailing_list) {
-##     analyze.monthly.list(mlist)
-##     # analList(mlist)
-## }
+for (mlist in mailing_lists$mailing_list) {
+    analyze.monthly.list(mlist)
+    # analList(mlist)
+}
 # analAggregated()
 data.monthly <- get.monthly()
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))	
