@@ -1789,6 +1789,8 @@ get.monthly <- function () {
   return (mls_monthly)
 }
 
+source('R/AuxiliaryMLS.R')
+
 analyze.monthly.list <- function (listname) {
 
     field = "mailing_list"
