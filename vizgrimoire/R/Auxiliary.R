@@ -89,6 +89,8 @@ ConfFromOptParse <- function (datasource="") {
 					help="Reports to be generated (repositories, companies)"),			
 			make_option(c("-s", "--start"), dest="startdate", 
 					help="Start date for the report", default="1900-01-01"),
+                        make_option(c("-g", "--granularity"), dest="granularity",
+                                        help="Granularity for the report (months, weeks)", default="months"),
 			make_option(c("-e", "--end"), dest="enddate", 
 					help="End date for the report", default="2100-01-01")
 	)	
