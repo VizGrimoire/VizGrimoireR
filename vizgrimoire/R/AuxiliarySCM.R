@@ -26,27 +26,27 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
 
-evol_commits <- function(granularity){
+evol_commits <- function(period){
       #Commits evolution
     
       q<- paste("select m.id as id,
                                       m.year as year,
-                                      m.month as month,
+                                      m.",period," as ",period,",
                                       DATE_FORMAT(m.date, '%b %Y') as date,
                                       IFNULL(pm.commits, 0) as commits
-                               from   months m
+                               from   ",period,"s m
                                left join(
                                       select year(s.date) as year, 
-                    month(s.date) as month, 
+                    ",period,"(s.date) as ",period,", 
                     count(distinct(s.id)) as commits
                                       from   scmlog s 
                                       group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                                       order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                                on (
                                       m.year = pm.year and
-                                      m.month = pm.month);")
+                                      m.",period," = pm.",period,");", sep="")
     
       query <- new ("Query", sql = q)
       data_commits <- run(query)
@@ -54,56 +54,56 @@ evol_commits <- function(granularity){
 }
 
 
-evol_committers <- function(granularity){
+evol_committers <- function(period){
       #Committers evolution
       q <- paste ("select m.id as id,
                                       m.year as year,
-                                      m.month as month,
+                                      m.",period," as ",period,",
                                       DATE_FORMAT(m.date, '%b %Y') as date,
                                       IFNULL(pm.committers, 0) as committers
-                               from   months m
+                               from   ",period,"s m
                                left join(
                                       select year(s.date) as year, 
-                    month(s.date) as month, 
+                    ",period,"(s.date) as ",period,", 
                     count(distinct(pup.upeople_id)) as committers
                                       from   scmlog s,
                     people_upeople pup
                                       where s.committer_id = pup.people_id 
                                       group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                                       order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                                on (
                                       m.year = pm.year and
-                                      m.month = pm.month);")
+                                      m.",period," = pm.",period,");", sep="")
     
       query <- new ("Query", sql = q)
       data_committers <- run(query)
       return (data_committers)
 }
 
-evol_authors <- function(granularity){
+evol_authors <- function(period){
 	# Authors evolution
       q <- paste ("select m.id as id,
                                       m.year as year,
-                                      m.month as month,
+                                      m.",period," as ",period,",
                                       DATE_FORMAT(m.date, '%b %Y') as date,
                                       IFNULL(pm.authors, 0) as authors
-                               from   months m
+                               from   ",period,"s m
                                left join(
                                       select year(s.date) as year, 
-                    month(s.date) as month, 
+                    ",period,"(s.date) as ",period,", 
                     count(distinct(pup.upeople_id)) as authors
                                       from   scmlog s,
                     people_upeople pup
                                       where s.author_id = pup.people_id 
                                       group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                                       order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                                on (
                                       m.year = pm.year and
-                                      m.month = pm.month);")
+                                      m.",period," = pm.",period,");", sep="")
 	
     query <- new ("Query", sql = q)
     data_authors <- run(query)
@@ -112,29 +112,29 @@ evol_authors <- function(granularity){
 
 
 
-evol_files <- function(granularity){
+evol_files <- function(period){
     
-      #Files per month
+      #Files per ",period,"
       q <- paste("select m.id as id,
                                       m.year as year,
-                                      m.month as month,
+                                      m.",period," as ",period,",
                                       DATE_FORMAT(m.date, '%b %Y') as date,
                                       IFNULL(pm.files, 0) as files
-                               from   months m
+                               from   ",period,"s m
                                left join(
                                       select year(s.date) as year, 
-                    month(s.date) as month, 
+                    ",period,"(s.date) as ",period,", 
                     count(distinct(a.file_id)) as files
                                       from   scmlog s, 
                     actions a
                                       where  a.commit_id = s.id
                                       group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                                       order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                                on (
                                       m.year = pm.year and
-                                      m.month = pm.month);")
+                                      m.",period," = pm.",period,");", sep="")
     
     
       query <- new ("Query", sql = q)
@@ -143,29 +143,29 @@ evol_files <- function(granularity){
 }
 
 
-evol_branches <- function(granularity){
+evol_branches <- function(period){
     
-      #Branches per month
+      #Branches per ",period,"
       q <- paste("select m.id as id,
                                       m.year as year,
-                                      m.month as month,
+                                      m.",period," as ",period,",
                                       DATE_FORMAT(m.date, '%b %Y') as date,
                                       IFNULL(pm.branches, 0) as branches
-                               from   months m
+                               from   ",period,"s m
                                left join(
                                       select year(s.date) as year, 
-                    month(s.date) as month, 
+                    ",period,"(s.date) as ",period,", 
                     count(distinct(a.branch_id)) as branches
                                       from   scmlog s, 
                     actions a
                                       where  a.commit_id = s.id
                                       group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                                       order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                                on (     
                                       m.year = pm.year and
-                                      m.month = pm.month);")
+                                      m.",period," = pm.",period,");", sep="")
     
       query <- new ("Query", sql = q)
       data_branches <- run(query)
@@ -173,42 +173,42 @@ evol_branches <- function(granularity){
 }
 
 
-evol_repositories <- function(granularity) {
+evol_repositories <- function(period) {
     
-      # Repositories per month
+      # Repositories per ",period,"
       q <- paste("select m.id as id,
                                       m.year as year,
-                                      m.month as month,
+                                      m.",period," as ",period,",
                                       DATE_FORMAT(m.date, '%b %Y') as date,
                                       IFNULL(pm.repositories, 0) as repositories
-                               from   months m
+                               from   ",period,"s m
                                left join(
                                       select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     count(distinct(s.repository_id)) as repositories
                                       from   scmlog s
                                       group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                                       order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                                on (
                                       m.year = pm.year and
-                                      m.month = pm.month);")
+                                      m.",period," = pm.",period,");", sep="")
       query <- new ("Query", sql = q)
       data_repositories <- run(query)
       return (data_repositories)
 }
 
-evol_companies <- function(){	
+evol_companies <- function(period){	
 	q <- paste("select m.id as id,
                     m.year as year,
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date,
                     IFNULL(pm.companies, 0) as num_companies
-                    from   months m
+                    from   ",period,"s m
                     left join(
                     select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     count(distinct(upc.company_id)) as companies
                     from   scmlog s,
                     people_upeople pup,
@@ -217,18 +217,18 @@ evol_companies <- function(){
                     pup.upeople_id = upc.upeople_id and
                     s.date >= upc.init and 
                     s.date <= upc.end
-                    group by year(s.date), month(s.date)
-                    order by year(s.date), month(s.date)) 
+                    group by year(s.date), ",period,"(s.date)
+                    order by year(s.date), ",period,"(s.date)) 
                     as pm
                     on (  
                     m.year = pm.year and
-                    m.month = pm.month)
-                    order by m.id;")	
+                    m.",period," = pm.",period,")
+                    order by m.id;", sep="")	
 	companies<- query(q)
 	return(companies)
 }
 
-evol_info_data <- function() {
+evol_info_data <- function(period) {
 	# Get some general stats from the database
 	##
 	q <- paste("SELECT count(s.id) as commits, 
@@ -269,13 +269,13 @@ evol_info_data <- function() {
 	query <- new("Query", sql = q)
 	data6 <- run(query)	
 	
-	q <- paste("select count(distinct(s.id))/timestampdiff(month,min(s.date),max(s.date)) 
-					as avg_commits_month from scmlog s")
+	q <- paste("select count(distinct(s.id))/timestampdiff(",period,",min(s.date),max(s.date)) 
+					as avg_commits_",period," from scmlog s", sep="")
 	query <- new("Query", sql = q)
 	data7 <- run(query)	
 	
-	q <- paste("select count(distinct(a.file_id))/timestampdiff(month,min(s.date),max(s.date)) 
-					as avg_files_month from scmlog s, actions a where a.commit_id=s.id")
+	q <- paste("select count(distinct(a.file_id))/timestampdiff(",period,",min(s.date),max(s.date)) 
+					as avg_files_",period," from scmlog s, actions a where a.commit_id=s.id", sep="")
 	query <- new("Query", sql = q)
 	data8 <- run(query)	
 	
@@ -286,15 +286,15 @@ evol_info_data <- function() {
 	query <- new("Query", sql = q)
 	data9 <- run(query)	
 	
-	q <- paste("select count(distinct(s.author_id))/timestampdiff(month,min(s.date),max(s.date)) 
-					as avg_authors_month from scmlog s")
+	q <- paste("select count(distinct(s.author_id))/timestampdiff(",period,",min(s.date),max(s.date)) 
+					as avg_authors_",period," from scmlog s", sep="")
 	query <- new("Query", sql = q)
 	data10 <- run(query)	
 	
-	q <- paste("select count(distinct(pup.upeople_id))/timestampdiff(month,min(s.date),max(s.date)) as avg_committers_month 
+	q <- paste("select count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_committers_",period," 
                     from scmlog s,
                     people_upeople pup
-                    where s.committer_id = pup.people_id")
+                    where s.committer_id = pup.people_id", sep="")
 	query <- new("Query", sql = q)
 	data11 <- run(query)	
 	
@@ -423,17 +423,17 @@ companies_name <- function() {
 	return (data)
 }
 
-company_commits <- function(company_name){		
+company_commits <- function(company_name, period){		
 	print (company_name)
 	q <- paste("select m.id as id,
                     m.year as year,
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date,
                     IFNULL(pm.commits, 0) as commits
-                    from  months m
+                    from  ",period,"s m
                     left join(
                     select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     count(distinct(s.id)) as commits
                     from   scmlog s,
                     people_upeople pup,
@@ -446,29 +446,29 @@ company_commits <- function(company_name){
                     upc.company_id = c.id and
                     c.name =", company_name, "
                     group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                     order by year(s.date),
-                    month(s.date)) as pm
+                    ",period,"(s.date)) as pm
                     on (
                     m.year = pm.year and
-                    m.month = pm.month)
-                    order by m.id;")
+                    m.",period," = pm.",period,")
+                    order by m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)	
 }
 
-company_files <- function(company_name) {
+company_files <- function(company_name, period) {
 	
 	q <- paste ("select m.id as id,
                     m.year as year,
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date,
                     IFNULL(pm.files, 0) as files
-                    from   months m
+                    from   ",period,"s m
                     left join(
                     select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     count(distinct(a.file_id)) as files
                     from   scmlog s,
                     actions a,
@@ -483,28 +483,28 @@ company_files <- function(company_name) {
                     upc.company_id = c.id and
                     c.name =", company_name, "
                     group by year(s.date),
-                    month(s.date) 
+                    ",period,"(s.date) 
                     order by year(s.date),
-                    month(s.date)) as pm
+                    ",period,"(s.date)) as pm
                     on (
                     m.year = pm.year and
-                    m.month = pm.month)
-                    order by m.id;")
+                    m.",period," = pm.",period,")
+                    order by m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
 }
 
-company_authors <- function(company_name) {		
+company_authors <- function(company_name, period) {		
 	q <- paste ("select m.id as id,
                     m.year as year,
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date,
                     IFNULL(pm.authors, 0) as authors
-                    from   months m
+                    from   ",period,"s m
                     left join(
                     select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     count(distinct(s.author_id)) as authors
                     from   scmlog s,
                     people_upeople pup,
@@ -517,28 +517,28 @@ company_authors <- function(company_name) {
                     upc.company_id = c.id and
                     c.name =", company_name, "
                     group by year(s.date),
-                    month(s.date) 
+                    ",period,"(s.date) 
                     order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                     on (
                     m.year = pm.year and
-                    m.month = pm.month)
-                    order by m.id;")
+                    m.",period," = pm.",period,")
+                    order by m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
 }
 
-company_committers <- function(company_name) {		
+company_committers <- function(company_name, period) {		
 	q <- paste ("select m.id as id,
                     m.year as year,
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date,
                     IFNULL(pm.committers, 0) as committers
-                    from   months m
+                    from   ",period,"s m
                     left join(
                     select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     count(distinct(s.committer_id)) as committers
                     from   scmlog s,
                     people_upeople pup,
@@ -551,30 +551,30 @@ company_committers <- function(company_name) {
                     upc.company_id = c.id and
                     c.name =", company_name, "
                     group by year(s.date),
-                    month(s.date) 
+                    ",period,"(s.date) 
                     order by year(s.date),
-                    month(s.date) ) as pm
+                    ",period,"(s.date) ) as pm
                     on (
                     m.year = pm.year and
-                    m.month = pm.month)
-                    order by m.id;")
+                    m.",period," = pm.",period,")
+                    order by m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
 }
 
-company_lines <- function(company_name) {
+company_lines <- function(company_name, period) {
 	
 	q <- paste ("select m.id as id,
                     m.year as year,
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date,
                     IFNULL(pm.added_lines, 0) as added_lines,
                     IFNULL(pm.removed_lines, 0) as removed_lines
-                    from   months m
+                    from   ",period,"s m
                     left join(
                     select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     sum(cl.added) as added_lines,
                     sum(cl.removed) as removed_lines
                     from   commits_lines cl,
@@ -590,19 +590,19 @@ company_lines <- function(company_name) {
                     upc.company_id = c.id and
                     c.name =", company_name, "
                     group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                     order by year(s.date),
-                    month(s.date)) as pm
+                    ",period,"(s.date)) as pm
                     on (
                     m.year = pm.year and
-                    m.month = pm.month)
-                    order by m.id;")
+                    m.",period," = pm.",period,")
+                    order by m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)	
 }
 
-evol_info_data_company <- function(company_name) {
+evol_info_data_company <- function(company_name, period) {
 	
 	# Get some general stats from the database
 	##
@@ -653,7 +653,7 @@ evol_info_data_company <- function(company_name) {
                     c.name =", company_name)
 	query <- new("Query", sql = q)
 	data5 <- run(query)	
-	q <- paste("select count(s.id)/timestampdiff(month,min(s.date),max(s.date)) as avg_commits_month
+	q <- paste("select count(s.id)/timestampdiff(",period,",min(s.date),max(s.date)) as avg_commits_",period,"
                     from scmlog s,
                     people_upeople pup,
                     upeople_companies upc,
@@ -663,10 +663,10 @@ evol_info_data_company <- function(company_name) {
                     s.date >= upc.init and 
                     s.date <= upc.end and
                     upc.company_id = c.id and
-                    c.name =", company_name)
+                    c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data7 <- run(query)	
-	q <- paste("select count(distinct(a.file_id))/timestampdiff(month,min(s.date),max(s.date)) as avg_files_month
+	q <- paste("select count(distinct(a.file_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_files_",period,"
                     from scmlog s, 
                     actions a,
                     people_upeople pup,
@@ -678,7 +678,7 @@ evol_info_data_company <- function(company_name) {
                     s.date >= upc.init and 
                     s.date <= upc.end and
                     upc.company_id = c.id and
-                    c.name =", company_name)
+                    c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data8 <- run(query)	
 	q <- paste("select count(distinct(s.id))/count(distinct(s.author_id)) as avg_commits_author
@@ -694,7 +694,7 @@ evol_info_data_company <- function(company_name) {
                     c.name =", company_name)
 	query <- new("Query", sql = q)
 	data9 <- run(query)	
-	q <- paste("select count(distinct(s.author_id))/timestampdiff(month,min(s.date),max(s.date)) as avg_authors_month
+	q <- paste("select count(distinct(s.author_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period,"
                     from scmlog s,
                     people_upeople pup,
                     upeople_companies upc,
@@ -704,7 +704,7 @@ evol_info_data_company <- function(company_name) {
                     s.date >= upc.init and 
                     s.date <= upc.end and
                     upc.company_id = c.id and
-                    c.name =", company_name)
+                    c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data10 <- run(query)	
 	q <- paste("select count(distinct(a.file_id))/count(distinct(s.author_id)) as avg_files_author
@@ -842,16 +842,16 @@ company_top_authors_year <- function(company_name, year){
 	return (data)
 }
 
-evol_companies <- function(){	
+evol_companies <- function(period){	
 	q <- paste("select m.id as id,
                     m.year as year,
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date,
                     IFNULL(pm.companies, 0) as num_companies
-                    from   months m
+                    from   ",period,"s m
                     left join(
                     select year(s.date) as year,
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     count(distinct(upc.company_id)) as companies
                     from   scmlog s,
                     people_upeople pup,
@@ -861,13 +861,13 @@ evol_companies <- function(){
                     s.date >= upc.init and 
                     s.date <= upc.end
                     group by year(s.date),
-                    month(s.date)
+                    ",period,"(s.date)
                     order by year(s.date),
-                    month(s.date)) as pm
+                    ",period,"(s.date)) as pm
                     on (  
                     m.year = pm.year and
-                    m.month = pm.month)
-                    order by m.id;")
+                    m.",period," = pm.",period,")
+                    order by m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)	
@@ -880,60 +880,60 @@ repos_name <- function() {
 	return (data)	
 }
 
-repo_commits <- function(repo_name){		
-	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+repo_commits <- function(repo_name, period){		
+	q <- paste("SELECT m.id as id, m.year as year, m.",period," as ",period,",
 					DATE_FORMAT(m.date, '%b %Y') as date, 
 					IFNULL(pm.commits, 0) as commits
-					FROM months m
+					FROM ",period,"s m
 					LEFT JOIN (
-					SELECT year(s.date) as year, month(s.date) as month,
+					SELECT year(s.date) as year, ",period,"(s.date) as ",period,",
 					COUNT(distinct(s.id)) as commits
 					FROM scmlog s, repositories r
 					WHERE r.name =", repo_name, " AND r.id = s.repository_id
-					GROUP BY YEAR(s.date), MONTH(s.date)
+					GROUP BY YEAR(s.date), ",period,"(s.date)
 					ORDER BY YEAR(s.date),
-					MONTH(s.date)) 
+					",period,"(s.date)) 
 					AS pm
-					ON (m.year = pm.year and m.month = pm.month)
-					ORDER BY m.id;")
+					ON (m.year = pm.year and m.",period," = pm.",period,")
+					ORDER BY m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)		
 }
 
-repo_files <- function(repo_name) {		
-	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+repo_files <- function(repo_name, period) {		
+	q <- paste("SELECT m.id as id, m.year as year, m.",period," as ",period,",
 					DATE_FORMAT(m.date, '%b %Y') as date, 
 					IFNULL(pm.files, 0) as files
-					FROM months m
+					FROM ",period,"s m
 					LEFT JOIN (
-					SELECT year(s.date) as year, month(s.date) as month,
+					SELECT year(s.date) as year, ",period,"(s.date) as ",period,",
 					COUNT(distinct(a.file_id)) as files
 					FROM scmlog s, actions a, repositories r
 					WHERE r.name =", repo_name, " AND r.id = s.repository_id
 					AND a.commit_id = s.id
-					GROUP BY YEAR(s.date), MONTH(s.date)
+					GROUP BY YEAR(s.date), ",period,"(s.date)
 					ORDER BY YEAR(s.date),
-					MONTH(s.date)) 
+					",period,"(s.date)) 
 					AS pm
-					ON (m.year = pm.year and m.month = pm.month)
-					ORDER BY m.id;")
+					ON (m.year = pm.year and m.",period," = pm.",period,")
+					ORDER BY m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)		
 }
 
 
-repo_committers <- function(repo_name) {
+repo_committers <- function(repo_name, period) {
 	q <- paste("SELECT m.id as id, 
                     m.year as year, 
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date, 
                     IFNULL(pm.committers, 0) as committers
-                    FROM months m
+                    FROM ",period,"s m
                     LEFT JOIN (
                     SELECT year(s.date) as year, 
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     COUNT(distinct(pup.upeople_id)) as committers
                     FROM scmlog s, 
                     people_upeople pup, 
@@ -942,29 +942,29 @@ repo_committers <- function(repo_name) {
                     r.id = s.repository_id and
                     s.committer_id = pup.people_id
                     GROUP BY YEAR(s.date), 
-                    MONTH(s.date)
+                    ",period,"(s.date)
                     ORDER BY YEAR(s.date),
-                    MONTH(s.date)) 
+                    ",period,"(s.date)) 
                     AS pm
                     ON (m.year = pm.year and 
-                    m.month = pm.month)
-                    ORDER BY m.id;")
+                    m.",period," = pm.",period,")
+                    ORDER BY m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)			
 }
 
 
-repo_authors <- function(repo_name) {
+repo_authors <- function(repo_name, period) {
 	q <- paste("SELECT m.id as id, 
                     m.year as year, 
-                    m.month as month,
+                    m.",period," as ",period,",
                     DATE_FORMAT(m.date, '%b %Y') as date, 
                     IFNULL(pm.authors, 0) as authors
-                    FROM months m
+                    FROM ",period,"s m
                     LEFT JOIN (
                     SELECT year(s.date) as year, 
-                    month(s.date) as month,
+                    ",period,"(s.date) as ",period,",
                     COUNT(distinct(pup.upeople_id)) as authors
                     FROM scmlog s, 
                     people_upeople pup, 
@@ -973,43 +973,43 @@ repo_authors <- function(repo_name) {
                     r.id = s.repository_id and
                     s.author_id = pup.people_id
                     GROUP BY YEAR(s.date), 
-                    MONTH(s.date)
+                    ",period,"(s.date)
                     ORDER BY YEAR(s.date),
-                    MONTH(s.date)) 
+                    ",period,"(s.date)) 
                     AS pm
                     ON (m.year = pm.year and 
-                    m.month = pm.month)
-                    ORDER BY m.id;")
+                    m.",period," = pm.",period,")
+                    ORDER BY m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)			
 }
 
-repo_lines <- function(repo_name) {
-	q <- paste("SELECT m.id as id, m.year as year, m.month as month,
+repo_lines <- function(repo_name, period) {
+	q <- paste("SELECT m.id as id, m.year as year, m.",period," as ",period,",
 					DATE_FORMAT(m.date, '%b %Y') as date, 
 					IFNULL(pm.added_lines, 0) as added_lines,
 					IFNULL(pm.removed_lines, 0) as removed_lines
-					FROM months m
+					FROM ",period,"s m
 					LEFT JOIN (
-					SELECT year(s.date) as year, month(s.date) as month,
+					SELECT year(s.date) as year, ",period,"(s.date) as ",period,",
 					SUM(cl.added) as added_lines,
 					SUM(cl.removed) as removed_lines
 					FROM scmlog s, commits_lines cl, repositories r
 					WHERE r.name =", repo_name, " AND r.id = s.repository_id
 					AND cl.commit_id = s.id
-					GROUP BY YEAR(s.date), MONTH(s.date)
+					GROUP BY YEAR(s.date), ",period,"(s.date)
 					ORDER BY YEAR(s.date),
-					MONTH(s.date)) 
+					",period,"(s.date)) 
 					AS pm
-					ON (m.year = pm.year and m.month = pm.month)
-					ORDER BY m.id;")
+					ON (m.year = pm.year and m.",period," = pm.",period,")
+					ORDER BY m.id;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)				
 }
 
-evol_info_data_repo <- function(repo_name) {
+evol_info_data_repo <- function(repo_name, period) {
 	
 	# Get some general stats from the database
 	##
@@ -1045,20 +1045,20 @@ evol_info_data_repo <- function(repo_name) {
 	query <- new("Query", sql = q)
 	data2 <- run(query)
 	
-	q <- paste("select count(s.id)/timestampdiff(month,min(s.date),max(s.date)) 
-					as avg_commits_month
+	q <- paste("select count(s.id)/timestampdiff(",period,",min(s.date),max(s.date)) 
+					as avg_commits_",period,"
 					FROM scmlog s, repositories r
 					WHERE r.id = s.repository_id AND
-					r.name =", repo_name)
+					r.name =", repo_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data3 <- run(query)
 	
-	q <- paste("select count(distinct(a.file_id))/timestampdiff(month,min(s.date),max(s.date)) 
-					as avg_files_month
+	q <- paste("select count(distinct(a.file_id))/timestampdiff(",period,",min(s.date),max(s.date)) 
+					as avg_files_",period,"
 					FROM scmlog s, actions a, repositories r
 					WHERE a.commit_id=s.id AND
 					r.id = s.repository_id AND
-					r.name =", repo_name)
+					r.name =", repo_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data4 <- run(query)
 	
@@ -1072,13 +1072,13 @@ evol_info_data_repo <- function(repo_name) {
 	query <- new("Query", sql = q)
 	data5 <- run(query)
 	
-	q <- paste("select count(distinct(pup.upeople_id))/timestampdiff(month,min(s.date),max(s.date)) AS avg_authors_month
+	q <- paste("select count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) AS avg_authors_",period,"
                     FROM scmlog s, 
                     repositories r,
                     people_upeople pup
                     WHERE r.id = s.repository_id AND
                     s.author_id = pup.people_id and
-                    r.name =", repo_name)
+                    r.name =", repo_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data6 <- run(query)
 	

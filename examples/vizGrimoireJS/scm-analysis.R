@@ -44,28 +44,35 @@ library("vizgrimoire")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
+if (conf$granularity == 'months'){
+   period = 'month'
+}
+if (conf$granularity == 'weeks'){
+   period='week'
+}
+
 #Commits per month
-data_commits <- evol_commits()
+data_commits <- evol_commits(period)
 
 #Committers per month
-data_committers = evol_committers()
+data_committers = evol_committers(period)
 
 # Authors per month
-data_authors = evol_authors()
+data_authors = evol_authors(period)
 
 #Files per month
-data_files = evol_files()
+data_files = evol_files(period)
 
 #Branches per month
-data_branches = evol_branches()
+data_branches = evol_branches(period)
 
 #Repositories per month
-data_repositories = evol_repositories()
+data_repositories = evol_repositories(period)
 
-if (conf$reports == 'companies') data_companies = evol_companies()
+if (conf$reports == 'companies') data_companies = evol_companies(period)
 
 # Fixed data
-info_data = evol_info_data()
+info_data = evol_info_data(period)
 
 if (conf$reports == 'companies') {
 	info_data_companies = evol_info_data_companies ()
@@ -120,11 +127,11 @@ if (conf$reports == 'companies') {
 		company_aux = paste(c("", company, ""), collapse='')
 		print (company_name)
 		 
-		commits <- company_commits(company_name)	
-		lines <-company_lines(company_name)
-		files <- company_files(company_name)
-		authors <- company_authors(company_name)
-		committers <- company_committers(company_name)
+		commits <- company_commits(company_name, period)	
+		lines <-company_lines(company_name, period)
+		files <- company_files(company_name, period)
+		authors <- company_authors(company_name, period)
+		committers <- company_committers(company_name, period)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
@@ -135,7 +142,7 @@ if (conf$reports == 'companies') {
 		
 		
 		print ("static info")
-		static_info <- evol_info_data_company(company_name)
+		static_info <- evol_info_data_company(company_name, period)
 		createJSON(static_info, paste(c("data/json/",company_aux,"-scm-static.json"), collapse=''))
 		
 		print ("top authors")
@@ -161,15 +168,15 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		print ("commits") 
-		commits <- repo_commits(repo_name)	
+		commits <- repo_commits(repo_name, period)	
 		# print ("lines")
-		# lines <- repo_lines(repo_name)
+		# lines <- repo_lines(repo_name, period)
 		lines <- ""
 		print ("files")
-		files <- repo_files(repo_name)
+		files <- repo_files(repo_name, period)
 		print ("people")
-		authors <- repo_authors(repo_name)
-		committers <- repo_committers(repo_name)
+		authors <- repo_authors(repo_name, period)
+		committers <- repo_committers(repo_name, period)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
@@ -179,7 +186,7 @@ if (conf$reports == 'repositories') {
 		createJSON(agg_data, paste(c("data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
 		print ("static info")
-		static_info <- evol_info_data_repo(repo_name)
+		static_info <- evol_info_data_repo(repo_name, period)
 		createJSON(static_info, paste(c("data/json/",repo_aux,"-scm-static.json"), collapse=''))		
 	}		
 }
