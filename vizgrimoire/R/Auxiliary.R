@@ -1419,7 +1419,7 @@ evol_info_data_companies <- function() {
 
 company_top_authors <- function(company_name) {
 	
-	q <- paste ("select u.identifier  as author,
+	q <- paste ("select u.identifier  as authors,
                             count(distinct(s.id)) as commits                         
                      from people p,
                           scmlog s,
@@ -1445,7 +1445,7 @@ company_top_authors <- function(company_name) {
 
 company_top_authors_year <- function(company_name, year){
 	
-	q <- paste ("select u.identifier  as author,
+	q <- paste ("select u.identifier as authors,
                             count(distinct(s.id)) as commits                         
                      from people p,
                           scmlog s,

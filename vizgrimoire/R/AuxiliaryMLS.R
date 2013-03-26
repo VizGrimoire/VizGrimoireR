@@ -213,10 +213,15 @@ mls_static_info <- function () {
 	q <- paste("SELECT mailing_list_url as url FROM mailing_lists limit 1")
 	query <- new ("Query", sql = q)
 	repo_info <- run(query)
+    
+    q <- paste("SELECT COUNT(DISTINCT(country)) AS countries from people")
+	query <- new ("Query", sql = q)
+	countries_info <- run(query)
 	
 	agg_data = merge(num_msg,num_ppl)
 	agg_data = merge(agg_data, num_repos)
 	agg_data = merge(agg_data, repo_info)
+    agg_data = merge(agg_data, countries_info)
 	return (agg_data)
 }
 
