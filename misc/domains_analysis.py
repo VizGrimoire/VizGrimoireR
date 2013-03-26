@@ -59,12 +59,14 @@ def create_tables(db, connector):
    return
 
 def connect(database):
-   user = 'xxx'
+   user = 'root'
    password = 'xxx'
-   host = 'xxx'
+   host = 'localhost'
 
    try:
-      db =  MySQLdb.connect(host,user,password,database)
+      # db =  MySQLdb.connect(host,user,password,database)
+      db = MySQLdb.connect(user = "root",
+                            db = "acs_cvsanaly_allura_1049")
       return db, db.cursor()
    except:
       print("Database connection error")

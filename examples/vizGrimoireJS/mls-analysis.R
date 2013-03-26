@@ -32,6 +32,10 @@ library("vizgrimoire")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
+# Aggregated data
+static_data <- mls_static_info()
+createJSON (static_data, paste("data/json/mls-static.json",sep=''))
+
 # Mailing lists
 query <- new ("Query", sql = "select distinct(mailing_list) from messages")
 mailing_lists <- run(query)
@@ -54,37 +58,31 @@ if (is.na(mailing_lists$mailing_list)) {
 	createJSON(repos, "data/json/mls-repos.json")	
 }
 
-# Countries
-country_limit = 30
-q <- paste("SELECT count(m.message_id) as total, country 
-            FROM messages m  
-            JOIN messages_people mp ON mp.message_ID=m.message_id  
-            JOIN people p ON mp.email_address = p.email_address 
-            GROUP BY country 
-            ORDER BY total desc LIMIT ", country_limit)
-query <- new ("Query", sql = q)
-data <- run(query)
-countries<-data$country
-createJSON (countries, paste("data/json/mls-countries.json",sep=''))
-
-for (country in countries) {
-    if (is.na(country)) next
-    print (country)
-    analyze.monthly.mls.countries(country)
+if (conf$reports == 'countries') {    
+    # Countries
+    country_limit = 30
+    q <- paste("SELECT count(m.message_id) as total, country 
+                FROM messages m  
+                JOIN messages_people mp ON mp.message_ID=m.message_id  
+                JOIN people p ON mp.email_address = p.email_address 
+                GROUP BY country 
+                ORDER BY total desc LIMIT ", country_limit)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    countries<-data$country
+    createJSON (countries, paste("data/json/mls-countries.json",sep=''))
+    
+    for (country in countries) {
+        if (is.na(country)) next
+        print (country)
+        analyze.monthly.mls.countries(country)
+    }
 }
 
-# Aggregated data
-static_data <- mls_static_info()
-createJSON (static_data, paste("data/json/mls-static.json",sep=''))
-
-if (FALSE) { 
 for (mlist in mailing_lists$mailing_list) {
     analyze.monthly.list(mlist)
-    # analList(mlist)
-}
 }
 
-# analAggregated()
 data.monthly <- get.monthly()
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 

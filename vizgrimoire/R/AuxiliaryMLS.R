@@ -17,18 +17,18 @@
 ## This file is a part of the vizGrimoire R package
 ##  (an R library for the MetricsGrimoire and vizGrimoire systems)
 ##
-## Auxiliary.R
+## AuxiliaryMLS.R
 ##
-## Auxiliary code for the classes in the package
+## Queries for MLS data analysis
 ##
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
 
-get.monthly <- function () {
-      ## Sent messages
-      q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
+get.monthly <- function (reports="") {
+    ## Sent messages
+    q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
 	                year(first_date) AS year,
 		            month(first_date) AS month,
 		            DATE_FORMAT (first_date, '%b %Y') as date,
@@ -36,11 +36,11 @@ get.monthly <- function () {
 		          FROM messages
 		          GROUP BY year,month
 		          ORDER BY year,month")
-      query <- new ("Query", sql = q)
-      sent_monthly <- run(query)
+    query <- new ("Query", sql = q)
+    sent_monthly <- run(query)
 	
-      ## Senders
-      q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ## Senders
+    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
 		             year(first_date) AS year,
 		             month(first_date) AS month,
 		             DATE_FORMAT (first_date, '%b %Y') as date,
@@ -50,49 +50,52 @@ get.monthly <- function () {
 		           WHERE type_of_recipient='From'
 		           GROUP BY year,month
 		           ORDER BY year,month")
-      query <- new ("Query", sql = q)
-      senders_monthly <- run(query)
+    query <- new ("Query", sql = q)
+    senders_monthly <- run(query)
       
-      # repositories
-      field = "mailing_list"
-      q <- paste ("select distinct(mailing_list) from messages")
-      query <- new ("Query", sql = q)
-      mailing_lists <- run(query)
+    # repositories
+    field = "mailing_list"
+    q <- paste ("select distinct(mailing_list) from messages")
+    query <- new ("Query", sql = q)
+    mailing_lists <- run(query)
       
-      if (is.na(mailing_lists$mailing_list)) {
-	          field = "mailing_list_url"
-      }		
-      q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-				     year(first_date) AS year,
-				     month(first_date) AS month,
-				     DATE_FORMAT (first_date, '%b %Y') as date,
-				     count(DISTINCT(",field,")) AS repositories
-				   FROM messages
-				   GROUP BY year,month
-				   ORDER BY year,month")
-      query <- new ("Query", sql = q)
-      repos_monthly <- run(query)
+    if (is.na(mailing_lists$mailing_list)) {
+        field = "mailing_list_url"
+    }		
+    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+                   year(first_date) AS year,
+                   month(first_date) AS month,
+                   DATE_FORMAT (first_date, '%b %Y') as date,
+                   count(DISTINCT(",field,")) AS repositories
+                 FROM messages
+                 GROUP BY year,month
+                 ORDER BY year,month")
+    query <- new ("Query", sql = q)
+    repos_monthly <- run(query)
       
-      # countries
-      q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-                     year(first_date) AS year,
-                     month(first_date) AS month,
-                     DATE_FORMAT (first_date, '%b %Y') as date,
-                     count(DISTINCT(country)) AS countries
-                     FROM messages m
-                   JOIN messages_people mp ON mp.message_ID=m.message_id
-                   JOIN people p ON mp.email_address = p.email_address
-                   GROUP BY year,month
-                   ORDER BY year,month")
-      print(q)
-      query <- new ("Query", sql = q)
-      countries_monthly <- run(query)
-      
-      mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
-      mls_monthly <- completeZeroMonthly (merge (mls_monthly, repos_monthly, all = TRUE))
-      mls_monthly <- completeZeroMonthly (merge (mls_monthly, countries_monthly, all = TRUE))
-      mls_monthly[is.na(mls_monthly)] <- 0
-      return (mls_monthly)
+    if (reports == "countries") {
+        # countries
+        q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+                         year(first_date) AS year,
+                         month(first_date) AS month,
+                         DATE_FORMAT (first_date, '%b %Y') as date,
+                         count(DISTINCT(country)) AS countries
+                         FROM messages m
+                       JOIN messages_people mp ON mp.message_ID=m.message_id
+                       JOIN people p ON mp.email_address = p.email_address
+                       GROUP BY year,month
+                       ORDER BY year,month")
+        print(q)
+        query <- new ("Query", sql = q)
+        countries_monthly <- run(query)
+    }
+  
+    mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
+    mls_monthly <- completeZeroMonthly (merge (mls_monthly, repos_monthly, all = TRUE))
+    if (reports == "countries") 
+        mls_monthly <- completeZeroMonthly (merge (mls_monthly, countries_monthly, all = TRUE))
+    mls_monthly[is.na(mls_monthly)] <- 0
+    return (mls_monthly)
 }
 
 analyze.monthly.list <- function (listname) {
@@ -185,7 +188,7 @@ analyze.monthly.list <- function (listname) {
 }
 
 
-mls_static_info <- function () {
+mls_static_info <- function (reports="") {
 	q <- paste ("SELECT count(*) as sent,
 					DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
 					DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date
@@ -214,14 +217,17 @@ mls_static_info <- function () {
 	query <- new ("Query", sql = q)
 	repo_info <- run(query)
     
-    q <- paste("SELECT COUNT(DISTINCT(country)) AS countries from people")
-	query <- new ("Query", sql = q)
-	countries_info <- run(query)
+    if (reports == "country") {
+        q <- paste("SELECT COUNT(DISTINCT(country)) AS countries from people")
+	    query <- new ("Query", sql = q)
+	    countries_info <- run(query)
+    }
 	
 	agg_data = merge(num_msg,num_ppl)
 	agg_data = merge(agg_data, num_repos)
 	agg_data = merge(agg_data, repo_info)
-    agg_data = merge(agg_data, countries_info)
+    if (reports == "country") 
+        agg_data = merge(agg_data, countries_info)
 	return (agg_data)
 }
 
