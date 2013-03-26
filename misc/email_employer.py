@@ -124,6 +124,22 @@ def insert_dates(people_companies):
 
    return people_companies_dates
 
+def insert_company(connector, company):
+   company_id = -1
+
+   query = "select * from companies where name = '"+company+"'"
+   results = execute_query(connector, query)
+   if len(results) == 0:
+      # new company detected
+      query = "insert into companies(name) values('"+company+"')"
+      execute_query(connector, query)
+      
+      query = "select id from companies where name='"+company.title()+"'"
+      results = execute_query(connector, query)
+      company_id = int(results[0][0])
+
+   return company_id
+
 def main(database, ee_file):
    # database: resultant database
    # ee_file:  email employer file
@@ -149,6 +165,11 @@ def main(database, ee_file):
          company = extra_data[0].lower()
          init_date = extra_data[1]
          end_date = extra_data[2]
+         #Inserting new companies (if this is the case) in companies table
+         company_id = insert_company(connector, company)
+         if company_id <> -1:
+            print "New company: " + company + ", id: " + str(company_id)
+            companies[company] = company_id
 
          # Retrieving data from email
          query = "select upeople_id from identities where identity = '"+ email +"' limit 1;"
@@ -157,12 +178,24 @@ def main(database, ee_file):
             continue # simply ignored
          upeople_id = int(results[0][0])
       
-         # Inserting new companies into table
-         query = "insert into upeople_companies(upeople_id, company_id, init, end) " + \
-                  "values("+ str(upeople_id) + ", " + \
-                  str(companies[company.lower()]) + ", " + \
-                  "'" + init_date + "', " + \
-                  "'" + end_date + "');"
+         # Inserting new companies timeframes into table
+
+         # First, checking that this tuple exists:
+         query = "select * from upeople_companies where upeople_id=" + str(upeople_id) +\
+                  " and company_id=" + str(companies[company.lower()]) + ";"
+         results = execute_query(connector, query)
+         if len(results) > 0:
+            # there exist previous data there (ideally initialized to generic values)
+            query = "update upeople_companies set init='" + init_date + "', end='" + end_date + "'" +\
+                    "where upeople_id=" + str(upeople_id) + " and company_id=" + str(companies[company.lower()]) + ";"
+
+         else:
+            query = "insert into upeople_companies(upeople_id, company_id, init, end) " + \
+                     "values("+ str(upeople_id) + ", " + \
+                     str(companies[company.lower()]) + ", " + \
+                     "'" + init_date + "', " + \
+                     "'" + end_date + "');"
+
          execute_query(connector, query)
 
 

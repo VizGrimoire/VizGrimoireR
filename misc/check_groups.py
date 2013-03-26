@@ -37,9 +37,9 @@ import sys
 import os
 
 def connect(database):
-   user = ''
-   password = ''
-   host = ''
+   user = 'xxx'
+   password = 'xxx'
+   host = 'xxx'
    try:
       db =  MySQLdb.connect(host,user,password,database)
       return db, db.cursor()
@@ -91,8 +91,9 @@ def insert_in_company(person, company_name, connector, db):
    results = execute_query(connector, query)
    if len(results) > 0:
       upeople_id = int(results[0][0])
-      query = "insert into upeople_companies(upeople_id, company_id)" + \
-           " values(" + str(upeople_id) + ", " + str(company_id) + ");"
+      query = "insert into upeople_companies(upeople_id, company_id, init, end)" + \
+           " values(" + str(upeople_id) + ", " + str(company_id) + \
+           ", '1900-01-01', '2100-01-01')"
 
       print query
       execute_query(connector, query)
