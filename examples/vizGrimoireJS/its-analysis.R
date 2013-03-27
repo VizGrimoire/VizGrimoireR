@@ -41,28 +41,46 @@ library("vizgrimoire")
 conf <- ConfFromOptParse('its')
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
-if (conf$backend == 'allura') closed_condition <- "new_value='CLOSED'"
-if (conf$backend == 'bugzilla') 
-	closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
-if (conf$backend == 'github') closed_condition <- "field='closed'"
-if (conf$backend == 'jira') 
-	closed_condition <- "new_value='CLOSED'"
-if (conf$backend == 'launchpad')
+# backends
+if (conf$backend == 'allura'){
+    closed_condition <- "new_value='CLOSED'"
+}
+if (conf$backend == 'bugzilla'){
+    closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
+}
+if (conf$backend == 'github'){
+    closed_condition <- "field='closed'"
+}
+if (conf$backend == 'jira'){
+    closed_condition <- "new_value='CLOSED'"
+}
+if (conf$backend == 'launchpad'){
     closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+}
 
-closed_monthly <- evol_closed(closed_condition)
-changed_monthly <- evol_changed()
-open_monthly <- evol_opened()
-repos_monthly <- its_evol_repositories();
+# period of time
+if (conf$granularity == 'months'){
+   period = 'month'
+}
+if (conf$granularity == 'weeks'){
+   period = 'week'
+}
 
-issues_monthly <- merge (open_monthly, closed_monthly, all = TRUE)
-issues_monthly <- merge (issues_monthly, changed_monthly, all = TRUE)
-issues_monthly <- merge (issues_monthly, repos_monthly, all = TRUE)
-issues_monthly[is.na(issues_monthly)] <- 0
+# dates
+startdate <- conf$startdate
+enddate <- conf$enddate
 
-issues_monthly <- completeZeroMonthly(issues_monthly)
+closed <- evol_closed(closed_condition, period, startdate, enddate)
+changed <- evol_changed(period, startdate, enddate)
+open <- evol_opened(period, startdate, enddate)
+repos <- its_evol_repositories(period, startdate, enddate)
 
-createJSON (issues_monthly, "data/json/its-evolutionary.json")
+issues <- merge (open, closed, all = TRUE)
+issues <- merge (issues, changed, all = TRUE)
+issues <- merge (issues, repos, all = TRUE)
+issues[is.na(issues)] <- 0
+
+createJSON (issues, "data/json/its-evolutionary.json")
 
 all_static_info <- its_static_info()
 createJSON (all_static_info, "data/json/its-static.json")
@@ -92,12 +110,12 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		# EVOLUTION INFO
-		closed <- repo_evol_closed(repo_name, closed_condition)
-		changed <- repo_evol_changed(repo_name)
-		opened <- repo_evol_opened(repo_name)		
+		closed <- repo_evol_closed(repo_name, closed_condition, period, startdate, enddate)
+		changed <- repo_evol_changed(repo_name, period, startdate, enddate)
+		opened <- repo_evol_opened(repo_name, period, startdate, enddate)                
 		agg_data = merge(closed, changed, all = TRUE)
 		agg_data = merge(agg_data, opened, all = TRUE)	
-		agg_data[is.na(agg_data)] <- 0				
+		agg_data[is.na(agg_data)] <- 0
 		createJSON(agg_data, paste(c("data/json/",repo_file,"-its-evolutionary.json"), collapse=''))
 		
 		# STATIC INFO

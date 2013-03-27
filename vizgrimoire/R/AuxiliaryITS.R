@@ -25,22 +25,32 @@
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
+##   Luis Cañas-Díaz <lcanas@bitergia.com>
 
 ## VizGrimoireJS ITS library
-evol_closed <- function (closed_condition) {
-	q <- paste ("SELECT YEAR(changed_on) * 12 + MONTH(changed_on) AS id,
-					YEAR(changed_on) as year,
-					MONTH(changed_on) as month,
-					DATE_FORMAT (changed_on, '%b %Y') as date,
-					count(issue_id) AS closed,
-					count(distinct(changed_by)) AS closers
-					FROM changes
-					WHERE ",closed_condition," 
-					GROUP BY year,month
-					ORDER BY year,month")
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)	
+evol_closed <- function (closed_condition, period, startdate, enddate) {
+    q <- paste("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.closed, 0) AS closed,
+                IFNULL(i.closers, 0) AS closers
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT YEAR(changed_on) AS year,
+                 ",period,"(changed_on) AS ",period,",
+                 count(issue_id) AS closed,
+                 count(distinct(changed_by)) AS closers
+                 FROM changes
+                 WHERE ",closed_condition,"
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)	
 }
 
 # Closed tickets: time ticket was open, first closed, time-to-first-close
@@ -60,46 +70,73 @@ evol_closed <- function (closed_condition) {
 #      WHERE issues.id = ch.issue_id")
 #res_issues_closed <- query(q)
 
-evol_changed <- function () {
-	# Changed and changers 
-	q <- paste ("SELECT year(changed_on) * 12 + month (changed_on) AS id,
-					year(changed_on) as year,
-					month(changed_on) as month,
-					DATE_FORMAT (changed_on, '%b %Y') as date,
-					count(changed_by) AS changed,
-					count(distinct(changed_by)) AS changers
-					FROM changes
-					GROUP BY year,month
-					ORDER BY year,month")
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)	
+evol_changed <- function (period, startdate, enddate) {
+    # Changed and changers
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.changed, 0) AS changed,
+                IFNULL(i.changers, 0) AS changers
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT YEAR(changed_on) AS year,
+                 ",period,"(changed_on) AS ",period,",
+                 count(changed_by) AS changed,
+                 count(distinct(changed_by)) AS changers
+                 FROM changes
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)	
 }
 
-evol_opened <- function () {
-	q <- paste ("SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
-					year(submitted_on) AS year,
-					month(submitted_on) AS month,
-					DATE_FORMAT (submitted_on, '%b %Y') as date,
-					count(submitted_by) AS opened,
-					count(distinct(submitted_by)) AS openers
-					FROM issues
-					GROUP BY year,month
-					ORDER BY year,month")
+evol_opened <- function (period, startdate, enddate) {
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.opened, 0) AS opened,
+                IFNULL(i.openers, 0) AS openers
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT YEAR(submitted_on) AS year,
+		 ",period,"(submitted_on) AS ",period,",
+                 count(submitted_by) AS opened,
+                 count(distinct(submitted_by)) AS openers
+                 FROM issues
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+
 	query <- new ("Query", sql = q)
 	data <- run(query)
 	return (data)
 }
 
-its_evol_repositories <- function() {
-	q <- paste ("SELECT year(submitted_on) * 12 + month(submitted_on) AS id,
-					year(submitted_on) AS year,
-					month(submitted_on) AS month,
-					DATE_FORMAT (submitted_on, '%b %Y') as date,
-					count(DISTINCT(tracker_id)) AS repositories
-					FROM issues
-					GROUP BY year,month
-					ORDER BY year,month")
+its_evol_repositories <- function(period, startdate, enddate) {
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.repositories, 0) AS repositories
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT YEAR(submitted_on) AS year,
+                 ",period,"(submitted_on) AS ",period,",
+                 count(DISTINCT(tracker_id)) AS repositories
+                 FROM issues
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
 	query <- new ("Query", sql = q)
 	data <- run(query)
 	return (data)
@@ -107,174 +144,203 @@ its_evol_repositories <- function() {
 
 
 its_people <- function() {
-	q <- paste ("select id,name,email,user_id from people")
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)
+    q <- paste ("select id,name,email,user_id from people")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 its_static_info <- function () {
-	## Get some general stats from the database and url info
-	##
-	q <- paste ("SELECT count(*) as tickets,
-					count(distinct(submitted_by)) as openers,
-					DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
-					DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
-					FROM issues")
-	query <- new ("Query", sql = q)
-	data <- run(query)
+    ## Get some general stats from the database and url info
+    ##
+    q <- paste ("SELECT count(*) as tickets,
+                 count(distinct(submitted_by)) as openers,
+                 DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
+                 DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
+                 FROM issues")
+    query <- new ("Query", sql = q)
+    data <- run(query)
 	
-	q <- paste ("SELECT count(distinct(changed_by)) as closers FROM changes WHERE ", closed_condition)
-	query <- new ("Query", sql = q)
-	data1 <- run(query)
+    q <- paste ("SELECT count(distinct(changed_by)) as closers FROM changes WHERE ", closed_condition)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
     
-	q <- paste ("SELECT count(distinct(changed_by)) as changers FROM changes")
-	query <- new ("Query", sql = q)
-	data2 <- run(query)
+    q <- paste ("SELECT count(distinct(changed_by)) as changers FROM changes")
+    query <- new ("Query", sql = q)
+    data2 <- run(query)
     
-	q <- paste ("SELECT count(*) as opened FROM issues")
-	query <- new ("Query", sql = q)
-	data3 <- run(query)
+    q <- paste ("SELECT count(*) as opened FROM issues")
+    query <- new ("Query", sql = q)
+    data3 <- run(query)
     
-	q <- paste ("SELECT count(distinct(issue_id)) as changed FROM changes")
-	query <- new ("Query", sql = q)
-	data4 <- run(query)
+    q <- paste ("SELECT count(distinct(issue_id)) as changed FROM changes")
+    query <- new ("Query", sql = q)
+    data4 <- run(query)
     
-	q <- paste ("SELECT count(distinct(issue_id)) as closed FROM changes WHERE ", closed_condition)
-	query <- new ("Query", sql = q)
-	data5 <- run(query)
+    q <- paste ("SELECT count(distinct(issue_id)) as closed FROM changes WHERE ", closed_condition)
+    query <- new ("Query", sql = q)
+    data5 <- run(query)
     
-	q <- paste ("SELECT url,name as type FROM trackers t JOIN supported_trackers s ON t.type = s.id limit 1")	
-	query <- new ("Query", sql = q)
-	data6 <- run(query)
+    q <- paste ("SELECT url,name as type FROM trackers t JOIN supported_trackers s ON t.type = s.id limit 1")	
+    query <- new ("Query", sql = q)
+    data6 <- run(query)
     
-	q <- paste ("SELECT count(*) as repositories FROM trackers")
-	query <- new ("Query", sql = q)
-	data7 <- run(query)
+    q <- paste ("SELECT count(*) as repositories FROM trackers")
+    query <- new ("Query", sql = q)
+    data7 <- run(query)
     
-	agg_data = merge(data, data1)
-	agg_data = merge(agg_data, data2)
-	agg_data = merge(agg_data, data3)
-	agg_data = merge(agg_data, data4)
-	agg_data = merge(agg_data, data5)
-	agg_data = merge(agg_data, data6)
-	agg_data = merge(agg_data, data7)
-	return(agg_data)
+    agg_data = merge(data, data1)
+    agg_data = merge(agg_data, data2)
+    agg_data = merge(agg_data, data3)
+    agg_data = merge(agg_data, data4)
+    agg_data = merge(agg_data, data5)
+    agg_data = merge(agg_data, data6)
+    agg_data = merge(agg_data, data7)
+    return(agg_data)
 }
 
 # Top
 top_closers <- function(days = 0) {
-	if (days == 0 ) {
-		q <- paste("SELECT p.user_id as closers, count(c.id) as closed 
-						FROM changes c JOIN people p ON c.changed_by = p.id 
-						WHERE ", closed_condition, " 
-						GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
-	} else {
-		query <- new ("Query", sql ="SELECT @maxdate:=max(changed_on) from changes limit 1;")
-		data <- run(query)
-		q <- paste("SELECT p.user_id as closers, count(c.id) as closed 
-						FROM changes c JOIN people p ON c.changed_by = p.id 
-						WHERE ", closed_condition, " 
-						AND c.id in (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,") 
-						GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")		
-	}
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)
+    if (days == 0 ) {
+        q <- paste("SELECT p.user_id as closers, count(c.id) as closed
+                    FROM changes c JOIN people p ON c.changed_by = p.id
+                    WHERE ", closed_condition, "
+                    GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
+    } else {
+        query <- new ("Query", sql ="SELECT @maxdate:=max(changed_on) from changes limit 1;")
+        data <- run(query)
+        q <- paste("SELECT p.user_id as closers, count(c.id) as closed
+                    FROM changes c JOIN people p ON c.changed_by = p.id
+                    WHERE ", closed_condition, "
+                    AND c.id in (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,")
+                    GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")		
+    }
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 
 its_repos_name <- function() {
-	# q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
-	q <- paste ("SELECT url AS name FROM trackers")
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)
+    # q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
+    q <- paste ("SELECT url AS name FROM trackers")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
-repo_evol_closed <- function(repo, closed_condition){
-	q <- paste ("SELECT YEAR(changed_on) * 12 + MONTH(changed_on) AS id,
-					YEAR(changed_on) as year,
-					MONTH(changed_on) as month,
-					DATE_FORMAT (changed_on, '%b %Y') as date,
-					COUNT(issue_id) AS closed,
-					COUNT(DISTINCT(changed_by)) AS closers ")
-	q <- paste (q, "FROM changes ")
-	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
-	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
-	q <- paste (q, "WHERE ")
-	q <- paste (q, closed_condition, " ")
-	q <- paste (q, "AND trackers.url=",repo)
-	q <- paste (q, "GROUP BY year,month ORDER BY year,month")
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)
+repo_evol_closed <- function(repo, closed_condition, period, startdate, enddate){
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.closed, 0) AS closed,
+                IFNULL(i.closers, 0) AS closers
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT YEAR(changed_on) as year,
+                 ",period,"(changed_on) as ",period,",
+                 COUNT(issue_id) AS closed,
+                 COUNT(DISTINCT(changed_by)) AS closers
+                 FROM changes
+                 JOIN issues ON (changes.issue_id = issues.id)
+                 JOIN trackers ON (issues.tracker_id = trackers.id)
+                 WHERE ",closed_condition,"
+                 AND trackers.url=",repo,"
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
-repo_evol_changed <- function(repo){
-	q <- paste ("SELECT YEAR(changed_on) * 12 + MONTH(changed_on) AS id,
-					YEAR(changed_on) as year,
-					MONTH(changed_on) as month,
-					DATE_FORMAT (changed_on, '%b %Y') as date,
-					COUNT(changed_by) AS changed,
-					COUNT(DISTINCT(changed_by)) AS changers")
-	q <- paste (q, "FROM changes ")
-	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
-	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
-	q <- paste (q, "WHERE trackers.url=",repo)
-	q <- paste (q, "GROUP BY year,month ORDER BY year,month")
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)
+repo_evol_changed <- function(repo, period, startdate, enddate){
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.changed, 0) AS changed,
+                IFNULL(i.changers, 0) AS changers
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT YEAR(changed_on) AS year,
+                 ",period,"(changed_on) AS ",period,",
+                 COUNT(changed_by) AS changed,
+                 COUNT(DISTINCT(changed_by)) AS changers
+                 FROM changes
+                 JOIN issues ON (changes.issue_id = issues.id)
+                 JOIN trackers ON (issues.tracker_id = trackers.id)
+                 WHERE trackers.url=",repo,"
+                 GROUP BY year,",period," ORDER BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
-repo_evol_opened <- function(repo){
-	q <- paste ("SELECT YEAR(submitted_on) * 12 + MONTH(submitted_on) AS id,
-					YEAR(submitted_on) AS year,
-					MONTH(submitted_on) AS month,
-					DATE_FORMAT (submitted_on, '%b %Y') as date,
-					COUNT(submitted_by) AS opened,
-					COUNT(DISTINCT(submitted_by)) AS openers")
-	q <- paste (q, "FROM issues ")
-	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
-	q <- paste (q, "WHERE trackers.url=",repo)
-	q <- paste (q, "GROUP BY year,month ORDER BY year,month")
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)
+repo_evol_opened <- function(repo, period, startdate, enddate){
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.opened, 0) AS opened,
+                IFNULL(i.openers, 0) AS openers
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT YEAR(submitted_on) AS year,
+                 ",period,"(submitted_on) AS ",period,",
+                 COUNT(submitted_by) AS opened,
+                 COUNT(DISTINCT(submitted_by)) AS openers
+                 FROM issues
+                 JOIN trackers ON (issues.tracker_id = trackers.id)
+                 WHERE trackers.url=",repo,"
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 its_static_info_repo <- function (repo) {
-	q <- paste ("SELECT count(distinct(submitted_by)) as openers,
-					count(*) as opened,
-					DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
-					DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
-					FROM issues ")
-	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
-	q <- paste (q, "WHERE trackers.url=",repo)
-	query <- new ("Query", sql = q)
-	data <- run(query)
+    q <- paste ("SELECT count(distinct(submitted_by)) as openers,
+                 count(*) as opened,
+                 DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
+                 DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
+                 FROM issues ")
+    q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")
+    q <- paste (q, "WHERE trackers.url=",repo)
+    query <- new ("Query", sql = q)
+    data <- run(query)
     
-	q <- paste ("SELECT count(distinct(changed_by)) as closers, ")
-	q <- paste (q, "count(distinct(issue_id)) as closed ")
-	q <- paste (q, "FROM changes ")
-	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
-	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")	
-	q <- paste (q, "WHERE ", closed_condition, " ")	
-	q <- paste (q, "AND trackers.url=",repo)
-	query <- new ("Query", sql = q)
-	data1 <- run(query)
+    q <- paste ("SELECT count(distinct(changed_by)) as closers, ")
+    q <- paste (q, "count(distinct(issue_id)) as closed ")
+    q <- paste (q, "FROM changes ")
+    q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
+    q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")	
+    q <- paste (q, "WHERE ", closed_condition, " ")	
+    q <- paste (q, "AND trackers.url=",repo)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
     
-	q <- paste ("SELECT count(distinct(changed_by)) as changers, ")
-	q <- paste (q, "count(distinct(issue_id)) as changed ")
-	q <- paste (q, "FROM changes ")
-	q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
-	q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")	
-	q <- paste (q, "WHERE trackers.url=",repo)	
-	query <- new ("Query", sql = q)
-	data2 <- run(query)
+    q <- paste ("SELECT count(distinct(changed_by)) as changers, ")
+    q <- paste (q, "count(distinct(issue_id)) as changed ")
+    q <- paste (q, "FROM changes ")
+    q <- paste (q, "JOIN issues ON (changes.issue_id = issues.id) ")
+    q <- paste (q, "JOIN trackers ON (issues.tracker_id = trackers.id) ")	
+    q <- paste (q, "WHERE trackers.url=",repo)	
+    query <- new ("Query", sql = q)
+    data2 <- run(query)
     
-	agg_data = merge(data, data1)
-	agg_data = merge(agg_data, data2)
-	return(agg_data)
+    agg_data = merge(data, data1)
+    agg_data = merge(agg_data, data2)
+    return(agg_data)
 }
