@@ -32,6 +32,18 @@ library("vizgrimoire")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
+# period of time
+if (conf$granularity == 'months'){
+   period = 'month'
+}
+if (conf$granularity == 'weeks'){
+   period = 'week'
+}
+
+# dates
+startdate <- conf$startdate
+enddate <- conf$enddate
+
 # Aggregated data
 static_data <- mls_static_info()
 createJSON (static_data, paste("data/json/mls-static.json",sep=''))
@@ -75,15 +87,15 @@ if (conf$reports == 'countries') {
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        analyze.monthly.mls.countries(country)
+        analyze.monthly.mls.countries(country, period, startdate, enddate)
     }
 }
 
 for (mlist in mailing_lists$mailing_list) {
-    analyze.monthly.list(mlist)
+    analyze.monthly.list(mlist, period, startdate, enddate)
 }
 
-data.monthly <- get.monthly()
+data.monthly <- get.monthly(period, startdate, enddate)
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders

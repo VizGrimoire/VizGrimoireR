@@ -25,31 +25,68 @@
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
+##   Luis Cañas-Díaz <lcanas@bitergia.com>
 
-get.monthly <- function (reports="") {
+get.monthly <- function (period, startdate, enddate, reports="") {
     ## Sent messages
-    q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
-	                year(first_date) AS year,
-		            month(first_date) AS month,
-		            DATE_FORMAT (first_date, '%b %Y') as date,
-		            count(message_ID) AS sent
-		          FROM messages
-		          GROUP BY year,month
-		          ORDER BY year,month")
+    ## q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ##                     year(first_date) AS year,
+    ##     	            month(first_date) AS month,
+    ##     	            DATE_FORMAT (first_date, '%b %Y') as date,
+    ##     	            count(message_ID) AS sent
+    ##     	          FROM messages
+    ##     	          GROUP BY year,month
+    ##     	          ORDER BY year,month")
+
+    ## Sent messages
+    q <- paste("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.sent, 0) AS sent
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 count(message_ID) AS sent
+                 FROM messages
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     sent_monthly <- run(query)
 	
     ## Senders
-    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-		             year(first_date) AS year,
-		             month(first_date) AS month,
-		             DATE_FORMAT (first_date, '%b %Y') as date,
-		             count(distinct(email_address)) AS senders
-		           FROM messages
-		           JOIN messages_people on (messages_people.message_id = messages.message_ID)
-		           WHERE type_of_recipient='From'
-		           GROUP BY year,month
-		           ORDER BY year,month")
+    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ##     	             year(first_date) AS year,
+    ##     	             month(first_date) AS month,
+    ##     	             DATE_FORMAT (first_date, '%b %Y') as date,
+    ##     	             count(distinct(email_address)) AS senders
+    ##     	           FROM messages
+    ##     	           JOIN messages_people on (messages_people.message_id = messages.message_ID)
+    ##     	           WHERE type_of_recipient='From'
+    ##     	           GROUP BY year,month
+    ##     	           ORDER BY year,month")
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.senders, 0) AS senders
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 count(distinct(email_address)) AS senders
+                 FROM messages
+                 JOIN messages_people on (messages_people.message_id = messages.message_ID)
+                 WHERE type_of_recipient='From'
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     senders_monthly <- run(query)
       
@@ -62,43 +99,81 @@ get.monthly <- function (reports="") {
     if (is.na(mailing_lists$mailing_list)) {
         field = "mailing_list_url"
     }		
-    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-                   year(first_date) AS year,
-                   month(first_date) AS month,
-                   DATE_FORMAT (first_date, '%b %Y') as date,
-                   count(DISTINCT(",field,")) AS repositories
+    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ##                year(first_date) AS year,
+    ##                month(first_date) AS month,
+    ##                DATE_FORMAT (first_date, '%b %Y') as date,
+    ##                count(DISTINCT(",field,")) AS repositories
+    ##              FROM messages
+    ##              GROUP BY year,month
+    ##              ORDER BY year,month")
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.repositories, 0) AS repositories
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 count(DISTINCT(",field,")) AS repositories
                  FROM messages
-                 GROUP BY year,month
-                 ORDER BY year,month")
-    query <- new ("Query", sql = q)
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new ("Query", sql = q)    
     repos_monthly <- run(query)
       
     if (reports == "countries") {
         # countries
-        q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-                         year(first_date) AS year,
-                         month(first_date) AS month,
-                         DATE_FORMAT (first_date, '%b %Y') as date,
-                         count(DISTINCT(country)) AS countries
-                         FROM messages m
-                       JOIN messages_people mp ON mp.message_ID=m.message_id
-                       JOIN people p ON mp.email_address = p.email_address
-                       GROUP BY year,month
-                       ORDER BY year,month")
-        print(q)
+        ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+        ##                  year(first_date) AS year,
+        ##                  month(first_date) AS month,
+        ##                  DATE_FORMAT (first_date, '%b %Y') as date,
+        ##                  count(DISTINCT(country)) AS countries
+        ##                  FROM messages m
+        ##                JOIN messages_people mp ON mp.message_ID=m.message_id
+        ##                JOIN people p ON mp.email_address = p.email_address
+        ##                GROUP BY year,month
+        ##                ORDER BY year,month")
+        q <- paste ("SELECT p.id AS id,
+                     p.year AS year,
+                     p.",period," AS ",period,",
+                     DATE_FORMAT(p.date, '%b %Y') AS date,
+                     IFNULL(i.countries, 0) AS countries
+                     FROM ",period,"s p
+                     LEFT JOIN(
+                      SELECT year(first_date) AS year,
+                      ",period,"(first_date) AS ",period,",
+                      count(DISTINCT(country)) AS countries
+                      FROM messages m
+                      JOIN messages_people mp ON mp.message_ID=m.message_id
+                      JOIN people p ON mp.email_address = p.email_address
+                      GROUP BY year,",period,") i
+                    ON (
+                     p.year = i.year AND p.",period," = i.",period,")
+                    WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                    ORDER BY p.id ASC;", sep="")
         query <- new ("Query", sql = q)
         countries_monthly <- run(query)
     }
   
-    mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
-    mls_monthly <- completeZeroMonthly (merge (mls_monthly, repos_monthly, all = TRUE))
+    ## mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
+    ## mls_monthly <- completeZeroMonthly (merge (mls_monthly, repos_monthly, all = TRUE))
+    ## if (reports == "countries") 
+    ##     mls_monthly <- completeZeroMonthly (merge (mls_monthly, countries_monthly, all = TRUE))
+    ## mls_monthly[is.na(mls_monthly)] <- 0
+    mls_monthly <- merge (sent_monthly, senders_monthly, all = TRUE)
+    mls_monthly <- merge (mls_monthly, repos_monthly, all = TRUE)
     if (reports == "countries") 
-        mls_monthly <- completeZeroMonthly (merge (mls_monthly, countries_monthly, all = TRUE))
+        mls_monthly <- merge (mls_monthly, countries_monthly, all = TRUE)
     mls_monthly[is.na(mls_monthly)] <- 0
     return (mls_monthly)
 }
 
-analyze.monthly.list <- function (listname) {
+analyze.monthly.list <- function (listname, period, startdate, enddate) {
     
     field = "mailing_list"
     listname_file = gsub("/","_",listname)
@@ -109,54 +184,122 @@ analyze.monthly.list <- function (listname) {
     }
     
     ## Messages sent	
-    q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
-	              year(first_date) AS year,
-	              month(first_date) AS month,
-		          DATE_FORMAT (first_date, '%b %Y') as date,
-	              count(message_ID) AS sent
-	            FROM messages WHERE ",field,"='",listname,"'
-		        GROUP BY year,month
-		        ORDER BY year,month",sep = '') 
+    ## q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ##                   year(first_date) AS year,
+    ##                   month(first_date) AS month,
+    ##     	          DATE_FORMAT (first_date, '%b %Y') as date,
+    ##                   count(message_ID) AS sent
+    ##                 FROM messages WHERE ",field,"='",listname,"'
+    ##     	        GROUP BY year,month
+    ##     	        ORDER BY year,month",sep = '')
+    q <- paste("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.sent, 0) AS sent
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 count(message_ID) AS sent
+                 FROM messages WHERE ",field,"='",listname,"'
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     sent_monthly <- run(query)	
     ##print (sent_monthly)
 	
     ## All subjects	
-    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-	                               year(first_date) AS year,
-	                               month(first_date) AS month,
-	                               DATE_FORMAT (first_date, '%b %Y') as date,
-	                               subject
-	                             FROM messages  WHERE ",field,"='",listname,"'
-	                             ORDER BY year,month", sep = '')
+    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ##                                    year(first_date) AS year,
+    ##                                    month(first_date) AS month,
+    ##                                    DATE_FORMAT (first_date, '%b %Y') as date,
+    ##                                    subject
+    ##                                  FROM messages  WHERE ",field,"='",listname,"'
+    ##                                  ORDER BY year,month", sep = '')
+    q <- paste ("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                i.subject AS subject
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 subject
+                 FROM messages  WHERE ",field,"='",listname,"'
+                 ORDER BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     subjects_monthly <- run(query)
 	
     ## Senders
-    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-	               year(first_date) AS year,
-	               month(first_date) AS month,
-	               DATE_FORMAT (first_date, '%b %Y') as date,
-	               COUNT(distinct(email_address)) AS senders
-	             FROM messages
-	             JOIN messages_people on (messages_people.message_id = messages.message_ID)
-	             WHERE type_of_recipient='From' AND ",field,"='",listname,"'
-	             GROUP BY year,month
-	             ORDER BY year,month", sep = '')
+    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ##                    year(first_date) AS year,
+    ##                    month(first_date) AS month,
+    ##                    DATE_FORMAT (first_date, '%b %Y') as date,
+    ##                    COUNT(distinct(email_address)) AS senders
+    ##                  FROM messages
+    ##                  JOIN messages_people on (messages_people.message_id = messages.message_ID)
+    ##                  WHERE type_of_recipient='From' AND ",field,"='",listname,"'
+    ##                  GROUP BY year,month
+    ##                  ORDER BY year,month", sep = '')
+
+    q <- paste("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.senders, 0) AS senders
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 COUNT(distinct(email_address)) AS senders
+                 FROM messages
+                 JOIN messages_people on (messages_people.message_id = messages.message_ID)
+                 WHERE type_of_recipient='From' AND ",field,"='",listname,"'
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     senders_monthly <- run(query)
     
 	## TODO: this query not sure if it is correct. Not same results in VizGrimoireJS
     ## All people monthly
-    q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-	               year(first_date) AS year,
-	               month(first_date) AS month,
-	               DATE_FORMAT (first_date, '%b %Y') as date,
-	               email_address
-	             FROM messages
-	             JOIN messages_people on (messages_people.message_id = messages.message_ID)
-	             WHERE type_of_recipient='From' AND ",field,"='",listname,"'
-	             ORDER BY year,month", sep = '')
+    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
+    ##                    year(first_date) AS year,
+    ##                    month(first_date) AS month,
+    ##                    DATE_FORMAT (first_date, '%b %Y') as date,
+    ##                    email_address
+    ##                  FROM messages
+    ##                  JOIN messages_people on (messages_people.message_id = messages.message_ID)
+    ##                  WHERE type_of_recipient='From' AND ",field,"='",listname,"'
+    ##                  ORDER BY year,month", sep = '')
+    q <- paste("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                i.email_address AS email_address
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 email_address
+                 FROM messages
+                 JOIN messages_people on (messages_people.message_id = messages.message_ID)
+                 WHERE type_of_recipient='From' AND ",field,"='",listname,"') i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     emails_monthly <- run(query)		
     
@@ -178,7 +321,8 @@ analyze.monthly.list <- function (listname) {
                    COUNT(DISTINCT(email_address)) as senders
                  FROM messages 
 	             JOIN messages_people on (messages_people.message_id = messages.message_ID)
-                 WHERE ",field,"='",listname,"'",sep='')
+                 WHERE ",field,"='",listname,"'
+                 AND first_date >= ",startdate," AND first_date <= ",enddate,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
 	# TODO: Multilist approach. We will obsolete it in future
@@ -231,20 +375,42 @@ mls_static_info <- function (reports="") {
 	return (agg_data)
 }
 
-analyze.monthly.mls.countries <- function (country) {           		
+analyze.monthly.mls.countries <- function (country, period, startdate, enddate) {           		
     # Sent and sender time series evol	
-	q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
-                  year(first_date) AS year,
-                  month(first_date) AS month,
-                  DATE_FORMAT (first_date, '%b %Y') as date,
-                  count(m.message_ID) AS sent,
-                  count(distinct(p.email_address)) AS senders
-                FROM messages m
-                JOIN messages_people mp ON mp.message_ID=m.message_id
-                JOIN people p ON mp.email_address = p.email_address
-                WHERE country='",country,"'
-                GROUP BY year,month
-                ORDER BY year,month",sep = '')
+	## q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
+        ##           year(first_date) AS year,
+        ##           month(first_date) AS month,
+        ##           DATE_FORMAT (first_date, '%b %Y') as date,
+        ##           count(m.message_ID) AS sent,
+        ##           count(distinct(p.email_address)) AS senders
+        ##         FROM messages m
+        ##         JOIN messages_people mp ON mp.message_ID=m.message_id
+        ##         JOIN people p ON mp.email_address = p.email_address
+        ##         WHERE country='",country,"'
+        ##         GROUP BY year,month
+        ##         ORDER BY year,month",sep = '')
+	q <- paste("SELECT p.id AS id,
+                p.year AS year,
+                p.",period," AS ",period,",
+                DATE_FORMAT(p.date, '%b %Y') AS date,
+                IFNULL(i.sent, 0) AS sent,
+                IFNULL(i.senders, 0) AS senders
+                FROM ",period,"s p
+                LEFT JOIN(
+                 SELECT year(first_date) AS year,
+                 ",period,"(first_date) AS ",period,",
+                 count(m.message_ID) AS sent,
+                 count(distinct(p.email_address)) AS senders
+                 FROM messages m
+                 JOIN messages_people mp ON mp.message_ID=m.message_id
+                 JOIN people p ON mp.email_address = p.email_address
+                 WHERE country='",country,"'
+                 GROUP BY year,",period,") i
+                ON (
+                 p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+        
 	query <- new ("Query", sql = q)
 	evol_monthly <- run(query)
     if (country == "") country ="Unknown"
