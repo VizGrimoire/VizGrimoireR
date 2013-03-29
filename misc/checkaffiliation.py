@@ -127,7 +127,7 @@ def CheckExact (entries):
     for pos in range (0, len(ids)-1):
         for other in range (pos+1, len(ids)):
             if entries[ids[pos]] == entries[ids[other]]:
-                return (True, other)
+                return (True, ids[other])
     return (False, None)
 
 def printEntries (person, entries, overlap):
@@ -161,8 +161,9 @@ def ShowDups (overlap=False, exact=False):
        overlap
     - exact (Boolean): show only entries which are exactly equal
        (same company, same dates)
-    Returns a list of rows to delete from upeople_companies, or None
-     (rows to delete are duplicated rows, with exact match)
+    Returns a list of rows to delete from upeople_companies,
+     Rows to delete are duplicated rows, with exact match.
+     The list may be empty.
     """
 
     query = """SELECT identifier, companies.name, upeople_companies.*
@@ -176,6 +177,7 @@ WHERE upeople_companies.upeople_id = dup.upeople_id AND
   upeople_companies.upeople_id = upeople.id
 ORDER BY upeople.id"""
 
+    todelete = []
     cursor.execute(query)
     dupUpeopleCompanies = cursor.fetchall()
 
@@ -191,6 +193,8 @@ ORDER BY upeople.id"""
                 if currentPerson != "":
                     if exact:
                         (found, foundid) = CheckExact (currentEntries)
+                        if found:
+                            todelete.append(foundid)
                     elif overlap:
                         found = CheckOverlap (currentEntries)
                     printEntries (currentPerson, currentEntries, found)
@@ -202,10 +206,13 @@ ORDER BY upeople.id"""
                 ", " + str(end)
     if exact:
         (found, foundid) = CheckExact (currentEntries)
+        if found:
+            todelete.append(foundid)
     elif overlap:
         found = CheckOverlap (currentEntries)
     if overlap or exact:
         printEntries (currentPerson, currentEntries, found)
+    return (todelete)
 
 def ShowUnaffiliated ():
     """Show upeople with no entry in upeople_companies (unaffilated).
@@ -255,6 +262,9 @@ parser.add_argument("--showexact",
 parser.add_argument("--showunaffiliated",
                     help="Show unaffilaited upeople",
                     action="store_true")
+parser.add_argument("--modify",
+                    help="Modify the database. If not present, just print the SQL code instead of modifying",
+                    action="store_true")
 args = parser.parse_args()
 
 # Open database connection
@@ -270,7 +280,6 @@ cursor = db.cursor()
 # Set all name retrieval in utf8
 cursor.execute("SET NAMES utf8")
 
-
 if args.showall:
     ShowAll()
 if args.showdups:
@@ -281,5 +290,17 @@ if args.showexact:
     todelete = ShowDups(exact=True)
 if args.showunaffiliated:
     ShowUnaffiliated()
+
+# Modify the database, or just print the SQL code for it
+#  (according to the --modify flag)
+for id in todelete:
+    sql = "DELETE FROM upeople_companies WHERE id = " + str(int(id))
+    print sql,
+    if args.modify:
+        print " Deleting...",
+        cursor.execute (sql)
+        db.commit()
+        print " Deleted!",
+    print
 
 db.close()
