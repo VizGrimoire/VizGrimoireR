@@ -70,10 +70,35 @@ WHERE company_id = companies.id and
   upeople_id = upeople.id
 ORDER BY upeople.id;"""
 
-# execute SQL query using execute() method.
 cursor.execute(query)
 upeopleCompanies = cursor.fetchall()
 
+print "== All entries:"
+print
 for entry in upeopleCompanies:
-    print entry
+    (person, company, id, personId, companyId, start, end) = entry
+    print person + " (" + company + ") " + str(start) + ", " + str(end)
 
+query = """SELECT identifier, companies.name, upeople_companies.*
+FROM upeople_companies, companies, upeople,
+  (
+  SELECT upeople_id FROM upeople_companies
+  GROUP BY upeople_id HAVING count(id) > 1
+  ) dup
+WHERE upeople_companies.upeople_id = dup.upeople_id AND
+  company_id = companies.id and
+  upeople_companies.upeople_id = upeople.id
+ORDER BY upeople.id"""
+
+cursor.execute(query)
+dupUpeopleCompanies = cursor.fetchall()
+
+print
+print "== Duplicate entries (person more than once):"
+print
+for entry in dupUpeopleCompanies:
+    (person, company, id, personId, companyId, start, end) = entry
+    print person + " (" + company + ") " + str(start) + ", " + str(end)
+
+
+db.close()
