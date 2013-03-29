@@ -257,13 +257,13 @@ parser.add_argument("--showoverlap",
                     help="Show upeople with overlapping entries in upeople_companies",
                     action="store_true")
 parser.add_argument("--showexact",
-                    help="Show exactly repeated entries in upeople_companies",
+                    help="Show exactly repeated entries in upeople_companies. Will delete duplicates (only the first duplicate for each row) if --modify is used",
                     action="store_true")
 parser.add_argument("--showunaffiliated",
                     help="Show unaffilaited upeople",
                     action="store_true")
 parser.add_argument("--modify",
-                    help="Modify the database. If not present, just print the SQL code instead of modifying",
+                    help="Modify the database. If not present, just print the SQL code instead of modifying the database",
                     action="store_true")
 args = parser.parse_args()
 
