@@ -82,7 +82,7 @@ issues[is.na(issues)] <- 0
 
 createJSON (issues, "data/json/its-evolutionary.json")
 
-all_static_info <- its_static_info()
+all_static_info <- its_static_info(closed_condition, startdate, enddate)
 createJSON (all_static_info, "data/json/its-static.json")
 
 # Top closers
