@@ -171,6 +171,31 @@ ORDER BY upeople.id"""
     if dates:
         print currentPerson, currentEntries
 
+def ShowUnaffiliated ():
+    """Show upeople with no entry in upeople_companies (unaffilated).
+    """
+
+    query = """SELECT upeople.*
+FROM upeople
+LEFT JOIN upeople_companies
+ON upeople.id = upeople_companies.upeople_id
+WHERE upeople_companies.upeople_id IS NULL
+"""
+
+    cursor.execute(query)
+    unaffilatedUpeople = cursor.fetchall()
+
+    print
+    print "== Unaffilated upeople:"
+    print
+    for entry in unaffilatedUpeople:
+        (id, name) = entry
+        print str(id) + ": " + str(name)
+
+#
+# Starts main program
+#
+
 # Parse command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--database",
@@ -187,6 +212,9 @@ parser.add_argument("--showdups",
                     action="store_true")
 parser.add_argument("--showoverlap",
                     help="Show upeople with overlapping entries in upeople_companies",
+                    action="store_true")
+parser.add_argument("--showunaffiliated",
+                    help="Show unaffilaited upeople",
                     action="store_true")
 args = parser.parse_args()
 
@@ -210,5 +238,7 @@ if args.showdups:
     ShowDups()
 if args.showoverlap:
     ShowDups(True)
+if args.showunaffiliated:
+    ShowUnaffiliated()
 
 db.close()
