@@ -95,22 +95,15 @@ ORDER BY upeople.id"""
         (person, company, id, personId, companyId, start, end) = entry
         print person + " (" + company + ") " + str(start) + ", " + str(end)
 
-# Open database connection and get all data in people table
-# into people list.
-# Uncomment these lines and specify options for the database access
-# db = MySQLdb.connect(host = "xxx",
-#                      user = "xxx",
-#                      port = 3308,
-#                      db = "xxx")
-db = MySQLdb.connect(user="jgb", passwd="XXX",
-                     db="dic_cvsanaly_openstack_1289_updated")
-
-cursor = db.cursor()
-# Set all name retrieval in utf8
-cursor.execute("SET NAMES utf8")
 
 # Parse command line arguments
 parser = argparse.ArgumentParser()
+parser.add_argument("--database",
+                    help="Database to check")
+parser.add_argument("--user",
+                    help="Database user name")
+parser.add_argument("--passwd",
+                    help="Dagtabase password")
 parser.add_argument("--showall",
                     help="Show all entries in upeople_companies",
                     action="store_true")
@@ -118,6 +111,21 @@ parser.add_argument("--showdups",
                     help="Show upeople with more than one entry in upeople_companies",
                     action="store_true")
 args = parser.parse_args()
+
+# Open database connection and get all data in people table
+# into people list.
+db = MySQLdb.connect(user=args.user, passwd=args.passwd,
+                     db=args.database)
+# Uncomment these lines and specify options for the database access
+# db = MySQLdb.connect(host = "xxx",
+#                      user = "xxx",
+#                      port = 3308,
+#                      db = "xxx")
+
+cursor = db.cursor()
+# Set all name retrieval in utf8
+cursor.execute("SET NAMES utf8")
+
 
 if args.showall:
     ShowAll()
