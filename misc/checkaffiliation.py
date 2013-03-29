@@ -48,7 +48,52 @@
 #   for sure that's an error)
 # People with no affilaition (not even -Unknown")
 
+# Parsing command line arguments
+import argparse
+# Communication with MySQL
 import MySQLdb
+
+def ShowAll ():
+    """Show all entries in upeople_companies table"""
+
+    query = """SELECT identifier, companies.name, upeople_companies.*
+FROM upeople_companies, companies, upeople
+WHERE company_id = companies.id and
+  upeople_id = upeople.id
+ORDER BY upeople.id;"""
+
+    cursor.execute(query)
+    upeopleCompanies = cursor.fetchall()
+
+    print "== All entries:"
+    print
+    for entry in upeopleCompanies:
+        (person, company, id, personId, companyId, start, end) = entry
+        print person + " (" + company + ") " + str(start) + ", " + str(end)
+
+def ShowDups ():
+    """Show upeople with more than one entry in upeople_companies"""
+
+    query = """SELECT identifier, companies.name, upeople_companies.*
+FROM upeople_companies, companies, upeople,
+  (
+  SELECT upeople_id FROM upeople_companies
+  GROUP BY upeople_id HAVING count(id) > 1
+  ) dup
+WHERE upeople_companies.upeople_id = dup.upeople_id AND
+  company_id = companies.id and
+  upeople_companies.upeople_id = upeople.id
+ORDER BY upeople.id"""
+
+    cursor.execute(query)
+    dupUpeopleCompanies = cursor.fetchall()
+
+    print
+    print "== Duplicate entries (person more than once):"
+    print
+    for entry in dupUpeopleCompanies:
+        (person, company, id, personId, companyId, start, end) = entry
+        print person + " (" + company + ") " + str(start) + ", " + str(end)
 
 # Open database connection and get all data in people table
 # into people list.
@@ -64,41 +109,20 @@ cursor = db.cursor()
 # Set all name retrieval in utf8
 cursor.execute("SET NAMES utf8")
 
-query = """SELECT identifier, companies.name, upeople_companies.*
-FROM upeople_companies, companies, upeople
-WHERE company_id = companies.id and
-  upeople_id = upeople.id
-ORDER BY upeople.id;"""
+# Parse command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("--showall",
+                    help="Show all entries in upeople_companies",
+                    action="store_true")
+parser.add_argument("--showdups",
+                    help="Show upeople with more than one entry in upeople_companies",
+                    action="store_true")
+args = parser.parse_args()
 
-cursor.execute(query)
-upeopleCompanies = cursor.fetchall()
-
-print "== All entries:"
-print
-for entry in upeopleCompanies:
-    (person, company, id, personId, companyId, start, end) = entry
-    print person + " (" + company + ") " + str(start) + ", " + str(end)
-
-query = """SELECT identifier, companies.name, upeople_companies.*
-FROM upeople_companies, companies, upeople,
-  (
-  SELECT upeople_id FROM upeople_companies
-  GROUP BY upeople_id HAVING count(id) > 1
-  ) dup
-WHERE upeople_companies.upeople_id = dup.upeople_id AND
-  company_id = companies.id and
-  upeople_companies.upeople_id = upeople.id
-ORDER BY upeople.id"""
-
-cursor.execute(query)
-dupUpeopleCompanies = cursor.fetchall()
-
-print
-print "== Duplicate entries (person more than once):"
-print
-for entry in dupUpeopleCompanies:
-    (person, company, id, personId, companyId, start, end) = entry
-    print person + " (" + company + ") " + str(start) + ", " + str(end)
+if args.showall:
+    ShowAll()
+if args.showdups:
+    ShowDups()
 
 
 db.close()
