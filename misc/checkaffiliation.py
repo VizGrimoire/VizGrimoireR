@@ -52,6 +52,7 @@
 import argparse
 # Communication with MySQL
 import MySQLdb
+import datetime
 
 def ShowAll ():
     """Show all entries in upeople_companies table"""
@@ -71,8 +72,69 @@ ORDER BY upeople.id;"""
         (person, company, id, personId, companyId, start, end) = entry
         print person + " (" + company + ") " + str(start) + ", " + str(end)
 
-def ShowDups ():
-    """Show upeople with more than one entry in upeople_companies"""
+def CheckOverlap (entries):
+    """Checks if entries in upeople_companies overlap.
+
+    - entries: dictionary with entries in upeople_companies
+       Usually they are entries for the same person
+       Key is the id in upeople_companies table.
+       Value is a list with company, start, end
+
+    Returns True if there is overlap, False if not
+    """
+
+    events = []
+    for id in entries.keys():
+        (company, start, end) = entries[id]
+        events.append ((start, company, "start"))
+        # End is minored in one sec. because end time could be
+        # equal than starting time for next company
+        events.append ((end - datetime.timedelta(seconds=1),
+                        company, "end"))
+    # Sort by date (element 0 of tuplas), in place
+    events.sort(key=lambda tup: tup[0])
+    company = ""
+    started = False
+    for event in events:
+        if started:
+            if (event[2] != "end") or (event[1] != company):
+                return (True)
+            else:
+                started = False
+        else:
+            company = event[1]
+            started = True
+    return (False)
+
+def printEntries (person, entries, overlap):
+    """Print entries from upeople_companies for person (ordered).
+
+    - person (String): name of person (upeople) corresponding to entries
+    - entries: dictionary with entries in upeople_companies
+       Usually they are entries for the same person
+       Key is the id in upeople_companies table.
+       Value is a list with company, start, end
+    - overlap (Boolean): do these entries have some overlapping period?
+    """
+
+    toprint = []
+    for id in entries.keys():
+        (company, start, end) = entries[id]
+        toprint.append ((start,
+                         str(overlap) + ": [" + str(start) + " - " + \
+                             str(end) + "] " + person + ", " + \
+                             company
+                         ))
+    toprint.sort(key=lambda tup: tup[0])
+    for line in toprint:
+        print line[1]
+
+def ShowDups (dates=False):
+    """Show upeople with more than one entry in upeople_companies.
+    
+    - dates (Boolean): show entries only when dates for same upeople 
+       overlap
+    """
 
     query = """SELECT identifier, companies.name, upeople_companies.*
 FROM upeople_companies, companies, upeople,
@@ -91,10 +153,23 @@ ORDER BY upeople.id"""
     print
     print "== Duplicate entries (person more than once):"
     print
+    currentPerson = ""
+    currentEntries = {}
     for entry in dupUpeopleCompanies:
         (person, company, id, personId, companyId, start, end) = entry
-        print person + " (" + company + ") " + str(start) + ", " + str(end)
-
+        if dates:
+            if person != currentPerson:
+                if currentPerson != "":
+                    overlap = CheckOverlap (currentEntries)
+                    printEntries (currentPerson, currentEntries, overlap)
+                currentPerson = person
+                currentEntries = {}
+            currentEntries[id] = (company, start, end)
+        else:
+            print person + " (" + company + ") " + str(start) + \
+                ", " + str(end)
+    if dates:
+        print currentPerson, currentEntries
 
 # Parse command line arguments
 parser = argparse.ArgumentParser()
@@ -110,10 +185,12 @@ parser.add_argument("--showall",
 parser.add_argument("--showdups",
                     help="Show upeople with more than one entry in upeople_companies",
                     action="store_true")
+parser.add_argument("--showoverlap",
+                    help="Show upeople with overlapping entries in upeople_companies",
+                    action="store_true")
 args = parser.parse_args()
 
-# Open database connection and get all data in people table
-# into people list.
+# Open database connection
 db = MySQLdb.connect(user=args.user, passwd=args.passwd,
                      db=args.database)
 # Uncomment these lines and specify options for the database access
@@ -131,6 +208,7 @@ if args.showall:
     ShowAll()
 if args.showdups:
     ShowDups()
-
+if args.showoverlap:
+    ShowDups(True)
 
 db.close()
