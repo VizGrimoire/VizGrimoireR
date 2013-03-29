@@ -106,6 +106,30 @@ def CheckOverlap (entries):
             started = True
     return (False)
 
+def CheckExact (entries):
+    """Checks if entries in upeople_companies are exactly equal.
+
+    - entries: dictionary with entries in upeople_companies
+       Usually they are entries for the same person
+       Key is the id in upeople_companies table.
+       Value is a list with company, start, end
+    Returns tuple (found, id):
+      - found: True if exact match was found, False otherwise
+      - id: id of exact match if there is exactly an equal entry,
+         If are more than two equal entries, only the second one
+         is returned (the first one is considered as the "original")
+         None if no exact match was found.
+    """
+
+    ids = sorted(entries.keys())
+    if len(ids) == 1:
+        return (False, None)
+    for pos in range (0, len(ids)-1):
+        for other in range (pos+1, len(ids)):
+            if entries[ids[pos]] == entries[ids[other]]:
+                return (True, other)
+    return (False, None)
+
 def printEntries (person, entries, overlap):
     """Print entries from upeople_companies for person (ordered).
 
@@ -121,7 +145,8 @@ def printEntries (person, entries, overlap):
     for id in entries.keys():
         (company, start, end) = entries[id]
         toprint.append ((start,
-                         str(overlap) + ": [" + str(start) + " - " + \
+                         str(overlap) + " (" + str(id) + "): [" + \
+                             str(start) + " - " + \
                              str(end) + "] " + person + ", " + \
                              company
                          ))
@@ -129,11 +154,15 @@ def printEntries (person, entries, overlap):
     for line in toprint:
         print line[1]
 
-def ShowDups (dates=False):
+def ShowDups (overlap=False, exact=False):
     """Show upeople with more than one entry in upeople_companies.
     
-    - dates (Boolean): show entries only when dates for same upeople 
+    - overlap (Boolean): show entries only when dates for same upeople 
        overlap
+    - exact (Boolean): show only entries which are exactly equal
+       (same company, same dates)
+    Returns a list of rows to delete from upeople_companies, or None
+     (rows to delete are duplicated rows, with exact match)
     """
 
     query = """SELECT identifier, companies.name, upeople_companies.*
@@ -157,19 +186,26 @@ ORDER BY upeople.id"""
     currentEntries = {}
     for entry in dupUpeopleCompanies:
         (person, company, id, personId, companyId, start, end) = entry
-        if dates:
+        if overlap or exact:
             if person != currentPerson:
                 if currentPerson != "":
-                    overlap = CheckOverlap (currentEntries)
-                    printEntries (currentPerson, currentEntries, overlap)
+                    if exact:
+                        (found, foundid) = CheckExact (currentEntries)
+                    elif overlap:
+                        found = CheckOverlap (currentEntries)
+                    printEntries (currentPerson, currentEntries, found)
                 currentPerson = person
                 currentEntries = {}
             currentEntries[id] = (company, start, end)
         else:
             print person + " (" + company + ") " + str(start) + \
                 ", " + str(end)
-    if dates:
-        print currentPerson, currentEntries
+    if exact:
+        (found, foundid) = CheckExact (currentEntries)
+    elif overlap:
+        found = CheckOverlap (currentEntries)
+    if overlap or exact:
+        printEntries (currentPerson, currentEntries, found)
 
 def ShowUnaffiliated ():
     """Show upeople with no entry in upeople_companies (unaffilated).
@@ -213,6 +249,9 @@ parser.add_argument("--showdups",
 parser.add_argument("--showoverlap",
                     help="Show upeople with overlapping entries in upeople_companies",
                     action="store_true")
+parser.add_argument("--showexact",
+                    help="Show exactly repeated entries in upeople_companies",
+                    action="store_true")
 parser.add_argument("--showunaffiliated",
                     help="Show unaffilaited upeople",
                     action="store_true")
@@ -237,7 +276,9 @@ if args.showall:
 if args.showdups:
     ShowDups()
 if args.showoverlap:
-    ShowDups(True)
+    ShowDups(overlap=True)
+if args.showexact:
+    todelete = ShowDups(exact=True)
 if args.showunaffiliated:
     ShowUnaffiliated()
 
