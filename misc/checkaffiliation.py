@@ -151,7 +151,7 @@ ORDER BY upeople.id"""
     dupUpeopleCompanies = cursor.fetchall()
 
     print
-    print "== Duplicate entries (person more than once):"
+    print "== Overlapped entries (person with overlapped affiliations):"
     print
     currentPerson = ""
     currentEntries = {}
