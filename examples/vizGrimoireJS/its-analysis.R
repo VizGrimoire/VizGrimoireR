@@ -70,6 +70,9 @@ if (conf$granularity == 'weeks'){
 startdate <- conf$startdate
 enddate <- conf$enddate
 
+# database with unique identities
+identities_db <- conf$identities_db
+
 closed <- evol_closed(closed_condition, period, startdate, enddate)
 changed <- evol_changed(period, startdate, enddate)
 open <- evol_opened(period, startdate, enddate)
@@ -78,12 +81,22 @@ repos <- its_evol_repositories(period, startdate, enddate)
 issues <- merge (open, closed, all = TRUE)
 issues <- merge (issues, changed, all = TRUE)
 issues <- merge (issues, repos, all = TRUE)
-issues[is.na(issues)] <- 0
 
+if (conf$reports == 'companies') {
+    info_data_companies = its_evol_companies (period, startdate, enddate, identities_db)
+    issues = merge(issues, info_data_companies, all = TRUE)
+}
+issues[is.na(issues)] <- 0
 createJSON (issues, "data/json/its-evolutionary.json")
 
 all_static_info <- its_static_info(closed_condition, startdate, enddate)
+if (conf$reports == 'companies') {
+    info_com = its_static_companies (startdate, enddate, identities_db)
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
 createJSON (all_static_info, "data/json/its-static.json")
+
+
 
 # Top closers
 top_closers_data <- list()
@@ -122,4 +135,17 @@ if (conf$reports == 'repositories') {
 		static_info <- its_static_info_repo(repo_name)
 		createJSON(static_info, paste(c("data/json/",repo_file,"-its-static.json"), collapse=''))		
 	}
+}
+
+# Companies
+if (conf$reports == 'companies') {
+    companies  <- its_companies_name(startdate, enddate, identities_db)
+    companies <- companies$name
+    createJSON(companies, "data/json/its-companies.json")
+    
+    for (company in companies){
+        company_name = paste(c("'", company, "'"), collapse='')
+        company_aux = paste(c("", company, ""), collapse='')
+        print (company_name)
+    }
 }

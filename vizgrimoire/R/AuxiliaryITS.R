@@ -50,7 +50,6 @@ evol_closed <- function (closed_condition, period, startdate, enddate) {
                  p.year = i.year AND p.",period," = i.",period,")
                 WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
                 ORDER BY p.id ASC;", sep="")
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)	
@@ -147,6 +146,33 @@ its_evol_repositories <- function(period, startdate, enddate) {
 	return (data)
 }
 
+its_evol_companies <- function(period, startdate, enddate, identities_db) {
+        q <- paste ("SELECT p.id AS id,
+                         p.year AS year,
+                         p.",period," AS ",period,",
+                         DATE_FORMAT(p.date, '%b %Y') AS date,
+                         IFNULL(i.companies, 0) AS companies
+                     FROM ",period,"s p
+                     LEFT JOIN(
+                         SELECT YEAR(changed_on) AS year,
+                             ",period,"(changed_on) AS ",period,",
+                             COUNT(DISTINCT(upc.company_id)) AS companies
+                         FROM changes,
+                             people_upeople pup,
+                             ",identities_db,".upeople_companies upc
+                         WHERE pup.people_id = changes.changed_by
+                             AND pup.upeople_id = upc.upeople_id
+                             AND changed_on >= ",startdate,"
+                             AND changed_on <= ",enddate,"
+                         GROUP BY year,",period,") i
+                     ON (
+                         p.year = i.year AND p.",period," = i.",period,")
+                     WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                     ORDER BY p.id ASC;", sep="")
+        query <- new ("Query", sql = q)
+        data <- run(query)
+        return (data)
+}
 
 its_people <- function() {
     q <- paste ("select id,name,email,user_id from people")
@@ -216,6 +242,21 @@ its_static_info <- function (closed_condition, startdate, enddate) {
     agg_data = merge(agg_data, data7)
     return(agg_data)
 }
+
+its_static_companies  <- function(startdate, enddate, identities_db) {
+    q <- paste ("SELECT COUNT(DISTINCT(upc.company_id)) AS companies
+                 FROM changes,
+                     people_upeople pup,
+                     ",identities_db,".upeople_companies upc
+                 WHERE pup.people_id = changes.changed_by
+                     AND pup.upeople_id = upc.upeople_id
+                     AND changed_on >= ",startdate,"
+                     AND changed_on <= ",enddate,"")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)               
+}
+
 
 # Top
 top_closers <- function(days = 0) {
@@ -369,4 +410,22 @@ its_static_info_repo <- function (repo) {
     agg_data = merge(data, data1)
     agg_data = merge(agg_data, data2)
     return(agg_data)
+}
+
+its_companies_name <- function(startdate, enddate, identities_db) {
+    q <- paste ("select distinct(c.name)
+                    from ",identities_db,".companies c,
+                         people_upeople pup,
+                         ",identities_db,".upeople_companies upc,
+                         changes s
+                    where c.id = upc.company_id and
+                          upc.upeople_id = pup.upeople_id and
+                          pup.people_id = s.changed_by and
+                          s.changed_on >", startdate, " and
+                          s.changed_on <= ", enddate, "
+                    group by c.name
+                    order by count(distinct(s.issue_id)) desc;")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
 }
