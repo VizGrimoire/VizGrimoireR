@@ -280,6 +280,7 @@ cursor = db.cursor()
 # Set all name retrieval in utf8
 cursor.execute("SET NAMES utf8")
 
+todelete = []
 if args.showall:
     ShowAll()
 if args.showdups:
