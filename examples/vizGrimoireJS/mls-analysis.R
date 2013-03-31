@@ -40,12 +40,14 @@ if (conf$granularity == 'weeks'){
    period = 'week'
 }
 
+identities_db = conf$identities_db
+
 # dates
 startdate <- conf$startdate
 enddate <- conf$enddate
 
 # Aggregated data
-static_data <- mls_static_info()
+static_data <- mls_static_info(startdate, enddate)
 createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
 # Mailing lists
