@@ -377,7 +377,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
 }
 
 
-mls_static_info <- function (reports="") {
+mls_static_info <- function (startdate, enddate, reports="") {
 	q <- paste ("SELECT count(*) as sent,
                             DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
                             DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date
@@ -385,13 +385,23 @@ mls_static_info <- function (reports="") {
 	query <- new ("Query", sql = q)
 	num_msg <- run(query)
 	
-	q <- paste ("SELECT count(*) as senders from people")
+	q <- paste ("SELECT count(distinct(pup.upeople_id)) as senders 
+                     from people_upeople pup,
+                          messages m,
+                          messages_people mp
+                     where pup.people_id = mp.email_address and
+                           mp.message_id = m.message_ID and
+                           m.first_date >= ",startdate," AND 
+                           m.first_date <= ",enddate,";", sep="")
 	query <- new ("Query", sql = q)
 	num_ppl <- run(query)
 	
 	# num repositories
 	field = "mailing_list"
-	q <- paste ("select distinct(mailing_list) from messages")
+	q <- paste ("select distinct(mailing_list) as mailing_list
+                     from messages
+                     where first_date >= ",startdate," AND 
+                           first_date <= ",enddate,";",sep='')
 	query <- new ("Query", sql = q)
 	mailing_lists <- run(query)
 	
@@ -406,6 +416,12 @@ mls_static_info <- function (reports="") {
 	query <- new ("Query", sql = q)
 	repo_info <- run(query)
     
+    # FIXME: this functionality is currently not working with the addition
+    # of startdate and enddate funcionality. Given that the final schema
+    # for the database has not been implemented, this is left as it is and 
+    # probably not working.
+    # In any case, as in other similar reports (companies or repositories), this 
+    # should be in another function (or then, the rest of the reports integrated here) 
     if (reports == "country") {
         q <- paste("SELECT COUNT(DISTINCT(country)) AS countries from people")
 	    query <- new ("Query", sql = q)
