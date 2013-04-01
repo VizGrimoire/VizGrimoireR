@@ -120,6 +120,8 @@ createJSON (people, "data/json/mls-people.json")
 if (conf$reports == 'companies'){
     
     company_names = companies_names(identities_db, startdate, enddate)
+
+    createJSON(company_names$name, "data/json/mls-companies.json")
    
     for (company in company_names$name){       
         print (company)
