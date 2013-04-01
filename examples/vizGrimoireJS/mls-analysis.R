@@ -19,6 +19,7 @@
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
+##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 ##
 ##
 ## Usage:
@@ -113,3 +114,23 @@ query <- new ("Query",
 		sql = "select email_address as id, email_address, name, username from people")
 people <- run(query)
 createJSON (people, "data/json/mls-people.json")
+
+
+# Companies information
+if (conf$reports == 'companies'){
+    
+    company_names = companies_names(identities_db, startdate, enddate)
+   
+    for (company in company_names$name){       
+        print (company)
+        company_name = paste("'",company,"'",sep="")
+        post_posters = company_posts_posters (company_name, identities_db, period, startdate, enddate)
+        createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
+
+        top_senders = company_top_senders (company_name, identities_db, period, startdate, enddate)
+        createJSON(top_senders, paste("data/json/",company,"-mls-top-senders.json", sep=""))
+
+        static_info = company_static_info(company_name, identities_db, startdate, enddate)
+        createJSON(static_info, paste("data/json/",company,"-mls-static-info.json", sep=""))
+    }
+}

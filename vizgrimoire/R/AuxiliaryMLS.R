@@ -258,7 +258,6 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                  WHERE p.date >= ",startdate," AND 
                        p.date <= ",enddate,"
                 ORDER BY p.id ASC;", sep="")
-    print(q)
     query <- new ("Query", sql = q)
     subjects_monthly <- run(query)
 	
@@ -299,7 +298,6 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                 WHERE p.date >= ",startdate," AND 
                       p.date <= ",enddate,"
                 ORDER BY p.id ASC;", sep="")
-    print(q)
     query <- new ("Query", sql = q)
 
     senders_monthly <- run(query)
@@ -339,7 +337,6 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                 WHERE p.date >= ",startdate," AND 
                       p.date <= ",enddate,"
                 ORDER BY p.id ASC;", sep="")
-    print(q)
     query <- new ("Query", sql = q)
     emails_monthly <- run(query)		
     
@@ -367,7 +364,6 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                        ",field,"='",listname,"' and
                        first_date >= ",startdate," AND 
                        first_date <= ",enddate,";",sep='')
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
 	# TODO: Multilist approach. We will obsolete it in future
@@ -509,4 +505,129 @@ top_senders <- function(days = 0) {
 	query <- new ("Query", sql = q)
 	data <- run(query)
 	return (data)
+}
+
+
+#Companies information
+
+companies_names <- function (i_db, startdate, enddate){
+
+    q <- paste("select c.name as name,
+                       count(distinct(m.message_ID)) as posts
+                from messages m,
+                     messages_people mp,
+                     people_upeople pup,
+                     ",i_db,".upeople_companies upc,
+                     ",i_db,".companies c
+                where m.message_ID = mp.message_id and
+                      mp.email_address  = pup.people_id and
+                      pup.upeople_id = upc.upeople_id and
+                      upc.company_id = c.id and
+                      m.first_date >= ",startdate," and
+                      m.first_date < ",enddate,"
+                group by c.name
+                order by count(distinct(m.message_ID)) desc;" , sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+}
+
+
+company_posts_posters <- function(company_name, i_db, period, startdate, enddate){
+    # company_name: name of the company in the database
+    # i_db: database where identities and companies info is found
+    # period: granularity of weeks or months
+    # startdate: initial date of analysis
+    # enddate: final date of analysis
+
+    q <- paste("SELECT p.id AS id,
+                       p.year AS year,
+                       p.",period," AS ",period,",
+                       DATE_FORMAT(p.date, '%b %Y') AS date,
+                       IFNULL(i.sent, 0) AS sent,
+                       IFNULL(i.senders, 0) AS senders
+                FROM ",period,"s p
+                LEFT JOIN(
+                          SELECT year(first_date) AS year,
+                                 ",period,"(first_date) AS ",period,",
+                                 count(m.message_ID) AS sent,
+                                 count(distinct(mp.email_address)) AS senders
+                          FROM messages m,
+                               messages_people mp,
+                               people_upeople pup,
+                               ",i_db,".upeople_companies upc,
+                               ",i_db,".companies c
+                          where m.message_ID = mp.message_id and
+                                mp.email_address = pup.people_id and
+                                pup.upeople_id = upc.upeople_id and
+                                upc.company_id = c.id and
+                                c.name = ",company_name,"
+                          group by year(first_date),
+                                   ",period,"(first_date)) i
+                on(
+                   p.year = i.year and
+                   p.",period," = i.",period,")
+                where p.date >=",startdate," and
+                      p.date <= ",enddate,"
+                order by p.id asc;", sep="")
+
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+}
+
+
+company_top_senders <- function(company_name, i_db, period, startdate, enddate){
+
+    q <- paste("select p.name as name, 
+                       count(distinct(m.message_id)) as posts
+                from messages m,
+                     messages_people mp,
+                     people p,
+                     people_upeople pup,
+                     ",i_db,".upeople_companies upc,
+                     ",i_db,".companies c
+                where m.message_ID = mp.message_id and
+                      mp.email_address = pup.people_id and
+                      mp.email_address = p.email_address and
+                      pup.upeople_id = upc.upeople_id and
+                      upc.company_id = c.id and
+                      c.name = ",company_name," and
+                      m.first_date >= ",startdate," and
+                      m.first_date <= ",enddate,"
+                group by p.name
+                order by count(distinct(m.message_id)) desc 
+                limit 10", sep="")
+
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+company_static_info <- function(company_name, i_db, startdate, enddate){
+
+    #posts
+    q <- paste("select count(distinct(mp.email_address)) as posters,
+                       count(distinct(m.message_id)) as posts,
+                       count(distinct(m.mailing_list_url)) as mailing_lists
+                from messages m,
+                     messages_people mp,
+                     people_upeople pup,
+                     ",i_db,".upeople_companies upc,
+                     ",i_db,".companies c
+                where m.message_ID = mp.message_id and
+                      mp.email_address = pup.people_id and
+                      pup.upeople_id = upc.upeople_id and
+                      upc.company_id = c.id and
+                      c.name = ",company_name," and
+                      m.first_date >= ",startdate," and
+                      m.first_date <= ",enddate,";", sep="")
+ 
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+
 }
