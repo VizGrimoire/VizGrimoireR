@@ -133,6 +133,6 @@ if (conf$reports == 'companies'){
         createJSON(top_senders, paste("data/json/",company,"-mls-top-senders.json", sep=""))
 
         static_info = company_static_info(company_name, identities_db, startdate, enddate)
-        createJSON(static_info, paste("data/json/",company,"-mls-static-info.json", sep=""))
+        createJSON(static_info, paste("data/json/",company,"-mls-static.json", sep=""))
     }
 }
