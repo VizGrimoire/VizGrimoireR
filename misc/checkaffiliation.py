@@ -235,6 +235,43 @@ WHERE upeople_companies.upeople_id IS NULL
         (id, name) = entry
         print str(id) + ": " + str(name)
 
+
+def ShowUPeople(upeopleId):
+    """Show information related to a upeople identifier"""
+
+    query = """SELECT people.id, people.name, people.email,
+ upeople.id, upeople.identifier
+FROM people, upeople, people_upeople
+WHERE people.id = people_upeople.people_id AND
+  people_upeople.upeople_id = upeople.id AND
+  (upeople.id = %s)"""
+
+    cursor.execute(query % str(upeopleId))
+    upeopleFound = cursor.fetchall()
+    print "people.id\tpeople.name\tpeople.email\tupeople.identifier"
+    for row in upeopleFound:
+        (peopleId, peopleName, peopleEmail, upeopleId,
+         upeopleIdentifier) = row
+        print str(int(peopleId)) + "\t" + peopleName + "\t" + \
+            peopleEmail + "\t" + upeopleIdentifier
+
+    print
+
+    query = """SELECT upeople_companies.id, companies.id, companies.name,
+  upeople_companies.init, upeople_companies.end
+FROM upeople_companies, companies
+WHERE upeople_companies.company_id = companies.id AND upeople_id = %s
+ORDER BY upeople_companies.init"""
+
+    cursor.execute(query % str(upeopleId))
+    companiesFound = cursor.fetchall()
+    print "upeople_companies.id\tcompanies.id\tname\tinit\tend"
+    for row in companiesFound:
+        (upeopleCompaniesId, companiesId, name, init, end) = row
+        print str(int(upeopleCompaniesId)) + "\t" + \
+            str(int(companiesId)) + "\t" + name + "\t" + \
+            str(init) + "\t" + str(end)
+
 #
 # Starts main program
 #
@@ -247,21 +284,30 @@ parser.add_argument("--user",
                     help="Database user name")
 parser.add_argument("--passwd",
                     help="Dagtabase password")
+
 parser.add_argument("--showall",
                     help="Show all entries in upeople_companies",
                     action="store_true")
+
 parser.add_argument("--showdups",
                     help="Show upeople with more than one entry in upeople_companies",
                     action="store_true")
+
 parser.add_argument("--showoverlap",
                     help="Show upeople with overlapping entries in upeople_companies",
                     action="store_true")
+
 parser.add_argument("--showexact",
                     help="Show exactly repeated entries in upeople_companies. Will delete duplicates (only the first duplicate for each row) if --modify is used",
                     action="store_true")
+
 parser.add_argument("--showunaffiliated",
                     help="Show unaffilaited upeople",
                     action="store_true")
+
+parser.add_argument("--showupeople",
+                    help="Show information related to an upeople identifier")
+
 parser.add_argument("--modify",
                     help="Modify the database. If not present, just print the SQL code instead of modifying the database",
                     action="store_true")
@@ -291,6 +337,8 @@ if args.showexact:
     todelete = ShowDups(exact=True)
 if args.showunaffiliated:
     ShowUnaffiliated()
+if args.showupeople:
+    ShowUPeople(args.showupeople)
 
 # Modify the database, or just print the SQL code for it
 #  (according to the --modify flag)
