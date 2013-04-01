@@ -147,5 +147,11 @@ if (conf$reports == 'companies') {
         company_name = paste(c("'", company, "'"), collapse='')
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
+        closed <- its_company_evol_closed(company_name, closed_condition, period, startdate, enddate, identities_db)
+        changed <- its_company_evol_changed(company_name, period, startdate, enddate, identities_db)
+        opened <- its_company_evol_opened(company_name, period, startdate, enddate, identities_db)
+        agg_data = merge(closed, changed, all = TRUE)
+        agg_data = merge(agg_data, opened, all = TRUE)
+        createJSON(agg_data, paste(c("data/json/",company_aux,"-its-evolutionary.json"), collapse=''))
     }
 }
