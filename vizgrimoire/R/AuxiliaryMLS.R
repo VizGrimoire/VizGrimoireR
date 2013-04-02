@@ -512,7 +512,7 @@ top_senders <- function(days = 0) {
 
 companies_names <- function (i_db, startdate, enddate){
 
-    q <- paste("select c.name as senders,
+    q <- paste("select c.name as name,
                        count(distinct(m.message_ID)) as sent
                 from messages m,
                      messages_people mp,
