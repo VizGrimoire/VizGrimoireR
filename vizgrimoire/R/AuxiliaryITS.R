@@ -84,7 +84,7 @@ evol_changed <- function (period, startdate, enddate) {
                 LEFT JOIN(
                  SELECT YEAR(changed_on) AS year,
                  ",period,"(changed_on) AS ",period,",
-                 COUNT(changed_by) AS changed,
+                 COUNT(DISTINCT(issue_id)) AS changed,
                  COUNT(DISTINCT(pup.upeople_id)) AS changers
                  FROM changes, people_upeople pup
                  WHERE pup.people_id = changes.changed_by
@@ -374,6 +374,97 @@ repo_evol_opened <- function(repo, period, startdate, enddate){
     return (data)
 }
 
+its_company_evol_closed <- function(company_name, closed_condition, period, startdate, enddate, identities_db){
+    q <- paste("SELECT p.id AS id,
+                       p.year AS year,
+                       p.",period," AS ",period,",
+                       DATE_FORMAT(p.date, '%b %Y') AS date,
+                       IFNULL(i.closed, 0) AS closed
+                FROM ",period,"s p
+                LEFT JOIN(
+                          SELECT YEAR(changed_on) AS year,
+                                ",period,"(changed_on) AS ",period,",
+                                COUNT(DISTINCT(issue_id)) AS closed
+                          FROM changes,
+                               people_upeople pup,
+                               ",identities_db,".upeople_companies upc,
+                               ",identities_db,".companies com
+                          WHERE ",closed_condition,"
+                                AND pup.people_id = changes.changed_by
+                                AND pup.upeople_id = upc.upeople_id
+                                AND upc.company_id = com.id
+                                AND com.name = ",company_name,"
+                                AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                          GROUP BY year,",period,") i
+                ON (
+                    p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)	
+}
+
+its_company_evol_changed <- function(company_name, period, startdate, enddate, identities_db){
+    q <- paste("SELECT p.id AS id,
+                       p.year AS year,
+                       p.",period," AS ",period,",
+                       DATE_FORMAT(p.date, '%b %Y') AS date,
+                       IFNULL(i.changed, 0) AS changed
+                FROM ",period,"s p
+                LEFT JOIN(
+                          SELECT YEAR(changed_on) AS year,
+                                ",period,"(changed_on) AS ",period,",
+                                COUNT(DISTINCT(issue_id)) AS changed
+                          FROM changes,
+                               people_upeople pup,
+                               ",identities_db,".upeople_companies upc,
+                               ",identities_db,".companies com
+                          WHERE pup.people_id = changes.changed_by
+                                AND pup.upeople_id = upc.upeople_id
+                                AND upc.company_id = com.id
+                                AND com.name = ",company_name,"
+                                AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                          GROUP BY year,",period,") i
+                ON (
+                    p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)    
+}
+
+its_company_evol_opened <- function(company_name, period, startdate, enddate, identities_db){
+    q <- paste("SELECT p.id AS id,
+                       p.year AS year,
+                       p.",period," AS ",period,",
+                       DATE_FORMAT(p.date, '%b %Y') AS date,
+                       IFNULL(i.opened, 0) AS opened
+                FROM ",period,"s p
+                LEFT JOIN(
+                         SELECT YEAR(submitted_on) AS year,
+                                ",period,"(submitted_on) AS ",period,",
+                                COUNT(submitted_by) AS opened
+                         FROM issues,
+                              people_upeople pup,
+                              ",identities_db,".upeople_companies upc,
+                              ",identities_db,".companies com
+                         WHERE pup.people_id = issues.submitted_by
+                               AND pup.upeople_id = upc.upeople_id
+                               AND upc.company_id = com.id
+                               AND com.name = ",company_name,"
+                               AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                         GROUP BY year,",period,") i
+                ON (
+                    p.year = i.year AND p.",period," = i.",period,")
+                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                ORDER BY p.id ASC;", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
+
 its_static_info_repo <- function (repo) {
     q <- paste ("SELECT COUNT(distinct(pup.upeople_id)) as openers,
                  count(*) as opened,
@@ -429,3 +520,75 @@ its_companies_name <- function(startdate, enddate, identities_db) {
     data <- run(query)	
     return (data)
 }
+
+its_company_static_info <- function (company_name, startdate, enddate, identities_db) {
+    ## Get some general stats from the database and url info
+    ##
+    q <- paste ("SELECT count(distinct(tracker_id)) as trackers
+                 FROM issues,
+                      changes,
+                      people_upeople pup,
+                      ",identities_db,".upeople_companies upc,
+                      ",identities_db,".companies com
+                 WHERE issues.id = changes.issue_id
+                       AND pup.people_id = changes.changed_by
+                       AND pup.upeople_id = upc.upeople_id
+                       AND upc.company_id = com.id
+                       AND com.name = ",company_name,"
+                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+	
+    q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers
+                 FROM changes,
+                      people_upeople pup,
+                      ",identities_db,".upeople_companies upc,
+                      ",identities_db,".companies com
+                 WHERE pup.people_id = changes.changed_by
+                       AND pup.upeople_id = upc.upeople_id
+                       AND upc.company_id = com.id
+                       AND com.name = ",company_name,"
+                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+    query <- new ("Query", sql = q)
+    data2 <- run(query)
+
+    q <- paste ("SELECT count(distinct(issue_id)) as changed
+                 FROM changes,
+                      people_upeople pup,
+                      ",identities_db,".upeople_companies upc,
+                      ",identities_db,".companies com
+                 WHERE pup.people_id = changes.changed_by
+                       AND pup.upeople_id = upc.upeople_id
+                       AND upc.company_id = com.id
+                       AND com.name = ",company_name,"
+                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+    query <- new ("Query", sql = q)
+    data3 <- run(query)
+  
+    
+    agg_data = merge(data1, data2)
+    agg_data = merge(agg_data, data3)
+    return(agg_data)
+}
+
+its_company_top_closers <- function(company_name, startdate, enddate, identities_db) {
+    q <- paste("SELECT people.name as closers,
+                       COUNT(DISTINCT(changes.id)) as closed
+                FROM changes,
+                     people,
+                     people_upeople pup,
+                     ",identities_db,".upeople_companies upc,
+                     ",identities_db,".companies com
+                WHERE ", closed_condition, "
+                      AND changes.changed_by = people.id
+                      AND pup.people_id = changes.changed_by
+                      AND pup.upeople_id = upc.upeople_id
+                      AND upc.company_id = com.id
+                      AND com.name = ",company_name,"
+                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
