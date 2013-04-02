@@ -513,7 +513,7 @@ top_senders <- function(days = 0) {
 companies_names <- function (i_db, startdate, enddate){
 
     q <- paste("select c.name as name,
-                       count(distinct(m.message_ID)) as posts
+                       count(distinct(m.message_ID)) as sent
                 from messages m,
                      messages_people mp,
                      people_upeople pup,
@@ -582,7 +582,7 @@ company_posts_posters <- function(company_name, i_db, period, startdate, enddate
 company_top_senders <- function(company_name, i_db, period, startdate, enddate){
 
     q <- paste("select p.name as name, 
-                       count(distinct(m.message_id)) as posts
+                       count(distinct(m.message_id)) as sent 
                 from messages m,
                      messages_people mp,
                      people p,
@@ -610,9 +610,9 @@ company_top_senders <- function(company_name, i_db, period, startdate, enddate){
 company_static_info <- function(company_name, i_db, startdate, enddate){
 
     #posts
-    q <- paste("select count(distinct(mp.email_address)) as posters,
-                       count(distinct(m.message_id)) as posts,
-                       count(distinct(m.mailing_list_url)) as mailing_lists
+    q <- paste("select count(distinct(mp.email_address)) as senders,
+                       count(distinct(m.message_id)) as sent,
+                       count(distinct(m.mailing_list_url)) as repositories
                 from messages m,
                      messages_people mp,
                      people_upeople pup,
