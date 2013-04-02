@@ -19,6 +19,7 @@
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
+##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 ##
 ##
 ## Usage:
@@ -40,12 +41,14 @@ if (conf$granularity == 'weeks'){
    period = 'week'
 }
 
+identities_db = conf$identities_db
+
 # dates
 startdate <- conf$startdate
 enddate <- conf$enddate
 
 # Aggregated data
-static_data <- mls_static_info()
+static_data <- mls_static_info(startdate, enddate)
 createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
 # Mailing lists
@@ -111,3 +114,25 @@ query <- new ("Query",
 		sql = "select email_address as id, email_address, name, username from people")
 people <- run(query)
 createJSON (people, "data/json/mls-people.json")
+
+
+# Companies information
+if (conf$reports == 'companies'){
+    
+    company_names = companies_names(identities_db, startdate, enddate)
+
+    createJSON(company_names$name, "data/json/mls-companies.json")
+   
+    for (company in company_names$name){       
+        print (company)
+        company_name = paste("'",company,"'",sep="")
+        post_posters = company_posts_posters (company_name, identities_db, period, startdate, enddate)
+        createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
+
+        top_senders = company_top_senders (company_name, identities_db, period, startdate, enddate)
+        createJSON(top_senders, paste("data/json/",company,"-mls-top-senders.json", sep=""))
+
+        static_info = company_static_info(company_name, identities_db, startdate, enddate)
+        createJSON(static_info, paste("data/json/",company,"-mls-static.json", sep=""))
+    }
+}
