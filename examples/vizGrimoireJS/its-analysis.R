@@ -153,5 +153,41 @@ if (conf$reports == 'companies') {
         agg_data = merge(closed, changed, all = TRUE)
         agg_data = merge(agg_data, opened, all = TRUE)
         createJSON(agg_data, paste(c("data/json/",company_aux,"-its-evolutionary.json"), collapse=''))
+
+        print ("static info")
+        static_info <- its_company_static_info(company_name, startdate, enddate, identities_db)
+        createJSON(static_info, paste(c("data/json/",company_aux,"-its-static.json"), collapse=''))
+		
+        print ("top closers")
+        top_closers <- its_company_top_closers(company_name, startdate, enddate, identities_db)
+        createJSON(top_closers, paste(c("data/json/",company_aux,"-its-top-closers.json"), collapse=''))
+
     }
 }
+
+# Quantiles
+
+## Which quantiles we're interested in
+quantiles_spec = c(.99,.95,.5,.25)
+
+## Closed tickets: time ticket was open, first closed, time-to-first-close
+closed <- new ("ITSTicketsTimes")
+## Yearly quantiles of time to fix (minutes)
+events.tofix <- new ("TimedEvents",
+                     closed$open, closed$tofix %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+JSON(quantiles, 'data/json/its-quantiles-year-time_to_fix_min.json')
+
+## Monthly quantiles of time to fix (hours)
+events.tofix.hours <- new ("TimedEvents",
+                           closed$open, closed$tofix %/% 3600)
+quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
+JSON(quantiles.month, 'data/json/its-quantiles-month-time_to_fix_hour.json')
+
+## Changed tickets: time ticket was attended, last move
+changed <- new ("ITSTicketsChangesTimes")
+## Yearly quantiles of time to attention (minutes)
+events.toatt <- new ("TimedEvents",
+                     changed$open, changed$toattention %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')
