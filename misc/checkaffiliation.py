@@ -154,6 +154,7 @@ def printEntries (person, entries, overlap):
     for line in toprint:
         print line[1]
 
+
 def ShowDups (overlap=False, exact=False):
     """Show upeople with more than one entry in upeople_companies.
     
@@ -235,6 +236,29 @@ WHERE upeople_companies.upeople_id IS NULL
         (id, name) = entry
         print str(id) + ": " + str(name)
 
+def ShowIdentitiesNotInUpeople ():
+    """Show identities entries for which no corresponding upeople id is found.
+
+    Probably they correspond to "old" upeople identifiers, that were merged
+    with some others..."""
+    
+    query = """SELECT identities.id, identities.identity, identities.type
+FROM identities
+LEFT JOIN upeople
+ON identities.upeople_id = upeople.id
+WHERE upeople.id is null
+"""
+
+    cursor.execute(query)
+    identities = cursor.fetchall()
+
+    print
+    print "== Entries in identities not corresponding to upeople:"
+    print
+    for entry in identities:
+        (id, identity, type) = entry
+        print str(id) + ": " + identity + "(" + type + ")"
+
 
 def ShowUPeople(upeopleId):
     """Show information related to a upeople identifier"""
@@ -272,6 +296,22 @@ ORDER BY upeople_companies.init"""
             str(int(companiesId)) + "\t" + name + "\t" + \
             str(init) + "\t" + str(end)
 
+def ShowLikeIdentities (string):
+    """Show identities similar (LIKE) to the string specified.
+"""
+    
+    query = """SELECT id, upeople_id, identity, type
+FROM identities where identity LIKE %s
+"""
+
+    cursor.execute(query, ("%" + string + "%",))
+    identities = cursor.fetchall()
+
+    for entry in identities:
+        (id, upeople, identity, type) = entry
+        print str(id) + ": " + identity + "(" + type + ")"
+
+
 #
 # Starts main program
 #
@@ -305,8 +345,15 @@ parser.add_argument("--showunaffiliated",
                     help="Show unaffilaited upeople",
                     action="store_true")
 
+parser.add_argument("--showwrongidentities",
+                    help="Show identities for which no upeople id is found.",
+                    action="store_true")
+
 parser.add_argument("--showupeople",
                     help="Show information related to an upeople identifier")
+
+parser.add_argument("--showlikeidentities",
+                    help="Show identities similar (LIKE) to the string specified.")
 
 parser.add_argument("--modify",
                     help="Modify the database. If not present, just print the SQL code instead of modifying the database",
@@ -337,8 +384,12 @@ if args.showexact:
     todelete = ShowDups(exact=True)
 if args.showunaffiliated:
     ShowUnaffiliated()
+if args.showwrongidentities:
+    ShowIdentitiesNotInUpeople()
 if args.showupeople:
     ShowUPeople(args.showupeople)
+if args.showlikeidentities:
+    ShowLikeIdentities (args.showlikeidentities)
 
 # Modify the database, or just print the SQL code for it
 #  (according to the --modify flag)
