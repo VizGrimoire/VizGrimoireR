@@ -300,16 +300,20 @@ def ShowLikeIdentities (string):
     """Show identities similar (LIKE) to the string specified.
 """
     
-    query = """SELECT id, upeople_id, identity, type
-FROM identities where identity LIKE %s
+    query = """SELECT identities.id, identities.upeople_id,
+  identities.identity, identities.type, upeople.identifier
+FROM identities, upeople
+WHERE identity LIKE %s AND
+  identities.upeople_id = upeople.id
 """
 
     cursor.execute(query, ("%" + string + "%",))
     identities = cursor.fetchall()
 
     for entry in identities:
-        (id, upeople, identity, type) = entry
-        print str(id) + ": " + identity + "(" + type + ")"
+        (id, upeopleId, identity, type, identifier) = entry
+        print str(id) + ": " + identity + "(" + type + ") upeople: " + \
+            identifier + " (" + str(upeopleId) + ")"
 
 
 #
