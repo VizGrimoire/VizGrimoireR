@@ -261,20 +261,26 @@ its_static_companies  <- function(startdate, enddate, identities_db) {
 # Top
 top_closers <- function(days = 0) {
     if (days == 0 ) {
-        q <- paste("SELECT pup.upeople_id as closers, count(c.id) as closed
-                    FROM changes c
-                    JOIN people_upeople pup ON (c.changed_by = pup.people_id)
-                    WHERE ", closed_condition, "
-                    GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
+        q <- paste("SELECT people.name as closers, count(changes.id) as closed
+                    FROM changes,
+                         people,
+                         people_upeople pup
+                    WHERE changes.changed_by = pup.people_id
+                          AND pup.people_id = people.id
+                          AND ", closed_condition, "
+                    GROUP BY pup.upeople_id ORDER BY closed DESC LIMIT 10;")
     } else {
         query <- new ("Query", sql ="SELECT @maxdate:=max(changed_on) from changes limit 1;")
         data <- run(query)
-        q <- paste("SELECT pup.people_id as closers, count(c.id) as closed
-                    FROM changes c
-                    JOIN people_upeople pup ON (c.changed_by = pup.people_id)
-                    WHERE ", closed_condition, "
-                    AND c.id in (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,")
-                    GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")		
+        q <- paste("SELECT people.name as closers, count(changes.id) as closed
+                    FROM changes,
+                         people,
+                         people_upeople pup
+                    WHERE changes.changed_by = pup.people_id
+                          AND pup.people_id = people.id
+                          AND ", closed_condition, "
+                          AND changes.id IN (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,")
+                    GROUP BY pup.upeople_id ORDER BY closed DESC LIMIT 10;")
     }
     query <- new ("Query", sql = q)
     data <- run(query)
