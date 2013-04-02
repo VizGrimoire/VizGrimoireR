@@ -581,7 +581,7 @@ company_posts_posters <- function(company_name, i_db, period, startdate, enddate
 
 company_top_senders <- function(company_name, i_db, period, startdate, enddate){
 
-    q <- paste("select p.name as name, 
+    q <- paste("select p.name as senders, 
                        count(distinct(m.message_id)) as sent 
                 from messages m,
                      messages_people mp,
