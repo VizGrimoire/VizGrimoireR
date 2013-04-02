@@ -261,20 +261,26 @@ its_static_companies  <- function(startdate, enddate, identities_db) {
 # Top
 top_closers <- function(days = 0) {
     if (days == 0 ) {
-        q <- paste("SELECT pup.upeople_id as closers, count(c.id) as closed
-                    FROM changes c
-                    JOIN people_upeople pup ON (c.changed_by = pup.people_id)
-                    WHERE ", closed_condition, "
-                    GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
+        q <- paste("SELECT people.name as closers, count(changes.id) as closed
+                    FROM changes,
+                         people,
+                         people_upeople pup
+                    WHERE changes.changed_by = pup.people_id
+                          AND pup.people_id = people.id
+                          AND ", closed_condition, "
+                    GROUP BY pup.upeople_id ORDER BY closed DESC LIMIT 10;")
     } else {
         query <- new ("Query", sql ="SELECT @maxdate:=max(changed_on) from changes limit 1;")
         data <- run(query)
-        q <- paste("SELECT pup.people_id as closers, count(c.id) as closed
-                    FROM changes c
-                    JOIN people_upeople pup ON (c.changed_by = pup.people_id)
-                    WHERE ", closed_condition, "
-                    AND c.id in (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,")
-                    GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")		
+        q <- paste("SELECT people.name as closers, count(changes.id) as closed
+                    FROM changes,
+                         people,
+                         people_upeople pup
+                    WHERE changes.changed_by = pup.people_id
+                          AND pup.people_id = people.id
+                          AND ", closed_condition, "
+                          AND changes.id IN (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,")
+                    GROUP BY pup.upeople_id ORDER BY closed DESC LIMIT 10;")
     }
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -379,12 +385,14 @@ its_company_evol_closed <- function(company_name, closed_condition, period, star
                        p.year AS year,
                        p.",period," AS ",period,",
                        DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.closed, 0) AS closed
+                       IFNULL(i.closed, 0) AS closed,
+                       IFNULL(i.closers, 0) AS closers
                 FROM ",period,"s p
                 LEFT JOIN(
                           SELECT YEAR(changed_on) AS year,
                                 ",period,"(changed_on) AS ",period,",
-                                COUNT(DISTINCT(issue_id)) AS closed
+                                COUNT(DISTINCT(issue_id)) AS closed,
+                                COUNT(DISTINCT(pup.upeople_id)) AS closers
                           FROM changes,
                                people_upeople pup,
                                ",identities_db,".upeople_companies upc,
@@ -410,12 +418,14 @@ its_company_evol_changed <- function(company_name, period, startdate, enddate, i
                        p.year AS year,
                        p.",period," AS ",period,",
                        DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.changed, 0) AS changed
+                       IFNULL(i.changed, 0) AS changed,
+                       IFNULL(i.changers, 0) AS changers
                 FROM ",period,"s p
                 LEFT JOIN(
                           SELECT YEAR(changed_on) AS year,
                                 ",period,"(changed_on) AS ",period,",
-                                COUNT(DISTINCT(issue_id)) AS changed
+                                COUNT(DISTINCT(issue_id)) AS changed,
+                                COUNT(DISTINCT(pup.upeople_id)) AS changers
                           FROM changes,
                                people_upeople pup,
                                ",identities_db,".upeople_companies upc,
@@ -440,12 +450,14 @@ its_company_evol_opened <- function(company_name, period, startdate, enddate, id
                        p.year AS year,
                        p.",period," AS ",period,",
                        DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.opened, 0) AS opened
+                       IFNULL(i.opened, 0) AS opened,
+                       IFNULL(i.openers, 0) AS openers
                 FROM ",period,"s p
                 LEFT JOIN(
                          SELECT YEAR(submitted_on) AS year,
                                 ",period,"(submitted_on) AS ",period,",
-                                COUNT(submitted_by) AS opened
+                                COUNT(submitted_by) AS opened,
+                                COUNT(DISTINCT(pup.upeople_id)) AS openers
                          FROM issues,
                               people_upeople pup,
                               ",identities_db,".upeople_companies upc,
