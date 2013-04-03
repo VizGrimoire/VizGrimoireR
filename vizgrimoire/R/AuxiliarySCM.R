@@ -404,6 +404,7 @@ evol_info_data <- function(period, startdate, enddate) {
 	return (agg_data)
 }
 
+
 top_committers <- function(days , startdate, enddate) {
       if (days == 0 ) {
             q <- paste("SELECT u.identifier as committers,
@@ -471,6 +472,37 @@ top_authors <- function(startdate, enddate) {
 	data <- run(query)
 	return (data)
 }
+
+top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
+    #list_affs
+    affiliations = ""
+    for (aff in list_affs){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+
+    q <- paste("SELECT u.identifier as authors,
+                       count(distinct(s.id)) as commits
+                FROM scmlog s,
+                     people_upeople pup,
+                     upeople u, 
+                     upeople_companies upc,
+                     companies c
+                where s.author_id = pup.people_id and
+                      pup.upeople_id = u.id and
+                      s.date >", startdate, " and
+                      s.date <= ", enddate, " and
+                      ",affiliations,"
+                      pup.upeople_id = upc.upeople_id and
+                      upc.company_id = c.id
+                group by u.identifier
+                order by commits desc
+                LIMIT 10;")
+        query <- new("Query", sql = q)
+        data <- run(query)
+        return (data)
+}
+
+
 
 top_authors_year <- function(year) {
     q <- paste("SELECT u.identifier as authors,
