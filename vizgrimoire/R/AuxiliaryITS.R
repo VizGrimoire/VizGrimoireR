@@ -259,6 +259,7 @@ its_static_companies  <- function(startdate, enddate, identities_db) {
 
 
 # Top
+#FIXME: startdate and enddate are not used in this script, to be fixed...
 top_closers <- function(days = 0) {
     if (days == 0 ) {
         q <- paste("SELECT people.name as closers, count(changes.id) as closed
@@ -285,6 +286,38 @@ top_closers <- function(days = 0) {
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
+}
+
+
+top_closers_wo_affiliation <- function(list_affs, i_db, startdate, enddate) {
+
+        affiliations = ""
+        for (aff in list_affs){
+            affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+        }
+
+        q <- paste("SELECT u.identifier as closers, 
+                           count(ch.id) as closed
+                    FROM changes ch,
+                         people_upeople pup,
+                         ",i_db,".upeople u,
+                         ",i_db,".upeople_companies upc,
+                         ",i_db,".companies c
+                    WHERE ch.changed_by = pup.people_id and
+                          pup.upeople_id = upc.upeople_id and
+                          pup.upeople_id = u.id and
+                          upc.company_id = c.id and
+                          ch.changed_on >= ",startdate," and
+                          ch.changed_on <= ",enddate," and
+                          ",affiliations," 
+                          ", closed_condition, "  
+                    GROUP BY u.identifier 
+                    ORDER BY closed DESC 
+                    LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+
 }
 
 
