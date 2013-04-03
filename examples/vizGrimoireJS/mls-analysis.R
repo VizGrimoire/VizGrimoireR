@@ -120,7 +120,8 @@ createJSON (people, "data/json/mls-people.json")
 # Companies information
 if (conf$reports == 'companies'){
     
-    company_names = companies_names(identities_db, startdate, enddate)
+    #company_names = companies_names(identities_db, startdate, enddate)
+    company_names = companies_names_wo_affs(c("-Bot", "-Individual", "-Unknown"), identities_db, startdate, enddate)
 
     createJSON(company_names$name, "data/json/mls-companies.json")
    

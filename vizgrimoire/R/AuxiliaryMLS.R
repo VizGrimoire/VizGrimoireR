@@ -544,6 +544,38 @@ top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
 
 #Companies information
 
+companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
+
+    affiliations = ""
+    for (aff in list_affs){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+
+
+    q <- paste("select c.name as name,
+                       count(distinct(m.message_ID)) as sent
+                from messages m,
+                     messages_people mp,
+                     people_upeople pup,
+                     ",i_db,".upeople_companies upc,
+                     ",i_db,".companies c
+                where m.message_ID = mp.message_id and
+                      mp.email_address  = pup.people_id and
+                      pup.upeople_id = upc.upeople_id and
+                      upc.company_id = c.id and
+                      ", affiliations, "
+                      m.first_date >= ",startdate," and
+                      m.first_date < ",enddate,"
+                group by c.name
+                order by count(distinct(m.message_ID)) desc;" , sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+
+
+}
+
 companies_names <- function (i_db, startdate, enddate){
 
     q <- paste("select c.name as name,
