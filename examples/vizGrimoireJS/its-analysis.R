@@ -140,7 +140,7 @@ if (conf$reports == 'repositories') {
 
 # Companies
 if (conf$reports == 'companies') {
-    companies  <- its_companies_name(startdate, enddate, identities_db)
+    companies  <- its_companies_name_wo_affiliations(c("-Bot", "-Unknown", "-Individual"), startdate, enddate, identities_db)
     companies <- companies$name
     createJSON(companies, "data/json/its-companies.json")
     
