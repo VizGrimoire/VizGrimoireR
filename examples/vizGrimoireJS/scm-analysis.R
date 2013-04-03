@@ -115,7 +115,7 @@ createJSON (top_authors_data, "data/json/scm-top-authors.json")
 #createJSON (top_authors_data_2012, "data/json/scm-top-authors_2012.json")
 
 if (conf$reports == 'companies') {
-	companies  <- companies_name(conf$startdate, conf$enddate)
+	companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
 	companies <- companies$name
 	createJSON(companies, "data/json/scm-companies.json")
 	

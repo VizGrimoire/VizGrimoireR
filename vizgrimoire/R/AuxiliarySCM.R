@@ -528,6 +528,32 @@ people <- function() {
 	return (data);
 }
 
+companies_name_wo_affs <- function(affs_list, startdate, enddate) {
+        #List of companies without certain affiliations
+        affiliations = ""
+        for (aff in affs_list){
+            affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+        }    
+
+        q <- paste ("select distinct(c.name)
+                    from companies c,
+                         people_upeople pup,
+                         upeople_companies upc,
+                         scmlog s
+                    where c.id = upc.company_id and
+                          upc.upeople_id = pup.upeople_id and
+                          pup.people_id = s.author_id and
+                          ",affiliations," 
+                          s.date >", startdate, " and
+                          s.date <= ", enddate, "
+                    group by c.name
+                    order by count(distinct(s.id)) desc;", sep="")
+        query <- new("Query", sql = q)
+        data <- run(query)
+        return (data)
+}
+
+
 companies_name <- function(startdate, enddate) {
 	q <- paste ("select distinct(c.name)
                     from companies c,
