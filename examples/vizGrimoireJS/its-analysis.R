@@ -38,8 +38,12 @@ library("vizgrimoire")
 ##               host = conf$host, port = conf$port)
 # conf <- ConfFromParameters(dbschema = "kdevelop_bicho", user = "jgb", password = "XXX")
 
+
+
 conf <- ConfFromOptParse('its')
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
+
+
 
 # backends
 if (conf$backend == 'allura'){
@@ -58,12 +62,15 @@ if (conf$backend == 'launchpad'){
     closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
 }
 
+
 # period of time
 if (conf$granularity == 'months'){
    period = 'month'
+   nperiod = 31
 }
 if (conf$granularity == 'weeks'){
    period = 'week'
+   nperiod = 7
 }
 
 # dates
@@ -73,17 +80,29 @@ enddate <- conf$enddate
 # database with unique identities
 identities_db <- conf$identities_db
 
-closed <- evol_closed(closed_condition, period, startdate, enddate)
-changed <- evol_changed(period, startdate, enddate)
-open <- evol_opened(period, startdate, enddate)
-repos <- its_evol_repositories(period, startdate, enddate)
+print(startdate)
+closed <- evol_closed(closed_condition, nperiod, startdate, enddate)
+closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
+closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
+
+changed <- evol_changed(nperiod, startdate, enddate)
+changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
+changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
+
+open <- evol_opened(nperiod, startdate, enddate)
+open$week <- as.Date(conf$str_startdate) + open$id * nperiod
+open$date <- toTextDate(GetYear(open$week), GetMonth(open$week)+1)
+
+repos <- its_evol_repositories(nperiod, startdate, enddate)
+repos$week <- as.Date(conf$str_startdate) + repos$id * nperiod
+repos$date <- toTextDate(GetYear(repos$week), GetMonth(repos$week)+1)
 
 issues <- merge (open, closed, all = TRUE)
 issues <- merge (issues, changed, all = TRUE)
 issues <- merge (issues, repos, all = TRUE)
 
 if (conf$reports == 'companies') {
-    info_data_companies = its_evol_companies (period, startdate, enddate, identities_db)
+    info_data_companies = its_evol_companies (nperiod, startdate, enddate, identities_db)
     issues = merge(issues, info_data_companies, all = TRUE)
 }
 issues[is.na(issues)] <- 0

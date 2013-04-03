@@ -116,7 +116,9 @@ ConfFromOptParse <- function (datasource="") {
 	startdatesplit <- strsplit(options$startdate,'-')
 	startyear <- startdatesplit[[1]][1]
 	startmonth <- startdatesplit[[1]][2]
+        options$str_startdate <- options$startdate
 	options$startdate <- paste (c("'", options$startdate, "'"), collapse='')
+
 		
 	return (options)
 }
