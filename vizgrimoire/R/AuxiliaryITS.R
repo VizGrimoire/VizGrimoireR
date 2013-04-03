@@ -297,7 +297,7 @@ top_closers_wo_affiliation <- function(list_affs, i_db, startdate, enddate) {
         }
 
         q <- paste("SELECT u.identifier as closers, 
-                           count(ch.id) as closed
+                           count(distinct(ch.issue_id)) as closed
                     FROM changes ch,
                          people_upeople pup,
                          ",i_db,".upeople u,
@@ -563,6 +563,32 @@ its_companies_name <- function(startdate, enddate, identities_db) {
                     order by count(distinct(s.issue_id)) desc;")
     query <- new("Query", sql = q)
     data <- run(query)	
+    return (data)
+}
+
+its_companies_name_wo_affiliations <- function(list_affs, startdate, enddate, id_b){
+
+        affiliations = ""
+        for (aff in list_affs){
+            affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+        }
+
+
+    q <- paste ("select distinct(c.name)
+                    from ",id_b,".companies c,
+                         people_upeople pup,
+                         ",id_b,".upeople_companies upc,
+                         changes ch
+                    where c.id = upc.company_id and
+                          upc.upeople_id = pup.upeople_id and
+                          pup.people_id = ch.changed_by and
+                          ",affiliations,"
+                          ch.changed_on >", startdate, " and
+                          ch.changed_on <= ", enddate, "
+                    group by c.name
+                    order by count(distinct(ch.issue_id)) desc;")
+    query <- new("Query", sql = q)
+    data <- run(query)
     return (data)
 }
 
