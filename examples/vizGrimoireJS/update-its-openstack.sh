@@ -1,0 +1,8 @@
+echo Updating ITS OpenStack JSON data
+rm -rf data/json data/its
+mkdir -p data/json  data/its/whole/ data/its/grizzly/ data/its/folsom/ data/its/essex/
+R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r repositories -u root -p '' -t launchpad < its-analysis.R && R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r companies -i dic_cvsanaly_openstack_1289_updated -u root -p '' -t launchpad < its-analysis.R && mv data/json/* data/its/whole/
+R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r repositories -u root -p '' -t launchpad -s 2012-09-27 < its-analysis.R && R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r companies -i dic_cvsanaly_openstack_1289_updated -u root -p '' -t launchpad -s 2012-09-27 < its-analysis.R && mv data/json/* data/its/grizzly/
+R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r repositories -u root -p '' -t launchpad -s 2012-04-05 -e 2012-09-27 < its-analysis.R && R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r companies -i dic_cvsanaly_openstack_1289_updated -u root -p '' -t launchpad -s 2012-04-05 -e 2012-09-27 < its-analysis.R && mv data/json/* data/its/folsom/
+R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r repositories -u root -p '' -t launchpad -s 2011-22-11 -e 2012-04-05 < its-analysis.R && R --vanilla --args -d lcanas_bicho_openstack_1291_2013_03_28 -g weeks -r companies -i dic_cvsanaly_openstack_1289_updated -u root -p '' -t launchpad -s 2011-22-11 -e 2012-04-05 < its-analysis.R && mv data/json/* data/its/essex/
+echo Your ITS JSON data per releases and whole under data/its
