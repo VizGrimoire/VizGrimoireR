@@ -36,9 +36,9 @@ import sys
 import re
 
 def connect(database):
-   user = 'xxx'
-   password = 'xxx'
-   host = 'xxx'
+   user = 'root'
+   password = ''
+   host = 'localhost'
    try:
       db =  MySQLdb.connect(host,user,password,database)
       return db, db.cursor()
