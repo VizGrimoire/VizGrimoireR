@@ -536,6 +536,54 @@ its_companies_name <- function(startdate, enddate, identities_db) {
 its_company_static_info <- function (company_name, startdate, enddate, identities_db) {
     ## Get some general stats from the database and url info
     ##
+
+    q <- paste ("SELECT COUNT(DISTINCT(issues.id)) as tickets,
+                        COUNT(DISTINCT(issues.id)) as opened,
+                        COUNT(distinct(pup.upeople_id)) as openers,
+                        DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
+                        DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date
+                 FROM issues,
+                      people_upeople pup,
+                      ",identities_db,".upeople_companies upc,
+                      ",identities_db,".companies com
+                 WHERE issues.submitted_by = pup.people_id
+                       AND pup.upeople_id = upc.upeople_id
+                       AND upc.company_id = com.id
+                       AND com.name = ",company_name,"
+                       AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"")
+    query <- new ("Query", sql = q)
+    data0 <- run(query)
+
+    q <- paste ("SELECT COUNT(DISTINCT(pup.upeople_id)) as closers,
+                        COUNT(DISTINCT(issue_id)) AS closed
+                 FROM changes,
+                      people_upeople pup,
+                      ",identities_db,".upeople_companies upc,
+                      ",identities_db,".companies com
+                 WHERE pup.people_id = changes.changed_by
+                       AND pup.upeople_id = upc.upeople_id
+                       AND upc.company_id = com.id
+                       AND com.name = ",company_name,"
+                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                       AND ", closed_condition)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+
+    q <- paste ("SELECT COUNT(distinct(issue_id)) as changed,
+                        COUNT(distinct(pup.upeople_id)) as changers
+                 FROM changes,
+                      people_upeople pup,
+                      ",identities_db,".upeople_companies upc,
+                      ",identities_db,".companies com
+                 WHERE pup.people_id = changes.changed_by
+                       AND pup.upeople_id = upc.upeople_id
+                       AND upc.company_id = com.id
+                       AND com.name = ",company_name,"
+                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+    query <- new ("Query", sql = q)
+    data2 <- run(query)
+
+
     q <- paste ("SELECT count(distinct(tracker_id)) as trackers
                  FROM issues,
                       changes,
@@ -549,36 +597,11 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND com.name = ",company_name,"
                        AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
     query <- new ("Query", sql = q)
-    data1 <- run(query)
-	
-    q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers
-                 FROM changes,
-                      people_upeople pup,
-                      ",identities_db,".upeople_companies upc,
-                      ",identities_db,".companies com
-                 WHERE pup.people_id = changes.changed_by
-                       AND pup.upeople_id = upc.upeople_id
-                       AND upc.company_id = com.id
-                       AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
-    query <- new ("Query", sql = q)
-    data2 <- run(query)
-
-    q <- paste ("SELECT count(distinct(issue_id)) as changed
-                 FROM changes,
-                      people_upeople pup,
-                      ",identities_db,".upeople_companies upc,
-                      ",identities_db,".companies com
-                 WHERE pup.people_id = changes.changed_by
-                       AND pup.upeople_id = upc.upeople_id
-                       AND upc.company_id = com.id
-                       AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
-    query <- new ("Query", sql = q)
     data3 <- run(query)
   
     
-    agg_data = merge(data1, data2)
+    agg_data = merge(data0, data1)
+    agg_data = merge(agg_data, data2)
     agg_data = merge(agg_data, data3)
     return(agg_data)
 }
