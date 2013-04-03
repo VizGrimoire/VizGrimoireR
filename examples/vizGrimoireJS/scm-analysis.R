@@ -23,6 +23,7 @@
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
+##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 ##
 ##
 ## Usage:
@@ -44,42 +45,49 @@ library("vizgrimoire")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
+if (conf$granularity == 'months'){
+   period = 'month'
+}
+if (conf$granularity == 'weeks'){
+   period='week'
+}
+
 #Commits per month
-data_commits <- evol_commits()
+data_commits <- evol_commits(period, conf$startdate, conf$enddate)
 
 #Committers per month
-data_committers = evol_committers()
+data_committers = evol_committers(period, conf$startdate, conf$enddate)
 
 # Authors per month
-data_authors = evol_authors()
+data_authors = evol_authors(period, conf$startdate, conf$enddate)
 
 #Files per month
-data_files = evol_files()
+data_files = evol_files(period, conf$startdate, conf$enddate)
 
 #Branches per month
-data_branches = evol_branches()
+data_branches = evol_branches(period, conf$startdate, conf$enddate)
 
 #Repositories per month
-data_repositories = evol_repositories()
+data_repositories = evol_repositories(period, conf$startdate, conf$enddate)
 
-if (conf$reports == 'companies') data_companies = evol_companies()
+if (conf$reports == 'companies') data_companies = evol_companies(period, conf$startdate, conf$enddate)
 
 # Fixed data
-info_data = evol_info_data()
+info_data = evol_info_data(period, conf$startdate, conf$enddate)
 
 if (conf$reports == 'companies') {
-	info_data_companies = evol_info_data_companies ()
+	info_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
 	info_data = merge(info_data, info_data_companies, all = TRUE)
 }
 
 # Top committers
 top_committers_data <- list()
-top_committers_data[['committers.']]<-top_committers()
-top_committers_data[['committers.last year']]<-top_committers(365)
-top_committers_data[['committers.last month']]<-top_committers(31)
+top_committers_data[['committers.']]<-top_committers(0, conf$startdate, conf$enddate)
+top_committers_data[['committers.last year']]<-top_committers(365, conf$startdate, conf$enddate)
+top_committers_data[['committers.last month']]<-top_committers(31, conf$startdate, conf$enddate)
 
 # Top authors
-top_authors_data <- top_authors()
+top_authors_data <- top_authors(conf$startdate, conf$enddate)
 top_authors_data_2006 <- top_authors_year(2006)
 top_authors_data_2009 <- top_authors_year(2009)
 top_authors_data_2012 <- top_authors_year(2012)
@@ -111,7 +119,7 @@ createJSON (top_authors_data_2009, "data/json/scm-top-authors_2009.json")
 createJSON (top_authors_data_2012, "data/json/scm-top-authors_2012.json")
 
 if (conf$reports == 'companies') {
-	companies  <- companies_name()
+	companies  <- companies_name(conf$startdate, conf$enddate)
 	companies <- companies$name
 	createJSON(companies, "data/json/scm-companies.json")
 	
@@ -120,11 +128,11 @@ if (conf$reports == 'companies') {
 		company_aux = paste(c("", company, ""), collapse='')
 		print (company_name)
 		 
-		commits <- company_commits(company_name)	
-		lines <-company_lines(company_name)
-		files <- company_files(company_name)
-		authors <- company_authors(company_name)
-		committers <- company_committers(company_name)
+		commits <- company_commits(company_name, period, conf$startdate, conf$enddate)	
+		lines <-company_lines(company_name, period, conf$startdate, conf$enddate)
+		files <- company_files(company_name, period, conf$startdate, conf$enddate)
+		authors <- company_authors(company_name, period, conf$startdate, conf$enddate)
+		committers <- company_committers(company_name, period, conf$startdate, conf$enddate)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
@@ -135,11 +143,11 @@ if (conf$reports == 'companies') {
 		
 		
 		print ("static info")
-		static_info <- evol_info_data_company(company_name)
+		static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
 		createJSON(static_info, paste(c("data/json/",company_aux,"-scm-static.json"), collapse=''))
 		
 		print ("top authors")
-		top_authors <- company_top_authors(company_name)
+		top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
 		createJSON(top_authors, paste(c("data/json/",company_aux,"-scm-top-authors.json"), collapse=''))
 		top_authors_2006 <- company_top_authors_year(company_name, 2006) 
 		createJSON(top_authors_2006, paste(c("data/json/",company_aux,"-scm-top-authors_2006.json"), collapse=''))
@@ -151,7 +159,7 @@ if (conf$reports == 'companies') {
 }
 
 if (conf$reports == 'repositories') {
-	repos  <- repos_name()
+	repos  <- repos_name(conf$startdate, conf$enddate)
 	repos <- repos$name
 	createJSON(repos, "data/json/scm-repos.json")
 	
@@ -161,15 +169,15 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		print ("commits") 
-		commits <- repo_commits(repo_name)	
+		commits <- repo_commits(repo_name, period, conf$startdate, conf$enddate)	
 		# print ("lines")
-		# lines <- repo_lines(repo_name)
+		# lines <- repo_lines(repo_name, period, conf$startdate, conf$enddate)
 		lines <- ""
 		print ("files")
-		files <- repo_files(repo_name)
+		files <- repo_files(repo_name, period, conf$startdate, conf$enddate)
 		print ("people")
-		authors <- repo_authors(repo_name)
-		committers <- repo_committers(repo_name)
+		authors <- repo_authors(repo_name, period, conf$startdate, conf$enddate)
+		committers <- repo_committers(repo_name, period, conf$startdate, conf$enddate)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
@@ -179,7 +187,7 @@ if (conf$reports == 'repositories') {
 		createJSON(agg_data, paste(c("data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
 		print ("static info")
-		static_info <- evol_info_data_repo(repo_name)
+		static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
 		createJSON(static_info, paste(c("data/json/",repo_aux,"-scm-static.json"), collapse=''))		
 	}		
 }

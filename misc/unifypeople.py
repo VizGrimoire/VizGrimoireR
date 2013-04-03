@@ -116,7 +116,6 @@ def strPerson (person):
 #                      port = 3308,
 #                      db = "xxx")
 
-
 cursor = db.cursor()
 query = """SELECT *
            FROM people, scmlog

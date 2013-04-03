@@ -19,6 +19,7 @@
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
+##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 ##
 ##
 ## Usage:
@@ -29,16 +30,26 @@
 
 library("vizgrimoire")
 
-## Analyze args, and produce config params from them
-## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
-##                            user = "root", password = NULL,
-##                            host = "127.0.0.1", port = 3308)
-## SetDBChannel (database = conf$database,
-##               user = conf$user, password = conf$password,
-##               host = conf$host, port = conf$port)
-## conf <- ConfFromParameters(dbschema = "acs_mlstats_allura_all", group = "fuego")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
+
+# period of time
+if (conf$granularity == 'months'){
+   period = 'month'
+}
+if (conf$granularity == 'weeks'){
+   period = 'week'
+}
+
+identities_db = conf$identities_db
+
+# dates
+startdate <- conf$startdate
+enddate <- conf$enddate
+
+# Aggregated data
+static_data <- mls_static_info(startdate, enddate)
+createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
 # Mailing lists
 query <- new ("Query", sql = "select distinct(mailing_list) from messages")
@@ -53,8 +64,8 @@ if (is.na(mailing_lists$mailing_list)) {
     mailing_lists_files$mailing_list = gsub("/","_",mailing_lists$mailing_list)
     # print (mailing_lists)
     createJSON (mailing_lists_files, "data/json/mls-lists.json")
-	repos <- mailing_lists_files$mailing_list
-	createJSON(repos, "data/json/mls-repos.json")	
+    repos <- mailing_lists_files$mailing_list
+    createJSON(repos, "data/json/mls-repos.json")	
 } else {
     print (mailing_lists)
     createJSON (mailing_lists, "data/json/mls-lists.json")
@@ -62,17 +73,33 @@ if (is.na(mailing_lists$mailing_list)) {
 	createJSON(repos, "data/json/mls-repos.json")	
 }
 
-# Aggregated data
-static_data <- mls_static_info()
-createJSON (static_data, paste("data/json/mls-static.json",sep=''))
+if (conf$reports == 'countries') {    
+    # Countries
+    country_limit = 30
+    q <- paste("SELECT count(m.message_id) as total, country 
+                FROM messages m  
+                JOIN messages_people mp ON mp.message_ID=m.message_id  
+                JOIN people p ON mp.email_address = p.email_address 
+                GROUP BY country 
+                ORDER BY total desc LIMIT ", country_limit)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    countries<-data$country
+    createJSON (countries, paste("data/json/mls-countries.json",sep=''))
+    
+    for (country in countries) {
+        if (is.na(country)) next
+        print (country)
+        analyze.monthly.mls.countries(country, period, startdate, enddate)
+    }
+}
 
 for (mlist in mailing_lists$mailing_list) {
-	analyze.monthly.list(mlist)
-	# analList(mlist)
+    analyze.monthly.list(mlist, period, startdate, enddate)
 }
-# analAggregated()
-data.monthly <- get.monthly()
-createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))	
+
+data.monthly <- get.monthly(period, startdate, enddate)
+createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders
 top_senders_data <- list()
@@ -87,3 +114,25 @@ query <- new ("Query",
 		sql = "select email_address as id, email_address, name, username from people")
 people <- run(query)
 createJSON (people, "data/json/mls-people.json")
+
+
+# Companies information
+if (conf$reports == 'companies'){
+    
+    company_names = companies_names(identities_db, startdate, enddate)
+
+    createJSON(company_names$name, "data/json/mls-companies.json")
+   
+    for (company in company_names$name){       
+        print (company)
+        company_name = paste("'",company,"'",sep="")
+        post_posters = company_posts_posters (company_name, identities_db, period, startdate, enddate)
+        createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
+
+        top_senders = company_top_senders (company_name, identities_db, period, startdate, enddate)
+        createJSON(top_senders, paste("data/json/",company,"-mls-top-senders.json", sep=""))
+
+        static_info = company_static_info(company_name, identities_db, startdate, enddate)
+        createJSON(static_info, paste("data/json/",company,"-mls-static.json", sep=""))
+    }
+}

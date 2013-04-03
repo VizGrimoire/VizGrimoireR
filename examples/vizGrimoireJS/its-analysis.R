@@ -42,32 +42,63 @@ library("vizgrimoire")
 conf <- ConfFromOptParse('its')
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
-if (conf$backend == 'allura') closed_condition <- "new_value='CLOSED'"
-if (conf$backend == 'bugzilla') 
-	closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
-if (conf$backend == 'github') closed_condition <- "field='closed'"
-if (conf$backend == 'jira') 
-	closed_condition <- "new_value='CLOSED'"
-if (conf$backend == 'lp')
-        closed_condition <- "(new_value='Fix Released' OR new_value='Invalid' OR new_value='Won''t Fix' OR new_value='Expired')"
+# backends
+if (conf$backend == 'allura'){
+    closed_condition <- "new_value='CLOSED'"
+}
+if (conf$backend == 'bugzilla'){
+    closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
+}
+if (conf$backend == 'github'){
+    closed_condition <- "field='closed'"
+}
+if (conf$backend == 'jira'){
+    closed_condition <- "new_value='CLOSED'"
+}
+if (conf$backend == 'launchpad'){
+    closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+}
 
+# period of time
+if (conf$granularity == 'months'){
+   period = 'month'
+}
+if (conf$granularity == 'weeks'){
+   period = 'week'
+}
 
-closed_monthly <- evol_closed(closed_condition)
-changed_monthly <- evol_changed()
-open_monthly <- evol_opened()
-repos_monthly <- its_evol_repositories()
+# dates
+startdate <- conf$startdate
+enddate <- conf$enddate
 
-issues_monthly <- merge (open_monthly, closed_monthly, all = TRUE)
-issues_monthly <- merge (issues_monthly, changed_monthly, all = TRUE)
-issues_monthly <- merge (issues_monthly, repos_monthly, all = TRUE)
-issues_monthly[is.na(issues_monthly)] <- 0
+# database with unique identities
+identities_db <- conf$identities_db
+>>>>>>> unique-ids
 
-issues_monthly <- completeZeroMonthly(issues_monthly)
+closed <- evol_closed(closed_condition, period, startdate, enddate)
+changed <- evol_changed(period, startdate, enddate)
+open <- evol_opened(period, startdate, enddate)
+repos <- its_evol_repositories(period, startdate, enddate)
 
-createJSON (issues_monthly, "data/json/its-evolutionary.json")
+issues <- merge (open, closed, all = TRUE)
+issues <- merge (issues, changed, all = TRUE)
+issues <- merge (issues, repos, all = TRUE)
 
-all_static_info <- its_static_info()
+if (conf$reports == 'companies') {
+    info_data_companies = its_evol_companies (period, startdate, enddate, identities_db)
+    issues = merge(issues, info_data_companies, all = TRUE)
+}
+issues[is.na(issues)] <- 0
+createJSON (issues, "data/json/its-evolutionary.json")
+
+all_static_info <- its_static_info(closed_condition, startdate, enddate)
+if (conf$reports == 'companies') {
+    info_com = its_static_companies (startdate, enddate, identities_db)
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
 createJSON (all_static_info, "data/json/its-static.json")
+
+
 
 # Top closers
 top_closers_data <- list()
@@ -94,12 +125,12 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		# EVOLUTION INFO
-		closed <- repo_evol_closed(repo_name, closed_condition)
-		changed <- repo_evol_changed(repo_name)
-		opened <- repo_evol_opened(repo_name)		
+		closed <- repo_evol_closed(repo_name, closed_condition, period, startdate, enddate)
+		changed <- repo_evol_changed(repo_name, period, startdate, enddate)
+		opened <- repo_evol_opened(repo_name, period, startdate, enddate)                
 		agg_data = merge(closed, changed, all = TRUE)
 		agg_data = merge(agg_data, opened, all = TRUE)	
-		agg_data[is.na(agg_data)] <- 0				
+		agg_data[is.na(agg_data)] <- 0
 		createJSON(agg_data, paste(c("data/json/",repo_file,"-its-evolutionary.json"), collapse=''))
 		
 		# STATIC INFO
@@ -107,3 +138,58 @@ if (conf$reports == 'repositories') {
 		createJSON(static_info, paste(c("data/json/",repo_file,"-its-static.json"), collapse=''))		
 	}
 }
+
+# Companies
+if (conf$reports == 'companies') {
+    companies  <- its_companies_name(startdate, enddate, identities_db)
+    companies <- companies$name
+    createJSON(companies, "data/json/its-companies.json")
+    
+    for (company in companies){
+        company_name = paste(c("'", company, "'"), collapse='')
+        company_aux = paste(c("", company, ""), collapse='')
+        print (company_name)
+        closed <- its_company_evol_closed(company_name, closed_condition, period, startdate, enddate, identities_db)
+        changed <- its_company_evol_changed(company_name, period, startdate, enddate, identities_db)
+        opened <- its_company_evol_opened(company_name, period, startdate, enddate, identities_db)
+        agg_data = merge(closed, changed, all = TRUE)
+        agg_data = merge(agg_data, opened, all = TRUE)
+        createJSON(agg_data, paste(c("data/json/",company_aux,"-its-evolutionary.json"), collapse=''))
+
+        print ("static info")
+        static_info <- its_company_static_info(company_name, startdate, enddate, identities_db)
+        createJSON(static_info, paste(c("data/json/",company_aux,"-its-static.json"), collapse=''))
+		
+        print ("top closers")
+        top_closers <- its_company_top_closers(company_name, startdate, enddate, identities_db)
+        createJSON(top_closers, paste(c("data/json/",company_aux,"-its-top-closers.json"), collapse=''))
+
+    }
+}
+
+# Quantiles
+
+## Which quantiles we're interested in
+quantiles_spec = c(.99,.95,.5,.25)
+
+## Closed tickets: time ticket was open, first closed, time-to-first-close
+closed <- new ("ITSTicketsTimes")
+## Yearly quantiles of time to fix (minutes)
+events.tofix <- new ("TimedEvents",
+                     closed$open, closed$tofix %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+JSON(quantiles, 'data/json/its-quantiles-year-time_to_fix_min.json')
+
+## Monthly quantiles of time to fix (hours)
+events.tofix.hours <- new ("TimedEvents",
+                           closed$open, closed$tofix %/% 3600)
+quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
+JSON(quantiles.month, 'data/json/its-quantiles-month-time_to_fix_hour.json')
+
+## Changed tickets: time ticket was attended, last move
+changed <- new ("ITSTicketsChangesTimes")
+## Yearly quantiles of time to attention (minutes)
+events.toatt <- new ("TimedEvents",
+                     changed$open, changed$toattention %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')

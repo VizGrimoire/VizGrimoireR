@@ -130,7 +130,12 @@ def main(database, dc_file):
             #if the author does not exist, then this is included, 
             # else: it does not make sense: this is already assigned to a 
             #       company or this is again unknown.
+<<<<<<< HEAD
             pe_com[author_id] = (companies.index("unknown") + 1)
+=======
+            pe_com[author_id] = []
+            pe_com[author_id].append(companies.index("unknown") + 1)
+>>>>>>> unique-ids
       if re.match(rexp, email):
          m = re.match(rexp, email)
          domain = str(m.groups()[1])
@@ -139,21 +144,39 @@ def main(database, dc_file):
             #if the author does not exist, then this is included, 
             # else: it does not make sense: this is already assigned to a
             #       company or this is again unknown.
+<<<<<<< HEAD
                pe_com[author_id] = (companies.index("unknown") + 1)
          else:
             company = domain_companies[domain]
             pe_com[author_id] = (companies.index(company) + 1) #+1 in orddr to avoid the insertion of 0 in the database
+=======
+               pe_com[author_id] = []
+               pe_com[author_id].append(companies.index("unknown") + 1)
+         else:
+            company = domain_companies[domain]
+            if not pe_com.has_key(author_id):
+               pe_com[author_id] = []
+               pe_com[author_id].append(companies.index(company) + 1) #+1 in orddr to avoid the insertion of 0 in the database
+            else:
+               pe_com[author_id].append(companies.index(company) + 1)
+>>>>>>> unique-ids
       else:
          if not pe_com.has_key(author_id):
             #if the author does not exist, then this is included, 
             # else: it does not make sense: this is already assigned to a
             #       company or this is again unknown.
+<<<<<<< HEAD
 
             pe_com[author_id] = (companies.index("unknown") + 1)
+=======
+            pd_com[author_id] = []
+            pe_com[author_id].append(companies.index("unknown") + 1)
+>>>>>>> unique-ids
    
    #inserting data in upeople_companies table
    for item in pe_com.iteritems():
       author_id = int(item[0])
+<<<<<<< HEAD
       company_id = int(item[1])
       query = "INSERT INTO upeople_companies(upeople_id, company_id, init, end) " + \
               "VALUES(" + str(author_id) + "," + \
@@ -164,6 +187,23 @@ def main(database, dc_file):
    for company in companies:
       query = "INSERT INTO companies(name) " +\
               "VALUES('" + company + "');"
+=======
+      companies_in_author = item[1]
+      for company in companies_in_author:
+         if len(companies_in_author) > 1 and company == companies.index("unknown") + 1:
+            #ignore this company. There are others, so unknown should not be inserted
+            continue
+         company_id = int(company)
+         query = "INSERT INTO upeople_companies(upeople_id, company_id, init, end) " + \
+                 "VALUES(" + str(author_id) + "," + \
+                             str(company_id) + "," + \
+                             "'1900-01-01', '2100-01-01' );"
+         connector.execute(query)
+   #inserting companies in companies table      
+   for company in companies:
+      query = "INSERT INTO companies(name) " +\
+              "VALUES('" + str(company) + "');"
+>>>>>>> unique-ids
       connector.execute(query)
       
 
