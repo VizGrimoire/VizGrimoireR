@@ -487,6 +487,7 @@ analyze.monthly.mls.countries <- function (country, period, startdate, enddate) 
     createJSON (data, paste("data/json/",country,"-mls-static.json",sep=''))
 }
 
+#FIXME: still needed to add stardate and enddate variables
 top_senders <- function(days = 0) {
   	if (days == 0 ) {
     	q <- "SELECT email_address as senders, count(m.message_id) as sent 
@@ -505,6 +506,39 @@ top_senders <- function(days = 0) {
 	query <- new ("Query", sql = q)
 	data <- run(query)
 	return (data)
+}
+
+top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
+
+        affiliations = ""
+        for (aff in list_affs){
+            affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+        }
+
+    q <- paste("SELECT u.identifier as senders, 
+                 count(distinct(m.message_id)) as sent
+          FROM messages m,
+               messages_people mp,
+               people_upeople pup,
+               ",i_db,".upeople u,
+               ",i_db,".upeople_companies upc,
+               ",i_db,".companies c
+          where m.message_ID = mp.message_id and
+                mp.email_address = pup.people_id and
+                pup.upeople_id = upc.upeople_id and
+                pup.upeople_id = u.id and
+                ",affiliations,"
+                upc.company_id = c.id and
+                m.first_date >= ",startdate," and
+                m.first_date <= ",enddate,"
+          GROUP by mp.email_address 
+          ORDER BY sent DESC LIMIT 10;", sep="")
+   print(q)
+   query <- new ("Query", sql = q)
+   data <- run(query)
+   return (data)
+
+
 }
 
 
