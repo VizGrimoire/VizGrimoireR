@@ -82,14 +82,23 @@ identities_db <- conf$identities_db
 
 print(startdate)
 closed <- evol_closed(closed_condition, nperiod, startdate, enddate)
+if (length(closed) == 0) {
+    closed <- data.frame(id=numeric(0), closers=numeric(0),closed=character(0))
+} 
 closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
 closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
 
 changed <- evol_changed(nperiod, startdate, enddate)
+if (length(changed) == 0) {
+    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=character(0))
+} 
 changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
 changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
 
 open <- evol_opened(nperiod, startdate, enddate)
+if (length(open) == 0) {
+    open <- data.frame(id=numeric(0), opened=numeric(0), openers=character(0))
+} 
 open$week <- as.Date(conf$str_startdate) + open$id * nperiod
 open$date <- toTextDate(GetYear(open$week), GetMonth(open$week)+1)
 
@@ -106,8 +115,8 @@ if (conf$reports == 'companies') {
     issues = merge(issues, info_data_companies, all = TRUE)
 }
 issues[is.na(issues)] <- 0
+issues <- issues[order(issues$id),]
 createJSON (issues, "data/json/its-evolutionary.json")
-print(issues)
 
 all_static_info <- its_static_info(closed_condition, startdate, enddate)
 if (conf$reports == 'companies') {
@@ -144,11 +153,33 @@ if (conf$reports == 'repositories') {
 		
 		# EVOLUTION INFO
 		closed <- repo_evol_closed(repo_name, closed_condition, nperiod, startdate, enddate)
+                if (length(closed) == 0) {
+                    closed <- data.frame(id=numeric(0),closers=numeric(0),closed=numeric(0))
+                } 
+                closed <- completeZeroPeriod(closed, conf$str_startdate, conf$str_enddate)
+                closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
+                closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
+
 		changed <- repo_evol_changed(repo_name, nperiod, startdate, enddate)
-		opened <- repo_evol_opened(repo_name, nperiod, startdate, enddate)                
+                if (length(changed) == 0) {
+                    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=character(0))
+                }                 
+                changed <- completeZeroPeriod(changed, conf$str_startdate, conf$str_enddate)
+                changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
+                changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
+                
+		opened <- repo_evol_opened(repo_name, nperiod, startdate, enddate)
+                if (length(open) == 0) {
+                    open <- data.frame(id=numeric(0), opened=numeric(0), openers=character(0))
+                } 
+                opened <- completeZeroPeriod(opened, conf$str_startdate, conf$str_enddate)
+                opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
+                opened$date <- toTextDate(GetYear(opened$week), GetMonth(opened$week)+1)
+                
 		agg_data = merge(closed, changed, all = TRUE)
 		agg_data = merge(agg_data, opened, all = TRUE)	
 		agg_data[is.na(agg_data)] <- 0
+                agg_data <- agg_data[order(agg_data$id),]
 		createJSON(agg_data, paste(c("data/json/",repo_file,"-its-evolutionary.json"), collapse=''))
 		
 		# STATIC INFO
@@ -168,19 +199,34 @@ if (conf$reports == 'companies') {
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
         closed <- its_company_evol_closed(company_name, closed_condition, nperiod, startdate, enddate, identities_db)
+        if (length(closed) == 0) {
+            closed <- data.frame(id=numeric(0),closers=numeric(0),closed=numeric(0))
+        } 
         closed <- completeZeroPeriod(closed, conf$str_startdate, conf$str_enddate)
-        print(closed)
+        closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
+        closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
+
         changed <- its_company_evol_changed(company_name, nperiod, startdate, enddate, identities_db)
+        if (length(changed) == 0) {
+            changed <- data.frame(id=numeric(0), changed=numeric(0), changers=character(0))
+        } 
         changed <- completeZeroPeriod(changed, conf$str_startdate, conf$str_enddate)
-        print(changed)
+        changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
+        changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
+
         opened <- its_company_evol_opened(company_name, nperiod, startdate, enddate, identities_db)
+        if (length(open) == 0) {
+            open <- data.frame(id=numeric(0), opened=numeric(0), openers=character(0))
+        }         
         opened <- completeZeroPeriod(opened, conf$str_startdate, conf$str_enddate)
-        print(opened)
+        opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
+        opened$date <- toTextDate(GetYear(opened$week), GetMonth(opened$week)+1)
+
         agg_data = merge(closed, changed, all = TRUE)
         agg_data = merge(agg_data, opened, all = TRUE)
         agg_data[is.na(agg_data)] <- 0
+        agg_data <- agg_data[order(agg_data$id),]
         createJSON(agg_data, paste(c("data/json/",company_aux,"-its-evolutionary.json"), collapse=''))
-        print(agg_data)
 
         print ("static info")
         static_info <- its_company_static_info(company_name, startdate, enddate, identities_db)

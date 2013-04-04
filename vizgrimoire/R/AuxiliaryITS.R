@@ -38,9 +38,10 @@ evol_closed <- function (closed_condition, period, startdate, enddate) {
                 WHERE ",closed_condition,"
                       AND pup.people_id = changes.changed_by
                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
-                      GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
+                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
+    print(data)
     return (data)	
 }
 
@@ -53,9 +54,10 @@ evol_changed <- function (period, startdate, enddate) {
                      people_upeople pup
                 WHERE pup.people_id = changes.changed_by
                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
-                      GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")");    
+                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
+    print(data)
     return (data)	
 }
 
@@ -67,9 +69,10 @@ evol_opened <- function (period, startdate, enddate) {
                      people_upeople pup
                 WHERE pup.people_id = issues.submitted_by
                       AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
-                      GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
+                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
+    print(data)
     return (data)
 }
 
@@ -78,9 +81,10 @@ its_evol_repositories <- function(period, startdate, enddate) {
                        COUNT(DISTINCT(tracker_id)) AS repositories
                 FROM issues
                 WHERE submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
-                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
+                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
+    print(data)
     return (data)
 }
 
@@ -93,9 +97,10 @@ its_evol_companies <- function(period, startdate, enddate, identities_db) {
                     WHERE pup.people_id = changes.changed_by
                           AND pup.upeople_id = upc.upeople_id
                           AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
-                          GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")          
-    query <- new ("Query", sql = q)
+                    GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
+    query <- new ("Query", sql = q)    
     data <- run(query)
+    print(data)
     return (data)
 }
 
@@ -243,7 +248,7 @@ repo_evol_closed <- function(repo, closed_condition, period, startdate, enddate)
 
 repo_evol_changed <- function(repo, period, startdate, enddate){
     q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(DISTINCT(changed.issue_id)) AS changed,
+                       COUNT(DISTINCT(changes.issue_id)) AS changed,
                        COUNT(DISTINCT(pup.upeople_id)) AS changers
                 FROM changes,
                      issues,
