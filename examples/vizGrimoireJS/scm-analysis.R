@@ -220,15 +220,30 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		print ("commits") 
-		commits <- repo_commits(repo_name, period, conf$startdate, conf$enddate)	
+		commits <- repo_commits(repo_name, nperiod, conf$startdate, conf$enddate)
+                commits$week <- as.Date(conf$str_startdate) + commits$id * nperiod
+                commits$date <- toTextDate(GetYear(commits$week), GetMonth(commits$week)+1)
+                commits <- commits[order(commits$id), ]
+                
 		# print ("lines")
 		# lines <- repo_lines(repo_name, period, conf$startdate, conf$enddate)
 		lines <- ""
 		print ("files")
-		files <- repo_files(repo_name, period, conf$startdate, conf$enddate)
+		files <- repo_files(repo_name, nperiod, conf$startdate, conf$enddate)
+                files$week <- as.Date(conf$str_startdate) + files$id * nperiod
+                files$date <- toTextDate(GetYear(files$week), GetMonth(files$week)+1)
+                files <- files[order(files$id), ]        
+
 		print ("people")
-		authors <- repo_authors(repo_name, period, conf$startdate, conf$enddate)
-		committers <- repo_committers(repo_name, period, conf$startdate, conf$enddate)
+		authors <- repo_authors(repo_name, nperiod, conf$startdate, conf$enddate)
+                authors$week <- as.Date(conf$str_startdate) + authors$id * nperiod
+                authors$date <- toTextDate(GetYear(authors$week), GetMonth(authors$week)+1)
+                authors <- authors[order(authors$id), ]
+
+		committers <- repo_committers(repo_name, nperiod, conf$startdate, conf$enddate)
+                committers$week <- as.Date(conf$str_startdate) + committers$id * nperiod
+                committers$date <- toTextDate(GetYear(committers$week), GetMonth(committers$week)+1)
+                committers <- committers[order(committers$id), ]
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)

@@ -1223,6 +1223,16 @@ repo_commits <- function(repo_name, period, startdate, enddate){
                           m.date <= ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
+
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                    COUNT(distinct(s.id)) as commits
+                               FROM scmlog s, repositories r
+                               WHERE r.name =", repo_name, " AND 
+                                     r.id = s.repository_id and
+                                     s.date >", startdate, " and
+                                     s.date <= ", enddate, "
+                    GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)		
@@ -1249,6 +1259,15 @@ repo_files <- function(repo_name, period, startdate, enddate) {
                           m.date <= ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           COUNT(distinct(a.file_id)) as files
+                               FROM scmlog s, actions a, repositories r
+                               WHERE r.name =", repo_name, " AND r.id = s.repository_id and
+                                     a.commit_id = s.id and
+                                     s.date >", startdate, " and
+                                     s.date <= ", enddate, "
+                    GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)		
@@ -1284,6 +1303,18 @@ repo_committers <- function(repo_name, period, startdate, enddate) {
                           m.date <= ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           COUNT(distinct(pup.upeople_id)) as committers
+                              FROM scmlog s,
+                                   people_upeople pup,
+                                   repositories r
+                              WHERE r.name =", repo_name, " AND
+                                    r.id = s.repository_id and
+                                    s.committer_id = pup.people_id and
+                                    s.date >", startdate, " and
+                                    s.date <= ", enddate, "
+                    GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)			
@@ -1319,6 +1350,18 @@ repo_authors <- function(repo_name, period, startdate, enddate) {
                           m.date <= ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           COUNT(distinct(pup.upeople_id)) as authors
+                               FROM scmlog s,
+                                    people_upeople pup,
+                                    repositories r
+                               WHERE r.name =", repo_name, " AND
+                                     r.id = s.repository_id and
+                                     s.author_id = pup.people_id and
+                                     s.date >", startdate, " and
+                                     s.date <= ", enddate, "
+                    GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)			
@@ -1349,6 +1392,17 @@ repo_lines <- function(repo_name, period, startdate, enddate) {
                                ON (m.year = pm.year and 
                                    m.",period," = pm.",period,")
                                ORDER BY m.id;", sep="")
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           SUM(cl.added) as added_lines,
+                                      SUM(cl.removed) as removed_lines
+                               FROM scmlog s, commits_lines cl, repositories r
+                               WHERE r.name =", repo_name, " AND
+                                     r.id = s.repository_id and
+                                     cl.commit_id = s.id and
+                                     s.date >", startdate, " and
+                                     s.date <= ", enddate, "
+                   GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)				
