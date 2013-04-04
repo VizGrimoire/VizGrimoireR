@@ -611,6 +611,21 @@ company_commits <- function(company_name, period, startdate, enddate){
                           m.date <= ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
+       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                          count(distinct(s.id)) as commits
+                   from scmlog s,
+                        people_upeople pup,
+                        upeople_companies upc,
+                        companies c
+                    where  s.author_id = pup.people_id and
+                           pup.upeople_id = upc.upeople_id and
+                           s.date >= upc.init and
+                           s.date <= upc.end and
+                           upc.company_id = c.id and
+                           c.name =", company_name, " and
+                           s.date >", startdate, " and
+                           s.date <= ", enddate, "
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
 	data <- run(query)	
@@ -654,6 +669,24 @@ company_files <- function(company_name, period, startdate, enddate) {
                            m.date <= ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                            count(distinct(a.file_id)) as files
+                               from scmlog s,
+                                    actions a,
+                                    people_upeople pup,
+                                    upeople_companies upc,
+                                    companies c
+                               where a.commit_id = s.id and
+                                     s.author_id = pup.people_id and
+                                     pup.upeople_id = upc.upeople_id and
+                                     s.date >= upc.init and 
+                                     s.date <= upc.end and
+                                     upc.company_id = c.id and
+                                     c.name =", company_name, " and
+                                     s.date >", startdate, " and
+                                     s.date <= ", enddate, "
+                                group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
@@ -693,6 +726,22 @@ company_authors <- function(company_name, period, startdate, enddate) {
                            m.date <= ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
+        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                            count(distinct(s.author_id)) as authors
+                               from scmlog s,
+                                    people_upeople pup,
+                                    upeople_companies upc,
+                                    companies c
+                               where  s.author_id = pup.people_id and
+                                      pup.upeople_id = upc.upeople_id and
+                                      s.date>=upc.init and
+                                      s.date<=upc.end and
+                                      upc.company_id = c.id and
+                                      c.name =", company_name, " and
+                                      s.date >", startdate, " and
+                                      s.date <= ", enddate, "
+                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
@@ -732,6 +781,22 @@ company_committers <- function(company_name, period, startdate, enddate) {
                            m.date <= ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
+        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           count(distinct(s.committer_id)) as committers
+                               from scmlog s,
+                                    people_upeople pup,
+                                    upeople_companies upc,
+                                    companies c
+                               where  s.committer_id = pup.people_id and
+                                      pup.upeople_id = upc.upeople_id and
+                                      s.date >= upc.init and
+                                      s.date <= upc.end and
+                                      upc.company_id = c.id and
+                                      c.name =", company_name, " and
+                                      s.date >", startdate, " and
+                                      s.date <= ", enddate, "
+                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
@@ -776,6 +841,25 @@ company_lines <- function(company_name, period, startdate, enddate) {
                            m.date <= ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
+        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                       sum(cl.added) as added_lines,
+                                      sum(cl.removed) as removed_lines
+                               from   commits_lines cl,
+                                      scmlog s,
+                                      people_upeople pup,
+                                      upeople_companies upc,
+                                      companies c
+                               where  cl.commit_id = s.id and
+                                      s.author_id = pup.people_id and
+                                      pup.upeople_id = upc.upeople_id and
+                                      s.date >= upc.init and
+                                      s.date <= upc.end and
+                                      upc.company_id = c.id and
+                                      c.name =", company_name, " and
+                                      s.date >", startdate, " and
+                                      s.date <= ", enddate, "
+                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="") 
+
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)	
@@ -1085,6 +1169,18 @@ evol_companies <- function(period, startdate, enddate){
                            m.date <= ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
+        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           count(distinct(upc.company_id)) as companies
+                               from   scmlog s,
+                                      people_upeople pup,
+                                      upeople_companies upc
+                               where  s.author_id = pup.people_id and
+                                      pup.upeople_id = upc.upeople_id and
+                                      s.date >= upc.init and 
+                                      s.date <= upc.end and
+                                      s.date >", startdate, " and
+                                      s.date <= ", enddate, "
+                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)	
