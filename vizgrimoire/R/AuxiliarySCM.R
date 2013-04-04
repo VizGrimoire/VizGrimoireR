@@ -40,8 +40,8 @@ evol_commits <- function(period, startdate, enddate){
                                   ",period,"(s.date) as ",period,", 
                                   count(distinct(s.id)) as commits
                            from   scmlog s 
-                           where  s.date >", startdate, " and
-                                  s.date <= ", enddate, "
+                           where  s.date >=", startdate, " and
+                                  s.date < ", enddate, "
                            group by year(s.date),
                                     ",period,"(s.date)
                            order by year(s.date),
@@ -50,15 +50,15 @@ evol_commits <- function(period, startdate, enddate){
                       m.year = pm.year and
                       m.",period," = pm.",period,")
                   where m.date >= ", startdate, " and
-                        m.date <= ",enddate," 
+                        m.date < ",enddate," 
                   order by m.year,
                            m.",period," asc;", sep="")
 
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                          count(distinct(s.id)) as commits
                   from   scmlog s 
-                  where  s.date >", startdate, " and
-                         s.date <= ", enddate,"
+                  where  s.date >=", startdate, " and
+                         s.date < ", enddate,"
                          GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
     
@@ -83,8 +83,8 @@ evol_committers <- function(period, startdate, enddate){
                              from   scmlog s,
                                     people_upeople pup
                              where s.committer_id = pup.people_id and
-                                   s.date >", startdate, " and
-                                   s.date <= ", enddate, "
+                                   s.date >=", startdate, " and
+                                   s.date < ", enddate, "
                              group by year(s.date),
                                       ",period,"(s.date)
                              order by year(s.date),
@@ -93,7 +93,7 @@ evol_committers <- function(period, startdate, enddate){
                        m.year = pm.year and
                        m.",period," = pm.",period,")
                    where m.date >= ", startdate, " and
-                         m.date <= ",enddate," 
+                         m.date < ",enddate," 
                    order by m.year,
                             m.",period," asc;", sep="")
     
@@ -102,8 +102,8 @@ evol_committers <- function(period, startdate, enddate){
                   from   scmlog s,
                          people_upeople pup
                   where s.committer_id = pup.people_id and
-                        s.date >", startdate, " and
-                        s.date <= ", enddate, "
+                        s.date >=", startdate, " and
+                        s.date < ", enddate, "
                   group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
       query <- new ("Query", sql = q)
@@ -145,8 +145,8 @@ evol_authors <- function(period, startdate, enddate){
                    from   scmlog s,
                           people_upeople pup
                    where s.author_id = pup.people_id and
-                         s.date >", startdate, " and
-                         s.date <= ", enddate, "
+                         s.date >=", startdate, " and
+                         s.date < ", enddate, "
                    GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")")
 
     query <- new ("Query", sql = q)
@@ -191,8 +191,8 @@ evol_files <- function(period, startdate, enddate){
                   from   scmlog s, 
                          actions a
                   where  a.commit_id = s.id and
-                         s.date >", startdate, " and
-                         s.date <= ", enddate, "                         
+                         s.date >=", startdate, " and
+                         s.date < ", enddate, "                         
                   group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
     
       query <- new ("Query", sql = q)
@@ -236,8 +236,8 @@ evol_branches <- function(period, startdate, enddate){
                    from scmlog s, 
                    actions a
                    where  a.commit_id = s.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, "
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
       query <- new ("Query", sql = q)
@@ -277,8 +277,8 @@ evol_repositories <- function(period, startdate, enddate) {
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id, 
                          count(distinct(s.repository_id)) as repositories
                   from scmlog s
-                  where s.date >", startdate, " and
-                        s.date <= ", enddate, "
+                  where s.date >=", startdate, " and
+                        s.date < ", enddate, "
                   group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
       query <- new ("Query", sql = q)
@@ -314,7 +314,7 @@ evol_companies <- function(period, startdate, enddate){
                         m.year = pm.year and
                         m.",period," = pm.",period,")
                     where m.date >= ", startdate, " and
-                          m.date <= ",enddate," 
+                          m.date < ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")	
 
@@ -326,9 +326,9 @@ evol_companies <- function(period, startdate, enddate){
                     where s.author_id = pup.people_id and
                           pup.upeople_id = upc.upeople_id and
                           s.date >= upc.init and 
-                          s.date <= upc.end and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, "
+                          s.date < upc.end and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                     group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	companies<- query(q)
@@ -345,8 +345,8 @@ evol_info_data <- function(period, startdate, enddate) {
                     FROM scmlog s,
                          people_upeople pup
                     where s.author_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, ";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, ";", sep="")
 	query <- new("Query", sql = q)
 	data0 <- run(query)
     
@@ -354,8 +354,8 @@ evol_info_data <- function(period, startdate, enddate) {
                     from scmlog s,
                          people_upeople pup
                     where s.committer_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, ";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, ";", sep="")
 	query <- new("Query", sql = q)
 	data1 <- run(query)
     
@@ -364,8 +364,8 @@ evol_info_data <- function(period, startdate, enddate) {
                     from actions a,
                          scmlog s
                     where a.commit_id = s.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, ";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, ";", sep="")
 	query <- new("Query", sql = q)
 	data2 <- run(query)	
 	
@@ -373,15 +373,15 @@ evol_info_data <- function(period, startdate, enddate) {
                     from actions a,
                          scmlog s
                     where a.commit_id = s.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, ";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, ";", sep="")
 	query <- new("Query", sql = q)
 	data3 <- run(query)	
 	
 	q <- paste("SELECT count(distinct(s.repository_id)) as repositories 
                     from scmlog s
-                    where s.date >", startdate, " and
-                          s.date <= ", enddate, ";", sep="")
+                    where s.date >=", startdate, " and
+                          s.date < ", enddate, ";", sep="")
 	query <- new("Query", sql = q)
 	data4 <- run(query)	
 	
@@ -389,8 +389,8 @@ evol_info_data <- function(period, startdate, enddate) {
                     from actions a,
                          scmlog s
                     where a.commit_id = s.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, ";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, ";", sep="")
 	query <- new("Query", sql = q)
 	data5 <- run(query)	
 	
@@ -400,8 +400,8 @@ evol_info_data <- function(period, startdate, enddate) {
 	
 	q <- paste("select count(distinct(s.id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_commits_",period," 
                     from scmlog s
-                    where s.date >", startdate, " and
-                          s.date <= ", enddate,";", sep="")
+                    where s.date >=", startdate, " and
+                          s.date < ", enddate,";", sep="")
 	query <- new("Query", sql = q)
 	data7 <- run(query)	
 	
@@ -409,8 +409,8 @@ evol_info_data <- function(period, startdate, enddate) {
                     from scmlog s, 
                          actions a 
                     where a.commit_id=s.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate,";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate,";", sep="")
 	query <- new("Query", sql = q)
 	data8 <- run(query)	
 	
@@ -418,15 +418,15 @@ evol_info_data <- function(period, startdate, enddate) {
                     from scmlog s, 
                     people_upeople pup 
                     where pup.people_id=s.author_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate,";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate,";", sep="")
 	query <- new("Query", sql = q)
 	data9 <- run(query)	
 	
 	q <- paste("select count(distinct(s.author_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period," 
                     from scmlog s
-                    where s.date >", startdate, " and
-                          s.date <= ", enddate,";", sep="")
+                    where s.date >=", startdate, " and
+                          s.date < ", enddate,";", sep="")
 	query <- new("Query", sql = q)
 	data10 <- run(query)	
 	
@@ -434,8 +434,8 @@ evol_info_data <- function(period, startdate, enddate) {
                     from scmlog s,
                     people_upeople pup
                     where s.committer_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate,";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate,";", sep="")
 	query <- new("Query", sql = q)
 	data11 <- run(query)	
 	
@@ -445,8 +445,8 @@ evol_info_data <- function(period, startdate, enddate) {
                     people_upeople pup
                     where a.commit_id=s.id and
                           s.author_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate,";", sep="")
+                          s.date >=", startdate, " and
+                          s.date < ", enddate,";", sep="")
 	query <- new("Query", sql = q)
 	data12 <- run(query)	
 	
@@ -475,8 +475,8 @@ top_committers <- function(days , startdate, enddate) {
                        upeople u
                   where s.committer_id = pup.people_id and
                         pup.upeople_id = u.id and
-                        s.date > ", startdate, " and
-                        s.date <= ", enddate, "
+                        s.date >= ", startdate, " and
+                        s.date < ", enddate, "
                   group by u.identifier
                   order by commits desc
 	          LIMIT 10;", sep="")
@@ -492,8 +492,8 @@ top_committers <- function(days , startdate, enddate) {
                         WHERE DATEDIFF(@maxdate,date)<",days," and
                               s.committer_id = pup.people_id and
                               pup.upeople_id = u.id and
-                              s.date >", startdate, " and
-                              s.date <= ", enddate, "
+                              s.date >=", startdate, " and
+                              s.date < ", enddate, "
                         group by u.identifier
                         order by commits desc    
                         LIMIT 10;")
@@ -524,8 +524,8 @@ top_authors <- function(startdate, enddate) {
                      upeople u
                 where s.author_id = pup.people_id and
                       pup.upeople_id = u.id and
-                      s.date >", startdate, " and
-                      s.date <= ", enddate, "
+                      s.date >=", startdate, " and
+                      s.date < ", enddate, "
                 group by u.identifier
                 order by commits desc
                 LIMIT 10;")
@@ -551,8 +551,8 @@ top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
                      companies c
                 where s.author_id = pup.people_id and
                       pup.upeople_id = u.id and
-                      s.date >", startdate, " and
-                      s.date <= ", enddate, " and
+                      s.date >=", startdate, " and
+                      s.date < ", enddate, " and
                       ",affiliations,"
                       pup.upeople_id = upc.upeople_id and
                       upc.company_id = c.id
@@ -604,11 +604,11 @@ companies_name_wo_affs <- function(affs_list, startdate, enddate) {
                     where c.id = upc.company_id and
                           upc.upeople_id = pup.upeople_id and
                           s.date >= upc.init and
-                          s.date <= upc.end and
+                          s.date < upc.end and
                           pup.people_id = s.author_id and
                           ",affiliations," 
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, "
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                     group by c.name
                     order by count(distinct(s.id)) desc;", sep="")
         query <- new("Query", sql = q)
@@ -625,8 +625,8 @@ companies_name <- function(startdate, enddate) {
                     where c.id = upc.company_id and
                           upc.upeople_id = pup.upeople_id and
                           pup.people_id = s.author_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, "
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                     group by c.name
                     order by count(distinct(s.id)) desc;")
 	query <- new("Query", sql = q)
@@ -653,11 +653,11 @@ company_commits <- function(company_name, period, startdate, enddate){
                               where  s.author_id = pup.people_id and
                                      pup.upeople_id = upc.upeople_id and
                                      s.date >= upc.init and 
-                                     s.date <= upc.end and
+                                     s.date < upc.end and
                                      upc.company_id = c.id and
                                      c.name =", company_name, " and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                               group by year(s.date),
                                        ",period,"(s.date)
                               order by year(s.date),
@@ -666,7 +666,7 @@ company_commits <- function(company_name, period, startdate, enddate){
                         m.year = pm.year and
                         m.",period," = pm.",period,")
                     where m.date >= ", startdate, " and
-                          m.date <= ",enddate," 
+                          m.date < ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
@@ -678,11 +678,11 @@ company_commits <- function(company_name, period, startdate, enddate){
                     where  s.author_id = pup.people_id and
                            pup.upeople_id = upc.upeople_id and
                            s.date >= upc.init and
-                           s.date <= upc.end and
+                           s.date < upc.end and
                            upc.company_id = c.id and
                            c.name =", company_name, " and
-                           s.date >", startdate, " and
-                           s.date <= ", enddate, "
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, "
                     group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
@@ -711,11 +711,11 @@ company_files <- function(company_name, period, startdate, enddate) {
                                      s.author_id = pup.people_id and
                                      pup.upeople_id = upc.upeople_id and
                                      s.date >= upc.init and 
-                                     s.date <= upc.end and
+                                     s.date < upc.end and
                                      upc.company_id = c.id and
                                      c.name =", company_name, " and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                                group by year(s.date),
                                      ",period,"(s.date) 
                                order by year(s.date),
@@ -724,7 +724,7 @@ company_files <- function(company_name, period, startdate, enddate) {
                          m.year = pm.year and
                          m.",period," = pm.",period,")
                      where m.date >= ", startdate, " and
-                           m.date <= ",enddate," 
+                           m.date < ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
@@ -738,11 +738,11 @@ company_files <- function(company_name, period, startdate, enddate) {
                                      s.author_id = pup.people_id and
                                      pup.upeople_id = upc.upeople_id and
                                      s.date >= upc.init and 
-                                     s.date <= upc.end and
+                                     s.date < upc.end and
                                      upc.company_id = c.id and
                                      c.name =", company_name, " and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                                 group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
@@ -768,11 +768,11 @@ company_authors <- function(company_name, period, startdate, enddate) {
                                where  s.author_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date>=upc.init and 
-                                      s.date<=upc.end and
+                                      s.date<upc.end and
                                       upc.company_id = c.id and
                                       c.name =", company_name, " and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by year(s.date),
                                         ",period,"(s.date) 
                                order by year(s.date),
@@ -781,7 +781,7 @@ company_authors <- function(company_name, period, startdate, enddate) {
                          m.year = pm.year and
                          m.",period," = pm.",period,")
                      where m.date >= ", startdate, " and
-                           m.date <= ",enddate," 
+                           m.date < ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
@@ -793,11 +793,11 @@ company_authors <- function(company_name, period, startdate, enddate) {
                                where  s.author_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date>=upc.init and
-                                      s.date<=upc.end and
+                                      s.date<upc.end and
                                       upc.company_id = c.id and
                                       c.name =", company_name, " and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
@@ -823,11 +823,11 @@ company_committers <- function(company_name, period, startdate, enddate) {
                                where  s.committer_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date >= upc.init and 
-                                      s.date <= upc.end and
+                                      s.date < upc.end and
                                       upc.company_id = c.id and
                                       c.name =", company_name, " and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by year(s.date),
                                         ",period,"(s.date) 
                                order by year(s.date),
@@ -836,7 +836,7 @@ company_committers <- function(company_name, period, startdate, enddate) {
                          m.year = pm.year and
                          m.",period," = pm.",period,")
                      where m.date >= ", startdate, " and
-                           m.date <= ",enddate," 
+                           m.date < ",enddate," 
                      order by m.year,
                               m.",period," asc;", sep="")
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
@@ -848,11 +848,11 @@ company_committers <- function(company_name, period, startdate, enddate) {
                                where  s.committer_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date >= upc.init and
-                                      s.date <= upc.end and
+                                      s.date < upc.end and
                                       upc.company_id = c.id and
                                       c.name =", company_name, " and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
@@ -883,11 +883,11 @@ company_lines <- function(company_name, period, startdate, enddate) {
                                       s.author_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date >= upc.init and 
-                                      s.date <= upc.end and
+                                      s.date < upc.end and
                                       upc.company_id = c.id and
                                       c.name =", company_name, " and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by year(s.date),
                                         ",period,"(s.date)
                                order by year(s.date),
@@ -911,11 +911,11 @@ company_lines <- function(company_name, period, startdate, enddate) {
                                       s.author_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date >= upc.init and
-                                      s.date <= upc.end and
+                                      s.date < upc.end and
                                       upc.company_id = c.id and
                                       c.name =", company_name, " and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="") 
 
 	query <- new("Query", sql = q)
@@ -939,10 +939,10 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                     where  s.author_id = pup.people_id and
                            pup.upeople_id = upc.upeople_id and
                            s.date >= upc.init and 
-                           s.date <= upc.end and
+                           s.date < upc.end and
                            upc.company_id = c.id and
-                           s.date >", startdate, " and
-                           s.date <= ", enddate, " and
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, " and
                            c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data1 <- run(query)	
@@ -955,12 +955,12 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                          companies c
                     where a.commit_id = s.id and
                           s.date >= upc.init and 
-                          s.date <= upc.end and
+                          s.date < upc.end and
                           s.author_id = pup.people_id and
                           pup.upeople_id = upc.upeople_id and
                           upc.company_id = c.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data3 <- run(query)
@@ -973,12 +973,12 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                          companies c
                     where s.id = a.commit_id and
                          s.date >= upc.init and 
-                         s.date <= upc.end and
+                         s.date < upc.end and
                          s.author_id = pup.people_id and
                          pup.upeople_id = upc.upeople_id and
                          upc.company_id = c.id and
-                         s.date >", startdate, " and
-                         s.date <= ", enddate, " and
+                         s.date >=", startdate, " and
+                         s.date < ", enddate, " and
                          c.name =", company_name,";", sep="")
 	query <- new("Query", sql = q)
 	data5 <- run(query)	
@@ -991,10 +991,10 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                     where s.author_id = pup.people_id and
                           pup.upeople_id = upc.upeople_id and
                           s.date >= upc.init and 
-                          s.date <= upc.end and
+                          s.date < upc.end and
                           upc.company_id = c.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data7 <- run(query)	
@@ -1008,10 +1008,10 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                           s.author_id = pup.people_id and
                           pup.upeople_id = upc.upeople_id and
                           s.date >= upc.init and 
-                          s.date <= upc.end and
+                          s.date < upc.end and
                           upc.company_id = c.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data8 <- run(query)	
@@ -1024,10 +1024,10 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                     where s.author_id = pup.people_id and
                           pup.upeople_id = upc.upeople_id and
                           s.date >= upc.init and 
-                          s.date <= upc.end and
+                          s.date < upc.end and
                           upc.company_id = c.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data9 <- run(query)	
@@ -1040,10 +1040,10 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                     where s.author_id = pup.people_id and
                           pup.upeople_id = upc.upeople_id and 
                           s.date >= upc.init and 
-                          s.date <= upc.end and
+                          s.date < upc.end and
                           upc.company_id = c.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data10 <- run(query)	
@@ -1059,10 +1059,10 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                           s.author_id = pup.people_id and
                           pup.upeople_id = upc.upeople_id and
                           s.date >= upc.init and 
-                          s.date <= upc.end and
+                          s.date < upc.end and
                           upc.company_id = c.id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and 
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and 
                           c.name =", company_name)
 	query <- new("Query", sql = q)
 	data11 <- run(query)
@@ -1087,8 +1087,8 @@ evol_info_data_companies <- function(startdate, enddate) {
                      where c.id = upc.company_id and
                            upc.upeople_id = pup.upeople_id and
                            pup.people_id = s.author_id and
-                           s.date >", startdate, " and
-                           s.date <= ", enddate, ";", sep="") 
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, ";", sep="") 
 	query <- new("Query", sql = q)
 	data13 <- run(query)
 	
@@ -1100,7 +1100,7 @@ evol_info_data_companies <- function(startdate, enddate) {
                     where s.author_id = pup.people_id and
                     pup.upeople_id = upc.upeople_id and
                     s.date >= upc.init and 
-                    s.date <= upc.end and
+                    s.date < upc.end and
                     upc.company_id = c.id and
                     year(s.date) = 2006")
 	query <- new("Query", sql = q)
@@ -1114,7 +1114,7 @@ evol_info_data_companies <- function(startdate, enddate) {
                     where s.author_id = pup.people_id and
                     pup.upeople_id = upc.upeople_id and
                     s.date >= upc.init and 
-                    s.date <= upc.end and
+                    s.date < upc.end and
                     upc.company_id = c.id and
                     year(s.date) = 2009")
 	query <- new("Query", sql = q)
@@ -1128,7 +1128,7 @@ evol_info_data_companies <- function(startdate, enddate) {
                     where s.author_id = pup.people_id and
                     pup.upeople_id = upc.upeople_id and
                     s.date >= upc.init and 
-                    s.date <= upc.end and
+                    s.date < upc.end and
                     upc.company_id = c.id and
                     year(s.date) = 2012")
 	query <- new("Query", sql = q)
@@ -1156,10 +1156,10 @@ company_top_authors <- function(company_name, startdate, enddate) {
                             pup.upeople_id = upc.upeople_id and 
                             pup.upeople_id = u.id and
                             s.date >= upc.init and 
-                            s.date <= upc.end and
+                            s.date < upc.end and
                             upc.company_id = c.id and   
-                            s.date >", startdate, " and
-                            s.date <= ", enddate, " and
+                            s.date >=", startdate, " and
+                            s.date < ", enddate, " and
                             c.name =", company_name, "
                      group by u.id
                      order by count(distinct(s.id)) desc
@@ -1184,7 +1184,7 @@ company_top_authors_year <- function(company_name, year){
                     pup.upeople_id = upc.upeople_id and 
                     pup.upeople_id = u.id and
                     s.date >= upc.init and 
-                    s.date <= upc.end and
+                    s.date < upc.end and
                     year(s.date)=",year," and
                     upc.company_id = c.id and
                     c.name =", company_name, "
@@ -1213,9 +1213,9 @@ evol_companies <- function(period, startdate, enddate){
                                where  s.author_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date >= upc.init and 
-                                      s.date <= upc.end and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date < upc.end and
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by year(s.date),
                                         ",period,"(s.date)
                                order by year(s.date),
@@ -1235,9 +1235,9 @@ evol_companies <- function(period, startdate, enddate){
                                where  s.author_id = pup.people_id and
                                       pup.upeople_id = upc.upeople_id and
                                       s.date >= upc.init and 
-                                      s.date <= upc.end and
-                                      s.date >", startdate, " and
-                                      s.date <= ", enddate, "
+                                      s.date < upc.end and
+                                      s.date >=", startdate, " and
+                                      s.date < ", enddate, "
                                group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
@@ -1269,8 +1269,8 @@ repo_commits <- function(repo_name, period, startdate, enddate){
                                FROM scmlog s, repositories r
                                WHERE r.name =", repo_name, " AND 
                                      r.id = s.repository_id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                                GROUP BY YEAR(s.date), 
                                         ",period,"(s.date)
                                ORDER BY YEAR(s.date),
@@ -1278,7 +1278,7 @@ repo_commits <- function(repo_name, period, startdate, enddate){
                     ON (m.year = pm.year and 
                         m.",period," = pm.",period,")
                     where m.date >= ", startdate, " and
-                          m.date <= ",enddate," 
+                          m.date < ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
 
@@ -1287,8 +1287,8 @@ repo_commits <- function(repo_name, period, startdate, enddate){
                                FROM scmlog s, repositories r
                                WHERE r.name =", repo_name, " AND 
                                      r.id = s.repository_id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1307,14 +1307,14 @@ repo_files <- function(repo_name, period, startdate, enddate) {
                                FROM scmlog s, actions a, repositories r
                                WHERE r.name =", repo_name, " AND r.id = s.repository_id and
                                      a.commit_id = s.id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                                GROUP BY YEAR(s.date), ",period,"(s.date)
                                ORDER BY YEAR(s.date),
                                         ",period,"(s.date)) AS pm
                     ON (m.year = pm.year and m.",period," = pm.",period,")
                     where m.date >= ", startdate, " and
-                          m.date <= ",enddate," 
+                          m.date < ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
@@ -1322,8 +1322,8 @@ repo_files <- function(repo_name, period, startdate, enddate) {
                                FROM scmlog s, actions a, repositories r
                                WHERE r.name =", repo_name, " AND r.id = s.repository_id and
                                      a.commit_id = s.id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1349,8 +1349,8 @@ repo_committers <- function(repo_name, period, startdate, enddate) {
                               WHERE r.name =", repo_name, " AND 
                                     r.id = s.repository_id and
                                     s.committer_id = pup.people_id and
-                                    s.date >", startdate, " and
-                                    s.date <= ", enddate, "
+                                    s.date >=", startdate, " and
+                                    s.date < ", enddate, "
                               GROUP BY YEAR(s.date), 
                                        ",period,"(s.date)
                               ORDER BY YEAR(s.date),
@@ -1358,7 +1358,7 @@ repo_committers <- function(repo_name, period, startdate, enddate) {
                     ON (m.year = pm.year and 
                         m.",period," = pm.",period,")
                     where m.date >= ", startdate, " and
-                          m.date <= ",enddate," 
+                          m.date < ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
@@ -1369,8 +1369,8 @@ repo_committers <- function(repo_name, period, startdate, enddate) {
                               WHERE r.name =", repo_name, " AND
                                     r.id = s.repository_id and
                                     s.committer_id = pup.people_id and
-                                    s.date >", startdate, " and
-                                    s.date <= ", enddate, "
+                                    s.date >=", startdate, " and
+                                    s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1396,8 +1396,8 @@ repo_authors <- function(repo_name, period, startdate, enddate) {
                                WHERE r.name =", repo_name, " AND 
                                      r.id = s.repository_id and
                                      s.author_id = pup.people_id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                                GROUP BY YEAR(s.date), 
                                         ",period,"(s.date)
                                ORDER BY YEAR(s.date),
@@ -1405,7 +1405,7 @@ repo_authors <- function(repo_name, period, startdate, enddate) {
                     ON (m.year = pm.year and 
                         m.",period," = pm.",period,")
                     where m.date >= ", startdate, " and
-                          m.date <= ",enddate," 
+                          m.date < ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
@@ -1416,8 +1416,8 @@ repo_authors <- function(repo_name, period, startdate, enddate) {
                                WHERE r.name =", repo_name, " AND
                                      r.id = s.repository_id and
                                      s.author_id = pup.people_id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1441,8 +1441,8 @@ repo_lines <- function(repo_name, period, startdate, enddate) {
                                WHERE r.name =", repo_name, " AND 
                                      r.id = s.repository_id and
                                      cl.commit_id = s.id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                                GROUP BY YEAR(s.date), 
                                         ",period,"(s.date)
                                ORDER BY YEAR(s.date),
@@ -1457,8 +1457,8 @@ repo_lines <- function(repo_name, period, startdate, enddate) {
                                WHERE r.name =", repo_name, " AND
                                      r.id = s.repository_id and
                                      cl.commit_id = s.id and
-                                     s.date >", startdate, " and
-                                     s.date <= ", enddate, "
+                                     s.date >=", startdate, " and
+                                     s.date < ", enddate, "
                    GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1479,8 +1479,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                          people_upeople pup
                     WHERE r.id = s.repository_id AND
                           s.author_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           r.name =", repo_name,";", sep="")
 	query <- new("Query", sql = q)
 	data0 <- run(query)
@@ -1491,8 +1491,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                          people_upeople pup
                     WHERE r.id = s.repository_id AND
                           s.committer_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           r.name =", repo_name,";", sep="")
 	query <- new("Query", sql = q)
 	data1 <- run(query)
@@ -1504,8 +1504,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                          repositories r
                     WHERE a.commit_id = s.id AND
                           r.id = s.repository_id AND
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           r.name =", repo_name,";", sep="")
 	query <- new("Query", sql = q)
 	data2 <- run(query)
@@ -1514,8 +1514,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                     FROM scmlog s, 
                          repositories r
                     WHERE r.id = s.repository_id AND
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           r.name =", repo_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data3 <- run(query)
@@ -1526,8 +1526,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                          repositories r
                     WHERE a.commit_id=s.id AND
                           r.id = s.repository_id AND
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           r.name =", repo_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data4 <- run(query)
@@ -1538,8 +1538,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                          people_upeople pup
                     WHERE r.id = s.repository_id AND
                           s.author_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           r.name =", repo_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data5 <- run(query)
@@ -1550,8 +1550,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                          people_upeople pup
                     WHERE r.id = s.repository_id AND
                           s.author_id = pup.people_id and
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and 
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and 
                           r.name =", repo_name, ";", sep="")
 	query <- new("Query", sql = q)
 	data6 <- run(query)
@@ -1564,8 +1564,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
                     WHERE a.commit_id=s.id AND
                           s.author_id = pup.people_id and
                           r.id = s.repository_id AND
-                          s.date >", startdate, " and
-                          s.date <= ", enddate, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, " and
                           r.name =", repo_name, ";", sep="")
         query <- new("Query", sql = q)
         data7 <- run(query)
