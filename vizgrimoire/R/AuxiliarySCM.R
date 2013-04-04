@@ -534,6 +534,36 @@ top_authors <- function(startdate, enddate) {
 	return (data)
 }
 
+
+top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
+    #list_affs
+    affiliations = ""
+    for (aff in list_affs){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+
+    q <- paste("SELECT u.identifier as authors,
+                       count(distinct(s.id)) as commits
+                FROM scmlog s,
+                     people_upeople pup,
+                     upeople u, 
+                     upeople_companies upc,
+                     companies c
+                where s.author_id = pup.people_id and
+                      pup.upeople_id = u.id and
+                      s.date >", startdate, " and
+                      s.date <= ", enddate, " and
+                      ",affiliations,"
+                      pup.upeople_id = upc.upeople_id and
+                      upc.company_id = c.id
+                group by u.identifier
+                order by commits desc
+                LIMIT 10;")
+        query <- new("Query", sql = q)
+        data <- run(query)
+        return (data)
+}
+
 top_authors_year <- function(year) {
     q <- paste("SELECT u.identifier as authors,
                        count(distinct(s.id)) as commits
@@ -556,6 +586,34 @@ people <- function() {
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data);
+}
+
+
+companies_name_wo_affs <- function(affs_list, startdate, enddate) {
+        #List of companies without certain affiliations
+        affiliations = ""
+        for (aff in affs_list){
+            affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+        }    
+
+        q <- paste ("select distinct(c.name)
+                    from companies c,
+                         people_upeople pup,
+                         upeople_companies upc,
+                         scmlog s
+                    where c.id = upc.company_id and
+                          upc.upeople_id = pup.upeople_id and
+                          s.date >= upc.init and
+                          s.date <= upc.end and
+                          pup.people_id = s.author_id and
+                          ",affiliations," 
+                          s.date >", startdate, " and
+                          s.date <= ", enddate, "
+                    group by c.name
+                    order by count(distinct(s.id)) desc;", sep="")
+        query <- new("Query", sql = q)
+        data <- run(query)
+        return (data)
 }
 
 companies_name <- function(startdate, enddate) {
