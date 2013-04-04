@@ -143,6 +143,7 @@ if (conf$reports == 'companies')
 agg_data = merge(agg_data, data_files, all = TRUE)
 agg_data = merge(agg_data, data_branches, all = TRUE)
 agg_data = merge(agg_data, data_repositories, all = TRUE)
+agg_data <- agg_data[order(agg_data$id), ]
 agg_data[is.na(agg_data)] <- 0
 
 # TODO: output dir read from params in command line
@@ -224,6 +225,7 @@ if (conf$reports == 'companies') {
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)
 		agg_data = merge(agg_data, committers, all = TRUE)
+                agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 		
@@ -300,6 +302,7 @@ if (conf$reports == 'repositories') {
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)	
 		agg_data = merge(agg_data, committers, all = TRUE)
+                agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
