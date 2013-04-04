@@ -127,10 +127,10 @@ top_committers_data[['committers.last month']]<-top_committers(31, conf$startdat
 
 # Top authors
 
-top_authors_data <- top_authors(conf$startdate, conf$enddate)
-top_authors_data_2006 <- top_authors_year(2006)
-top_authors_data_2009 <- top_authors_year(2009)
-top_authors_data_2012 <- top_authors_year(2012)
+#top_authors_data <- top_authors(conf$startdate, conf$enddate)
+#top_authors_data_2006 <- top_authors_year(2006)
+#top_authors_data_2009 <- top_authors_year(2009)
+#top_authors_data_2012 <- top_authors_year(2012)
 top_authors_data <- top_authors_wo_affiliations(c("-Bot"), conf$startdate, conf$enddate)
 
 # Top files
@@ -143,21 +143,22 @@ if (conf$reports == 'companies')
 agg_data = merge(agg_data, data_files, all = TRUE)
 agg_data = merge(agg_data, data_branches, all = TRUE)
 agg_data = merge(agg_data, data_repositories, all = TRUE)
+agg_data <- agg_data[order(agg_data$id), ]
 agg_data[is.na(agg_data)] <- 0
 
 # TODO: output dir read from params in command line
 createJSON (agg_data, "data/json/scm-evolutionary.json")
 createJSON (info_data, "data/json/scm-static.json")
-createJSON (top_committers_data, "data/json/scm-top.json")
+#createJSON (top_committers_data, "data/json/scm-top.json")
 
 people_list = people()
 createJSON (people_list, "data/json/scm-people.json")
 
 # TODO: Have a unique file, scm-top.json already exists, with all metrics
-createJSON (top_authors_data, "data/json/scm-top-authors.json")
-createJSON (top_authors_data_2006, "data/json/scm-top-authors_2006.json")
-createJSON (top_authors_data_2009, "data/json/scm-top-authors_2009.json")
-createJSON (top_authors_data_2012, "data/json/scm-top-authors_2012.json")
+createJSON (top_authors_data, "data/json/scm-top.json")
+#createJSON (top_authors_data_2006, "data/json/scm-top-authors_2006.json")
+#createJSON (top_authors_data_2009, "data/json/scm-top-authors_2009.json")
+#createJSON (top_authors_data_2012, "data/json/scm-top-authors_2012.json")
 
 if (conf$reports == 'companies') {
 	companies  <- companies_name(conf$startdate, conf$enddate)
@@ -224,6 +225,7 @@ if (conf$reports == 'companies') {
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)
 		agg_data = merge(agg_data, committers, all = TRUE)
+                agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 		
@@ -300,6 +302,7 @@ if (conf$reports == 'repositories') {
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)	
 		agg_data = merge(agg_data, committers, all = TRUE)
+                agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
