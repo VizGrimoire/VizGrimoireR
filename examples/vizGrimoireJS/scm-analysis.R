@@ -47,28 +47,48 @@ SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpa
 
 if (conf$granularity == 'months'){
    period = 'month'
+   nperiod = 31
 }
 if (conf$granularity == 'weeks'){
    period='week'
+   nperiod = 7
 }
 
 #Commits per month
-data_commits <- evol_commits(period, conf$startdate, conf$enddate)
+data_commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
+data_commits$week <- as.Date(conf$str_startdate) + data_commits$id * nperiod
+data_commits$date  <- toTextDate(GetYear(data_commits$week), GetMonth(data_commits$week)+1)
+print(data_commits)
 
 #Committers per month
-data_committers = evol_committers(period, conf$startdate, conf$enddate)
+data_committers = evol_committers(nperiod, conf$startdate, conf$enddate)
+data_committers$week <- as.Date(conf$str_startdate) + data_committers$id * nperiod
+data_committers$date <- toTextDate(GetYear(data_committers$week), GetMonth(data_committers$week)+1)
+print(data_committers)
 
 # Authors per month
-data_authors = evol_authors(period, conf$startdate, conf$enddate)
+data_authors = evol_authors(nperiod, conf$startdate, conf$enddate)
+data_authors$week <- as.Date(conf$str_startdate) + data_authors$id * nperiod
+data_authors$date <- toTextDate(GetYear(data_authors$week), GetMonth(data_authors$week)+1)
+print (data_authors)
 
 #Files per month
-data_files = evol_files(period, conf$startdate, conf$enddate)
+data_files = evol_files(nperiod, conf$startdate, conf$enddate)
+data_files$week <- as.Date(conf$str_startdate) + data_files$id * nperiod
+data_files$date <- toTextDate(GetYear(data_files$week), GetMonth(data_files$week)+1)
+print(data_files)
 
 #Branches per month
-data_branches = evol_branches(period, conf$startdate, conf$enddate)
+data_branches = evol_branches(nperiod, conf$startdate, conf$enddate)
+data_branches$week <- as.Date(conf$str_startdate) + data_branches$id * nperiod
+data_branches_date <- toTextDate(GetYear(data_branches$week), GetMonth(data_branches$week)+1)
+print(data_branches)
 
 #Repositories per month
-data_repositories = evol_repositories(period, conf$startdate, conf$enddate)
+data_repositories = evol_repositories(nperiod, conf$startdate, conf$enddate)
+data_repositories$week <- as.Date(conf$str_startdate) + data_repositories$id * nperiod
+data_repositories$date <- toTextDate(GetYear(data_repositories$week), GetMonth(data_repositories$week)+1)
+print(data_repositories)
 
 if (conf$reports == 'companies') data_companies = evol_companies(period, conf$startdate, conf$enddate)
 
