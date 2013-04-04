@@ -97,7 +97,7 @@ if (conf$reports == 'countries') {
 }
 
 for (mlist in mailing_lists$mailing_list) {
-    analyze.monthly.list(mlist, period, startdate, enddate)
+    analyze.monthly.list(mlist, nperiod, startdate, enddate)
 }
 
 data.monthly <- get.monthly(nperiod, startdate, enddate)
