@@ -62,7 +62,7 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(distinct(m.message_ID)) AS sent
                 FROM messages m
-                where m.first_date>=",startdate," and m.first_date<=",enddate,"
+                where m.first_date>=",startdate," and m.first_date < ",enddate,"
                 group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
 
     query <- new ("Query", sql = q)
@@ -112,7 +112,7 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                            where m.message_ID = mp.message_id and 
                                  mp.email_address = pup.people_id and 
                                  mp.type_of_recipient='From' and
-                                 m.first_date>=",startdate," and m.first_date<=",enddate,"
+                                 m.first_date>=",startdate," and m.first_date<",enddate,"
                 group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)
     senders_monthly <- run(query)
@@ -151,12 +151,12 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                      p.year = i.year AND 
                      p.",period," = i.",period,")
                  WHERE p.date >= ",startdate," AND 
-                       p.date <= ",enddate,"
+                       p.date < ",enddate,"
                  ORDER BY p.id ASC;", sep="")
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(DISTINCT(",field,")) AS repositories
                 FROM messages m
-                where m.first_date>=",startdate," and m.first_date<=",enddate,"
+                where m.first_date>=",startdate," and m.first_date<",enddate,"
                 group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)    
     repos_monthly <- run(query)
@@ -192,7 +192,7 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                          p.year = i.year AND 
                          p.",period," = i.",period,")
                      WHERE p.date >= ",startdate," AND 
-                           p.date <= ",enddate,"
+                           p.date < ",enddate,"
                     ORDER BY p.id ASC;", sep="")
                            
 
@@ -249,7 +249,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                      p.year = i.year AND 
                      p.",period," = i.",period,")
                 WHERE p.date >= ",startdate," AND 
-                      p.date <= ",enddate,"
+                      p.date < ",enddate,"
                 ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     sent_monthly <- run(query)	
@@ -280,7 +280,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                      p.year = i.year AND 
                      p.",period," = i.",period,")
                  WHERE p.date >= ",startdate," AND 
-                       p.date <= ",enddate,"
+                       p.date < ",enddate,"
                 ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     subjects_monthly <- run(query)
@@ -320,7 +320,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                     p.year = i.year AND 
                     p.",period," = i.",period,")
                 WHERE p.date >= ",startdate," AND 
-                      p.date <= ",enddate,"
+                      p.date < ",enddate,"
                 ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
 
@@ -359,7 +359,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                     p.year = i.year AND 
                     p.",period," = i.",period,")
                 WHERE p.date >= ",startdate," AND 
-                      p.date <= ",enddate,"
+                      p.date < ",enddate,"
                 ORDER BY p.id ASC;", sep="")
     query <- new ("Query", sql = q)
     emails_monthly <- run(query)		
@@ -387,7 +387,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                        mp.email_address = pup.people_id and
                        ",field,"='",listname,"' and
                        first_date >= ",startdate," AND 
-                       first_date <= ",enddate,";",sep='')
+                       first_date < ",enddate,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
 	# TODO: Multilist approach. We will obsolete it in future
@@ -412,7 +412,7 @@ mls_static_info <- function (startdate, enddate, reports="") {
                      where pup.people_id = mp.email_address and
                            mp.message_id = m.message_ID and
                            m.first_date >= ",startdate," AND 
-                           m.first_date <= ",enddate,";", sep="")
+                           m.first_date < ",enddate,";", sep="")
 	query <- new ("Query", sql = q)
 	num_ppl <- run(query)
 	
@@ -421,7 +421,7 @@ mls_static_info <- function (startdate, enddate, reports="") {
 	q <- paste ("select distinct(mailing_list) as mailing_list
                      from messages
                      where first_date >= ",startdate," AND 
-                           first_date <= ",enddate,";",sep='')
+                           first_date < ",enddate,";",sep='')
 	query <- new ("Query", sql = q)
 	mailing_lists <- run(query)
 	
@@ -489,7 +489,7 @@ analyze.monthly.mls.countries <- function (country, period, startdate, enddate) 
                  GROUP BY year,",period,") i
                 ON (
                  p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+                WHERE p.date >= ",startdate," AND p.date < ",enddate,"
                 ORDER BY p.id ASC;", sep="")
         
 	query <- new ("Query", sql = q)
@@ -553,7 +553,7 @@ top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
                 ",affiliations,"
                 upc.company_id = c.id and
                 m.first_date >= ",startdate," and
-                m.first_date <= ",enddate,"
+                m.first_date < ",enddate,"
           GROUP by mp.email_address 
           ORDER BY sent DESC LIMIT 10;", sep="")
    print(q)
@@ -660,7 +660,7 @@ company_posts_posters <- function(company_name, i_db, period, startdate, enddate
                    p.year = i.year and
                    p.",period," = i.",period,")
                 where p.date >=",startdate," and
-                      p.date <= ",enddate,"
+                      p.date < ",enddate,"
                 order by p.id asc;", sep="")
 
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
@@ -678,7 +678,7 @@ company_posts_posters <- function(company_name, i_db, period, startdate, enddate
                                 m.first_date >= upc.init and
                                 m.first_date < upc.end and 
                                 c.name = ",company_name," and
-                                m.first_date>=",startdate," and m.first_date<=",enddate,"
+                                m.first_date>=",startdate," and m.first_date<",enddate,"
                 group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -704,7 +704,7 @@ company_top_senders <- function(company_name, i_db, period, startdate, enddate){
                       upc.company_id = c.id and
                       c.name = ",company_name," and
                       m.first_date >= ",startdate," and
-                      m.first_date <= ",enddate,"
+                      m.first_date < ",enddate,"
                 group by p.name
                 order by count(distinct(m.message_id)) desc 
                 limit 10", sep="")
@@ -732,7 +732,7 @@ company_static_info <- function(company_name, i_db, startdate, enddate){
                       upc.company_id = c.id and
                       c.name = ",company_name," and
                       m.first_date >= ",startdate," and
-                      m.first_date <= ",enddate,";", sep="")
+                      m.first_date < ",enddate,";", sep="")
  
     query <- new ("Query", sql = q)
     data <- run(query)
