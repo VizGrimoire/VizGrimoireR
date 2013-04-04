@@ -55,7 +55,8 @@ if (conf$backend == 'jira'){
     closed_condition <- "new_value='CLOSED'"
 }
 if (conf$backend == 'launchpad'){
-    closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+    #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+    closed_condition <- "(new_value='Fix Committed')"
 }
 
 
