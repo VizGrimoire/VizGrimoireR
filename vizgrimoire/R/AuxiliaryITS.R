@@ -37,7 +37,7 @@ evol_closed <- function (closed_condition, period, startdate, enddate) {
                      people_upeople pup
                 WHERE ",closed_condition,"
                       AND pup.people_id = changes.changed_by
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                 GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -53,7 +53,7 @@ evol_changed <- function (period, startdate, enddate) {
                 FROM changes,
                      people_upeople pup
                 WHERE pup.people_id = changes.changed_by
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                 GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -68,7 +68,7 @@ evol_opened <- function (period, startdate, enddate) {
                 FROM issues,
                      people_upeople pup
                 WHERE pup.people_id = issues.submitted_by
-                      AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                      AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -80,7 +80,7 @@ its_evol_repositories <- function(period, startdate, enddate) {
     q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
                        COUNT(DISTINCT(tracker_id)) AS repositories
                 FROM issues
-                WHERE submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                WHERE submitted_on >= ",startdate," AND submitted_on < ",enddate,"
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -96,7 +96,7 @@ its_evol_companies <- function(period, startdate, enddate, identities_db) {
                          ",identities_db,".upeople_companies upc
                     WHERE pup.people_id = changes.changed_by
                           AND pup.upeople_id = upc.upeople_id
-                          AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                          AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                     GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)    
     data <- run(query)
@@ -120,14 +120,14 @@ its_static_info <- function (closed_condition, startdate, enddate) {
                  DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
                  FROM issues, people_upeople pup
                  WHERE issues.submitted_by = pup.people_id
-                 AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"")
+                 AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"")
     query <- new ("Query", sql = q)
     data <- run(query)
 	
     q <- paste ("SELECT COUNT(DISTINCT(pup.upeople_id)) as closers
                  FROM changes, people_upeople pup
                  WHERE pup.people_id = changes.changed_by
-                 AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                 AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                  AND ", closed_condition)
     query <- new ("Query", sql = q)
     data1 <- run(query)
@@ -135,23 +135,23 @@ its_static_info <- function (closed_condition, startdate, enddate) {
     q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers
                  FROM changes, people_upeople pup
                  WHERE pup.people_id = changes.changed_by
-                 AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+                 AND changed_on >= ",startdate," AND changed_on < ",enddate,"")
     query <- new ("Query", sql = q)
     data2 <- run(query)
     
     q <- paste ("SELECT count(*) as opened FROM issues
-                 WHERE submitted_on >= ",startdate," AND submitted_on <= ",enddate,"")
+                 WHERE submitted_on >= ",startdate," AND submitted_on < ",enddate,"")
     query <- new ("Query", sql = q)
     data3 <- run(query)
     
     q <- paste ("SELECT count(distinct(issue_id)) as changed FROM changes
-                 WHERE changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+                 WHERE changed_on >= ",startdate," AND changed_on < ",enddate,"")
     query <- new ("Query", sql = q)
     data4 <- run(query)
     
     q <- paste ("SELECT count(distinct(issue_id)) as closed FROM changes
                  WHERE ", closed_condition, "
-                 AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+                 AND changed_on >= ",startdate," AND changed_on < ",enddate,"")
     query <- new ("Query", sql = q)
     data5 <- run(query)
     
@@ -181,7 +181,7 @@ its_static_companies  <- function(startdate, enddate, identities_db) {
                  WHERE pup.people_id = changes.changed_by
                      AND pup.upeople_id = upc.upeople_id
                      AND changed_on >= ",startdate,"
-                     AND changed_on <= ",enddate,"")
+                     AND changed_on < ",enddate,"")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)               
@@ -239,7 +239,7 @@ repo_evol_closed <- function(repo, closed_condition, period, startdate, enddate)
                       AND changes.issue_id = issues.id
                       AND issues.tracker_id = trackers.id
                       AND pup.people_id = changes.changed_by
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                       GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")    
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -258,7 +258,7 @@ repo_evol_changed <- function(repo, period, startdate, enddate){
                       AND changes.issue_id = issues.id
                       AND issues.tracker_id = trackers.id
                       AND pup.people_id = changes.changed_by
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                 GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -275,7 +275,7 @@ repo_evol_opened <- function(repo, period, startdate, enddate){
                 WHERE trackers.url=",repo,"                      
                       AND issues.tracker_id = trackers.id
                       AND pup.people_id = issues.submitted_by
-                      AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                      AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -323,9 +323,9 @@ its_company_evol_closed <- function(company_name, closed_condition, period, star
                       AND pup.upeople_id = upc.upeople_id
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                       AND changed_on >= upc.init
-                      AND changed_on <= upc.end
+                      AND changed_on < upc.end
                       GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
 
     
@@ -373,9 +373,9 @@ its_company_evol_changed <- function(company_name, period, startdate, enddate, i
                       AND pup.upeople_id = upc.upeople_id
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                       AND changed_on >= upc.init
-                      AND changed_on <= upc.end
+                      AND changed_on < upc.end
                 GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")");    
     
     
@@ -423,9 +423,9 @@ its_company_evol_opened <- function(company_name, period, startdate, enddate, id
                       AND pup.upeople_id = upc.upeople_id
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
-                      AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                      AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
                       AND submitted_on >= upc.init
-                      AND submitted_on <= upc.end
+                      AND submitted_on < upc.end
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
     query <- new("Query", sql = q)
     data <- run(query)	
@@ -479,8 +479,8 @@ its_companies_name <- function(startdate, enddate, identities_db) {
                     where c.id = upc.company_id and
                           upc.upeople_id = pup.upeople_id and
                           pup.people_id = s.changed_by and
-                          s.changed_on >", startdate, " and
-                          s.changed_on <= ", enddate, "
+                          s.changed_on >= ", startdate, " and
+                          s.changed_on < ", enddate, "
                     group by c.name
                     order by count(distinct(s.issue_id)) desc;")
     query <- new("Query", sql = q)
@@ -504,8 +504,8 @@ its_companies_name_wo_affs <- function(affs_list, startdate, enddate, identities
                        upc.upeople_id = pup.upeople_id and
                        pup.people_id = s.changed_by and
                        ",affiliations,"
-                       s.changed_on >", startdate, " and
-                       s.changed_on <= ", enddate, "
+                       s.changed_on >= ", startdate, " and
+                       s.changed_on < ", enddate, "
                  group by c.name
                  order by count(distinct(s.id)) desc;", sep="")
     query <- new("Query", sql = q)
@@ -532,9 +532,9 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND pup.upeople_id = upc.upeople_id
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
-                       AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                       AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
                        AND submitted_on >= upc.init
-                       AND submitted_on <= upc.end")
+                       AND submitted_on < upc.end")
     query <- new ("Query", sql = q)
     data0 <- run(query)
 
@@ -548,9 +548,9 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND pup.upeople_id = upc.upeople_id
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                       AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                        AND changed_on >= upc.init
-                       AND changed_on <= upc.end
+                       AND changed_on < upc.end
                        AND ", closed_condition)
     query <- new ("Query", sql = q)
     data1 <- run(query)
@@ -565,9 +565,9 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND pup.upeople_id = upc.upeople_id
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                       AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                        AND changed_on >= upc.init
-                       AND changed_on <= upc.end")
+                       AND changed_on < upc.end")
     query <- new ("Query", sql = q)
     data2 <- run(query)
 
@@ -583,9 +583,9 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND pup.upeople_id = upc.upeople_id
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                       AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                        AND changed_on >= upc.init
-                       AND changed_on <= upc.end")
+                       AND changed_on < upc.end")
     query <- new ("Query", sql = q)
     data3 <- run(query)
   
@@ -610,9 +610,9 @@ its_company_top_closers <- function(company_name, startdate, enddate, identities
                       AND pup.upeople_id = upc.upeople_id
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                       AND changed_on >= upc.init
-                      AND changed_on <= upc.end
+                      AND changed_on < upc.end
                 GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -638,9 +638,9 @@ its_top_closers_wo_affiliations <- function(list_affs, startdate, enddate, ident
                       AND pup.people_id = changes.changed_by
                       AND pup.upeople_id = upc.upeople_id
                       AND upc.company_id = com.id
-                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
                       AND changed_on >= upc.init
-                      AND changed_on <= upc.end
+                      AND changed_on < upc.end
                       ",affiliations,"
                 GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	    
     query <- new("Query", sql = q)
