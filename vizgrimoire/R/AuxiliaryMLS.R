@@ -361,7 +361,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
     # TODO: Multilist approach. We will obsolete it in future
     createJSON (mls_monthly, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
     # Multirepos filename
-    #createJSON (mls_monthly, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
+    createJSON (mls_monthly, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
     # createJSON (subjects_monthly, paste("data/json/mls-",listname,"-subjects-evolutionary.json",sep=''))
     #createJSON (emails_monthly, paste("data/json/mls-",listname_file,"-emails-evolutionary.json",sep=''))
 	
