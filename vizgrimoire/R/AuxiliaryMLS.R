@@ -531,8 +531,75 @@ top_senders <- function(days = 0) {
 	return (data)
 }
 
+top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
+
+        affiliations = ""
+        for (aff in list_affs){
+            affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+        }
+
+    q <- paste("SELECT u.identifier as senders, 
+                 count(distinct(m.message_id)) as sent
+          FROM messages m,
+               messages_people mp,
+               people_upeople pup,
+               ",i_db,".upeople u,
+               ",i_db,".upeople_companies upc,
+               ",i_db,".companies c
+          where m.message_ID = mp.message_id and
+                mp.email_address = pup.people_id and
+                pup.upeople_id = upc.upeople_id and
+                pup.upeople_id = u.id and
+                ",affiliations,"
+                upc.company_id = c.id and
+                m.first_date >= ",startdate," and
+                m.first_date <= ",enddate,"
+          GROUP by mp.email_address 
+          ORDER BY sent DESC LIMIT 10;", sep="")
+   print(q)
+   query <- new ("Query", sql = q)
+   data <- run(query)
+   return (data)
+
+
+}
+
 
 #Companies information
+
+companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
+
+    affiliations = ""
+    for (aff in list_affs){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+
+
+    q <- paste("select c.name as name,
+                       count(distinct(m.message_ID)) as sent
+                from messages m,
+                     messages_people mp,
+                     people_upeople pup,
+                     ",i_db,".upeople_companies upc,
+                     ",i_db,".companies c
+                where m.message_ID = mp.message_id and
+                      mp.email_address  = pup.people_id and
+                      pup.upeople_id = upc.upeople_id and
+                      upc.company_id = c.id and
+                      ", affiliations, "
+                      m.first_date >= ",startdate," and
+                      m.first_date < ",enddate,"
+                group by c.name
+                order by count(distinct(m.message_ID)) desc;" , sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+
+
+}
+
+
 
 companies_names <- function (i_db, startdate, enddate){
 
@@ -596,6 +663,21 @@ company_posts_posters <- function(company_name, i_db, period, startdate, enddate
                       p.date <= ",enddate,"
                 order by p.id asc;", sep="")
 
+    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
+                       count(m.message_ID) AS sent,
+                                 count(distinct(mp.email_address)) AS senders
+                          FROM messages m,
+                               messages_people mp,
+                               people_upeople pup,
+                               ",i_db,".upeople_companies upc,
+                               ",i_db,".companies c
+                          where m.message_ID = mp.message_id and
+                                mp.email_address = pup.people_id and
+                                pup.upeople_id = upc.upeople_id and
+                                upc.company_id = c.id and
+                                c.name = ",company_name," and
+                                m.first_date>=",startdate," and m.first_date<=",enddate,"
+                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

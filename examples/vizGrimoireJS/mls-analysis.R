@@ -101,16 +101,18 @@ for (mlist in mailing_lists$mailing_list) {
 }
 
 data.monthly <- get.monthly(nperiod, startdate, enddate)
+data.monthly = completeZeroPeriod(data.monthly, conf$str_startdate, conf$str_enddate)
 data.monthly$week <- as.Date(conf$str_startdate) + data.monthly$id * nperiod
 data.monthly$date  <- toTextDate(GetYear(data.monthly$week), GetMonth(data.monthly$week)+1)
 data.monthly <- data.monthly[order(data.monthly$id), ]
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders
-top_senders_data <- list()
-top_senders_data[['senders.']]<-top_senders()
-top_senders_data[['senders.last year']]<-top_senders(365)
-top_senders_data[['senders.last month']]<-top_senders(31)
+top_senders_data <- top_senders_wo_affs(c("-Bot"), identities_db, startdate, enddate)
+#top_senders_data <- list()
+#top_senders_data[['senders.']]<-top_senders()
+#top_senders_data[['senders.last year']]<-top_senders(365)
+#top_senders_data[['senders.last month']]<-top_senders(31)
 
 createJSON (top_senders_data, "data/json/mls-top.json")
 
@@ -124,14 +126,20 @@ createJSON (people, "data/json/mls-people.json")
 # Companies information
 if (conf$reports == 'companies'){
     
-    company_names = companies_names(identities_db, startdate, enddate)
+    #company_names = companies_names(identities_db, startdate, enddate)
+    company_names = companies_names_wo_affs(c("-Bot", "-Individual", "-Unknown"), identities_db, startdate, enddate)
 
     createJSON(company_names$name, "data/json/mls-companies.json")
    
     for (company in company_names$name){       
         print (company)
         company_name = paste("'",company,"'",sep="")
-        post_posters = company_posts_posters (company_name, identities_db, period, startdate, enddate)
+        post_posters = company_posts_posters (company_name, identities_db, nperiod, startdate, enddate)
+        post_posters = completeZeroPeriod(post_posters, conf$str_startdate, conf$str_enddate)
+        post_posters$week <- as.Date(conf$str_startdate) + post_posters$id * nperiod
+        post_posters$date  <- toTextDate(GetYear(post_posters$week), GetMonth(post_posters$week)+1)
+        post_posters <- post_posters[order(post_posters$id), ]
+
         createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
 
         top_senders = company_top_senders (company_name, identities_db, period, startdate, enddate)
