@@ -36,9 +36,11 @@ SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpa
 # period of time
 if (conf$granularity == 'months'){
    period = 'month'
+   nperiod = 31
 }
 if (conf$granularity == 'weeks'){
    period = 'week'
+   nperiod = 7
 }
 
 identities_db = conf$identities_db
@@ -98,7 +100,10 @@ for (mlist in mailing_lists$mailing_list) {
     analyze.monthly.list(mlist, period, startdate, enddate)
 }
 
-data.monthly <- get.monthly(period, startdate, enddate)
+data.monthly <- get.monthly(nperiod, startdate, enddate)
+data.monthly$week <- as.Date(conf$str_startdate) + data.monthly$id * nperiod
+data.monthly$date  <- toTextDate(GetYear(data.monthly$week), GetMonth(data.monthly$week)+1)
+data.monthly <- data.monthly[order(data.monthly$id), ]
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders
