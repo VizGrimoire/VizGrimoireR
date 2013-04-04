@@ -59,6 +59,12 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                 WHERE p.date >= ",startdate," AND 
                       p.date <= ",enddate,"
                 ORDER BY p.id ASC;", sep="")
+    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
+                       count(distinct(m.message_ID)) AS sent
+                FROM messages m
+                where m.first_date>=",startdate," and m.first_date<=",enddate,"
+                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
+
     query <- new ("Query", sql = q)
     sent_monthly <- run(query)
 	
@@ -88,7 +94,8 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                                 people_upeople pup 
                            where m.message_ID = mp.message_id and 
                                  mp.email_address = pup.people_id and 
-                                 mp.type_of_recipient='From' 
+                                 mp.type_of_recipient='From' and
+                                 m.first_date>=",startdate," and m.first_date<=",enddate,"
                            group by year, 
                                     ",period,") i
                  ON (
@@ -97,6 +104,16 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                 WHERE p.date >= ",startdate," AND 
                       p.date <= ",enddate,"
                 ORDER BY p.id ASC;", sep="")
+    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
+                       count(distinct(pup.upeople_id)) as senders 
+                           from messages m, 
+                                messages_people mp, 
+                                people_upeople pup 
+                           where m.message_ID = mp.message_id and 
+                                 mp.email_address = pup.people_id and 
+                                 mp.type_of_recipient='From' and
+                                 m.first_date>=",startdate," and m.first_date<=",enddate,"
+                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)
     senders_monthly <- run(query)
       
@@ -136,6 +153,11 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                  WHERE p.date >= ",startdate," AND 
                        p.date <= ",enddate,"
                  ORDER BY p.id ASC;", sep="")
+    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
+                       count(DISTINCT(",field,")) AS repositories
+                FROM messages m
+                where m.first_date>=",startdate," and m.first_date<=",enddate,"
+                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)    
     repos_monthly <- run(query)
       
@@ -172,6 +194,8 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
                      WHERE p.date >= ",startdate," AND 
                            p.date <= ",enddate,"
                     ORDER BY p.id ASC;", sep="")
+                           
+
         query <- new ("Query", sql = q)
         countries_monthly <- run(query)
     }
