@@ -135,9 +135,13 @@ if (conf$reports == 'companies'){
         print (company)
         company_name = paste("'",company,"'",sep="")
         post_posters = company_posts_posters (company_name, identities_db, nperiod, startdate, enddate)
+        if (length(post_posters) == 0) {
+            post_posters <- data.frame(id=numeric(0), sent=numeric(0), senders=numeric(0))
+        }
         post_posters = completeZeroPeriod(post_posters, conf$str_startdate, conf$str_enddate)
         post_posters$week <- as.Date(conf$str_startdate) + post_posters$id * nperiod
         post_posters$date  <- toTextDate(GetYear(post_posters$week), GetMonth(post_posters$week)+1)
+        print(post_posters)
         post_posters <- post_posters[order(post_posters$id), ]
 
         createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
