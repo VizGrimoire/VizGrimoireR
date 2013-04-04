@@ -38,12 +38,8 @@ library("vizgrimoire")
 ##               host = conf$host, port = conf$port)
 # conf <- ConfFromParameters(dbschema = "kdevelop_bicho", user = "jgb", password = "XXX")
 
-
-
 conf <- ConfFromOptParse('its')
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
-
-
 
 # backends
 if (conf$backend == 'allura'){
@@ -83,21 +79,21 @@ identities_db <- conf$identities_db
 print(startdate)
 closed <- evol_closed(closed_condition, nperiod, startdate, enddate)
 if (length(closed) == 0) {
-    closed <- data.frame(id=numeric(0), closers=numeric(0),closed=character(0))
+    closed <- data.frame(id=numeric(0), closers=numeric(0),closed=numeric(0))
 } 
 closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
 closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
 
 changed <- evol_changed(nperiod, startdate, enddate)
 if (length(changed) == 0) {
-    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=character(0))
+    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
 } 
 changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
 changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
 
 open <- evol_opened(nperiod, startdate, enddate)
 if (length(open) == 0) {
-    open <- data.frame(id=numeric(0), opened=numeric(0), openers=character(0))
+    open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
 } 
 open$week <- as.Date(conf$str_startdate) + open$id * nperiod
 open$date <- toTextDate(GetYear(open$week), GetMonth(open$week)+1)
@@ -162,7 +158,7 @@ if (conf$reports == 'repositories') {
 
 		changed <- repo_evol_changed(repo_name, nperiod, startdate, enddate)
                 if (length(changed) == 0) {
-                    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=character(0))
+                    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
                 }                 
                 changed <- completeZeroPeriod(changed, conf$str_startdate, conf$str_enddate)
                 changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
@@ -170,7 +166,7 @@ if (conf$reports == 'repositories') {
                 
 		opened <- repo_evol_opened(repo_name, nperiod, startdate, enddate)
                 if (length(open) == 0) {
-                    open <- data.frame(id=numeric(0), opened=numeric(0), openers=character(0))
+                    open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
                 } 
                 opened <- completeZeroPeriod(opened, conf$str_startdate, conf$str_enddate)
                 opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
@@ -208,7 +204,7 @@ if (conf$reports == 'companies') {
 
         changed <- its_company_evol_changed(company_name, nperiod, startdate, enddate, identities_db)
         if (length(changed) == 0) {
-            changed <- data.frame(id=numeric(0), changed=numeric(0), changers=character(0))
+            changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
         } 
         changed <- completeZeroPeriod(changed, conf$str_startdate, conf$str_enddate)
         changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
@@ -216,7 +212,7 @@ if (conf$reports == 'companies') {
 
         opened <- its_company_evol_opened(company_name, nperiod, startdate, enddate, identities_db)
         if (length(open) == 0) {
-            open <- data.frame(id=numeric(0), opened=numeric(0), openers=character(0))
+            open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
         }         
         opened <- completeZeroPeriod(opened, conf$str_startdate, conf$str_enddate)
         opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
