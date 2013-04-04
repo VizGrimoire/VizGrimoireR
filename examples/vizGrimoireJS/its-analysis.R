@@ -125,11 +125,12 @@ createJSON (all_static_info, "data/json/its-static.json")
 
 
 # Top closers
-top_closers_data <- list()
-top_closers_data[['closers.']]<-top_closers()
-top_closers_data[['closers.last year']]<-top_closers(365)
-top_closers_data[['closers.last month']]<-top_closers(31)
+## top_closers_data <- list()
+## top_closers_data[['closers.']]<-top_closers()
+## top_closers_data[['closers.last year']]<-top_closers(365)
+## top_closers_data[['closers.last month']]<-top_closers(31)
 
+top_closers_data <- its_top_closers_wo_affiliations(c("-Bot"), startdate, enddate, identites_db)
 createJSON (top_closers_data, "data/json/its-top.json")
 
 # People List for working in unique identites

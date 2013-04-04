@@ -619,3 +619,31 @@ its_company_top_closers <- function(company_name, startdate, enddate, identities
     return (data)
 }
 
+its_top_closers_wo_affiliations <- function(list_affs, startdate, enddate, identites_db) {
+    #list_affs
+    affiliations = ""
+    for (aff in list_affs){
+        affiliations <- paste(affiliations, "AND com.name<>'",aff,"' ",sep="")
+    }
+    
+    q <- paste("SELECT people.name as closers,
+                       COUNT(DISTINCT(changes.id)) as closed
+                FROM changes,
+                     people,
+                     people_upeople pup,
+                     ",identities_db,".upeople_companies upc,
+                     ",identities_db,".companies com
+                WHERE ", closed_condition, "
+                      AND changes.changed_by = people.id
+                      AND pup.people_id = changes.changed_by
+                      AND pup.upeople_id = upc.upeople_id
+                      AND upc.company_id = com.id
+                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= upc.init
+                      AND changed_on <= upc.end
+                      ",affiliations,"
+                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	    
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
