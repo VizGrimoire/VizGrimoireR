@@ -31,7 +31,7 @@ R --vanilla --args -d $1 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-05 
 R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-05 -g weeks < mls-analysis.R
 R --vanilla --args -d $2 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-05 -g weeks < mls-analysis.R
 #ITS
-R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2012-09-27 -g weeks -t launchpad < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-05 -g weeks -t launchpad < its-analysis.R
 R --vanilla --args -d $3 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-05 -g weeks -t launchpad < its-analysis.R
 rm data/grizzly/*
 mv data/json/* data/grizzly/
