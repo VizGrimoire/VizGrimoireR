@@ -103,7 +103,8 @@ agg_data[is.na(agg_data)] <- 0
 # TODO: output dir read from params in command line
 createJSON (agg_data, "data/json/scm-evolutionary.json")
 createJSON (info_data, "data/json/scm-static.json")
-createJSON (top_committers_data, "data/json/scm-top.json")
+#createJSON (top_committers_data, "data/json/scm-top.json")
+createJSON (top_authors_data, "data/json/scm-top.json")
 
 people_list = people()
 createJSON (people_list, "data/json/scm-people.json")
