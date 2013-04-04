@@ -488,6 +488,33 @@ its_companies_name <- function(startdate, enddate, identities_db) {
     return (data)
 }
 
+its_companies_name_wo_affs <- function(affs_list, startdate, enddate, identities_db) {
+    #List of companies without certain affiliations
+    affiliations = ""
+    for (aff in affs_list){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+    
+    q <- paste ("select distinct(c.name)
+                 from ",identities_db,".companies c,
+                      people_upeople pup,
+                      ",identities_db,".upeople_companies upc,
+                      changes s
+                 where c.id = upc.company_id and
+                       upc.upeople_id = pup.upeople_id and
+                       pup.people_id = s.changed_by and
+                       ",affiliations,"
+                       s.changed_on >", startdate, " and
+                       s.changed_on <= ", enddate, "
+                 group by c.name
+                 order by count(distinct(s.id)) desc;", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+
 its_company_static_info <- function (company_name, startdate, enddate, identities_db) {
     ## Get some general stats from the database and url info
     ##
