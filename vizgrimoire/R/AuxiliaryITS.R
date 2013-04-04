@@ -324,6 +324,8 @@ its_company_evol_closed <- function(company_name, closed_condition, period, star
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= upc.init
+                      AND changed_on <= upc.end
                       GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
 
     
@@ -372,6 +374,8 @@ its_company_evol_changed <- function(company_name, period, startdate, enddate, i
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= upc.init
+                      AND changed_on <= upc.end
                 GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")");    
     
     
@@ -420,6 +424,8 @@ its_company_evol_opened <- function(company_name, period, startdate, enddate, id
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
                       AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                      AND submitted_on >= upc.init
+                      AND submitted_on <= upc.end
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
     query <- new("Query", sql = q)
     data <- run(query)	
@@ -499,7 +505,9 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND pup.upeople_id = upc.upeople_id
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
-                       AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"")
+                       AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                       AND submitted_on >= upc.init
+                       AND submitted_on <= upc.end")
     query <- new ("Query", sql = q)
     data0 <- run(query)
 
@@ -514,6 +522,8 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
                        AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                       AND changed_on >= upc.init
+                       AND changed_on <= upc.end
                        AND ", closed_condition)
     query <- new ("Query", sql = q)
     data1 <- run(query)
@@ -528,7 +538,9 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND pup.upeople_id = upc.upeople_id
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                       AND changed_on >= upc.init
+                       AND changed_on <= upc.end")
     query <- new ("Query", sql = q)
     data2 <- run(query)
 
@@ -544,7 +556,9 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
                        AND pup.upeople_id = upc.upeople_id
                        AND upc.company_id = com.id
                        AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"")
+                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                       AND changed_on >= upc.init
+                       AND changed_on <= upc.end")
     query <- new ("Query", sql = q)
     data3 <- run(query)
   
@@ -570,6 +584,8 @@ its_company_top_closers <- function(company_name, startdate, enddate, identities
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
                       AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      AND changed_on >= upc.init
+                      AND changed_on <= upc.end
                 GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
     query <- new ("Query", sql = q)
     data <- run(query)
