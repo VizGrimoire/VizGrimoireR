@@ -111,6 +111,7 @@ ConfFromOptParse <- function (datasource="") {
 	enddatesplit <- strsplit(options$enddate,'-')
 	endyear <- enddatesplit[[1]][1]
 	endmonth <- enddatesplit[[1]][2]
+        options$str_enddate <- options$enddate
 	options$enddate <- paste (c("'", options$enddate, "'"), collapse='')
 	
 	startdatesplit <- strsplit(options$startdate,'-')
@@ -252,7 +253,8 @@ mergeWeekly <- function (d1, d2) {
 #
 completeZeroMonthly <- function (data) {
 
-  firstmonth = as.integer(data$id[1])
+  #firstmonth = as.integer(data$id[1])
+  firstmonth = 0
   lastmonth = as.integer(data$id[nrow(data)])
   months = data.frame('id'=c(firstmonth:lastmonth))
   completedata <- merge (data, months, all=TRUE)
@@ -270,6 +272,15 @@ mergeMonthly <- function (d1, d2) {
   d = completeZeroMonthly (merge (d1, d2, all=TRUE))
 
   return (d)
+}
+
+completeZeroPeriod <- function (data, startdate, enddate){
+    first = 0
+    last = ceiling (difftime(as.POSIXlt(enddate), as.POSIXlt(startdate),units='days') / 7)
+    periods = data.frame('id'=c(first:last))
+    completedata <- merge (data, periods, all=TRUE)
+    completedata[is.na(completedata)] <- 0
+    return (completedata)
 }
 
 ##

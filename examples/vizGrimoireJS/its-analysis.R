@@ -107,6 +107,7 @@ if (conf$reports == 'companies') {
 }
 issues[is.na(issues)] <- 0
 createJSON (issues, "data/json/its-evolutionary.json")
+print(issues)
 
 all_static_info <- its_static_info(closed_condition, startdate, enddate)
 if (conf$reports == 'companies') {
@@ -142,9 +143,9 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		# EVOLUTION INFO
-		closed <- repo_evol_closed(repo_name, closed_condition, period, startdate, enddate)
-		changed <- repo_evol_changed(repo_name, period, startdate, enddate)
-		opened <- repo_evol_opened(repo_name, period, startdate, enddate)                
+		closed <- repo_evol_closed(repo_name, closed_condition, nperiod, startdate, enddate)
+		changed <- repo_evol_changed(repo_name, nperiod, startdate, enddate)
+		opened <- repo_evol_opened(repo_name, nperiod, startdate, enddate)                
 		agg_data = merge(closed, changed, all = TRUE)
 		agg_data = merge(agg_data, opened, all = TRUE)	
 		agg_data[is.na(agg_data)] <- 0
@@ -166,12 +167,20 @@ if (conf$reports == 'companies') {
         company_name = paste(c("'", company, "'"), collapse='')
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
-        closed <- its_company_evol_closed(company_name, closed_condition, period, startdate, enddate, identities_db)
-        changed <- its_company_evol_changed(company_name, period, startdate, enddate, identities_db)
-        opened <- its_company_evol_opened(company_name, period, startdate, enddate, identities_db)
+        closed <- its_company_evol_closed(company_name, closed_condition, nperiod, startdate, enddate, identities_db)
+        closed <- completeZeroPeriod(closed, conf$str_startdate, conf$str_enddate)
+        print(closed)
+        changed <- its_company_evol_changed(company_name, nperiod, startdate, enddate, identities_db)
+        changed <- completeZeroPeriod(changed, conf$str_startdate, conf$str_enddate)
+        print(changed)
+        opened <- its_company_evol_opened(company_name, nperiod, startdate, enddate, identities_db)
+        opened <- completeZeroPeriod(opened, conf$str_startdate, conf$str_enddate)
+        print(opened)
         agg_data = merge(closed, changed, all = TRUE)
         agg_data = merge(agg_data, opened, all = TRUE)
+        agg_data[is.na(agg_data)] <- 0
         createJSON(agg_data, paste(c("data/json/",company_aux,"-its-evolutionary.json"), collapse=''))
+        print(agg_data)
 
         print ("static info")
         static_info <- its_company_static_info(company_name, startdate, enddate, identities_db)

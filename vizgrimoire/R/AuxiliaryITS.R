@@ -222,181 +222,200 @@ its_repos_name <- function() {
 }
 
 repo_evol_closed <- function(repo, closed_condition, period, startdate, enddate){
-    q <- paste ("SELECT p.id AS id,
-                p.year AS year,
-                p.",period," AS ",period,",
-                DATE_FORMAT(p.date, '%b %Y') AS date,
-                IFNULL(i.closed, 0) AS closed,
-                IFNULL(i.closers, 0) AS closers
-                FROM ",period,"s p
-                LEFT JOIN(
-                 SELECT YEAR(changed_on) as year,
-                 ",period,"(changed_on) as ",period,",
-                 COUNT(issue_id) AS closed,
-                 COUNT(DISTINCT(people_upeople.upeople_id)) AS closers
-                 FROM changes
-                 JOIN issues ON (changes.issue_id = issues.id)
-                 JOIN trackers ON (issues.tracker_id = trackers.id)
-                 JOIN people_upeople ON (people_upeople.people_id = changes.changed_by)
-                 WHERE ",closed_condition,"
-                 AND trackers.url=",repo,"
-                 GROUP BY year,",period,") i
-                ON (
-                 p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
+    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(DISTINCT(issue_id)) AS closed,
+                       COUNT(DISTINCT(pup.upeople_id)) AS closers
+                FROM changes,
+                     issues,
+                     trackers,
+                     people_upeople pup
+                WHERE ",closed_condition,"
+                      AND trackers.url=",repo,"
+                      AND changes.issue_id = issues.id
+                      AND issues.tracker_id = trackers.id
+                      AND pup.people_id = changes.changed_by
+                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")    
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 repo_evol_changed <- function(repo, period, startdate, enddate){
-    q <- paste ("SELECT p.id AS id,
-                p.year AS year,
-                p.",period," AS ",period,",
-                DATE_FORMAT(p.date, '%b %Y') AS date,
-                IFNULL(i.changed, 0) AS changed,
-                IFNULL(i.changers, 0) AS changers
-                FROM ",period,"s p
-                LEFT JOIN(
-                 SELECT YEAR(changed_on) AS year,
-                 ",period,"(changed_on) AS ",period,",
-                 COUNT(changed_by) AS changed,
-                 COUNT(DISTINCT(people_upeople.upeople_id)) AS changers
-                 FROM changes
-                 JOIN issues ON (changes.issue_id = issues.id)
-                 JOIN trackers ON (issues.tracker_id = trackers.id)
-                 JOIN people_upeople ON (people_upeople.people_id = changes.changed_by)
-                 WHERE trackers.url=",repo,"
-                 GROUP BY year,",period," ORDER BY year,",period,") i
-                ON (
-                 p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
+    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(DISTINCT(changed.issue_id)) AS changed,
+                       COUNT(DISTINCT(pup.upeople_id)) AS changers
+                FROM changes,
+                     issues,
+                     trackers,
+                     people_upeople pup
+                WHERE trackers.url=",repo,"
+                      AND changes.issue_id = issues.id
+                      AND issues.tracker_id = trackers.id
+                      AND pup.people_id = changes.changed_by
+                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 repo_evol_opened <- function(repo, period, startdate, enddate){
-    q <- paste ("SELECT p.id AS id,
-                p.year AS year,
-                p.",period," AS ",period,",
-                DATE_FORMAT(p.date, '%b %Y') AS date,
-                IFNULL(i.opened, 0) AS opened,
-                IFNULL(i.openers, 0) AS openers
-                FROM ",period,"s p
-                LEFT JOIN(
-                 SELECT YEAR(submitted_on) AS year,
-                 ",period,"(submitted_on) AS ",period,",
-                 COUNT(submitted_by) AS opened,
-                 COUNT(DISTINCT(people_upeople.upeople_id)) AS openers
-                 FROM issues
-                 JOIN trackers ON (issues.tracker_id = trackers.id)
-                 JOIN people_upeople ON (people_upeople.people_id = issues.submitted_by)
-                 WHERE trackers.url=",repo,"
-                 GROUP BY year,",period,") i
-                ON (
-                 p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
+    q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(submitted_by) AS opened,
+                       COUNT(DISTINCT(pup.upeople_id)) AS openers
+                FROM issues,
+                     trackers,
+                     people_upeople pup
+                WHERE trackers.url=",repo,"                      
+                      AND issues.tracker_id = trackers.id
+                      AND pup.people_id = issues.submitted_by
+                      AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 its_company_evol_closed <- function(company_name, closed_condition, period, startdate, enddate, identities_db){
-    q <- paste("SELECT p.id AS id,
-                       p.year AS year,
-                       p.",period," AS ",period,",
-                       DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.closed, 0) AS closed,
-                       IFNULL(i.closers, 0) AS closers
-                FROM ",period,"s p
-                LEFT JOIN(
-                          SELECT YEAR(changed_on) AS year,
-                                ",period,"(changed_on) AS ",period,",
-                                COUNT(DISTINCT(issue_id)) AS closed,
-                                COUNT(DISTINCT(pup.upeople_id)) AS closers
-                          FROM changes,
-                               people_upeople pup,
-                               ",identities_db,".upeople_companies upc,
-                               ",identities_db,".companies com
-                          WHERE ",closed_condition,"
-                                AND pup.people_id = changes.changed_by
-                                AND pup.upeople_id = upc.upeople_id
-                                AND upc.company_id = com.id
-                                AND com.name = ",company_name,"
-                                AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
-                          GROUP BY year,",period,") i
-                ON (
-                    p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
+    ## q <- paste("SELECT p.id AS id,
+    ##                    p.year AS year,
+    ##                    p.",period," AS ",period,",
+    ##                    DATE_FORMAT(p.date, '%b %Y') AS date,
+    ##                    IFNULL(i.closed, 0) AS closed,
+    ##                    IFNULL(i.closers, 0) AS closers
+    ##             FROM ",period,"s p
+    ##             LEFT JOIN(
+    ##                       SELECT YEAR(changed_on) AS year,
+    ##                             ",period,"(changed_on) AS ",period,",
+    ##                             COUNT(DISTINCT(issue_id)) AS closed,
+    ##                             COUNT(DISTINCT(pup.upeople_id)) AS closers
+    ##                       FROM changes,
+    ##                            people_upeople pup,
+    ##                            ",identities_db,".upeople_companies upc,
+    ##                            ",identities_db,".companies com
+    ##                       WHERE ",closed_condition,"
+    ##                             AND pup.people_id = changes.changed_by
+    ##                             AND pup.upeople_id = upc.upeople_id
+    ##                             AND upc.company_id = com.id
+    ##                             AND com.name = ",company_name,"
+    ##                             AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+    ##                       GROUP BY year,",period,") i
+    ##             ON (
+    ##                 p.year = i.year AND p.",period," = i.",period,")
+    ##             WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+    ##             ORDER BY p.id ASC;", sep="")
+    
+    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(DISTINCT(issue_id)) AS closed,
+                       COUNT(DISTINCT(pup.upeople_id)) AS closers
+                FROM changes,
+                     people_upeople pup,
+                     ",identities_db,".upeople_companies upc,
+                     ",identities_db,".companies com    
+                WHERE ",closed_condition,"
+                      AND pup.people_id = changes.changed_by
+                      AND pup.upeople_id = upc.upeople_id
+                      AND upc.company_id = com.id
+                      AND com.name = ",company_name,"
+                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                      GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
+
+    
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)	
 }
 
 its_company_evol_changed <- function(company_name, period, startdate, enddate, identities_db){
-    q <- paste("SELECT p.id AS id,
-                       p.year AS year,
-                       p.",period," AS ",period,",
-                       DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.changed, 0) AS changed,
-                       IFNULL(i.changers, 0) AS changers
-                FROM ",period,"s p
-                LEFT JOIN(
-                          SELECT YEAR(changed_on) AS year,
-                                ",period,"(changed_on) AS ",period,",
-                                COUNT(DISTINCT(issue_id)) AS changed,
-                                COUNT(DISTINCT(pup.upeople_id)) AS changers
-                          FROM changes,
-                               people_upeople pup,
-                               ",identities_db,".upeople_companies upc,
-                               ",identities_db,".companies com
-                          WHERE pup.people_id = changes.changed_by
-                                AND pup.upeople_id = upc.upeople_id
-                                AND upc.company_id = com.id
-                                AND com.name = ",company_name,"
-                                AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
-                          GROUP BY year,",period,") i
-                ON (
-                    p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
+    ## q <- paste("SELECT p.id AS id,
+    ##                    p.year AS year,
+    ##                    p.",period," AS ",period,",
+    ##                    DATE_FORMAT(p.date, '%b %Y') AS date,
+    ##                    IFNULL(i.changed, 0) AS changed,
+    ##                    IFNULL(i.changers, 0) AS changers
+    ##             FROM ",period,"s p
+    ##             LEFT JOIN(
+    ##                       SELECT YEAR(changed_on) AS year,
+    ##                             ",period,"(changed_on) AS ",period,",
+    ##                             COUNT(DISTINCT(issue_id)) AS changed,
+    ##                             COUNT(DISTINCT(pup.upeople_id)) AS changers
+    ##                       FROM changes,
+    ##                            people_upeople pup,
+    ##                            ",identities_db,".upeople_companies upc,
+    ##                            ",identities_db,".companies com
+    ##                       WHERE pup.people_id = changes.changed_by
+    ##                             AND pup.upeople_id = upc.upeople_id
+    ##                             AND upc.company_id = com.id
+    ##                             AND com.name = ",company_name,"
+    ##                             AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+    ##                       GROUP BY year,",period,") i
+    ##             ON (
+    ##                 p.year = i.year AND p.",period," = i.",period,")
+    ##             WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+    ##             ORDER BY p.id ASC;", sep="")
+    
+    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(DISTINCT(issue_id)) AS changed,
+                       COUNT(DISTINCT(pup.upeople_id)) AS changers
+                FROM changes,
+                     people_upeople pup,
+                     ",identities_db,".upeople_companies upc,
+                     ",identities_db,".companies com    
+                WHERE pup.people_id = changes.changed_by
+                      AND pup.upeople_id = upc.upeople_id
+                      AND upc.company_id = com.id
+                      AND com.name = ",company_name,"
+                      AND changed_on >= ",startdate," AND changed_on <= ",enddate,"
+                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")");    
+    
+    
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)    
 }
 
 its_company_evol_opened <- function(company_name, period, startdate, enddate, identities_db){
-    q <- paste("SELECT p.id AS id,
-                       p.year AS year,
-                       p.",period," AS ",period,",
-                       DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.opened, 0) AS opened,
-                       IFNULL(i.openers, 0) AS openers
-                FROM ",period,"s p
-                LEFT JOIN(
-                         SELECT YEAR(submitted_on) AS year,
-                                ",period,"(submitted_on) AS ",period,",
-                                COUNT(submitted_by) AS opened,
-                                COUNT(DISTINCT(pup.upeople_id)) AS openers
-                         FROM issues,
-                              people_upeople pup,
-                              ",identities_db,".upeople_companies upc,
-                              ",identities_db,".companies com
-                         WHERE pup.people_id = issues.submitted_by
-                               AND pup.upeople_id = upc.upeople_id
-                               AND upc.company_id = com.id
-                               AND com.name = ",company_name,"
-                               AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
-                         GROUP BY year,",period,") i
-                ON (
-                    p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
+    ## q <- paste("SELECT p.id AS id,
+    ##                    p.year AS year,
+    ##                    p.",period," AS ",period,",
+    ##                    DATE_FORMAT(p.date, '%b %Y') AS date,
+    ##                    IFNULL(i.opened, 0) AS opened,
+    ##                    IFNULL(i.openers, 0) AS openers
+    ##             FROM ",period,"s p
+    ##             LEFT JOIN(
+    ##                      SELECT YEAR(submitted_on) AS year,
+    ##                             ",period,"(submitted_on) AS ",period,",
+    ##                             COUNT(submitted_by) AS opened,
+    ##                             COUNT(DISTINCT(pup.upeople_id)) AS openers
+    ##                      FROM issues,
+    ##                           people_upeople pup,
+    ##                           ",identities_db,".upeople_companies upc,
+    ##                           ",identities_db,".companies com
+    ##                      WHERE pup.people_id = issues.submitted_by
+    ##                            AND pup.upeople_id = upc.upeople_id
+    ##                            AND upc.company_id = com.id
+    ##                            AND com.name = ",company_name,"
+    ##                            AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+    ##                      GROUP BY year,",period,") i
+    ##             ON (
+    ##                 p.year = i.year AND p.",period," = i.",period,")
+    ##             WHERE p.date >= ",startdate," AND p.date <= ",enddate,"
+    ##             ORDER BY p.id ASC;", sep="")
+    
+    q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(submitted_by) AS opened,
+                       COUNT(DISTINCT(pup.upeople_id)) AS openers
+                FROM issues,
+                     people_upeople pup,
+                     ",identities_db,".upeople_companies upc,
+                     ",identities_db,".companies com
+                WHERE pup.people_id = issues.submitted_by
+                      AND pup.upeople_id = upc.upeople_id
+                      AND upc.company_id = com.id
+                      AND com.name = ",company_name,"
+                      AND submitted_on >= ",startdate," AND submitted_on <= ",enddate,"
+                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
