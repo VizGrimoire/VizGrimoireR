@@ -90,7 +90,7 @@ its_evol_repositories <- function(period, startdate, enddate) {
 
 its_evol_companies <- function(period, startdate, enddate, identities_db) {
     q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                           COUNT(DISTINCT(upc.company_id)) AS companies
+                       COUNT(DISTINCT(upc.company_id)) AS num_companies
                     FROM changes,
                          people_upeople pup,
                          ",identities_db,".upeople_companies upc
