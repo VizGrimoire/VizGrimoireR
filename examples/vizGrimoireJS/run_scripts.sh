@@ -3,7 +3,7 @@
 #$2 = MLS database
 #$3 = ITS database
 
-# Example: ./run_scripts.sh dic_cvsanaly_openstack_1289_2013_04_02 dic_mlstats_openstack_1290_2013_04_02 lcanas_bicho_openstack_1291_2013_04_02
+# Example: ./run_scripts.sh dic_cvsanaly_openstack_1289_2013_04_04 dic_mlstats_openstack_1290_2013_04_04 lcanas_bicho_openstack_1291_2013_04_04
 
 #WHOLE DATA
 rm data/json/*
