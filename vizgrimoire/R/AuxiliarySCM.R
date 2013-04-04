@@ -54,6 +54,13 @@ evol_commits <- function(period, startdate, enddate){
                   order by m.year,
                            m.",period," asc;", sep="")
 
+      q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                         count(distinct(s.id)) as commits
+                  from   scmlog s 
+                  where  s.date >", startdate, " and
+                         s.date <= ", enddate,"
+                         GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
+
     
       query <- new ("Query", sql = q)
       data_commits <- run(query)
@@ -90,6 +97,15 @@ evol_committers <- function(period, startdate, enddate){
                    order by m.year,
                             m.",period," asc;", sep="")
     
+      q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                         count(distinct(pup.upeople_id)) as committers
+                  from   scmlog s,
+                         people_upeople pup
+                  where s.committer_id = pup.people_id and
+                        s.date >", startdate, " and
+                        s.date <= ", enddate, "
+                  group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
+
       query <- new ("Query", sql = q)
       data_committers <- run(query)
       return (data_committers)
@@ -124,6 +140,15 @@ evol_authors <- function(period, startdate, enddate){
                    order by m.year,
                             m.",period," asc;", sep="")
 	
+       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                          count(distinct(pup.upeople_id)) as authors
+                   from   scmlog s,
+                          people_upeople pup
+                   where s.author_id = pup.people_id and
+                         s.date >", startdate, " and
+                         s.date <= ", enddate, "
+                   GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")")
+
     query <- new ("Query", sql = q)
     data_authors <- run(query)
 	return (data_authors)
@@ -160,7 +185,15 @@ evol_files <- function(period, startdate, enddate){
                         m.date <= ",enddate," 
                   order by m.year,
                            m.",period," asc;", sep="")
-    
+
+      q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                          count(distinct(a.file_id)) as files
+                  from   scmlog s, 
+                         actions a
+                  where  a.commit_id = s.id and
+                         s.date >", startdate, " and
+                         s.date <= ", enddate, "                         
+                  group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
     
       query <- new ("Query", sql = q)
       data_files <- run(query)
@@ -198,6 +231,15 @@ evol_branches <- function(period, startdate, enddate){
                   order by m.year,
                            m.",period," asc;", sep="")
     
+       q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                          count(distinct(a.branch_id)) as branches
+                   from scmlog s, 
+                   actions a
+                   where  a.commit_id = s.id and
+                          s.date >", startdate, " and
+                          s.date <= ", enddate, "
+                   group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+
       query <- new ("Query", sql = q)
       data_branches <- run(query)
       return (data_branches)
@@ -231,6 +273,13 @@ evol_repositories <- function(period, startdate, enddate) {
                         m.date <= ",enddate," 
                   order by m.year,
                            m.",period," asc;", sep="")
+
+      q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id, 
+                         count(distinct(s.repository_id)) as repositories
+                  from scmlog s
+                  where s.date >", startdate, " and
+                        s.date <= ", enddate, "
+                  group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
       query <- new ("Query", sql = q)
       data_repositories <- run(query)
@@ -268,6 +317,19 @@ evol_companies <- function(period, startdate, enddate){
                           m.date <= ",enddate," 
                     order by m.year,
                              m.",period," asc;", sep="")	
+
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           count(distinct(upc.company_id)) as companies
+                    from scmlog s,
+                         people_upeople pup,
+                         upeople_companies upc
+                    where s.author_id = pup.people_id and
+                          pup.upeople_id = upc.upeople_id and
+                          s.date >= upc.init and 
+                          s.date <= upc.end and
+                          s.date >", startdate, " and
+                          s.date <= ", enddate, "
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	companies<- query(q)
 	return(companies)
