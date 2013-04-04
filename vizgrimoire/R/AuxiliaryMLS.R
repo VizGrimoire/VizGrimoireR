@@ -675,6 +675,8 @@ company_posts_posters <- function(company_name, i_db, period, startdate, enddate
                                 mp.email_address = pup.people_id and
                                 pup.upeople_id = upc.upeople_id and
                                 upc.company_id = c.id and
+                                m.first_date >= upc.init and
+                                m.first_date < upc.end and 
                                 c.name = ",company_name," and
                                 m.first_date>=",startdate," and m.first_date<=",enddate,"
                 group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
