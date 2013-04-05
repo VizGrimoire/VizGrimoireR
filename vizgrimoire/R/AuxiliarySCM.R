@@ -963,7 +963,7 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                            s.date < ", enddate, " and
                            c.name =", company_name, ";", sep="")
         query <- new("Query", sql = q)
-        data0 <- run(query)
+        data1 <- run(query)
 
 	q <- paste("SELECT count(distinct(file_id)) as files
                     from actions a,
@@ -1085,7 +1085,8 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
 	query <- new("Query", sql = q)
 	data11 <- run(query)
 	
-	agg_data = merge(data1, data3)
+        agg_data = merge(data0, data1)
+	agg_data = merge(agg_data, data3)
 	agg_data = merge(agg_data, data5)
 	agg_data = merge(agg_data, data7)
 	agg_data = merge(agg_data, data8)
