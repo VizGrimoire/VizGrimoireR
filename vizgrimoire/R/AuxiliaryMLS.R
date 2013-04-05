@@ -578,6 +578,8 @@ companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
                       mp.email_address  = pup.people_id and
                       pup.upeople_id = upc.upeople_id and
                       upc.company_id = c.id and
+                      m.first_date >= upc.init and
+                      m.first_date < upc.end and 
                       ", affiliations, "
                       m.first_date >= ",startdate," and
                       m.first_date < ",enddate,"
