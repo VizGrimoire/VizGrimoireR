@@ -927,9 +927,8 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
 	
 	# Get some general stats from the database
 	##
-	q <- paste("SELECT count(s.id) as commits, 
-                           count(distinct(s.committer_id)) as committers,
-                           count(distinct(s.author_id)) as authors,
+	q <- paste("SELECT count(distinct(s.id)) as commits, 
+                           count(distinct(pup.upeople_id)) as authors,
                            DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
                            DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
                     FROM   scmlog s,
@@ -945,7 +944,26 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                            s.date < ", enddate, " and
                            c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
-	data1 <- run(query)	
+	data0 <- run(query)	
+
+
+        q <- paste("SELECT count(distinct(pup.upeople_id)) as committers,
+                           DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
+                           DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
+                    FROM   scmlog s,
+                           people_upeople pup,
+                           upeople_companies upc,
+                           companies c
+                    where  s.committer_id = pup.people_id and
+                           pup.upeople_id = upc.upeople_id and
+                           s.date >= upc.init and
+                           s.date < upc.end and
+                           upc.company_id = c.id and
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, " and
+                           c.name =", company_name, ";", sep="")
+        query <- new("Query", sql = q)
+        data0 <- run(query)
 
 	q <- paste("SELECT count(distinct(file_id)) as files
                     from actions a,
