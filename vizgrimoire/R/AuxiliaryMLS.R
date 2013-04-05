@@ -694,6 +694,8 @@ company_top_senders <- function(company_name, i_db, period, startdate, enddate){
                       mp.email_address = p.email_address and
                       pup.upeople_id = upc.upeople_id and
                       upc.company_id = c.id and
+                      m.first_date >= upc.init and
+                      m.first_date < upc.end and
                       c.name = ",company_name," and
                       m.first_date >= ",startdate," and
                       m.first_date < ",enddate,"
