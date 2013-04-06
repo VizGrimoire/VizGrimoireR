@@ -21,7 +21,7 @@
 #       Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
 
 #
-# btw2identities.py
+# its2identities.py
 #
 # This script is based on the outcomes of unifypeople.py used in the CVSAnalY
 # database. This checks information about name and email from the email accounts
