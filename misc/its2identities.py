@@ -34,17 +34,43 @@
 import MySQLdb
 import sys
 import re
+from optparse import OptionGroup, OptionParser
 
-def connect(database):
-   user = 'xxx'
-   password = 'xxx'
-   host = 'xxx'
+def getOptions():     
+    parser = OptionParser(usage='Usage: %prog [options]', 
+                          description='Companies detection using email domains',
+                          version='0.1')
+    
+    parser.add_option('--db-database-its', dest='db_database_its',
+                     help='ITS database name', default=None)
+    parser.add_option('--db-database-ids', dest='db_database_ids',
+                     help='Identities database name', default=None)
+    parser.add_option('-u','--db-user', dest='db_user',
+                     help='Database user name', default='root')
+    parser.add_option('-p', '--db-password', dest='db_password',
+                     help='Database user password', default='')
+    parser.add_option('--db-hostname', dest='db_hostname',
+                     help='Name of the host where database server is running',
+                     default='localhost')
+    parser.add_option('--db-port', dest='db_port',
+                     help='Port of the host where database server is running',
+                     default='3306')
+    
+    (ops, args) = parser.parse_args()
+    
+    return ops
+
+def connect(db, cfg):
+   user = cfg.db_user
+   password = cfg.db_password
+   host = cfg.db_hostname
+
    try:
-      db =  MySQLdb.connect(host,user,password,database)
+      db = MySQLdb.connect(user = user, passwd = password, db = db)      
       return db, db.cursor()
    except:
       print("Database connection error")
-
+      raise
 
 def execute_query(connector, query):
    results = int (connector.execute(query))
@@ -69,12 +95,11 @@ def create_tables(db, connector):
 
 
 
-def main(db_bts, db_identities):
-   # db_bts: Bicho database
-   # db_identities: Identities database
-
-   db_bicho, connector_bts = connect(db_bts)
-   db_ids, connector_ids = connect(db_identities)
+def main():
+   cfg = getOptions()
+   
+   db_bicho, connector_bts = connect(cfg.db_database_its, cfg)
+   db_ids, connector_ids = connect(cfg.db_database_ids, cfg)
 
    create_tables(db_bicho, connector_bts)
 
@@ -123,6 +148,6 @@ def main(db_bts, db_identities):
 
 
 
-if __name__ == "__main__":main(sys.argv[1], sys.argv[2])
+if __name__ == "__main__":main()
 
 
