@@ -671,6 +671,6 @@ createJSON <- function (data, filename) {
    sink()
 }
 
-source('R/AuxiliarySCM.R')
-source('R/AuxiliaryMLS.R')
-source('R/AuxiliaryITS.R')
+source('R/SCM.R')
+source('R/MLS.R')
+source('R/ITS.R')
