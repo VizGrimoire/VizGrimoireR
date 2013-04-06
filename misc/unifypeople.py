@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 # Authors :
-#       Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
+#   Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
 #	Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
 
 #
@@ -37,6 +37,7 @@
 #
 
 import MySQLdb
+from optparse import OptionGroup, OptionParser
 
 class Identities:
     """Keeps track of identities assigned to unique ids.
@@ -108,12 +109,35 @@ def strPerson (person):
 
     return (person['name'] + " / " + person['email'])
 
+def getOptions():        
+    parser = OptionParser(usage='Usage: %prog [options]', 
+                          description='Unify identities',
+                          version='0.1')
+    
+    parser.add_option('-d', '--db-database', dest='db_database',
+                     help='Output database name', default=None)
+    parser.add_option('-u','--db-user', dest='db_user',
+                     help='Database user name', default='root')
+    parser.add_option('-p', '--db-password', dest='db_password',
+                     help='Database user password', default='')
+    parser.add_option('--db-hostname', dest='db_hostname',
+                     help='Name of the host where database server is running',
+                     default='localhost')
+    parser.add_option('--db-port', dest='db_port',
+                     help='Port of the host where database server is running',
+                     default='3306')
+    
+    (ops, args) = parser.parse_args()
+    
+    return ops
+    
+
+
 # Open database connection and get all data in people table
 # into people list.
-# Uncomment these lines and specify options for the database access
-db = MySQLdb.connect(user = "root",
-                     db = "acs_cvsanaly_allura_1049")
 
+cfg = getOptions()
+db = MySQLdb.connect(user = cfg.db_user, db = cfg.db_database)
 
 cursor = db.cursor()
 query = """SELECT *
