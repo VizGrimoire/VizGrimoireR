@@ -78,6 +78,7 @@ enddate <- conf$enddate
 identities_db <- conf$identities_db
 
 print(startdate)
+
 closed <- evol_closed(closed_condition, nperiod, startdate, enddate)
 if (length(closed) == 0) {
     closed <- data.frame(id=numeric(0), closers=numeric(0),closed=numeric(0))
@@ -239,29 +240,29 @@ if (conf$reports == 'companies') {
     }
 }
 
-# Quantiles
-
-## Which quantiles we're interested in
-quantiles_spec = c(.99,.95,.5,.25)
-
-## Closed tickets: time ticket was open, first closed, time-to-first-close
-closed <- new ("ITSTicketsTimes")
-## Yearly quantiles of time to fix (minutes)
-events.tofix <- new ("TimedEvents",
-                     closed$open, closed$tofix %/% 60)
-quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-JSON(quantiles, 'data/json/its-quantiles-year-time_to_fix_min.json')
-
-## Monthly quantiles of time to fix (hours)
-events.tofix.hours <- new ("TimedEvents",
-                           closed$open, closed$tofix %/% 3600)
-quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
-JSON(quantiles.month, 'data/json/its-quantiles-month-time_to_fix_hour.json')
-
-## Changed tickets: time ticket was attended, last move
-changed <- new ("ITSTicketsChangesTimes")
-## Yearly quantiles of time to attention (minutes)
-events.toatt <- new ("TimedEvents",
-                     changed$open, changed$toattention %/% 60)
-quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')
+## Quantiles
+#
+### Which quantiles we're interested in
+#quantiles_spec = c(.99,.95,.5,.25)
+#
+### Closed tickets: time ticket was open, first closed, time-to-first-close
+#closed <- new ("ITSTicketsTimes")
+### Yearly quantiles of time to fix (minutes)
+#events.tofix <- new ("TimedEvents",
+#                     closed$open, closed$tofix %/% 60)
+#quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+#JSON(quantiles, 'data/json/its-quantiles-year-time_to_fix_min.json')
+#
+### Monthly quantiles of time to fix (hours)
+#events.tofix.hours <- new ("TimedEvents",
+#                           closed$open, closed$tofix %/% 3600)
+#quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
+#JSON(quantiles.month, 'data/json/its-quantiles-month-time_to_fix_hour.json')
+#
+### Changed tickets: time ticket was attended, last move
+#changed <- new ("ITSTicketsChangesTimes")
+### Yearly quantiles of time to attention (minutes)
+#events.toatt <- new ("TimedEvents",
+#                     changed$open, changed$toattention %/% 60)
+#quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+#JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')
