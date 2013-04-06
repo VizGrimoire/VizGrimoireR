@@ -109,7 +109,7 @@ def strPerson (person):
 
     return (person['name'] + " / " + person['email'])
 
-def getOptions():        
+def getOptions():     
     parser = OptionParser(usage='Usage: %prog [options]', 
                           description='Unify identities',
                           version='0.1')
@@ -137,7 +137,7 @@ def getOptions():
 # into people list.
 
 cfg = getOptions()
-db = MySQLdb.connect(user = cfg.db_user, db = cfg.db_database)
+db = MySQLdb.connect(user = cfg.db_user, passwd = cfg.db_password,  db = cfg.db_database)
 
 cursor = db.cursor()
 query = """SELECT *
