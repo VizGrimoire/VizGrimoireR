@@ -101,7 +101,7 @@ for (mlist in mailing_lists$mailing_list) {
 }
 
 data.monthly <- get.monthly(nperiod, startdate, enddate)
-data.monthly = completeZeroPeriod(data.monthly, conf$str_startdate, conf$str_enddate)
+data.monthly = completeZeroPeriod(data.monthly, nperiod, conf$str_startdate, conf$str_enddate)
 data.monthly$week <- as.Date(conf$str_startdate) + data.monthly$id * nperiod
 data.monthly$date  <- toTextDate(GetYear(data.monthly$week), GetMonth(data.monthly$week)+1)
 data.monthly <- data.monthly[order(data.monthly$id), ]
@@ -138,7 +138,7 @@ if (conf$reports == 'companies'){
         if (length(post_posters) == 0) {
             post_posters <- data.frame(id=numeric(0), sent=numeric(0), senders=numeric(0))
         }
-        post_posters = completeZeroPeriod(post_posters, conf$str_startdate, conf$str_enddate)
+        post_posters = completeZeroPeriod(post_posters, nperiod, conf$str_startdate, conf$str_enddate)
         post_posters$week <- as.Date(conf$str_startdate) + post_posters$id * nperiod
         post_posters$date  <- toTextDate(GetYear(post_posters$week), GetMonth(post_posters$week)+1)
         print(post_posters)

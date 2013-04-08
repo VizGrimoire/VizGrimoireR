@@ -155,7 +155,7 @@ if (conf$reports == 'repositories') {
                 if (length(closed) == 0) {
                     closed <- data.frame(id=numeric(0),closers=numeric(0),closed=numeric(0))
                 } 
-                closed <- completeZeroPeriod(closed, conf$str_startdate, conf$str_enddate)
+                closed <- completeZeroPeriod(closed, nperiod, conf$str_startdate, conf$str_enddate)
                 closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
                 closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
 
@@ -163,7 +163,7 @@ if (conf$reports == 'repositories') {
                 if (length(changed) == 0) {
                     changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
                 }                 
-                changed <- completeZeroPeriod(changed, conf$str_startdate, conf$str_enddate)
+                changed <- completeZeroPeriod(changed, nperiod, conf$str_startdate, conf$str_enddate)
                 changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
                 changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
                 
@@ -171,7 +171,7 @@ if (conf$reports == 'repositories') {
                 if (length(open) == 0) {
                     open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
                 } 
-                opened <- completeZeroPeriod(opened, conf$str_startdate, conf$str_enddate)
+                opened <- completeZeroPeriod(opened, nperiod, conf$str_startdate, conf$str_enddate)
                 opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
                 opened$date <- toTextDate(GetYear(opened$week), GetMonth(opened$week)+1)
                 
@@ -203,7 +203,7 @@ if (conf$reports == 'companies') {
         if (length(closed) == 0) {
             closed <- data.frame(id=numeric(0),closers=numeric(0),closed=numeric(0))
         } 
-        closed <- completeZeroPeriod(closed, conf$str_startdate, conf$str_enddate)
+        closed <- completeZeroPeriod(closed, nperiod, conf$str_startdate, conf$str_enddate)
         closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
         closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
 
@@ -211,7 +211,7 @@ if (conf$reports == 'companies') {
         if (length(changed) == 0) {
             changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
         } 
-        changed <- completeZeroPeriod(changed, conf$str_startdate, conf$str_enddate)
+        changed <- completeZeroPeriod(changed, nperiod, conf$str_startdate, conf$str_enddate)
         changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
         changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
 
@@ -219,7 +219,7 @@ if (conf$reports == 'companies') {
         if (length(open) == 0) {
             open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
         }         
-        opened <- completeZeroPeriod(opened, conf$str_startdate, conf$str_enddate)
+        opened <- completeZeroPeriod(opened, nperiod, conf$str_startdate, conf$str_enddate)
         opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
         opened$date <- toTextDate(GetYear(opened$week), GetMonth(opened$week)+1)
 
