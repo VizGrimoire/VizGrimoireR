@@ -944,10 +944,9 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                            s.date < ", enddate, " and
                            c.name =", company_name, ";", sep="")
 	query <- new("Query", sql = q)
-	data0 <- run(query)	
-
-
-        q <- paste("SELECT count(distinct(pup.upeople_id)) as committers,
+	data0 <- run(query)
+    
+    q <- paste("SELECT count(distinct(pup.upeople_id)) as committers,
                            DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
                            DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
                     FROM   scmlog s,
@@ -965,6 +964,22 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
         query <- new("Query", sql = q)
         data1 <- run(query)
 
+        date0s <- as.Date(data0$first_date)
+        date0e <- as.Date(data0$last_date)
+        date1s <- as.Date(data1$first_date)
+        date1e <- as.Date(data1$last_date)
+        
+        if (!is.na(date0s) && !is.na(date1s) && (date0s > date1s)) {
+            data0$first_date = data1$first_date
+        }
+        if (!is.na(date0e) && !is.na(date1e) && (date0e < date1e)) {
+            data0$last_date = data1$last_date
+        }
+        data1$first_date = data0$first_date
+        data1$last_date = data0$last_date
+                
+        agg_data = merge(data0, data1)            
+        
 	q <- paste("SELECT count(distinct(file_id)) as files
                     from actions a,
                          scmlog s,
@@ -999,8 +1014,8 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                          s.date < ", enddate, " and
                          c.name =", company_name,";", sep="")
 	query <- new("Query", sql = q)
-	data5 <- run(query)	
-
+	data5 <- run(query)
+    
 	q <- paste("select count(s.id)/timestampdiff(",period,",min(s.date),max(s.date)) as avg_commits_",period,"
                     from scmlog s,
                          people_upeople pup,
@@ -1084,8 +1099,8 @@ evol_info_data_company <- function(company_name, period, startdate, enddate) {
                           c.name =", company_name)
 	query <- new("Query", sql = q)
 	data11 <- run(query)
-	
-        agg_data = merge(data0, data1)
+	    
+    agg_data = merge(data0, data1)
 	agg_data = merge(agg_data, data3)
 	agg_data = merge(agg_data, data5)
 	agg_data = merge(agg_data, data7)

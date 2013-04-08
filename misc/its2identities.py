@@ -110,8 +110,12 @@ def main():
       name = result[1]
       name = name.replace("'", "\\'") #avoiding ' errors in MySQL
       email = result[2]
-      email = email.replace("'", "\\'") #avoiding ' errors in MySQL
-      query = "select upeople_id from identities where identity='" + name  + "' or identity='"+ email +"';"
+      if email:
+          email = email.replace("'", "\\'") #avoiding ' errors in MySQL
+      query = "select upeople_id from identities where identity='" + name + "'"
+      if email:
+        query += " or identity='"+ email +"'"
+      query += ";"  
       results_ids = execute_query(connector_ids, query)
       if len(results_ids) > 0:
          # there exist such identity
@@ -134,9 +138,10 @@ def main():
                  "values(" + str(upeople_id) + ", '"+name+"', 'name');"
          execute_query(connector_ids, query)
  
-         query = "insert into identities(upeople_id, identity, type)" +\
-                 "values(" + str(upeople_id) + ", '"+email+"', 'email');"
-         execute_query(connector_ids, query)
+         if email:
+             query = "insert into identities(upeople_id, identity, type)" +\
+                     "values(" + str(upeople_id) + ", '"+email+"', 'email');"
+             execute_query(connector_ids, query)
 
          query = "insert into people_upeople(people_id, upeople_id) " +\
                  "values('"+ str(people_id) +"', "+str(upeople_id)+");"

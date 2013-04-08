@@ -586,11 +586,9 @@ companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
                 group by c.name
                 order by count(distinct(m.message_ID)) desc;" , sep="")
     query <- new("Query", sql = q)
+   
     data <- run(query)
     return (data)
-
-
-
 }
 
 
