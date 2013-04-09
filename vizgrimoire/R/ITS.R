@@ -648,3 +648,65 @@ its_top_closers_wo_affiliations <- function(list_affs, startdate, enddate, ident
     data <- run(query)
     return (data)
 }
+
+# COUNTRIES
+
+its_countries_names <- function (identities_db,startdate, enddate) {
+        
+    q <- paste("SELECT count(ch.id) as closed, c.name as name
+                FROM changes ch, people_upeople pup,
+                  ",identities_db,".countries c,
+                   ",identities_db,".upeople_countries upc
+                WHERE 
+                   ", closed_condition, "
+                   AND pup.people_id = ch.changed_by
+                   AND pup.upeople_id = upc.upeople_id
+                   AND upc.country_id = c.id
+                   AND changed_on >= ",startdate," AND changed_on < ",enddate,"
+                GROUP BY c.name order by closed desc;", sep="")
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)    
+}
+
+its_countries_evol <- function(identities_db, country, period, startdate, enddate) {
+    
+    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
+                count(ch.id) AS closed,
+                COUNT(DISTINCT(ch.changed_by)) as closers
+                FROM changes ch, people_upeople pup,
+                  ",identities_db,".countries c,
+                   ",identities_db,".upeople_countries upc
+                WHERE 
+                   ", closed_condition, "
+                   AND pup.people_id = ch.changed_by
+                   AND pup.upeople_id = upc.upeople_id
+                   AND upc.country_id = c.id
+                   AND changed_on >= ",startdate," AND changed_on < ",enddate," AND
+                   c.name = '", country, "'
+                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
+
+its_countries_static <- function(identities_db, country, startdate, enddate) {
+    q <- paste("SELECT
+                count(ch.id) AS closed,
+                COUNT(DISTINCT(ch.changed_by)) as closers,
+                DATE_FORMAT (min(changed_on), '%Y-%m-%d') as first_date,
+                DATE_FORMAT (max(changed_on), '%Y-%m-%d') as last_date
+                FROM changes ch, people_upeople pup,
+                  ",identities_db,".countries c,
+                   ",identities_db,".upeople_countries upc
+                WHERE 
+                   ", closed_condition, "
+                   AND pup.people_id = ch.changed_by
+                   AND pup.upeople_id = upc.upeople_id
+                   AND upc.country_id = c.id
+                   AND changed_on >= ",startdate," AND changed_on < ",enddate," AND
+                  c.name = '", country, "'", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+} 

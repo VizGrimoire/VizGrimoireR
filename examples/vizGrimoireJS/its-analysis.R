@@ -240,6 +240,29 @@ if (conf$reports == 'companies') {
     }
 }
 
+# COUNTRIES
+if (conf$reports == 'countries') {
+    countries  <- its_countries_names(conf$identities_db,conf$startdate, conf$enddate)
+	countries <- countries$name
+	createJSON(countries, "data/json/its-countries.json")
+    
+    for (country in countries) {
+        if (is.na(country)) next
+        print (country)
+        
+        data <- its_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
+        data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
+        data$week <- as.Date(conf$str_startdate) + data$id * nperiod
+        data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
+        data <- data[order(data$id), ]
+        createJSON (data, paste("data/json/",country,"-its-evolutionary.json",sep=''))
+        
+        data <- its_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
+        createJSON (data, paste("data/json/",country,"-its-static.json",sep=''))                
+    }    
+}
+    
+
 ## Quantiles
 #
 ### Which quantiles we're interested in
