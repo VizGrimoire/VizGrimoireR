@@ -19,6 +19,7 @@
 #
 # Authors :
 #       Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
+#       Alvaro del Castillo <acs@bitergia.com>
 
 #
 # its2identities.py
@@ -37,7 +38,7 @@ import re
 from optparse import OptionGroup, OptionParser
 
 def getOptions():     
-    parser = OptionParser(usage='Usage: %prog [options]', 
+    parser = OptionParser(usage='Usage: %prog [options]',
                           description='Companies detection using email domains',
                           version='0.1')
     
@@ -45,7 +46,7 @@ def getOptions():
                      help='ITS database name', default=None)
     parser.add_option('--db-database-ids', dest='db_database_ids',
                      help='Identities database name', default=None)
-    parser.add_option('-u','--db-user', dest='db_user',
+    parser.add_option('-u', '--db-user', dest='db_user',
                      help='Database user name', default='root')
     parser.add_option('-p', '--db-password', dest='db_password',
                      help='Database user password', default='')
@@ -66,7 +67,7 @@ def connect(db, cfg):
    host = cfg.db_hostname
 
    try:
-      db = MySQLdb.connect(user = user, passwd = password, db = db)      
+      db = MySQLdb.connect(user=user, passwd=password, db=db)      
       return db, db.cursor()
    except:
       print("Database connection error")
@@ -93,65 +94,84 @@ def create_tables(db, connector):
 
    return
 
+def insert_identity(connector_ids, connector_its, people_id, 
+                    name, email, user_id):
+    # Insert in people_upeople, identities and upeople (new identitiy)
+ 
+    # Max (upeople_)id from upeople table
+    query = "select max(id) from upeople;"
+    results = execute_query(connector_ids, query)
+    upeople_id = int(results[0][0]) + 1
+    
+    query = "insert into upeople(id) values(" + str(upeople_id) + ");"
+    execute_query(connector_ids, query)
+    
+    query = "insert into identities(upeople_id, identity, type)" + \
+            "values(" + str(upeople_id) + ", '" + name + "', 'name');"
+    execute_query(connector_ids, query)
 
+    query = "insert into identities(upeople_id, identity, type)" + \
+            "values(" + str(upeople_id) + ", '" + email + "', 'email');"
+    execute_query(connector_ids, query)
+    
+    query = "insert into identities(upeople_id, identity, type)" + \
+            "values(" + str(upeople_id) + ", '" + user_id + "', 'user_id');"
+    execute_query(connector_ids, query)
 
+    reuse_identity(connector_its, people_id, upeople_id)
+    
+def search_identity(connector_ids, field):
+   query = "select upeople_id from identities where identity='"+field+"'"
+   results_ids = execute_query(connector_ids, query)
+   return results_ids
+
+def reuse_identity(connector_its, people_id, upeople_id):
+    query = "insert into people_upeople(people_id, upeople_id) " + \
+                 "values('" + str(people_id) + "', " + str(upeople_id) + ");"
+    execute_query(connector_its, query)
+    
 def main():
    cfg = getOptions()
    
-   db_bicho, connector_bts = connect(cfg.db_database_its, cfg)
+   db_bicho, connector_its = connect(cfg.db_database_its, cfg)
    db_ids, connector_ids = connect(cfg.db_database_ids, cfg)
 
-   create_tables(db_bicho, connector_bts)
+   create_tables(db_bicho, connector_its)
 
-   query = "select id, name, email from people"
-   results = execute_query(connector_bts, query)
+   query = "select id, name, email, user_id from people"
+   results = execute_query(connector_its, query)
+   
+   # Searching for already existing identites
+   query = "select upeople_id from identities where "
    for result in results:
       people_id = int(result[0])
       name = result[1]
-      name = name.replace("'", "\\'") #avoiding ' errors in MySQL
+      name = name.replace("'", "\\'")  # avoiding ' errors in MySQL
+      if not name == "None":
+          results_ids = search_identity(connector_ids, name)
+          if len(results_ids) > 0:
+              reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+              continue
+          else:
+              insert_identity(connector_ids, connector_its, name)
       email = result[2]
-      if email:
-          email = email.replace("'", "\\'") #avoiding ' errors in MySQL
-      query = "select upeople_id from identities where identity='" + name + "'"
-      if email:
-        query += " or identity='"+ email +"'"
-      query += ";"  
-      results_ids = execute_query(connector_ids, query)
-      if len(results_ids) > 0:
-         # there exist such identity
-         upeople_id = int(results_ids[0][0])
-         query = "insert into people_upeople(people_id, upeople_id) " +\
-                 "values('"+ str(people_id) +"', "+str(upeople_id)+");"
-         execute_query(connector_bts, query)
-      else:
-         #Insert in people_upeople, identities and upeople (new identitiy)
- 
-         # Max (upeople_)id from upeople table
-         query = "select max(id) from upeople;"
-         results = execute_query(connector_ids, query)
-         upeople_id = int(results[0][0]) + 1
-         
-         query = "insert into upeople(id) values("+ str(upeople_id) +");"
-         execute_query(connector_ids, query)
-         
-         query = "insert into identities(upeople_id, identity, type)" +\
-                 "values(" + str(upeople_id) + ", '"+name+"', 'name');"
-         execute_query(connector_ids, query)
- 
-         if email:
-             query = "insert into identities(upeople_id, identity, type)" +\
-                     "values(" + str(upeople_id) + ", '"+email+"', 'email');"
-             execute_query(connector_ids, query)
-
-         query = "insert into people_upeople(people_id, upeople_id) " +\
-                 "values('"+ str(people_id) +"', "+str(upeople_id)+");"
-         print query
-         execute_query(connector_bts, query)
-
+      if not email == "None":
+          results_ids = search_identity(connector_ids, email)
+          if len(results_ids) > 0:
+              reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+              continue
+      user_id = result[3]
+      if not user_id == "None":
+          results_ids = search_identity(connector_ids, user_id)
+          if len(results_ids) > 0:
+              reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+              continue
+      insert_identity(connector_ids, connector_its, 
+                      people_id, name, email, user_id)
    db_ids.commit()
+   
+   # Print total people and unique people
    return 
-
-
 
 if __name__ == "__main__":main()
 
