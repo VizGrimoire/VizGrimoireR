@@ -503,24 +503,34 @@ analyze.monthly.mls.countries <- function (country, period, startdate, enddate) 
     createJSON (data, paste("data/json/",country,"-mls-static.json",sep=''))
 }
 
-top_senders <- function(days = 0) {
-  	if (days == 0 ) {
-    	q <- "SELECT email_address as senders, count(m.message_id) as sent 
-	  			FROM messages m
-          		JOIN messages_people m_p on m_p.message_id=m.message_ID 
-	  			GROUP by email_address ORDER BY sent DESC LIMIT 10;"
-  	} else {
+
+top_senders <- function(days = 0, startdate, enddate, identites_db) {
+    
+    date_limit = ""
+    if (days != 0 ) {
     	query <- new ("Query",
-                sql = "SELECT @maxdate:=max(first_date) from messages limit 1")
-    	data <- run(query)
-    	q <- paste("SELECT email_address as senders, count(m.message_id) as sent 
-		                FROM messages m join messages_people m_p on m_p.message_id=m.message_ID
- 		                WHERE DATEDIFF(@maxdate,first_date)<",days," 
-		                GROUP by email_address ORDER BY sent DESC LIMIT 10;")		
-  	}
-	query <- new ("Query", sql = q)
-	data <- run(query)
-	return (data)
+                sql = "SELECT @maxdate:=max(first_date) from messages limit 1")        
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate,first_date)<",days)
+    }
+    q <- paste("SELECT u.identifier as senders,
+                  count(m.message_id) as sent
+               FROM messages m, messages_people m_p, 
+                    people_upeople pup,
+                    ",identities_db,".upeople u
+               WHERE m_p.message_id=m.message_ID AND 
+                     m_p.email_address = pup.people_id and
+                     pup.upeople_id = u.id and
+                     m.first_date >= ", startdate, " and
+                     m.first_date < ", enddate, 
+                     date_limit, " 
+               GROUP BY u.identifier
+               ORDER BY sent desc
+               LIMIT 10;", sep="")    
+	print (q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){

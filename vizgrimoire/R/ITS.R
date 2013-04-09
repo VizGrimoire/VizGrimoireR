@@ -189,29 +189,30 @@ its_static_companies  <- function(startdate, enddate, identities_db) {
 
 
 # Top
-top_closers <- function(days = 0) {
-    if (days == 0 ) {
-        q <- paste("SELECT people.name as closers, count(changes.id) as closed
-                    FROM changes,
-                         people,
-                         people_upeople pup
-                    WHERE changes.changed_by = pup.people_id
-                          AND pup.people_id = people.id
-                          AND ", closed_condition, "
-                    GROUP BY pup.upeople_id ORDER BY closed DESC LIMIT 10;")
-    } else {
-        query <- new ("Query", sql ="SELECT @maxdate:=max(changed_on) from changes limit 1;")
+top_closers <- function(days = 0, startdate, enddate, identites_db) {
+    
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
         data <- run(query)
-        q <- paste("SELECT people.name as closers, count(changes.id) as closed
-                    FROM changes,
-                         people,
-                         people_upeople pup
-                    WHERE changes.changed_by = pup.people_id
-                          AND pup.people_id = people.id
-                          AND ", closed_condition, "
-                          AND changes.id IN (select id from changes where DATEDIFF(@maxdate,changed_on)<",days,")
-                    GROUP BY pup.upeople_id ORDER BY closed DESC LIMIT 10;")
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
     }
+    q <- paste("SELECT u.identifier as closers,
+                  count(c.id) as closed
+                FROM changes c,
+                  people_upeople pup,
+                  ",identities_db,".upeople u
+                WHERE c.changed_by = pup.people_id and
+                  pup.upeople_id = u.id and
+                  c.changed_on >= ", startdate, " and
+                  c.changed_on < ", enddate, " and ",
+			      closed_condition, " ", date_limit, "
+                GROUP BY u.identifier
+                ORDER BY closed desc
+                LIMIT 10;", sep="")
+
+	print (q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

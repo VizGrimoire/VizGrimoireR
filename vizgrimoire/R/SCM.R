@@ -465,41 +465,32 @@ evol_info_data <- function(period, startdate, enddate) {
 	return (agg_data)
 }
 
-top_committers <- function(days , startdate, enddate) {
-      if (days == 0 ) {
-            q <- paste("SELECT u.identifier as committers,
-                         count(distinct(s.id)) as commits
-                  FROM scmlog s,
-                       people_upeople pup,
-                       upeople u
-                  where s.committer_id = pup.people_id and
-                        pup.upeople_id = u.id and
-                        s.date >= ", startdate, " and
-                        s.date < ", enddate, "
-                  group by u.identifier
-                  order by commits desc
-	          LIMIT 10;", sep="")
-      } else {
-            query <- new("Query",
+top_people <- function(days, startdate, enddate, rol) {
+    
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
                 sql = "SELECT @maxdate:=max(date) from scmlog limit 1")
-            data <- run(query)
-            q <- paste("SELECT u.identifier as committers,
-                               count(distinct(s.id)) as commits
-                        FROM scmlog s,
-                             people_upeople pup,
-                             upeople u
-                        WHERE DATEDIFF(@maxdate,date)<",days," and
-                              s.committer_id = pup.people_id and
-                              pup.upeople_id = u.id and
-                              s.date >=", startdate, " and
-                              s.date < ", enddate, "
-                        group by u.identifier
-                        order by commits desc    
-                        LIMIT 10;")
-      }
-      query <- new("Query", sql = q)
-      data <- run(query)
-      return (data)	
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, date)<",days)
+    }
+    
+    q <- paste("SELECT u.identifier as ", rol, "s,
+                 count(distinct(s.id)) as commits
+               FROM scmlog s,
+                 people_upeople pup,
+                 upeople u
+               WHERE s.", rol, "_id = pup.people_id and
+                 pup.upeople_id = u.id and
+                 s.date >= ", startdate, " and
+                 s.date < ", enddate," ", date_limit, "
+               GROUP BY u.identifier
+               ORDER BY commits desc
+               LIMIT 10;", sep="")
+
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)	
 }
 
 top_files_modified <- function() {

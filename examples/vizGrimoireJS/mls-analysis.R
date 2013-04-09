@@ -108,11 +108,11 @@ data.monthly <- data.monthly[order(data.monthly$id), ]
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders
-top_senders_data <- top_senders_wo_affs(c("-Bot"), identities_db, startdate, enddate)
-#top_senders_data <- list()
-#top_senders_data[['senders.']]<-top_senders()
-#top_senders_data[['senders.last year']]<-top_senders(365)
-#top_senders_data[['senders.last month']]<-top_senders(31)
+# top_senders_data <- top_senders_wo_affs(c("-Bot"), identities_db, startdate, enddate)
+top_senders_data <- list()
+top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identites_db)
+top_senders_data[['senders.last year']]<-top_senders(365, conf$startdate, conf$enddate,identites_db)
+top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$enddate,identites_db)
 
 createJSON (top_senders_data, "data/json/mls-top.json")
 
