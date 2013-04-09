@@ -28,31 +28,6 @@
 
 evol_commits <- function(period, startdate, enddate){
       #Commits evolution
-    
-      q<- paste("select m.id as id,
-                        m.year as year,
-                        m.",period," as ",period,",
-                        DATE_FORMAT(m.date, '%b %Y') as date,
-                        IFNULL(pm.commits, 0) as commits
-                 from   ",period,"s m
-                 left join(
-                           select year(s.date) as year, 
-                                  ",period,"(s.date) as ",period,", 
-                                  count(distinct(s.id)) as commits
-                           from   scmlog s 
-                           where  s.date >=", startdate, " and
-                                  s.date < ", enddate, "
-                           group by year(s.date),
-                                    ",period,"(s.date)
-                           order by year(s.date),
-                                    ",period,"(s.date) ) as pm
-                  on (
-                      m.year = pm.year and
-                      m.",period," = pm.",period,")
-                  where m.date >= ", startdate, " and
-                        m.date < ",enddate," 
-                  order by m.year,
-                           m.",period," asc;", sep="")
 
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                          count(distinct(s.id)) as commits
@@ -69,33 +44,7 @@ evol_commits <- function(period, startdate, enddate){
 
 evol_committers <- function(period, startdate, enddate){
       #Committers evolution
-      q <- paste ("select m.id as id,
-                          m.year as year,
-                          m.",period," as ",period,",
-                          DATE_FORMAT(m.date, '%b %Y') as date,
-                          IFNULL(pm.committers, 0) as committers
-                   from   ",period,"s m
-                   left join(
-                             select year(s.date) as year, 
-                                    ",period,"(s.date) as ",period,", 
-                                    count(distinct(pup.upeople_id)) as committers
-                             from   scmlog s,
-                                    people_upeople pup
-                             where s.committer_id = pup.people_id and
-                                   s.date >=", startdate, " and
-                                   s.date < ", enddate, "
-                             group by year(s.date),
-                                      ",period,"(s.date)
-                             order by year(s.date),
-                                      ",period,"(s.date) ) as pm
-                   on (
-                       m.year = pm.year and
-                       m.",period," = pm.",period,")
-                   where m.date >= ", startdate, " and
-                         m.date < ",enddate," 
-                   order by m.year,
-                            m.",period," asc;", sep="")
-    
+
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                          count(distinct(pup.upeople_id)) as committers
                   from   scmlog s,
@@ -112,33 +61,7 @@ evol_committers <- function(period, startdate, enddate){
 
 evol_authors <- function(period, startdate, enddate){
 	# Authors evolution
-      q <- paste ("select m.id as id,
-                          m.year as year,
-                          m.",period," as ",period,",
-                          DATE_FORMAT(m.date, '%b %Y') as date,
-                          IFNULL(pm.authors, 0) as authors
-                   from   ",period,"s m
-                   left join(
-                             select year(s.date) as year, 
-                                    ",period,"(s.date) as ",period,", 
-                                    count(distinct(pup.upeople_id)) as authors
-                             from   scmlog s,
-                                    people_upeople pup
-                             where s.author_id = pup.people_id and
-                                   s.date >", startdate, " and
-                                   s.date <= ", enddate, "
-                             group by year(s.date),
-                                      ",period,"(s.date)
-                             order by year(s.date),
-                                      ",period,"(s.date) ) as pm
-                   on (
-                       m.year = pm.year and
-                       m.",period," = pm.",period,")
-                   where m.date >= ", startdate, " and
-                         m.date <= ",enddate," 
-                   order by m.year,
-                            m.",period," asc;", sep="")
-	
+
        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(pup.upeople_id)) as authors
                    from   scmlog s,
@@ -158,32 +81,6 @@ evol_authors <- function(period, startdate, enddate){
 evol_files <- function(period, startdate, enddate){
     
       #Files per ",period,"
-      q <- paste("select m.id as id,
-                         m.year as year,
-                         m.",period," as ",period,",
-                         DATE_FORMAT(m.date, '%b %Y') as date,
-                         IFNULL(pm.files, 0) as files
-                  from   ",period,"s m
-                  left join(
-                            select year(s.date) as year, 
-                                   ",period,"(s.date) as ",period,", 
-                                   count(distinct(a.file_id)) as files
-                            from   scmlog s, 
-                                   actions a
-                            where  a.commit_id = s.id and
-                                   s.date >", startdate, " and
-                                   s.date <= ", enddate, "
-                            group by year(s.date),
-                                     ",period,"(s.date)
-                            order by year(s.date),
-                                     ",period,"(s.date) ) as pm
-                  on (
-                      m.year = pm.year and
-                      m.",period," = pm.",period,")
-                  where m.date >= ", startdate, " and
-                        m.date <= ",enddate," 
-                  order by m.year,
-                           m.",period," asc;", sep="")
 
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(a.file_id)) as files
@@ -203,32 +100,6 @@ evol_files <- function(period, startdate, enddate){
 evol_branches <- function(period, startdate, enddate){
     
       #Branches per ",period,"
-      q <- paste("select m.id as id,
-                         m.year as year,
-                         m.",period," as ",period,",
-                         DATE_FORMAT(m.date, '%b %Y') as date,
-                         IFNULL(pm.branches, 0) as branches
-                  from   ",period,"s m
-                  left join(
-                            select year(s.date) as year, 
-                                   ",period,"(s.date) as ",period,", 
-                                   count(distinct(a.branch_id)) as branches
-                            from scmlog s, 
-                                 actions a
-                            where  a.commit_id = s.id and
-                                   s.date >", startdate, " and
-                                   s.date <= ", enddate, "
-                            group by year(s.date),
-                                     ",period,"(s.date)
-                            order by year(s.date),
-                                     ",period,"(s.date) ) as pm
-                  on (     
-                      m.year = pm.year and
-                      m.",period," = pm.",period,")
-                  where m.date >= ", startdate, " and
-                        m.date <= ",enddate," 
-                  order by m.year,
-                           m.",period," asc;", sep="")
     
        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(a.branch_id)) as branches
@@ -248,30 +119,6 @@ evol_branches <- function(period, startdate, enddate){
 evol_repositories <- function(period, startdate, enddate) {
     
       # Repositories per ",period,"
-      q <- paste("select m.id as id,
-                         m.year as year,
-                         m.",period," as ",period,",
-                         DATE_FORMAT(m.date, '%b %Y') as date,
-                         IFNULL(pm.repositories, 0) as repositories
-                  from   ",period,"s m
-                  left join(
-                            select year(s.date) as year,
-                                   ",period,"(s.date) as ",period,",
-                                   count(distinct(s.repository_id)) as repositories
-                            from scmlog s
-                            where s.date >", startdate, " and
-                                  s.date <= ", enddate, "
-                            group by year(s.date),
-                                     ",period,"(s.date)
-                            order by year(s.date),
-                                     ",period,"(s.date) ) as pm
-                  on (
-                      m.year = pm.year and
-                      m.",period," = pm.",period,")
-                  where m.date >= ", startdate, " and
-                        m.date <= ",enddate," 
-                  order by m.year,
-                           m.",period," asc;", sep="")
 
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id, 
                          count(distinct(s.repository_id)) as repositories
@@ -286,36 +133,6 @@ evol_repositories <- function(period, startdate, enddate) {
 }
 
 evol_companies <- function(period, startdate, enddate){	
-	q <- paste("select m.id as id,
-                           m.year as year,
-                           m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date,
-                           IFNULL(pm.companies, 0) as num_companies
-                    from   ",period,"s m
-                    left join(
-                              select year(s.date) as year,
-                                     ",period,"(s.date) as ",period,",
-                                     count(distinct(upc.company_id)) as companies
-                              from scmlog s,
-                                   people_upeople pup,
-                                   upeople_companies upc
-                              where s.author_id = pup.people_id and
-                                    pup.upeople_id = upc.upeople_id and
-                                    s.date >= upc.init and 
-                                    s.date <= upc.end and
-                                    s.date >", startdate, " and
-                                    s.date <= ", enddate, "
-                              group by year(s.date), 
-                                       ",period,"(s.date)
-                              order by year(s.date), 
-                                       ",period,"(s.date)) as pm
-                    on (  
-                        m.year = pm.year and
-                        m.",period," = pm.",period,")
-                    where m.date >= ", startdate, " and
-                          m.date < ",enddate," 
-                    order by m.year,
-                             m.",period," asc;", sep="")	
 
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            count(distinct(upc.company_id)) as companies
@@ -626,39 +443,7 @@ companies_name <- function(startdate, enddate) {
 
 company_commits <- function(company_name, period, startdate, enddate){		
 	print (company_name)
-	q <- paste("select m.id as id,
-                           m.year as year,
-                           m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date,
-                           IFNULL(pm.commits, 0) as commits
-                    from  ",period,"s m
-                    left join(
-                              select year(s.date) as year,
-                                     ",period,"(s.date) as ",period,",
-                                     count(distinct(s.id)) as commits
-                              from scmlog s,
-                                   people_upeople pup,
-                                   upeople_companies upc,
-                                   companies c
-                              where  s.author_id = pup.people_id and
-                                     pup.upeople_id = upc.upeople_id and
-                                     s.date >= upc.init and 
-                                     s.date < upc.end and
-                                     upc.company_id = c.id and
-                                     c.name =", company_name, " and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
-                              group by year(s.date),
-                                       ",period,"(s.date)
-                              order by year(s.date),
-                                       ",period,"(s.date)) as pm
-                    on (
-                        m.year = pm.year and
-                        m.",period," = pm.",period,")
-                    where m.date >= ", startdate, " and
-                          m.date < ",enddate," 
-                    order by m.year,
-                             m.",period," asc;", sep="")
+
        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(s.id)) as commits
                    from scmlog s,
@@ -682,58 +467,24 @@ company_commits <- function(company_name, period, startdate, enddate){
 
 company_files <- function(company_name, period, startdate, enddate) {
 	
-	q <- paste ("select m.id as id,
-                            m.year as year,
-                            m.",period," as ",period,",
-                            DATE_FORMAT(m.date, '%b %Y') as date,
-                            IFNULL(pm.files, 0) as files
-                     from   ",period,"s m
-                     left join(
-                               select year(s.date) as year,
-                                      ",period,"(s.date) as ",period,",
-                                      count(distinct(a.file_id)) as files
-                               from scmlog s,
-                                    actions a,
-                                    people_upeople pup,
-                                    upeople_companies upc,
-                                    companies c
-                               where a.commit_id = s.id and
-                                     s.author_id = pup.people_id and
-                                     pup.upeople_id = upc.upeople_id and
-                                     s.date >= upc.init and 
-                                     s.date < upc.end and
-                                     upc.company_id = c.id and
-                                     c.name =", company_name, " and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
-                               group by year(s.date),
-                                     ",period,"(s.date) 
-                               order by year(s.date),
-                                        ",period,"(s.date)) as pm
-                     on (
-                         m.year = pm.year and
-                         m.",period," = pm.",period,")
-                     where m.date >= ", startdate, " and
-                           m.date < ",enddate," 
-                     order by m.year,
-                              m.",period," asc;", sep="")
+
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                             count(distinct(a.file_id)) as files
-                               from scmlog s,
-                                    actions a,
-                                    people_upeople pup,
-                                    upeople_companies upc,
-                                    companies c
-                               where a.commit_id = s.id and
-                                     s.author_id = pup.people_id and
-                                     pup.upeople_id = upc.upeople_id and
-                                     s.date >= upc.init and 
-                                     s.date < upc.end and
-                                     upc.company_id = c.id and
-                                     c.name =", company_name, " and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
-                                group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+                    from scmlog s,
+                         actions a,
+                         people_upeople pup,
+                         upeople_companies upc,
+                         companies c
+                    where a.commit_id = s.id and
+                          s.author_id = pup.people_id and
+                          pup.upeople_id = upc.upeople_id and
+                          s.date >= upc.init and 
+                          s.date < upc.end and
+                          upc.company_id = c.id and
+                          c.name =", company_name, " and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
 	data <- run(query)	
@@ -741,54 +492,22 @@ company_files <- function(company_name, period, startdate, enddate) {
 }
 
 company_authors <- function(company_name, period, startdate, enddate) {		
-	q <- paste ("select m.id as id,
-                            m.year as year,
-                            m.",period," as ",period,",
-                            DATE_FORMAT(m.date, '%b %Y') as date,
-                            IFNULL(pm.authors, 0) as authors
-                     from   ",period,"s m
-                     left join(
-                               select year(s.date) as year,
-                                      ",period,"(s.date) as ",period,",
-                                      count(distinct(s.author_id)) as authors
-                               from scmlog s,
-                                    people_upeople pup,
-                                    upeople_companies upc,
-                                    companies c
-                               where  s.author_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date>=upc.init and 
-                                      s.date<upc.end and
-                                      upc.company_id = c.id and
-                                      c.name =", company_name, " and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by year(s.date),
-                                        ",period,"(s.date) 
-                               order by year(s.date),
-                                        ",period,"(s.date) ) as pm
-                     on (
-                         m.year = pm.year and
-                         m.",period," = pm.",period,")
-                     where m.date >= ", startdate, " and
-                           m.date < ",enddate," 
-                     order by m.year,
-                              m.",period," asc;", sep="")
+	
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                             count(distinct(s.author_id)) as authors
-                               from scmlog s,
-                                    people_upeople pup,
-                                    upeople_companies upc,
-                                    companies c
-                               where  s.author_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date>=upc.init and
-                                      s.date<upc.end and
-                                      upc.company_id = c.id and
-                                      c.name =", company_name, " and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+                    from scmlog s,
+                         people_upeople pup,
+                         upeople_companies upc,
+                         companies c
+                    where  s.author_id = pup.people_id and
+                           pup.upeople_id = upc.upeople_id and
+                           s.date>=upc.init and
+                           s.date<upc.end and
+                           upc.company_id = c.id and
+                           c.name =", company_name, " and
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, "
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
 	data <- run(query)	
@@ -796,54 +515,22 @@ company_authors <- function(company_name, period, startdate, enddate) {
 }
 
 company_committers <- function(company_name, period, startdate, enddate) {		
-	q <- paste ("select m.id as id,
-                            m.year as year,
-                            m.",period," as ",period,",
-                            DATE_FORMAT(m.date, '%b %Y') as date,
-                            IFNULL(pm.committers, 0) as committers
-                     from   ",period,"s m
-                     left join(
-                               select year(s.date) as year,
-                                      ",period,"(s.date) as ",period,",
-                                      count(distinct(s.committer_id)) as committers
-                               from scmlog s,
-                                    people_upeople pup,
-                                    upeople_companies upc,
-                                    companies c
-                               where  s.committer_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date >= upc.init and 
-                                      s.date < upc.end and
-                                      upc.company_id = c.id and
-                                      c.name =", company_name, " and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by year(s.date),
-                                        ",period,"(s.date) 
-                               order by year(s.date),
-                                        ",period,"(s.date) ) as pm
-                     on (
-                         m.year = pm.year and
-                         m.",period," = pm.",period,")
-                     where m.date >= ", startdate, " and
-                           m.date < ",enddate," 
-                     order by m.year,
-                              m.",period," asc;", sep="")
+	
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            count(distinct(s.committer_id)) as committers
-                               from scmlog s,
-                                    people_upeople pup,
-                                    upeople_companies upc,
-                                    companies c
-                               where  s.committer_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date >= upc.init and
-                                      s.date < upc.end and
-                                      upc.company_id = c.id and
-                                      c.name =", company_name, " and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+                    from scmlog s,
+                         people_upeople pup,
+                         upeople_companies upc,
+                         companies c
+                    where  s.committer_id = pup.people_id and
+                           pup.upeople_id = upc.upeople_id and
+                           s.date >= upc.init and
+                           s.date < upc.end and
+                           upc.company_id = c.id and
+                           c.name =", company_name, " and
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, "
+                     group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 
 	query <- new("Query", sql = q)
 	data <- run(query)	
@@ -852,61 +539,25 @@ company_committers <- function(company_name, period, startdate, enddate) {
 
 company_lines <- function(company_name, period, startdate, enddate) {
 	
-	q <- paste ("select m.id as id,
-                            m.year as year,
-                            m.",period," as ",period,",
-                            DATE_FORMAT(m.date, '%b %Y') as date,
-                            IFNULL(pm.added_lines, 0) as added_lines,
-                            IFNULL(pm.removed_lines, 0) as removed_lines
-                     from   ",period,"s m
-                     left join(
-                               select year(s.date) as year,
-                                      ",period,"(s.date) as ",period,",
-                                      sum(cl.added) as added_lines,
-                                      sum(cl.removed) as removed_lines
-                               from   commits_lines cl,
-                                      scmlog s,
-                                      people_upeople pup,
-                                      upeople_companies upc,
-                                      companies c
-                               where  cl.commit_id = s.id and
-                                      s.author_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date >= upc.init and 
-                                      s.date < upc.end and
-                                      upc.company_id = c.id and
-                                      c.name =", company_name, " and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by year(s.date),
-                                        ",period,"(s.date)
-                               order by year(s.date),
-                                        ",period,"(s.date)) as pm
-                     on (
-                         m.year = pm.year and
-                         m.",period," = pm.",period,")
-                     where m.date >= ", startdate, " and
-                           m.date <= ",enddate," 
-                     order by m.year,
-                              m.",period," asc;", sep="")
+	
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                       sum(cl.added) as added_lines,
-                                      sum(cl.removed) as removed_lines
-                               from   commits_lines cl,
-                                      scmlog s,
-                                      people_upeople pup,
-                                      upeople_companies upc,
-                                      companies c
-                               where  cl.commit_id = s.id and
-                                      s.author_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date >= upc.init and
-                                      s.date < upc.end and
-                                      upc.company_id = c.id and
-                                      c.name =", company_name, " and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="") 
+                           sum(cl.added) as added_lines,
+                           sum(cl.removed) as removed_lines
+                    from   commits_lines cl,
+                           scmlog s,
+                           people_upeople pup,
+                           upeople_companies upc,
+                           companies c
+                    where  cl.commit_id = s.id and
+                           s.author_id = pup.people_id and
+                           pup.upeople_id = upc.upeople_id and
+                           s.date >= upc.init and
+                           s.date < upc.end and
+                           upc.company_id = c.id and
+                           c.name =", company_name, " and
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, "
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="") 
 
 	query <- new("Query", sql = q)
 	data <- run(query)	
@@ -1196,22 +847,22 @@ company_top_authors <- function(company_name, startdate, enddate) {
 company_top_authors_year <- function(company_name, year){
 	
 	q <- paste ("select u.identifier as authors,
-                    count(distinct(s.id)) as commits                         
+                            count(distinct(s.id)) as commits                         
                     from people p,
-                    scmlog s,
-                    people_upeople pup,
-                    upeople u,
-                    upeople_companies upc,
-                    companies c
+                         scmlog s,
+                         people_upeople pup,
+                         upeople u,
+                         upeople_companies upc,
+                         companies c
                     where  p.id = s.author_id and
-                    s.author_id = pup.people_id and
-                    pup.upeople_id = upc.upeople_id and 
-                    pup.upeople_id = u.id and
-                    s.date >= upc.init and 
-                    s.date < upc.end and
-                    year(s.date)=",year," and
-                    upc.company_id = c.id and
-                    c.name =", company_name, "
+                           s.author_id = pup.people_id and
+                           pup.upeople_id = upc.upeople_id and 
+                           pup.upeople_id = u.id and
+                           s.date >= upc.init and 
+                           s.date < upc.end and
+                           year(s.date)=",year," and
+                           upc.company_id = c.id and
+                           c.name =", company_name, "
                     group by u.id
                     order by count(distinct(s.id)) desc
                     limit 10;")
@@ -1221,48 +872,19 @@ company_top_authors_year <- function(company_name, year){
 }
 
 evol_companies <- function(period, startdate, enddate){	
-	q <- paste("select m.id as id,
-                           m.year as year,
-                           m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date,
-                           IFNULL(pm.companies, 0) as num_companies
-                     from   ",period,"s m
-                     left join(
-                               select year(s.date) as year,
-                                      ",period,"(s.date) as ",period,",
-                                      count(distinct(upc.company_id)) as companies
-                               from   scmlog s,
-                                      people_upeople pup,
-                                      upeople_companies upc
-                               where  s.author_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date >= upc.init and 
-                                      s.date < upc.end and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by year(s.date),
-                                        ",period,"(s.date)
-                               order by year(s.date),
-                                        ",period,"(s.date)) as pm
-                     on (  
-                         m.year = pm.year and
-                         m.",period," = pm.",period,")
-                     where m.date >= ", startdate, " and
-                           m.date <= ",enddate," 
-                     order by m.year,
-                              m.",period," asc;", sep="")
+	
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            count(distinct(upc.company_id)) as companies
-                               from   scmlog s,
-                                      people_upeople pup,
-                                      upeople_companies upc
-                               where  s.author_id = pup.people_id and
-                                      pup.upeople_id = upc.upeople_id and
-                                      s.date >= upc.init and 
-                                      s.date < upc.end and
-                                      s.date >=", startdate, " and
-                                      s.date < ", enddate, "
-                               group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+                    from   scmlog s,
+                           people_upeople pup,
+                           upeople_companies upc
+                    where  s.author_id = pup.people_id and
+                           pup.upeople_id = upc.upeople_id and
+                           s.date >= upc.init and 
+                           s.date < upc.end and
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, "
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)	
@@ -1282,37 +904,14 @@ repos_name <- function(startdate, enddate) {
 }
 
 repo_commits <- function(repo_name, period, startdate, enddate){
-	q <- paste("SELECT m.id as id, m.year as year, m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date, 
-                           IFNULL(pm.commits, 0) as commits
-                    FROM ",period,"s m
-                    LEFT JOIN (
-                               SELECT year(s.date) as year, 
-                                      ",period,"(s.date) as ",period,",
-                                      COUNT(distinct(s.id)) as commits
-                               FROM scmlog s, repositories r
-                               WHERE r.name =", repo_name, " AND 
-                                     r.id = s.repository_id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
-                               GROUP BY YEAR(s.date), 
-                                        ",period,"(s.date)
-                               ORDER BY YEAR(s.date),
-                                        ",period,"(s.date)) AS pm
-                    ON (m.year = pm.year and 
-                        m.",period," = pm.",period,")
-                    where m.date >= ", startdate, " and
-                          m.date < ",enddate," 
-                    order by m.year,
-                             m.",period," asc;", sep="")
-
+	
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                    COUNT(distinct(s.id)) as commits
-                               FROM scmlog s, repositories r
-                               WHERE r.name =", repo_name, " AND 
-                                     r.id = s.repository_id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
+                            COUNT(distinct(s.id)) as commits
+                    FROM scmlog s, repositories r
+                    WHERE r.name =", repo_name, " AND 
+                          r.id = s.repository_id and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1321,33 +920,15 @@ repo_commits <- function(repo_name, period, startdate, enddate){
 }
 
 repo_files <- function(repo_name, period, startdate, enddate) {
-	q <- paste("SELECT m.id as id, m.year as year, m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date, 
-                           IFNULL(pm.files, 0) as files
-                    FROM ",period,"s m
-                    LEFT JOIN (
-                               SELECT year(s.date) as year, ",period,"(s.date) as ",period,",
-                                      COUNT(distinct(a.file_id)) as files
-                               FROM scmlog s, actions a, repositories r
-                               WHERE r.name =", repo_name, " AND r.id = s.repository_id and
-                                     a.commit_id = s.id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
-                               GROUP BY YEAR(s.date), ",period,"(s.date)
-                               ORDER BY YEAR(s.date),
-                                        ",period,"(s.date)) AS pm
-                    ON (m.year = pm.year and m.",period," = pm.",period,")
-                    where m.date >= ", startdate, " and
-                          m.date < ",enddate," 
-                    order by m.year,
-                             m.",period," asc;", sep="")
+	
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            COUNT(distinct(a.file_id)) as files
-                               FROM scmlog s, actions a, repositories r
-                               WHERE r.name =", repo_name, " AND r.id = s.repository_id and
-                                     a.commit_id = s.id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
+                    FROM scmlog s, actions a, repositories r
+                    WHERE r.name =", repo_name, " AND 
+                          r.id = s.repository_id and
+                          a.commit_id = s.id and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1357,44 +938,17 @@ repo_files <- function(repo_name, period, startdate, enddate) {
 
 
 repo_committers <- function(repo_name, period, startdate, enddate) {
-	q <- paste("SELECT m.id as id, 
-                           m.year as year, 
-                           m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date, 
-                           IFNULL(pm.committers, 0) as committers
-                    FROM ",period,"s m
-                    LEFT JOIN (
-                              SELECT year(s.date) as year, 
-                                     ",period,"(s.date) as ",period,",
-                                     COUNT(distinct(pup.upeople_id)) as committers
-                              FROM scmlog s, 
-                                   people_upeople pup, 
-                                   repositories r
-                              WHERE r.name =", repo_name, " AND 
-                                    r.id = s.repository_id and
-                                    s.committer_id = pup.people_id and
-                                    s.date >=", startdate, " and
-                                    s.date < ", enddate, "
-                              GROUP BY YEAR(s.date), 
-                                       ",period,"(s.date)
-                              ORDER BY YEAR(s.date),
-                                       ",period,"(s.date)) AS pm
-                    ON (m.year = pm.year and 
-                        m.",period," = pm.",period,")
-                    where m.date >= ", startdate, " and
-                          m.date < ",enddate," 
-                    order by m.year,
-                             m.",period," asc;", sep="")
+	
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            COUNT(distinct(pup.upeople_id)) as committers
-                              FROM scmlog s,
-                                   people_upeople pup,
-                                   repositories r
-                              WHERE r.name =", repo_name, " AND
-                                    r.id = s.repository_id and
-                                    s.committer_id = pup.people_id and
-                                    s.date >=", startdate, " and
-                                    s.date < ", enddate, "
+                    FROM scmlog s,
+                         people_upeople pup,
+                         repositories r
+                    WHERE r.name =", repo_name, " AND
+                          r.id = s.repository_id and
+                          s.committer_id = pup.people_id and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1404,44 +958,17 @@ repo_committers <- function(repo_name, period, startdate, enddate) {
 
 
 repo_authors <- function(repo_name, period, startdate, enddate) {
-	q <- paste("SELECT m.id as id, 
-                           m.year as year, 
-                           m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date, 
-                           IFNULL(pm.authors, 0) as authors
-                    FROM ",period,"s m
-                    LEFT JOIN (
-                               SELECT year(s.date) as year, 
-                                      ",period,"(s.date) as ",period,",
-                                      COUNT(distinct(pup.upeople_id)) as authors
-                               FROM scmlog s, 
-                                    people_upeople pup, 
-                                    repositories r
-                               WHERE r.name =", repo_name, " AND 
-                                     r.id = s.repository_id and
-                                     s.author_id = pup.people_id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
-                               GROUP BY YEAR(s.date), 
-                                        ",period,"(s.date)
-                               ORDER BY YEAR(s.date),
-                                        ",period,"(s.date)) AS pm
-                    ON (m.year = pm.year and 
-                        m.",period," = pm.",period,")
-                    where m.date >= ", startdate, " and
-                          m.date < ",enddate," 
-                    order by m.year,
-                             m.",period," asc;", sep="")
+	
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            COUNT(distinct(pup.upeople_id)) as authors
-                               FROM scmlog s,
-                                    people_upeople pup,
-                                    repositories r
-                               WHERE r.name =", repo_name, " AND
-                                     r.id = s.repository_id and
-                                     s.author_id = pup.people_id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
+                    FROM scmlog s,
+                         people_upeople pup,
+                         repositories r
+                    WHERE r.name =", repo_name, " AND
+                          r.id = s.repository_id and
+                          s.author_id = pup.people_id and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                     GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1450,39 +977,16 @@ repo_authors <- function(repo_name, period, startdate, enddate) {
 }
 
 repo_lines <- function(repo_name, period, startdate, enddate) {
-	q <- paste("SELECT m.id as id, 
-                           m.year as year, 
-                           m.",period," as ",period,",
-                           DATE_FORMAT(m.date, '%b %Y') as date, 
-                           IFNULL(pm.added_lines, 0) as added_lines,
-                           IFNULL(pm.removed_lines, 0) as removed_lines
-                    FROM ",period,"s m
-                    LEFT JOIN (
-                               SELECT year(s.date) as year, ",period,"(s.date) as ",period,",
-                                      SUM(cl.added) as added_lines,
-                                      SUM(cl.removed) as removed_lines
-                               FROM scmlog s, commits_lines cl, repositories r
-                               WHERE r.name =", repo_name, " AND 
-                                     r.id = s.repository_id and
-                                     cl.commit_id = s.id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
-                               GROUP BY YEAR(s.date), 
-                                        ",period,"(s.date)
-                               ORDER BY YEAR(s.date),
-					",period,"(s.date)) AS pm
-                               ON (m.year = pm.year and 
-                                   m.",period," = pm.",period,")
-                               ORDER BY m.id;", sep="")
+	
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            SUM(cl.added) as added_lines,
-                                      SUM(cl.removed) as removed_lines
-                               FROM scmlog s, commits_lines cl, repositories r
-                               WHERE r.name =", repo_name, " AND
-                                     r.id = s.repository_id and
-                                     cl.commit_id = s.id and
-                                     s.date >=", startdate, " and
-                                     s.date < ", enddate, "
+                           SUM(cl.removed) as removed_lines
+                    FROM scmlog s, commits_lines cl, repositories r
+                    WHERE r.name =", repo_name, " AND
+                          r.id = s.repository_id and
+                          cl.commit_id = s.id and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
                    GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
 
 	query <- new("Query", sql = q)
@@ -1610,16 +1114,17 @@ scm_countries_names <- function(identities_db, startdate, enddate) {
     rol = "author" #committer
     
     q <- paste("SELECT count(s.id) as commits, c.name as name 
-                FROM scmlog s, people_upeople pup,
-				  ",identities_db,".countries c,
-				  ",identities_db,".upeople_countries upc
+                FROM scmlog s, 
+                     people_upeople pup,
+                     ",identities_db,".countries c,
+                     ",identities_db,".upeople_countries upc
                 WHERE pup.people_id = s.",rol,"_id AND
-                  pup.upeople_id  = upc.upeople_id and
-                  upc.country_id = c.id and
-                  s.date >=", startdate, " and
-                  s.date < ", enddate, "
-                  group by c.name
-                  order by commits desc;", sep="")
+                      pup.upeople_id  = upc.upeople_id and
+                      upc.country_id = c.id and
+                      s.date >=", startdate, " and
+                      s.date < ", enddate, "
+                group by c.name
+                order by commits desc;", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)    
@@ -1632,15 +1137,16 @@ scm_countries_evol <- function(identities_db, country, period, startdate, enddat
     q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                 count(s.id) AS commits,
                 COUNT(DISTINCT(s.",rol,"_id)) as ", rol,"s
-                FROM scmlog s, people_upeople pup,
-                  ",identities_db,".countries c,
-                  ",identities_db,".upeople_countries upc
+                FROM scmlog s, 
+                     people_upeople pup,
+                     ",identities_db,".countries c,
+                     ",identities_db,".upeople_countries upc
                 WHERE pup.people_id = s.",rol,"_id AND
-                  pup.upeople_id  = upc.upeople_id and
-                  upc.country_id = c.id and
-                  s.date >=", startdate, " and
-                  s.date < ", enddate, " and
-                  c.name = '", country, "'
+                      pup.upeople_id  = upc.upeople_id and
+                      upc.country_id = c.id and
+                      s.date >=", startdate, " and
+                      s.date < ", enddate, " and
+                      c.name = '", country, "'
                 GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new("Query", sql = q)
     data <- run(query)	
@@ -1650,20 +1156,20 @@ scm_countries_evol <- function(identities_db, country, period, startdate, enddat
 scm_countries_static <- function(identities_db, country, startdate, enddate) {
     rol = "author" #committer
     
-    q <- paste("SELECT
-                count(s.id) AS commits,
-                COUNT(DISTINCT(s.",rol,"_id)) as ", rol,"s,
-                DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
-                DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
-                FROM scmlog s, people_upeople pup,
-                  ",identities_db,".countries c,
-                  ",identities_db,".upeople_countries upc
+    q <- paste("SELECT count(s.id) AS commits,
+                       COUNT(DISTINCT(s.",rol,"_id)) as ", rol,"s,
+                       DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
+                       DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
+                FROM scmlog s, 
+                     people_upeople pup,
+                     ",identities_db,".countries c,
+                     ",identities_db,".upeople_countries upc
                 WHERE pup.people_id = s.",rol,"_id AND
-                  pup.upeople_id  = upc.upeople_id and
-                  upc.country_id = c.id and
-                  s.date >=", startdate, " and
-                  s.date < ", enddate, " and
-                  c.name = '", country, "'", sep="")
+                      pup.upeople_id  = upc.upeople_id and
+                      upc.country_id = c.id and
+                      s.date >=", startdate, " and
+                      s.date < ", enddate, " and
+                      c.name = '", country, "'", sep="")
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
