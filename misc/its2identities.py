@@ -110,9 +110,10 @@ def insert_identity(connector_ids, connector_its, people_id,
             "values(" + str(upeople_id) + ", '" + name + "', 'name');"
     execute_query(connector_ids, query)
 
-    query = "insert into identities(upeople_id, identity, type)" + \
-            "values(" + str(upeople_id) + ", '" + email + "', 'email');"
-    execute_query(connector_ids, query)
+    if email != 'None':
+        query = "insert into identities(upeople_id, identity, type)" + \
+                "values(" + str(upeople_id) + ", '" + email + "', 'email');"
+        execute_query(connector_ids, query)
     
     query = "insert into identities(upeople_id, identity, type)" + \
             "values(" + str(upeople_id) + ", '" + user_id + "', 'user_id');"
