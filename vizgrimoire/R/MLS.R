@@ -448,7 +448,36 @@ mls_static_info <- function (startdate, enddate, reports="") {
 	return (agg_data)
 }
 
-analyze.monthly.mls.countries <- function (country, period, startdate, enddate) {           		
+#
+# COUNTRIES
+#
+
+countries_names <- function (identities_db, startdate, enddate) {
+    # Countries
+    country_limit = 30
+    q <- paste("SELECT count(m.message_id) as sent, c.name as country 
+                FROM messages m, messages_people m_p, people_upeople pup,
+                  ",identities_db,".upeople up,
+				  ",identities_db,".countries c,
+				  ",identities_db,".upeople_countries upc
+                 WHERE m_p.message_id=m.message_ID AND 
+                   m_p.email_address = pup.people_id and
+                   pup.upeople_id = up.id and
+                   up.id  = upc.upeople_id and
+                   upc.country_id = c.id and
+                   m.first_date >= ", startdate, " and
+                   m.first_date < ", enddate, "
+                 GROUP BY c.name
+                 ORDER BY sent desc LIMIT ", country_limit)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    countries<-data$country
+    
+}
+    
+
+
+analyze.monthly.mls.countries.evol <- function (identities_db, country, period, startdate, enddate) {           		
     # Sent and sender time series evol	
 	## q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
         ##           year(first_date) AS year,
@@ -483,24 +512,51 @@ analyze.monthly.mls.countries <- function (country, period, startdate, enddate) 
                  p.year = i.year AND p.",period," = i.",period,")
                 WHERE p.date >= ",startdate," AND p.date < ",enddate,"
                 ORDER BY p.id ASC;", sep="")
-        
+
+    q <- paste("SELECT ((to_days(first_date) - to_days(",startdate,")) div ",period,") as id,
+                count(m.message_ID) AS sent,
+				COUNT(DISTINCT(m_p.email_address)) as senders
+                FROM  messages m, messages_people m_p, people_upeople pup,
+                  ",identities_db,".upeople up,
+				  ",identities_db,".countries c,
+				  ",identities_db,".upeople_countries upc
+                 WHERE m_p.message_id=m.message_ID AND 
+                   m_p.email_address = pup.people_id and
+                   pup.upeople_id = up.id and
+                   up.id  = upc.upeople_id and
+                   upc.country_id = c.id and
+                   m.first_date >= ", startdate, " and
+                   m.first_date < ", enddate, " and
+                   c.name = '", country, "'				
+                GROUP BY ((to_days(first_date) - to_days(",startdate,")) div ",period,")", sep="")
+
 	query <- new ("Query", sql = q)
 	evol_monthly <- run(query)
-    if (country == "") country ="Unknown"
-    createJSON (evol_monthly, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
-   
+    return (evol_monthly)
+}
+
+analyze.monthly.mls.countries.static <- function (identities_db, country, startdate, enddate) {
     ## Get some general stats from mls
     q <- paste ("SELECT count(m.message_ID) as sent,
                    DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
                    DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date,
-                   COUNT(DISTINCT(p.email_address)) as senders
-                 FROM messages m
-                 JOIN messages_people mp on (mp.message_id = m.message_ID)
-                 JOIN people p ON mp.email_address = p.email_address
-                 WHERE country='",country,"'",sep='')
+                   COUNT(DISTINCT(m_p.email_address)) as senders
+                FROM  messages m, messages_people m_p, people_upeople pup,
+                  ",identities_db,".upeople up,
+				  ",identities_db,".countries c,
+				  ",identities_db,".upeople_countries upc
+                 WHERE m_p.message_id=m.message_ID AND 
+                   m_p.email_address = pup.people_id and
+                   pup.upeople_id = up.id and
+                   up.id  = upc.upeople_id and
+                   upc.country_id = c.id and
+                   m.first_date >= ", startdate, " and
+                   m.first_date < ", enddate, " and
+                   c.name = '", country, "'", sep="")
+    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
-    createJSON (data, paste("data/json/",country,"-mls-static.json",sep=''))
+    return (data)
 }
 
 
@@ -600,8 +656,6 @@ companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
     data <- run(query)
     return (data)
 }
-
-
 
 companies_names <- function (i_db, startdate, enddate){
 

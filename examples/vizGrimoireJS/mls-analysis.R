@@ -75,24 +75,17 @@ if (is.na(mailing_lists$mailing_list)) {
 	createJSON(repos, "data/json/mls-repos.json")	
 }
 
-if (conf$reports == 'countries') {    
-    # Countries
-    country_limit = 30
-    q <- paste("SELECT count(m.message_id) as total, country 
-                FROM messages m  
-                JOIN messages_people mp ON mp.message_ID=m.message_id  
-                JOIN people p ON mp.email_address = p.email_address 
-                GROUP BY country 
-                ORDER BY total desc LIMIT ", country_limit)
-    query <- new ("Query", sql = q)
-    data <- run(query)
-    countries<-data$country
+if (conf$reports == 'countries') {
+    countries <- countries_names(identities_db, startdate, enddate) 
     createJSON (countries, paste("data/json/mls-countries.json",sep=''))
     
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        analyze.monthly.mls.countries(country, period, startdate, enddate)
+        data <- analyze.monthly.mls.countries.evol(identities_db, country, nperiod, startdate, enddate)
+        createJSON (data, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
+        data <- analyze.monthly.mls.countries.static(identities_db, country, startdate, enddate)
+        createJSON (data, paste("data/json/",country,"-mls-static.json",sep=''))
     }
 }
 
