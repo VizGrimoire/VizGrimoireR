@@ -178,6 +178,11 @@ if __name__ == '__main__':
 
         email = i[0]
         country = i[1].rstrip('\n') #remove last \n
+        
+        if False: # helper code to test without real data
+            import random
+            test_countries = ['eeuu', 'spain', 'germany', 'uk', 'india']
+            country = test_countries[random.randint(0,len(test_countries)-1)]
 
         nmatches = cursor.execute("SELECT upeople_id, type, identity \
                                   FROM identities WHERE identity = '%s'"

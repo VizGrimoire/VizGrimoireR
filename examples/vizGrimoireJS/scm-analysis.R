@@ -319,3 +319,24 @@ if (conf$reports == 'repositories') {
 		createJSON(static_info, paste(c("data/json/",repo_aux,"-scm-static.json"), collapse=''))		
 	}		
 }
+
+if (conf$reports == 'countries') {
+	countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
+	countries <- countries$name
+	createJSON(countries, "data/json/scm-countries.json")
+	
+	for (country in countries) {
+        if (is.na(country)) next
+        print (country)
+        data <- scm_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
+        data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
+        data$week <- as.Date(conf$str_startdate) + data$id * nperiod
+        data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
+        data <- data[order(data$id), ]
+        createJSON (data, paste("data/json/",country,"-scm-evolutionary.json",sep=''))
+        
+        data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
+        createJSON (data, paste("data/json/",country,"-scm-static.json",sep=''))        
+    }
+}
+        
