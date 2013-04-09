@@ -553,7 +553,6 @@ analyze.monthly.mls.countries.static <- function (identities_db, country, startd
                    m.first_date >= ", startdate, " and
                    m.first_date < ", enddate, " and
                    c.name = '", country, "'", sep="")
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

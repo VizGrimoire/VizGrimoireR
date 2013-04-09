@@ -82,8 +82,13 @@ if (conf$reports == 'countries') {
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- analyze.monthly.mls.countries.evol(identities_db, country, nperiod, startdate, enddate)
+        data <- analyze.monthly.mls.countries.evol(identities_db, country, nperiod, startdate, enddate)        
+        data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
+        data$week <- as.Date(conf$str_startdate) + data$id * nperiod
+        data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
+        data <- data[order(data$id), ]
         createJSON (data, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
+        
         data <- analyze.monthly.mls.countries.static(identities_db, country, startdate, enddate)
         createJSON (data, paste("data/json/",country,"-mls-static.json",sep=''))
     }
