@@ -152,8 +152,6 @@ def main():
           if len(results_ids) > 0:
               reuse_identity(connector_its, people_id, int(results_ids[0][0]))
               continue
-          else:
-              insert_identity(connector_ids, connector_its, name)
       email = result[2]
       if not email == "None":
           results_ids = search_identity(connector_ids, email)
