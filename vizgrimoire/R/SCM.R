@@ -424,6 +424,8 @@ companies_name_wo_affs <- function(affs_list, startdate, enddate) {
 }
 
 companies_name <- function(startdate, enddate) {
+    companies_limit = 30
+    
 	q <- paste ("select distinct(c.name)
                     from companies c,
                          people_upeople pup,
@@ -434,8 +436,9 @@ companies_name <- function(startdate, enddate) {
                           pup.people_id = s.author_id and
                           s.date >=", startdate, " and
                           s.date < ", enddate, "
+                          s.date < ", enddate, "
                     group by c.name
-                    order by count(distinct(s.id)) desc;")
+                    order by count(distinct(s.id)) desc LIMIT ", companies_limit)
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)

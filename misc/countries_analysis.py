@@ -148,13 +148,18 @@ def create_tables(cursor, con):
            ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
 
    cursor.execute(query)
-
+   
    query = "CREATE TABLE IF NOT EXISTS upeople_countries (" + \
            "id int(11) NOT NULL AUTO_INCREMENT," + \
            "upeople_id int(11) NOT NULL," + \
            "country_id int(11) NOT NULL," + \
            "PRIMARY KEY (id)" + \
            ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
+   cursor.execute(query)
+
+   query = "CREATE INDEX upc_up ON upeople_countries (upeople_id);"
+   cursor.execute(query)
+   query = "CREATE INDEX upc_c ON upeople_countries (country_id);"
    cursor.execute(query)
 
    con.commit()
