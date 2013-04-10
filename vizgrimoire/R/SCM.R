@@ -282,6 +282,52 @@ evol_info_data <- function(period, startdate, enddate) {
 	return (agg_data)
 }
 
+last_activity <- function(days) {
+    #commits
+    q <- paste("select count(*) as commits_",days,"
+                from scmlog 
+                where date >= (
+                      select (max(date) - INTERVAL ",days," day) 
+                      from scmlog)", sep="");
+    query <- new("Query", sql = q)
+    data1 = run(query)
+
+    #authors
+    q <- paste("select count(distinct(pup.upeople_id)) as authors_",days,"
+                from scmlog s, 
+                     people_upeople pup 
+                where pup.people_id = s.author_id and 
+                      s.date >= (select (max(date) - INTERVAL ",days," day) from scmlog)", sep="");
+    query <- new("Query", sql = q)
+    data2 = run(query)
+
+
+    #files
+    q <- paste("select count(distinct(a.file_id)) as files_",days,"
+                from scmlog s, 
+                     actions a 
+                where a.commit_id = s.id and 
+                      s.date >= (select (max(date) - INTERVAL ",days," day) from scmlog)", sep="");
+    query <- new("Query", sql = q)
+    data3 = run(query)
+
+    #added_removed lines
+    q <- paste(" select sum(cl.added) as added_lines_",days,",
+                        sum(cl.removed) as removed_lines_",days,"
+                 from scmlog s, 
+                      commits_lines cl 
+                 where cl.commit_id = s.id and 
+                       s.date >= (select (max(date) - INTERVAL ",days," day) from scmlog)", sep="");
+    query <- new("Query", sql = q)
+    data4 = run(query)
+
+    agg_data = merge(data1, data2)
+    agg_data = merge(agg_data, data3)
+    agg_data = merge(agg_data, data4)
+
+    return (agg_data)
+}
+
 top_people <- function(days, startdate, enddate, rol) {
     
     date_limit = ""

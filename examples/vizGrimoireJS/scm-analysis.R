@@ -113,6 +113,14 @@ if (conf$reports == 'companies') {
 
 # Fixed data
 info_data = evol_info_data(period, conf$startdate, conf$enddate)
+latest_activity7 = last_activity(7)
+latest_activity30 = last_activity(30)
+latest_activity90 = last_activity(90)
+latest_activity365 = last_activity(365)
+info_data = merge(info_data, latest_activity7)
+info_data = merge(info_data, latest_activity30)
+info_data = merge(info_data, latest_activity90)
+info_data = merge(info_data, latest_activity365)
 
 if (conf$reports == 'companies') {
 	info_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
