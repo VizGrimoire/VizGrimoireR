@@ -172,7 +172,7 @@ createJSON (people_list, "data/json/scm-people.json")
 
 if (conf$reports == 'companies') {
 	companies  <- companies_name(conf$startdate, conf$enddate)
-        companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
+    # companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
 	companies <- companies$name
 	createJSON(companies, "data/json/scm-companies.json")
 	

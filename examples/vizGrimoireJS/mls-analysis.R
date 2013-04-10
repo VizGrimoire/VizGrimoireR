@@ -124,8 +124,8 @@ createJSON (top_senders_data, "data/json/mls-top.json")
 # Companies information
 if (conf$reports == 'companies'){
     
-    #company_names = companies_names(identities_db, startdate, enddate)
-    company_names = companies_names_wo_affs(c("-Bot", "-Individual", "-Unknown"), identities_db, startdate, enddate)
+    company_names = companies_names(identities_db, startdate, enddate)
+    # company_names = companies_names_wo_affs(c("-Bot", "-Individual", "-Unknown"), identities_db, startdate, enddate)
 
     createJSON(company_names$name, "data/json/mls-companies.json")
    
@@ -139,7 +139,7 @@ if (conf$reports == 'companies'){
         post_posters = completeZeroPeriod(post_posters, nperiod, conf$str_startdate, conf$str_enddate)
         post_posters$week <- as.Date(conf$str_startdate) + post_posters$id * nperiod
         post_posters$date  <- toTextDate(GetYear(post_posters$week), GetMonth(post_posters$week)+1)
-        print(post_posters)
+        # print(post_posters)
         post_posters <- post_posters[order(post_posters$id), ]
 
         createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
