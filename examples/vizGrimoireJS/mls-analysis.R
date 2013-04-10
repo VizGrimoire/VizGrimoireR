@@ -115,10 +115,10 @@ top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$e
 createJSON (top_senders_data, "data/json/mls-top.json")
 
 # People list
-query <- new ("Query", 
-		sql = "select email_address as id, email_address, name, username from people")
-people <- run(query)
-createJSON (people, "data/json/mls-people.json")
+# query <- new ("Query", 
+# 		sql = "select email_address as id, email_address, name, username from people")
+# people <- run(query)
+# createJSON (people, "data/json/mls-people.json")
 
 
 # Companies information
