@@ -9,14 +9,14 @@
 rm data/json/*
 mkdir -p data/whole_project
 #SCM
-R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2008-05-01 -e 2013-04-05 -g weeks < scm-analysis.R
-R --vanilla --args -d $1 -u root -i $1 -r companies -s 2008-05-01 -e 2013-04-05 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2008-04-01 -e 2013-04-04 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r companies -s 2008-04-01 -e 2013-04-04 -g weeks < scm-analysis.R
 #MLS
-R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2008-05-01 -e 2013-04-05 -g weeks < mls-analysis.R
-R --vanilla --args -d $2 -u root -i $1 -r companies -s 2008-05-01 -e 2013-04-05 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2008-04-01 -e 2013-04-04 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r companies -s 2008-04-01 -e 2013-04-04 -g weeks < mls-analysis.R
 #ITS
-R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2008-05-01 -e 2013-04-05 -g weeks -t allura < its-analysis.R
-R --vanilla --args -d $3 -u root -i $1 -r companies -s 2008-05-01 -e 2013-04-05 -g weeks -t allura < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2008-04-01 -e 2013-04-04 -g weeks -t allura < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r companies -s 2008-04-01 -e 2013-04-04 -g weeks -t allura < its-analysis.R
 rm data/whole_project/*
 mv data/json/* data/whole_project/
 
@@ -24,14 +24,14 @@ mv data/json/* data/whole_project/
 rm data/json/*
 mkdir -p data/grizzly
 #SCM
-R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-05 -g weeks < scm-analysis.R
-R --vanilla --args -d $1 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-05 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-04 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-04 -g weeks < scm-analysis.R
 #MLS
-R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-05 -g weeks < mls-analysis.R
-R --vanilla --args -d $2 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-05 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-04 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-04 -g weeks < mls-analysis.R
 #ITS
-R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-05 -g weeks -t launchpad < its-analysis.R
-R --vanilla --args -d $3 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-05 -g weeks -t launchpad < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2012-09-27 -e 2013-04-04 -g weeks -t launchpad < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r companies -s 2012-09-27 -e 2013-04-04 -g weeks -t launchpad < its-analysis.R
 rm data/grizzly/*
 mv data/json/* data/grizzly/
 
@@ -39,14 +39,14 @@ mv data/json/* data/grizzly/
 rm data/json/*
 mkdir -p data/folsom
 #SCM
-R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2012-04-05 -e 2012-09-27 -g weeks < scm-analysis.R
-R --vanilla --args -d $1 -u root -i $1 -r companies -s 2012-04-05 -e 2012-09-27 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2012-04-04 -e 2012-09-27 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r companies -s 2012-04-04 -e 2012-09-27 -g weeks < scm-analysis.R
 #MLS
-R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2012-04-05 -e 2012-09-27 -g weeks < mls-analysis.R
-R --vanilla --args -d $2 -u root -i $1 -r companies -s 2012-04-05 -e 2012-09-27 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2012-04-04 -e 2012-09-27 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r companies -s 2012-04-04 -e 2012-09-27 -g weeks < mls-analysis.R
 #ITS
-R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2012-04-05 -e 2012-09-27 -g weeks -t launchpad < its-analysis.R
-R --vanilla --args -d $3 -u root -i $1 -r companies -s 2012-04-05 -e 2012-09-27 -g weeks -t launchpad < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2012-04-04 -e 2012-09-27 -g weeks -t launchpad < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r companies -s 2012-04-04 -e 2012-09-27 -g weeks -t launchpad < its-analysis.R
 rm data/folsom/*
 mv data/json/* data/folsom/
 
@@ -54,14 +54,14 @@ mv data/json/* data/folsom/
 rm data/json/*
 mkdir -p data/essex
 #SCM
-R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2011-11-22 -e 2012-04-05 -g weeks < scm-analysis.R
-R --vanilla --args -d $1 -u root -i $1 -r companies -s 2011-11-22 -e 2012-04-05 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2011-11-22 -e 2012-04-04 -g weeks < scm-analysis.R
+R --vanilla --args -d $1 -u root -i $1 -r companies -s 2011-11-22 -e 2012-04-04 -g weeks < scm-analysis.R
 #MLS
-R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2011-11-22 -e 2012-04-05 -g weeks < mls-analysis.R
-R --vanilla --args -d $2 -u root -i $1 -r companies -s 2011-11-22 -e 2012-04-05 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2011-11-22 -e 2012-04-04 -g weeks < mls-analysis.R
+R --vanilla --args -d $2 -u root -i $1 -r companies -s 2011-11-22 -e 2012-04-04 -g weeks < mls-analysis.R
 #ITS
-R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2011-11-22 -e 2012-04-05 -g weeks -t launchpad < its-analysis.R
-R --vanilla --args -d $3 -u root -i $1 -r companies -s 2011-11-22 -e 2012-04-05 -g weeks -t launchpad < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r repositories -s 2011-11-22 -e 2012-04-04 -g weeks -t launchpad < its-analysis.R
+R --vanilla --args -d $3 -u root -i $1 -r companies -s 2011-11-22 -e 2012-04-04 -g weeks -t launchpad < its-analysis.R
 rm data/essex/*
 mv data/json/* data/essex/
 

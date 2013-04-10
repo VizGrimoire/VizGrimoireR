@@ -177,6 +177,7 @@ if __name__ == '__main__':
     for i in ids_file:
 
         email = i[0]
+        email = email.replace("'", "\\'") #avoiding ' errors in MySQL
         country = i[1].rstrip('\n') #remove last \n
         
         if False: # helper code to test without real data
