@@ -121,6 +121,14 @@ if (conf$reports == 'companies') {
     info_com = its_static_companies (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
+latest_activity7 = last_activity_its(7, closed_condition)
+latest_activity30 = last_activity_its(30, closed_condition)
+latest_activity90 = last_activity_its(90, closed_condition)
+latest_activity365 = last_activity_its(365, closed_condition)
+all_static_info = merge(all_static_info, latest_activity7)
+all_static_info = merge(all_static_info, latest_activity30)
+all_static_info = merge(all_static_info, latest_activity90)
+all_static_info = merge(all_static_info, latest_activity365)
 createJSON (all_static_info, "data/json/its-static.json")
 
 

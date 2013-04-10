@@ -173,6 +173,45 @@ its_static_info <- function (closed_condition, startdate, enddate) {
     return(agg_data)
 }
 
+
+last_activity_its <- function(days, closed_condition) {
+    # opened issues
+    q <- paste("select count(*) as opened_",days,"
+                from issues
+                where submitted_on >= (
+                      select (max(submitted_on) - INTERVAL ",days," day)
+                      from issues)", sep="");
+    query <- new("Query", sql = q)
+    data1 = run(query)
+    
+    # closed issues
+    q <- paste("select count(distinct(issue_id)) as closed_",days,"
+                from changes
+                where  ", closed_condition,"
+                and changed_on >= (
+                      select (max(changed_on) - INTERVAL ",days," day)
+                      from changes)", sep="");
+    query <- new("Query", sql = q)
+    data2 = run(query)
+
+    # people_involved
+    q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers_",days,"
+                 FROM changes, people_upeople pup
+                 WHERE pup.people_id = changes.changed_by and
+                 changed_on >= (
+                     select (max(changed_on) - INTERVAL ",days," day)
+                      from changes)", sep="");
+                 
+    query <- new ("Query", sql = q)
+    data3 <- run(query)
+
+    agg_data = merge(data1, data2)
+    agg_data = merge(agg_data, data3)
+
+    return (agg_data)
+
+}
+
 its_static_companies  <- function(startdate, enddate, identities_db) {
     q <- paste ("SELECT COUNT(DISTINCT(upc.company_id)) AS companies
                  FROM changes,
