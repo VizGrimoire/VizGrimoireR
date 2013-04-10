@@ -448,6 +448,33 @@ mls_static_info <- function (startdate, enddate, reports="") {
 	return (agg_data)
 }
 
+
+last_activity_mls <- function(days) {
+    #commits
+    q <- paste("select count(distinct(message_ID)) as sent_",days,"
+                from messages
+                where first_date >= (
+                      select (max(first_date) - INTERVAL ",days," day)
+                      from messages)", sep="");
+    query <- new("Query", sql = q)
+    data1 = run(query)
+
+    q <- paste("select count(distinct(pup.upeople_id)) as senders_",days,"
+                from messages m,
+                     people_upeople pup,
+                     messages_people mp
+                where pup.people_id = mp.email_address  and
+                      m.message_ID = mp.message_id and 
+                      m.first_date >= (select (max(first_date) - INTERVAL ",days," day) from messages)", sep="");
+    query <- new("Query", sql = q)
+    data2 = run(query)
+
+    agg_data = merge(data1, data2)
+
+    return(agg_data)    
+
+}
+
 #
 # COUNTRIES
 #
