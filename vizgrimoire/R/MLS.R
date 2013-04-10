@@ -458,9 +458,9 @@ countries_names <- function (identities_db, startdate, enddate) {
     q <- paste("SELECT count(m.message_id) as sent, c.name as country 
                 FROM messages m, messages_people m_p, people_upeople pup,
                   ",identities_db,".upeople up,
-				  ",identities_db,".countries c,
-				  ",identities_db,".upeople_countries upc
-                 WHERE m_p.message_id=m.message_ID AND 
+                  ",identities_db,".countries c,
+                  ",identities_db,".upeople_countries upc
+                 WHERE m_p.message_id=m.message_ID AND
                    m_p.email_address = pup.people_id and
                    pup.upeople_id = up.id and
                    up.id  = upc.upeople_id and
@@ -469,6 +469,8 @@ countries_names <- function (identities_db, startdate, enddate) {
                    m.first_date < ", enddate, "
                  GROUP BY c.name
                  ORDER BY sent desc LIMIT ", country_limit)
+    print(q)
+    exit
     query <- new ("Query", sql = q)
     data <- run(query)
     countries<-data$country
