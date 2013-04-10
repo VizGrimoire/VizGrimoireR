@@ -469,8 +469,6 @@ countries_names <- function (identities_db, startdate, enddate) {
                    m.first_date < ", enddate, "
                  GROUP BY c.name
                  ORDER BY sent desc LIMIT ", country_limit)
-    print(q)
-    exit
     query <- new ("Query", sql = q)
     data <- run(query)
     countries<-data$country
