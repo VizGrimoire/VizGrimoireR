@@ -76,6 +76,40 @@ evol_opened <- function (period, startdate, enddate) {
     return (data)
 }
 
+# evol_opened but with an extra condition to filter strange cases in OpenStack gerrit
+evol_opened_gerrit <- function (period, startdate, enddate) {
+    q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(submitted_by) AS opened,
+                       COUNT(DISTINCT(pup.upeople_id)) AS openers
+                FROM issues, issues_ext_gerrit,
+                     people_upeople pup
+                WHERE pup.people_id = issues.submitted_by AND
+                      issues.id = issues_ext_gerrit.issue_id AND submitted_on<mod_date
+                      AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
+                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+evol_closed_gerrit <- function (period, startdate, enddate) {
+    q <- paste("SELECT ((to_days(mod_date) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(submitted_by) AS closed,
+                       COUNT(DISTINCT(pup.upeople_id)) AS closers
+                FROM issues, issues_ext_gerrit,
+                     people_upeople pup
+                WHERE pup.people_id = issues.submitted_by AND
+                      issues.id = issues_ext_gerrit.issue_id AND submitted_on<mod_date
+                      AND mod_date >= ",startdate," AND mod_date < ",enddate,"
+                      AND (status='MERGED' or status='ABANDONED')
+                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
 its_evol_repositories <- function(period, startdate, enddate) {
     q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
                        COUNT(DISTINCT(tracker_id)) AS repositories
