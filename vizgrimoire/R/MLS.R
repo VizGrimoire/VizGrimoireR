@@ -582,7 +582,7 @@ top_senders <- function(days = 0, startdate, enddate, identites_db) {
                GROUP BY u.identifier
                ORDER BY sent desc
                LIMIT 10;", sep="")    
-	print (q)
+	# print (q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -613,7 +613,7 @@ top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
                 m.first_date < ",enddate,"
           GROUP by mp.email_address 
           ORDER BY sent DESC LIMIT 10;", sep="")
-   print(q)
+   # print(q)
    query <- new ("Query", sql = q)
    data <- run(query)
    return (data)
@@ -658,6 +658,8 @@ companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
 
 companies_names <- function (i_db, startdate, enddate){
 
+    # companies_limit = 30
+
     q <- paste("select c.name as name,
                        count(distinct(m.message_ID)) as sent
                 from messages m,
@@ -672,7 +674,8 @@ companies_names <- function (i_db, startdate, enddate){
                       m.first_date >= ",startdate," and
                       m.first_date < ",enddate,"
                 group by c.name
-                order by count(distinct(m.message_ID)) desc;" , sep="")
+                order by count(distinct(m.message_ID)) desc", sep="")
+                # order by count(distinct(m.message_ID)) desc LIMIT ", companies_limit , sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)

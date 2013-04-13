@@ -424,7 +424,7 @@ companies_name_wo_affs <- function(affs_list, startdate, enddate) {
 }
 
 companies_name <- function(startdate, enddate) {
-    companies_limit = 30
+    # companies_limit = 30
     
 	q <- paste ("select distinct(c.name)
                     from companies c,
@@ -436,9 +436,10 @@ companies_name <- function(startdate, enddate) {
                           pup.people_id = s.author_id and
                           s.date >=", startdate, " and
                           s.date < ", enddate, "
-                          s.date < ", enddate, "
                     group by c.name
-                    order by count(distinct(s.id)) desc LIMIT ", companies_limit)
+                    order by count(distinct(s.id)) desc", sep="")
+                    # order by count(distinct(s.id)) desc LIMIT ", companies_limit, sep="")
+    print(q)
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
@@ -1113,7 +1114,8 @@ evol_info_data_repo <- function(repo_name, period, startdate, enddate) {
 
 # COUNTRIES support
 scm_countries_names <- function(identities_db, startdate, enddate) {
-    
+   
+    countries_limit = 30 
     rol = "author" #committer
     
     q <- paste("SELECT count(s.id) as commits, c.name as name 
@@ -1127,7 +1129,7 @@ scm_countries_names <- function(identities_db, startdate, enddate) {
                       s.date >=", startdate, " and
                       s.date < ", enddate, "
                 group by c.name
-                order by commits desc;", sep="")
+                order by commits desc LIMIT ", countries_limit, sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)    

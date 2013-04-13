@@ -472,6 +472,7 @@ its_static_info_repo <- function (repo) {
 }
 
 its_companies_name <- function(startdate, enddate, identities_db) {
+    # companies_limit = 30
     q <- paste ("select distinct(c.name)
                     from ",identities_db,".companies c,
                          people_upeople pup,
@@ -483,7 +484,8 @@ its_companies_name <- function(startdate, enddate, identities_db) {
                           s.changed_on >= ", startdate, " and
                           s.changed_on < ", enddate, "
                     group by c.name
-                    order by count(distinct(s.issue_id)) desc;")
+                    order by count(distinct(s.issue_id)) desc", sep="")
+    #                order by count(distinct(s.issue_id)) desc LIMIT ", companies_limit, sep="")
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
@@ -652,7 +654,8 @@ its_top_closers_wo_affiliations <- function(list_affs, startdate, enddate, ident
 # COUNTRIES
 
 its_countries_names <- function (identities_db,startdate, enddate) {
-        
+    countries_limit = 30
+    
     q <- paste("SELECT count(ch.id) as closed, c.name as name
                 FROM changes ch, people_upeople pup,
                   ",identities_db,".countries c,
@@ -663,7 +666,7 @@ its_countries_names <- function (identities_db,startdate, enddate) {
                    AND pup.upeople_id = upc.upeople_id
                    AND upc.country_id = c.id
                    AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                GROUP BY c.name order by closed desc;", sep="")
+                GROUP BY c.name order by closed desc limit ", countries_limit, sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)    
