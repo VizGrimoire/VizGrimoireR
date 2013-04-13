@@ -3,6 +3,14 @@ vizGrimoireR
 
 R package vizgrimoire, to make life easier to those using Metrics Grimoire tools, and maybe vizGrimoireJS.
 
+Dependencies
+------------
+
+Some R packages need to be installed for vizGrimoireR to run. Those packages are available from CRAN. For installing them from there, run the following line from the R prompt:
+
+install.packages("optparse")
+
+
 Installation from source
 ------------------------
 
