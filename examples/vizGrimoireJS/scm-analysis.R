@@ -113,6 +113,14 @@ if (conf$reports == 'companies') {
 
 # Fixed data
 info_data = evol_info_data(period, conf$startdate, conf$enddate)
+latest_activity7 = last_activity(7)
+latest_activity30 = last_activity(30)
+latest_activity90 = last_activity(90)
+latest_activity365 = last_activity(365)
+info_data = merge(info_data, latest_activity7)
+info_data = merge(info_data, latest_activity30)
+info_data = merge(info_data, latest_activity90)
+info_data = merge(info_data, latest_activity365)
 
 if (conf$reports == 'companies') {
 	info_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
@@ -120,27 +128,29 @@ if (conf$reports == 'companies') {
 }
 
 # Top committers
-top_committers_data <- list()
-top_committers_data[['committers.']]<-top_people(0, conf$startdate, conf$enddate, "committer")
-top_committers_data[['committers.last year']]<-top_people(365, conf$startdate, conf$enddate, "committer")
-top_committers_data[['committers.last month']]<-top_people(31, conf$startdate, conf$enddate, "committer")
+#top_committers_data <- list()
+#top_committers_data[['committers.']]<-top_people(0, conf$startdate, conf$enddate, "committer")
+#top_committers_data[['committers.last year']]<-top_people(365, conf$startdate, conf$enddate, "committer")
+#top_committers_data[['committers.last month']]<-top_people(31, conf$startdate, conf$enddate, "committer")
 
 # Top authors
-top_authors_data <- list()
-top_authors_data[['authors.']]<-top_people(0, conf$startdate, conf$enddate, "author")
-top_authors_data[['authors.last year']]<-top_people(365, conf$startdate, conf$enddate, "author")
-top_authors_data[['authors.last month']]<-top_people(31, conf$startdate, conf$enddate, "author")
+#top_authors_data <- list()
+#top_authors_data[['authors.']]<-top_people(0, conf$startdate, conf$enddate, "author")
+#top_authors_data[['authors.last year']]<-top_people(365, conf$startdate, conf$enddate, "author")
+#top_authors_data[['authors.last month']]<-top_people(31, conf$startdate, conf$enddate, "author")
 
-top_data <- c(top_committers_data, top_authors_data)
-createJSON (top_data, "data/json/scm-top.json")
+#top_data <- c(top_committers_data, top_authors_data)
+#createJSON (top_data, "data/json/scm-top.json")
 
 # Top authors
 
-#top_authors_data <- top_authors(conf$startdate, conf$enddate)
+top_authors_data <- top_authors(conf$startdate, conf$enddate)
 #top_authors_data_2006 <- top_authors_year(2006)
 #top_authors_data_2009 <- top_authors_year(2009)
 #top_authors_data_2012 <- top_authors_year(2012)
-# top_authors_data <- top_authors_wo_affiliations(c("-Bot"), conf$startdate, conf$enddate)
+top_authors_data <- list()
+top_authors_data[['authors.']] <- top_authors_wo_affiliations(c("-Bot"), conf$startdate, conf$enddate)
+createJSON (top_authors_data, "data/json/scm-top.json")
 
 # Top files
 top_files_modified_data = top_files_modified()

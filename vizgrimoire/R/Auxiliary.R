@@ -276,7 +276,7 @@ mergeMonthly <- function (d1, d2) {
 
 completeZeroPeriod <- function (data, nperiod, startdate, enddate){
     first = 0
-    last = ceiling (difftime(as.POSIXlt(enddate), as.POSIXlt(startdate),units='days') / nperiod)
+    last = ceiling (difftime(as.POSIXlt(enddate), as.POSIXlt(startdate),units='days') / nperiod) - 1
     periods = data.frame('id'=c(first:last))
     completedata <- merge (data, periods, all=TRUE)
     completedata[is.na(completedata)] <- 0

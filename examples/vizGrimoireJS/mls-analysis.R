@@ -51,6 +51,14 @@ enddate <- conf$enddate
 
 # Aggregated data
 static_data <- mls_static_info(startdate, enddate)
+latest_activity7 <- last_activity_mls(7)
+latest_activity30 <- last_activity_mls(30)
+latest_activity90 <- last_activity_mls(90)
+latest_activity365 <- last_activity_mls(365)
+static_data = merge(static_data, latest_activity7)
+static_data = merge(static_data, latest_activity30)
+static_data = merge(static_data, latest_activity90)
+static_data = merge(static_data, latest_activity365)
 createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
 # Mailing lists
