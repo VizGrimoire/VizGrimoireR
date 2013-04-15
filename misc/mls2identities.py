@@ -19,6 +19,7 @@
 #
 # Authors :
 #       Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
+#       Alvaro del Castillo <acs@bitergia.com>
 
 #
 # mls2identities.py
@@ -106,6 +107,7 @@ def main():
 
    query = "select name, email_address from people"
    results = execute_query(connector_mls, query)
+   print ("Total identities to analyze: " + str(len(results)))
    for result in results:
       name = result[0]
       name = name.replace("'", "\\'") #avoiding ' errors in MySQL
@@ -121,13 +123,19 @@ def main():
          execute_query(connector_mls, query)
       else:
          #Insert in people_upeople, identities and upeople (new identitiy)
+         uidentifier = ""
+         if email:
+            uidentifier = email
+         elif name:
+            uidentifier = name
  
          # Max (upeople_)id from upeople table
          query = "select max(id) from upeople;"
          results = execute_query(connector_ids, query)
          upeople_id = int(results[0][0]) + 1
          
-         query = "insert into upeople(id) values("+ str(upeople_id) +");"
+         # query = "insert into upeople(id) values("+ str(upeople_id) +");"
+         query = "insert into upeople(id, identifier) values(" + str(upeople_id) + ",'"+uidentifier+"');"
          execute_query(connector_ids, query)
          
          query = "insert into identities(upeople_id, identity, type)" +\
@@ -140,7 +148,7 @@ def main():
 
          query = "insert into people_upeople(people_id, upeople_id) " +\
                  "values('"+email+"', "+str(upeople_id)+");"
-         print query
+         # print query
          execute_query(connector_mls, query)
 
    db_ids.commit()

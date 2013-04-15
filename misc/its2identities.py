@@ -102,13 +102,21 @@ def insert_identity(connector_ids, connector_its, people_id,
     query = "select max(id) from upeople;"
     results = execute_query(connector_ids, query)
     upeople_id = int(results[0][0]) + 1
-    
-    query = "insert into upeople(id) values(" + str(upeople_id) + ");"
+ 
+    uidentifier = upeople_id
+    if email and email != 'None': 
+        uidentifier = email 
+    elif name and name != 'None':
+        uidentifier = name 
+    elif user_id and user_id != 'None':
+        uidentifier = user_id 
+    query = "insert into upeople(id, identifier) values(" + str(upeople_id) + ",'"+str(uidentifier)+"');"
     execute_query(connector_ids, query)
     
-    query = "insert into identities(upeople_id, identity, type)" + \
-            "values(" + str(upeople_id) + ", '" + name + "', 'name');"
-    execute_query(connector_ids, query)
+    if name != 'None':
+        query = "insert into identities(upeople_id, identity, type)" + \
+                "values(" + str(upeople_id) + ", '" + name + "', 'name');"
+        execute_query(connector_ids, query)
 
     if email != 'None':
         query = "insert into identities(upeople_id, identity, type)" + \
@@ -143,28 +151,25 @@ def main():
    results = execute_query(connector_its, query)
    
    # Searching for already existing identites
-   query = "select upeople_id from identities where "
+   # query = "select upeople_id from identities where "
    for result in results:
       people_id = int(result[0])
       name = result[1]
       name = name.replace("'", "\\'")  # avoiding ' errors in MySQL
-      if not name == "None":
-          results_ids = search_identity(connector_ids, name)
-          if len(results_ids) > 0:
-              reuse_identity(connector_its, people_id, int(results_ids[0][0]))
-              continue
+      results_ids = search_identity(connector_ids, name)
+      if len(results_ids) > 0:
+        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+        continue
       email = result[2]
-      if not email == "None":
-          results_ids = search_identity(connector_ids, email)
-          if len(results_ids) > 0:
-              reuse_identity(connector_its, people_id, int(results_ids[0][0]))
-              continue
+      results_ids = search_identity(connector_ids, email)
+      if len(results_ids) > 0:
+        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+        continue
       user_id = result[3]
-      if not user_id == "None":
-          results_ids = search_identity(connector_ids, user_id)
-          if len(results_ids) > 0:
-              reuse_identity(connector_its, people_id, int(results_ids[0][0]))
-              continue
+      results_ids = search_identity(connector_ids, user_id)
+      if len(results_ids) > 0:
+        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+        continue
       insert_identity(connector_ids, connector_its, 
                       people_id, name, email, user_id)
    db_ids.commit()
