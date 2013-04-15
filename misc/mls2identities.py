@@ -107,8 +107,12 @@ def main():
 
    query = "select name, email_address from people"
    results = execute_query(connector_mls, query)
-   print ("Total identities to analyze: " + str(len(results)))
+   total = len(results)
+   done = 0
+   print ("Total identities to analyze: " + str(total))
    for result in results:
+      done += 1
+      if (done % 100 == 0): print (str(done)+" ("+str(total-done)+" pend)")
       name = result[0]
       name = name.replace("'", "\\'") #avoiding ' errors in MySQL
       email = result[1]
