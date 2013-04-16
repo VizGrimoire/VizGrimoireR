@@ -243,7 +243,7 @@ if (conf$reports == 'companies') {
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)
 		agg_data = merge(agg_data, committers, all = TRUE)
-        agg_data <- agg_data[order(agg_data$id), ]
+                agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 		
@@ -349,4 +349,37 @@ if (conf$reports == 'countries') {
         createJSON (data, paste("data/json/",country,"-scm-static.json",sep=''))        
     }
 }
-        
+
+if (conf$reports == 'companies-countries'){
+    companies  <- companies_name(conf$startdate, conf$enddate)
+    companies <- companies$name
+    for (company in companies){
+        countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
+	countries <- countries$name
+	for (country in countries) {
+            company_name = paste(c("'", company, "'"), collapse='')
+            company_aux = paste(c("", company, ""), collapse='')
+
+            ###########
+            if (is.na(country)) next
+            print (paste(country, "<->", company))
+            data <- scm_companies_countries_evol(conf$identities_db, company, country, nperiod, conf$startdate, conf$enddate)
+            if (length(data) == 0) {
+                data <- data.frame(id=numeric(0),commits=numeric(0),authors=numeric(0))
+            } 
+
+            data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
+            data$week <- as.Date(conf$str_startdate) + data$id * nperiod
+            data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
+            data <- data[order(data$id), ]
+            createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-evolutionary.json",sep=''))
+            
+            data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
+            createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-static.json",sep=''))        
+
+            #################
+            
+            
+        }
+    }
+}
