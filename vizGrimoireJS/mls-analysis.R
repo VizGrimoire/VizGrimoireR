@@ -90,11 +90,8 @@ if (conf$reports == 'countries') {
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- analyze.monthly.mls.countries.evol(identities_db, country, nperiod, startdate, enddate)        
-        data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
-        data$week <- as.Date(conf$str_startdate) + data$id * nperiod
-        data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
-        data <- data[order(data$id), ]
+        data <- analyze.monthly.mls.countries.evol(identities_db, country, nperiod, startdate, enddate)
+        data <- completePeriod(data, nperiod, conf)        
         createJSON (data, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
         
         data <- analyze.monthly.mls.countries.static(identities_db, country, startdate, enddate)
@@ -107,10 +104,7 @@ for (mlist in mailing_lists$mailing_list) {
 }
 
 data.monthly <- get.monthly(nperiod, startdate, enddate)
-data.monthly = completeZeroPeriod(data.monthly, nperiod, conf$str_startdate, conf$str_enddate)
-data.monthly$week <- as.Date(conf$str_startdate) + data.monthly$id * nperiod
-data.monthly$date  <- toTextDate(GetYear(data.monthly$week), GetMonth(data.monthly$week)+1)
-data.monthly <- data.monthly[order(data.monthly$id), ]
+data.monthly <- completePeriod(data.monthly, nperiod, conf)
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders
@@ -141,15 +135,7 @@ if (conf$reports == 'companies'){
         print (company)
         company_name = paste("'",company,"'",sep="")
         post_posters = company_posts_posters (company_name, identities_db, nperiod, startdate, enddate)
-        if (length(post_posters) == 0) {
-            post_posters <- data.frame(id=numeric(0), sent=numeric(0), senders=numeric(0))
-        }
-        post_posters = completeZeroPeriod(post_posters, nperiod, conf$str_startdate, conf$str_enddate)
-        post_posters$week <- as.Date(conf$str_startdate) + post_posters$id * nperiod
-        post_posters$date  <- toTextDate(GetYear(post_posters$week), GetMonth(post_posters$week)+1)
-        # print(post_posters)
-        post_posters <- post_posters[order(post_posters$id), ]
-
+        post_posters <- completePeriod(post_posters, nperiod, conf)        
         createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
 
         top_senders = company_top_senders (company_name, identities_db, period, startdate, enddate)
@@ -159,3 +145,14 @@ if (conf$reports == 'companies'){
         createJSON(static_info, paste("data/json/",company,"-mls-static.json", sep=""))
     }
 }
+
+# Demographics
+
+demos <- new ("Demographics","mls")
+demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
+demos$age[demos$age < 0 ] <- 0
+aux <- data.frame(demos["id"], demos["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, "data/json/mls-demos-pyramid.json")

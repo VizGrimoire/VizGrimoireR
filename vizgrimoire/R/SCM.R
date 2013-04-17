@@ -96,6 +96,23 @@ evol_files <- function(period, startdate, enddate){
       return (data_files)
 }
 
+evol_lines <- function(period, startdate, enddate) {
+
+        # Lines added & removed per ",period,"
+	
+        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           sum(cl.added) as added_lines,
+                           sum(cl.removed) as removed_lines
+                    from   commits_lines cl,
+                           scmlog s
+                    where  cl.commit_id = s.id
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="") 
+
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)	
+}
+
 
 evol_branches <- function(period, startdate, enddate){
     
@@ -1227,3 +1244,32 @@ scm_countries_static <- function(identities_db, country, startdate, enddate) {
 }
 
 
+# Companies / Countries support
+
+scm_companies_countries_evol <- function(identities_db, company, country, period, startdate, enddate) {
+    
+    rol = "author" #committer
+    
+    q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                count(s.id) AS commits,
+                COUNT(DISTINCT(s.",rol,"_id)) as ", rol,"s
+                FROM scmlog s, 
+                     people_upeople pup,
+                     ",identities_db,".countries ct,
+                     ",identities_db,".upeople_countries upct,
+                     ",identities_db,".companies com,
+                     ",identities_db,".upeople_companies upcom
+                WHERE pup.people_id = s.",rol,"_id AND
+                      pup.upeople_id  = upct.upeople_id and
+                      pup.upeople_id = upcom.upeople_id AND
+                      upcom.company_id = com.id AND
+                      upct.country_id = ct.id and
+                      s.date >=", startdate, " and
+                      s.date < ", enddate, " and
+                      ct.name = '", country, "' AND
+                      com.name ='",company,"'
+                GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}

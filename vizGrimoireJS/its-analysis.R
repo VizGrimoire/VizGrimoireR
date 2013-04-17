@@ -77,32 +77,17 @@ enddate <- conf$enddate
 # database with unique identities
 identities_db <- conf$identities_db
 
-print(startdate)
-
 closed <- evol_closed(closed_condition, nperiod, startdate, enddate)
-if (length(closed) == 0) {
-    closed <- data.frame(id=numeric(0), closers=numeric(0),closed=numeric(0))
-} 
-closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
-closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
+closed <- completePeriod(closed, nperiod, conf)
 
 changed <- evol_changed(nperiod, startdate, enddate)
-if (length(changed) == 0) {
-    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
-} 
-changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
-changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
+changed <- completePeriod(changed, nperiod, conf)
 
 open <- evol_opened(nperiod, startdate, enddate)
-if (length(open) == 0) {
-    open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
-} 
-open$week <- as.Date(conf$str_startdate) + open$id * nperiod
-open$date <- toTextDate(GetYear(open$week), GetMonth(open$week)+1)
+open <- completePeriod(open, nperiod, conf)
 
 repos <- its_evol_repositories(nperiod, startdate, enddate)
-repos$week <- as.Date(conf$str_startdate) + repos$id * nperiod
-repos$date <- toTextDate(GetYear(repos$week), GetMonth(repos$week)+1)
+repos <- completePeriod(repos, nperiod, conf)
 
 issues <- merge (open, closed, all = TRUE)
 issues <- merge (issues, changed, all = TRUE)
@@ -110,6 +95,7 @@ issues <- merge (issues, repos, all = TRUE)
 
 if (conf$reports == 'companies') {
     info_data_companies = its_evol_companies (nperiod, startdate, enddate, identities_db)
+    info_data_companies <- completePeriod(info_data_companies, nperiod, conf)
     issues = merge(issues, info_data_companies, all = TRUE)
 }
 issues[is.na(issues)] <- 0
@@ -130,7 +116,6 @@ all_static_info = merge(all_static_info, latest_activity30)
 all_static_info = merge(all_static_info, latest_activity90)
 all_static_info = merge(all_static_info, latest_activity365)
 createJSON (all_static_info, "data/json/its-static.json")
-
 
 
 # Top closers
@@ -160,33 +145,18 @@ if (conf$reports == 'repositories') {
 		
 		# EVOLUTION INFO
 		closed <- repo_evol_closed(repo_name, closed_condition, nperiod, startdate, enddate)
-                if (length(closed) == 0) {
-                    closed <- data.frame(id=numeric(0),closers=numeric(0),closed=numeric(0))
-                } 
-                closed <- completeZeroPeriod(closed, nperiod, conf$str_startdate, conf$str_enddate)
-                closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
-                closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
+        closed <- completePeriod(closed, nperiod, conf)
 
 		changed <- repo_evol_changed(repo_name, nperiod, startdate, enddate)
-                if (length(changed) == 0) {
-                    changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
-                }                 
-                changed <- completeZeroPeriod(changed, nperiod, conf$str_startdate, conf$str_enddate)
-                changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
-                changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
+        changed <- completePeriod(changed, nperiod, conf)
                 
 		opened <- repo_evol_opened(repo_name, nperiod, startdate, enddate)
-                if (length(open) == 0) {
-                    open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
-                } 
-                opened <- completeZeroPeriod(opened, nperiod, conf$str_startdate, conf$str_enddate)
-                opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
-                opened$date <- toTextDate(GetYear(opened$week), GetMonth(opened$week)+1)
+        opened <- completePeriod(opened, nperiod, conf)
                 
 		agg_data = merge(closed, changed, all = TRUE)
-		agg_data = merge(agg_data, opened, all = TRUE)	
+		agg_data = merge(agg_data, opened, all = TRUE)
 		agg_data[is.na(agg_data)] <- 0
-                agg_data <- agg_data[order(agg_data$id),]
+        agg_data <- agg_data[order(agg_data$id),]		
 		createJSON(agg_data, paste(c("data/json/",repo_file,"-its-evolutionary.json"), collapse=''))
 		
 		# STATIC INFO
@@ -208,33 +178,18 @@ if (conf$reports == 'companies') {
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
         closed <- its_company_evol_closed(company_name, closed_condition, nperiod, startdate, enddate, identities_db)
-        if (length(closed) == 0) {
-            closed <- data.frame(id=numeric(0),closers=numeric(0),closed=numeric(0))
-        } 
-        closed <- completeZeroPeriod(closed, nperiod, conf$str_startdate, conf$str_enddate)
-        closed$week <- as.Date(conf$str_startdate) + closed$id * nperiod
-        closed$date <- toTextDate(GetYear(closed$week), GetMonth(closed$week)+1)
+        closed <- completePeriod(closed, nperiod, conf)    
 
         changed <- its_company_evol_changed(company_name, nperiod, startdate, enddate, identities_db)
-        if (length(changed) == 0) {
-            changed <- data.frame(id=numeric(0), changed=numeric(0), changers=numeric(0))
-        } 
-        changed <- completeZeroPeriod(changed, nperiod, conf$str_startdate, conf$str_enddate)
-        changed$week <- as.Date(conf$str_startdate) + changed$id * nperiod
-        changed$date <- toTextDate(GetYear(changed$week), GetMonth(changed$week)+1)
-
+        changed <- completePeriod(changed, nperiod, conf)
+        
         opened <- its_company_evol_opened(company_name, nperiod, startdate, enddate, identities_db)
-        if (length(open) == 0) {
-            open <- data.frame(id=numeric(0), opened=numeric(0), openers=numeric(0))
-        }         
-        opened <- completeZeroPeriod(opened, nperiod, conf$str_startdate, conf$str_enddate)
-        opened$week <- as.Date(conf$str_startdate) + opened$id * nperiod
-        opened$date <- toTextDate(GetYear(opened$week), GetMonth(opened$week)+1)
-
+        opened <- completePeriod(opened, nperiod, conf)
+        
         agg_data = merge(closed, changed, all = TRUE)
         agg_data = merge(agg_data, opened, all = TRUE)
         agg_data[is.na(agg_data)] <- 0
-        agg_data <- agg_data[order(agg_data$id),]
+        agg_data <- agg_data[order(agg_data$id),]               
         createJSON(agg_data, paste(c("data/json/",company_aux,"-its-evolutionary.json"), collapse=''))
 
         print ("static info")
@@ -258,11 +213,8 @@ if (conf$reports == 'countries') {
         if (is.na(country)) next
         print (country)
         
-        data <- its_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
-        data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
-        data$week <- as.Date(conf$str_startdate) + data$id * nperiod
-        data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
-        data <- data[order(data$id), ]
+        data <- its_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)
+        data <- completePeriod(data, nperiod, conf)
         createJSON (data, paste("data/json/",country,"-its-evolutionary.json",sep=''))
         
         data <- its_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
@@ -272,28 +224,29 @@ if (conf$reports == 'countries') {
     
 
 ## Quantiles
-#
-### Which quantiles we're interested in
-#quantiles_spec = c(.99,.95,.5,.25)
-#
-### Closed tickets: time ticket was open, first closed, time-to-first-close
-#closed <- new ("ITSTicketsTimes")
-### Yearly quantiles of time to fix (minutes)
-#events.tofix <- new ("TimedEvents",
-#                     closed$open, closed$tofix %/% 60)
-#quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-#JSON(quantiles, 'data/json/its-quantiles-year-time_to_fix_min.json')
-#
-### Monthly quantiles of time to fix (hours)
-#events.tofix.hours <- new ("TimedEvents",
-#                           closed$open, closed$tofix %/% 3600)
-#quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
-#JSON(quantiles.month, 'data/json/its-quantiles-month-time_to_fix_hour.json')
-#
-### Changed tickets: time ticket was attended, last move
-#changed <- new ("ITSTicketsChangesTimes")
-### Yearly quantiles of time to attention (minutes)
-#events.toatt <- new ("TimedEvents",
-#                     changed$open, changed$toattention %/% 60)
-#quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-#JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')
+
+## Which quantiles we're interested in
+quantiles_spec = c(.99,.95,.5,.25)
+
+## Closed tickets: time ticket was open, first closed, time-to-first-close
+closed <- new ("ITSTicketsTimes")
+
+## Yearly quantiles of time to fix (minutes)
+events.tofix <- new ("TimedEvents",
+                     closed$open, closed$tofix %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+JSON(quantiles, 'data/json/its-quantiles-year-time_to_fix_min.json')
+
+## Monthly quantiles of time to fix (hours)
+events.tofix.hours <- new ("TimedEvents",
+                           closed$open, closed$tofix %/% 3600)
+quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
+JSON(quantiles.month, 'data/json/its-quantiles-month-time_to_fix_hour.json')
+
+## Changed tickets: time ticket was attended, last move
+changed <- new ("ITSTicketsChangesTimes")
+## Yearly quantiles of time to attention (minutes)
+events.toatt <- new ("TimedEvents",
+                     changed$open, changed$toattention %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')

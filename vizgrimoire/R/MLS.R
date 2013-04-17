@@ -340,19 +340,9 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
     ## print(sent_monthly)
     ## print(senders_monthly)
     
-    if (length(sent_monthly) == 0) {
-        sent_monthly <- data.frame(id=numeric(0), sent=numeric(0))
-    }
-    sent_monthly <- completeZeroPeriod(sent_monthly, period, conf$str_startdate, conf$str_enddate)
-    sent_monthly$week <- as.Date(conf$str_startdate) + sent_monthly$id * nperiod
-    sent_monthly$date <- toTextDate(GetYear(sent_monthly$week), GetMonth(sent_monthly$week)+1)
-
-    if (length(senders_monthly) == 0) {
-        senders_monthly <- data.frame(id=numeric(0), senders=numeric(0))
-    }
-    senders_monthly <- completeZeroPeriod(senders_monthly, period, conf$str_startdate, conf$str_enddate)
-    senders_monthly$week <- as.Date(conf$str_startdate) + senders_monthly$id * nperiod
-    senders_monthly$date <- toTextDate(GetYear(senders_monthly$week), GetMonth(senders_monthly$week)+1)
+    
+    sent_monthly <- completePeriod(sent_monthly, period, conf)
+    senders_monthly <- completePeriod(senders_monthly, period, conf)
     
     mls_monthly <- merge (sent_monthly, senders_monthly, all = TRUE)
     mls_monthly[is.na(mls_monthly)] <- 0

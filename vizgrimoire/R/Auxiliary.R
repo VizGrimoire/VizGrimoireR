@@ -318,6 +318,18 @@ GetMonth <- function (time) {
   return (as.POSIXlt(time)$mon)
 }
 
+## Group daily samples by selected period
+completePeriod <- function (data, nperiod, conf) {
+    if (length(data) == 0) {
+        data <- data.frame(id=numeric(0), commits=numeric(0))
+    }    
+    new_data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
+    new_data$week <- as.Date(conf$str_startdate) + new_data$id * nperiod
+    new_data$date  <- toTextDate(GetYear(new_data$week), GetMonth(new_data$week)+1)
+    new_data[is.na(new_data)] <- 0
+    new_data <- new_data[order(new_data$id), ]
+    return (new_data);
+}
 
 #
 # Plot several columns of a timeserie
