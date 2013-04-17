@@ -54,9 +54,14 @@ if (conf$granularity == 'weeks'){
    nperiod = 7
 }
 
+sql_res = 1 # 1 day resolution  SQL
+
 #Commits per month
-commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
+# commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
+commits <- evol_commits(sql_res, conf$startdate, conf$enddate)
 data_commits <- completePeriod(commits, nperiod, conf)
+print(data_commits)
+exit
 
 #Committers per month
 committers <- evol_committers(nperiod, conf$startdate, conf$enddate)
