@@ -55,60 +55,32 @@ if (conf$granularity == 'weeks'){
 }
 
 #Commits per month
-data_commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
-data_commits = completeZeroPeriod(data_commits, nperiod, conf$str_startdate, conf$str_enddate)
-data_commits$week <- as.Date(conf$str_startdate) + data_commits$id * nperiod
-data_commits$date  <- toTextDate(GetYear(data_commits$week), GetMonth(data_commits$week)+1)
-data_commits <- data_commits[order(data_commits$id), ]
-print(data_commits)
+commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
+data_commits <- completePeriod(commits, nperiod, conf)
 
 #Committers per month
-data_committers = evol_committers(nperiod, conf$startdate, conf$enddate)
-data_committers = completeZeroPeriod(data_committers, nperiod, conf$str_startdate, conf$str_enddate)
-data_committers$week <- as.Date(conf$str_startdate) + data_committers$id * nperiod
-data_committers$date <- toTextDate(GetYear(data_committers$week), GetMonth(data_committers$week)+1)
-data_committers <- data_committers[order(data_committers$id), ]
-print(data_committers)
+committers <- evol_committers(nperiod, conf$startdate, conf$enddate)
+data_committers <- completePeriod(committers, nperiod, conf)
 
 # Authors per month
-data_authors = evol_authors(nperiod, conf$startdate, conf$enddate)
-data_authors = completeZeroPeriod(data_authors, nperiod, conf$str_startdate, conf$str_enddate)
-data_authors$week <- as.Date(conf$str_startdate) + data_authors$id * nperiod
-data_authors$date <- toTextDate(GetYear(data_authors$week), GetMonth(data_authors$week)+1)
-data_authors <- data_authors[order(data_authors$id), ]
-print (data_authors)
+authors <- evol_authors(nperiod, conf$startdate, conf$enddate)
+data_authors <- completePeriod(authors, nperiod, conf)
 
 #Files per month
-data_files = evol_files(nperiod, conf$startdate, conf$enddate)
-data_files = completeZeroPeriod(data_files, nperiod, conf$str_startdate, conf$str_enddate)
-data_files$week <- as.Date(conf$str_startdate) + data_files$id * nperiod
-data_files$date <- toTextDate(GetYear(data_files$week), GetMonth(data_files$week)+1)
-data_files <- data_files[order(data_files$id), ]
-print(data_files)
+files <- evol_files(nperiod, conf$startdate, conf$enddate)
+data_files <- completePeriod(files, nperiod, conf)
 
 #Branches per month
-data_branches = evol_branches(nperiod, conf$startdate, conf$enddate)
-data_branches = completeZeroPeriod(data_branches, nperiod, conf$str_startdate, conf$str_enddate)
-data_branches$week <- as.Date(conf$str_startdate) + data_branches$id * nperiod
-data_branches_date <- toTextDate(GetYear(data_branches$week), GetMonth(data_branches$week)+1)
-data_branches <- data_branches[order(data_branches$id), ]
-print(data_branches)
+branches <- evol_branches(nperiod, conf$startdate, conf$enddate)
+data_branches <- completePeriod(branches, nperiod, conf)
 
 #Repositories per month
-data_repositories = evol_repositories(nperiod, conf$startdate, conf$enddate)
-data_repositories = completeZeroPeriod(data_repositories, nperiod, conf$str_startdate, conf$str_enddate)
-data_repositories$week <- as.Date(conf$str_startdate) + data_repositories$id * nperiod
-data_repositories$date <- toTextDate(GetYear(data_repositories$week), GetMonth(data_repositories$week)+1)
-data_repositories <- data_repositories[order(data_repositories$id), ]
-print(data_repositories)
+repositories <- evol_repositories(nperiod, conf$startdate, conf$enddate)
+data_repositories <- completePeriod(repositories, nperiod, conf)
 
 if (conf$reports == 'companies') { 
-    data_companies = evol_companies(nperiod, conf$startdate, conf$enddate)
-    data_companies = completeZeroPeriod(data_companies, nperiod, conf$str_startdate, conf$str_enddate)
-    data_companies$week <- as.Date(conf$str_startdate) + data_companies$id * nperiod
-    print (data_companies)
-    data_companies$date <- toTextDate(GetYear(data_companies$week), GetMonth(data_companies$week)+1)
-    data_companies <- data_companies[order(data_companies$id), ]
+    companies <- evol_companies(nperiod, conf$startdate, conf$enddate)
+    data_companies <- completePeriod(companies, nperiod, conf)
 }
 
 # Fixed data
@@ -191,54 +163,21 @@ if (conf$reports == 'companies') {
 		company_aux = paste(c("", company, ""), collapse='')
 		print (company_name)
 		 
-		commits <- company_commits(company_name, nperiod, conf$startdate, conf$enddate)	
-                if (length(commits) == 0) {
-                    commits <- data.frame(id=numeric(0), commits=numeric(0))
-                }
-                commits = completeZeroPeriod(commits, nperiod, conf$str_startdate, conf$str_enddate)
-                commits$week <- as.Date(conf$str_startdate) + commits$id * nperiod
-                commits$date <- toTextDate(GetYear(commits$week), GetMonth(commits$week)+1)
-                commits <- commits[order(commits$id), ]
-                # print(commits)
-
+		commits <- company_commits(company_name, nperiod, conf$startdate, conf$enddate)        
+        commits <- completePeriod(commits, nperiod, conf)
+        
 		lines <-company_lines(company_name, nperiod, conf$startdate, conf$enddate)
-                if (length(lines) == 0) {
-                    lines <- data.frame(id=numeric(0), added_lines=numeric(0), removed_lines=numeric(0))
-                }
-                lines = completeZeroPeriod(lines, nperiod, conf$str_startdate, conf$str_enddate)
-                lines$week <- as.Date(conf$str_startdate) + lines$id * nperiod
-                lines$date <- toTextDate(GetYear(lines$week), GetMonth(lines$week)+1)
-                lines <- lines[order(lines$id), ]
-                # print(lines)
+        lines <- completePeriod(lines, nperiod, conf)
 
 		files <- company_files(company_name, nperiod, conf$startdate, conf$enddate)
-                if (length(files) == 0) {
-                    files <- data.frame(id=numeric(0), files=numeric(0))
-                }
-                files = completeZeroPeriod(files, nperiod, conf$str_startdate, conf$str_enddate)
-                files$week <- as.Date(conf$str_startdate) + files$id * nperiod
-                files$date <- toTextDate(GetYear(files$week), GetMonth(files$week)+1)
-                files <- files[order(files$id), ]
-                # print(files) 
+        files <- completePeriod(files, nperiod, conf)
 
 		authors <- company_authors(company_name, nperiod, conf$startdate, conf$enddate)
-                if (length(authors) == 0) {
-                    authors <- data.frame(id=numeric(0), authors=numeric(0))
-                }
-                authors = completeZeroPeriod(authors, nperiod, conf$str_startdate, conf$str_enddate)
-                authors$week <- as.Date(conf$str_startdate) + authors$id * nperiod
-                authors$date <- toTextDate(GetYear(authors$week), GetMonth(authors$week)+1)
-                authors <- authors[order(authors$id), ]
+        authors <- completePeriod(authors, nperiod, conf)
 
 		committers <- company_committers(company_name, nperiod, conf$startdate, conf$enddate)
-                if (length(committers) == 0) {
-                    committers <- data.frame(id=numeric(0), committers=numeric(0))
-                }
-                committers = completeZeroPeriod(committers, nperiod, conf$str_startdate, conf$str_enddate)
-                committers$week <- as.Date(conf$str_startdate) + committers$id * nperiod
-                committers$date <- toTextDate(GetYear(committers$week), GetMonth(committers$week)+1)
-                committers <- committers[order(committers$id), ]
-		
+        committers <- completePeriod(committers, nperiod, conf)
+        		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)
@@ -246,8 +185,7 @@ if (conf$reports == 'companies') {
         agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
-		
-		
+				
 		print ("static info")
 		static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
 		createJSON(static_info, paste(c("data/json/",company_aux,"-scm-static.json"), collapse=''))
@@ -273,48 +211,22 @@ if (conf$reports == 'repositories') {
 		repo_name = paste(c("'", repo, "'"), collapse='')
 		repo_aux = paste(c("", repo, ""), collapse='')
 		print (repo_name)
-		
-		print ("commits") 
+        
 		commits <- repo_commits(repo_name, nperiod, conf$startdate, conf$enddate)
-                if (length(commits) == 0) {
-                    commits <- data.frame(id=numeric(0), commits=numeric(0))
-                }
-                commits = completeZeroPeriod(commits, nperiod, conf$str_startdate, conf$str_enddate)
-                commits$week <- as.Date(conf$str_startdate) + commits$id * nperiod
-                commits$date <- toTextDate(GetYear(commits$week), GetMonth(commits$week)+1)
-                commits <- commits[order(commits$id), ]
-                
+        commits <- completePeriod(commits, nperiod, conf)
+        
 		# print ("lines")
 		# lines <- repo_lines(repo_name, period, conf$startdate, conf$enddate)
 		lines <- ""
-		print ("files")
-		files <- repo_files(repo_name, nperiod, conf$startdate, conf$enddate)
-                if (length(files) == 0) {
-                    lines <- data.frame(id=numeric(0), files=numeric(0))
-                }
-                files = completeZeroPeriod(files, nperiod, conf$str_startdate, conf$str_enddate)
-                files$week <- as.Date(conf$str_startdate) + files$id * nperiod
-                files$date <- toTextDate(GetYear(files$week), GetMonth(files$week)+1)
-                files <- files[order(files$id), ]        
 
-		print ("people")
+		files <- repo_files(repo_name, nperiod, conf$startdate, conf$enddate)
+        files <- completePeriod(files, nperiod, conf)
+
 		authors <- repo_authors(repo_name, nperiod, conf$startdate, conf$enddate)
-                if (length(authors) == 0) {
-                    lines <- data.frame(id=numeric(0), authors=numeric(0))
-                }
-                authors = completeZeroPeriod(authors, nperiod, conf$str_startdate, conf$str_enddate)
-                authors$week <- as.Date(conf$str_startdate) + authors$id * nperiod
-                authors$date <- toTextDate(GetYear(authors$week), GetMonth(authors$week)+1)
-                authors <- authors[order(authors$id), ]
+        authors <- completePeriod(authors, nperiod, conf)
 
 		committers <- repo_committers(repo_name, nperiod, conf$startdate, conf$enddate)
-                if (length(committers) == 0) {
-                    lines <- data.frame(id=numeric(0), committers=numeric(0))
-                }
-                committers = completeZeroPeriod(committers, nperiod, conf$str_startdate, conf$str_enddate)
-                committers$week <- as.Date(conf$str_startdate) + committers$id * nperiod
-                committers$date <- toTextDate(GetYear(committers$week), GetMonth(committers$week)+1)
-                committers <- committers[order(committers$id), ]
+        committers <- completePeriod(committers, nperiod, conf)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
@@ -339,14 +251,10 @@ if (conf$reports == 'countries') {
         if (is.na(country)) next
         print (country)
         data <- scm_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
-        data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
-        data$week <- as.Date(conf$str_startdate) + data$id * nperiod
-        data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
-        data <- data[order(data$id), ]
+        data <- completePeriod(data, nperiod, conf) 
         createJSON (data, paste("data/json/",country,"-scm-evolutionary.json",sep=''))
         
         data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
         createJSON (data, paste("data/json/",country,"-scm-static.json",sep=''))        
     }
 }
-        
