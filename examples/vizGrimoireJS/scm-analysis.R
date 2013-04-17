@@ -70,6 +70,10 @@ data_authors <- completePeriod(authors, nperiod, conf)
 files <- evol_files(nperiod, conf$startdate, conf$enddate)
 data_files <- completePeriod(files, nperiod, conf)
 
+#Lines
+lines <- evol_lines(nperiod, conf$startdate, conf$enddate)
+data_lines <- completePeriod(lines, nperiod, conf)
+
 #Branches per month
 branches <- evol_branches(nperiod, conf$startdate, conf$enddate)
 data_branches <- completePeriod(branches, nperiod, conf)
@@ -132,6 +136,7 @@ agg_data = merge(agg_data, data_authors, all = TRUE)
 if (conf$reports == 'companies') 
 	agg_data = merge(agg_data, data_companies, all = TRUE)
 agg_data = merge(agg_data, data_files, all = TRUE)
+agg_data = merge(agg_data, data_lines, all = TRUE)
 agg_data = merge(agg_data, data_branches, all = TRUE)
 agg_data = merge(agg_data, data_repositories, all = TRUE)
 agg_data <- agg_data[order(agg_data$id), ]
