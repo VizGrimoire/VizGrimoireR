@@ -383,3 +383,13 @@ if (conf$reports == 'companies-countries'){
         }
     }
 }
+
+# Demographics
+
+demos <- new ("Demographics")
+demos$age <- as.Date(demos$lastdate) - as.Date(demos$firstdate)
+aux <- data.frame(demos["id"], demos["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, "data/json/scm-demos-pyramid.json")
