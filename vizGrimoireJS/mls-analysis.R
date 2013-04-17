@@ -145,3 +145,14 @@ if (conf$reports == 'companies'){
         createJSON(static_info, paste("data/json/",company,"-mls-static.json", sep=""))
     }
 }
+
+# Demographics
+
+demos <- new ("Demographics","mls")
+demos$age <- as.Date(conf$enddate) - as.Date(demos$firstdate)
+demos$age[demos$age < 0 ] <- 0
+aux <- data.frame(demos["id"], demos["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, "data/json/mls-demos-pyramid.json")

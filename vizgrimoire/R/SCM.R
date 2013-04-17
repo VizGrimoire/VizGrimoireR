@@ -96,6 +96,23 @@ evol_files <- function(period, startdate, enddate){
       return (data_files)
 }
 
+evol_lines <- function(period, startdate, enddate) {
+
+        # Lines added & removed per ",period,"
+	
+        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           sum(cl.added) as added_lines,
+                           sum(cl.removed) as removed_lines
+                    from   commits_lines cl,
+                           scmlog s
+                    where  cl.commit_id = s.id
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="") 
+
+	query <- new("Query", sql = q)
+	data <- run(query)	
+	return (data)	
+}
+
 
 evol_branches <- function(period, startdate, enddate){
     
