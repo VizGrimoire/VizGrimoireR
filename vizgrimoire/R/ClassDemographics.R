@@ -56,6 +56,17 @@ where
     people.id = upeople.id
 group by upeople.uid"
 
+# Query for getting first and last date from MLS database
+query.mls <- "SELECT people.email_address as id,
+                     people.name as name,
+                     people.email_address as email,
+                     MIN(first_date) as firstdatestr,
+                     MAX(first_date) as lastdatestr
+              FROM messages, messages_people, people
+              WHERE messages.message_ID = messages_people.message_id
+                    AND people.email_address = messages_people.email_address
+              GROUP BY people.email_address"
+
 setClass(Class="Demographics",
          contains="data.frame",
          )
@@ -64,16 +75,29 @@ setClass(Class="Demographics",
 ##
 setMethod(f="initialize",
           signature="Demographics",
-          definition=function(.Object, unique = FALSE, query = NULL){
+          definition=function(.Object, type, unique = FALSE, query = NULL){
             cat("~~~ Demographics: initializator ~~~ \n")
-            if (!is.null(query)) {
-              ## We have a query, forget about unique
-              q <- new ("Query", sql = query)
-            } else if (unique) {
-              q <- new ("Query", sql = query.scm.unique)
-            } else {
-              q <- new ("Query", sql = query.scm)
+            ## if (!is.null(query)) {
+            ##   ## We have a query, forget about unique
+            ##   q <- new ("Query", sql = query)
+            ## } else if (unique) {
+            ##   q <- new ("Query", sql = query.scm.unique)
+            ## } else {
+            ##   q <- new ("Query", sql = query.scm)
+            ## }
+            
+            if (type == 'scm'){
+                cat("~~~ SCM query\n")
+                if (unique) {
+                    q <- new ("Query", sql = query.scm.unique)
+                } else {
+                    q <- new ("Query", sql = query.scm)
+                }
+            } else if (type == 'mls'){
+                cat("~~~ MLS query\n")
+                q <- new("Query", sql = query.mls)
             }
+            
             as(.Object,"data.frame") <- run (q)
             .Object$firstdate <- strptime(.Object$firstdatestr,
                                           format="%Y-%m-%d %H:%M:%S")
