@@ -61,7 +61,6 @@ sql_res = 1 # 1 day resolution  SQL
 commits <- evol_commits(sql_res, conf$startdate, conf$enddate)
 data_commits <- completePeriod(commits, nperiod, conf)
 print(data_commits)
-exit
 
 #Committers per month
 committers <- evol_committers(nperiod, conf$startdate, conf$enddate)
