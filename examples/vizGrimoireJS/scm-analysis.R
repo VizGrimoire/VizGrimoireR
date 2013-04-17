@@ -301,7 +301,8 @@ if (conf$reports == 'companies-countries'){
 # Demographics
 
 demos <- new ("Demographics","scm")
-demos$age <- as.Date(demos$lastdate) - as.Date(demos$firstdate)
+demos$age <- as.Date(conf$enddate) - as.Date(demos$firstdate)
+demos$age[demos$age < 0 ] <- 0
 aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
