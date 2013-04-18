@@ -318,17 +318,143 @@ GetMonth <- function (time) {
   return (as.POSIXlt(time)$mon)
 }
 
+##
+## GetWeek
+##
+## Get the week of a datetime object
+##
+## Week of the year as decimal number (00–53) as defined in ISO 8601. 
+## If the week (starting on Monday) containing 1 January has four or 
+## more days in the new year, then it is considered week 1. 
+## Otherwise, it is the last week of the previous year, and the next week is week 1. 
+## (Accepted but ignored on input.)
+##
+GetWeek  <- function (time) {  
+    return (format(time, "%V"))
+}
+
 ## Group daily samples by selected period
-completePeriod <- function (data, nperiod, conf) {
+completePeriod <- function (data, period, conf) {
+    
+    nperiod = 1 # sql resolution, days
+    
     if (length(data) == 0) {
         data <- data.frame(id=numeric(0), commits=numeric(0))
-    }    
-    new_data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
+    }
+    new_data <- completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
     new_data$week <- as.Date(conf$str_startdate) + new_data$id * nperiod
     new_data$date  <- toTextDate(GetYear(new_data$week), GetMonth(new_data$week)+1)
     new_data[is.na(new_data)] <- 0
     new_data <- new_data[order(new_data$id), ]
-    return (new_data);
+    
+    grouped_data <- data.frame()
+    
+    cur_month = GetMonth(as.Date(conf$str_startdate))
+    cur_month_commits = 0
+    for (i in 1:nrow(new_data)) {
+        commits <- new_data[i,2]
+        date <- new_data[i,3]
+        month <- GetMonth(date)
+        print(paste(commits,date,month))
+        if (month != cur_month) {
+            # Store last month data           
+            grouped_data <- cur_month_commits
+            # new month start
+            print ("New month started")
+            cur_month_commits = commits
+            cur_month = month
+        } else {
+            cur_month_commits = cur_month_commits + commits
+        }
+    } 
+    
+    return (new_data)
+}
+
+GetPeriod <- function(period, date) {
+    val = NULL
+    
+    if (!(period %in% c('weeks','months','years'))) 
+        stop (paste("WRONG PERIOD", period))
+    if (period == "weeks") val = GetWeek(date)
+    else if (period == "months") val = GetMonth(date)
+    else if (period == "years") val = GetYear(date)
+    
+    return (val)
+}
+
+GetDateText <- function(period, date) {
+    val = NULL
+    
+    if (!(period %in% c('weeks','months','years'))) 
+        stop (paste("WRONG PERIOD", period))
+    if (period == "weeks") val = strftime(date, "%W %d %b %Y")
+    else if (period == "months") val = strftime(date, "%d %b %Y")
+    else if (period == "years") val = strftime(date, "%d %b %Y")
+    
+    return (val)
+}
+
+## Group daily samples by selected period
+completePeriod2 <- function (data, period, start, end) {
+    
+    if (!(period %in% c('weeks','months','years'))) 
+        stop (paste("WRONG PERIOD", period))   
+    
+    nperiod = 1 # sql resolution, days
+    metric = ""
+    
+    for (column in names(data)) {
+        if (column == "id") {next}
+        else {metric = column; break}
+    }
+    
+    if (length(data) == 0) {
+        data <- data.frame(id=numeric(0), commits=numeric(0))
+        if (metric != "") colnames(data)[2]<-metric
+    }
+    
+    new_data <- completeZeroPeriod(data, nperiod, start, end)
+    new_data$week <- as.Date(start) + new_data$id * nperiod
+    new_data$date  <- toTextDate(GetYear(new_data$week), GetMonth(new_data$week)+1)
+    new_data[is.na(new_data)] <- 0
+    new_data <- new_data[order(new_data$id), ]
+    
+    grouped_data <- list()
+    
+    cur_period = GetPeriod(period,as.Date(conf$str_startdate))
+    cur_period_commits = 0
+    for (i in 1:nrow(new_data)) {
+        commits <- new_data[i,2]
+        date <- new_data[i,3]
+        date_period <- GetPeriod(period,date)
+        
+        if (date_period != cur_period) {
+            # Store last period data           
+            grouped_data[['id']] <- c(grouped_data[['id']], past_date)
+            grouped_data[[metric]] <- c(grouped_data[[metric]], 
+                    cur_period_commits)
+            grouped_data[['date']] <- c(grouped_data[['date']], 
+                    GetDateText(period, past_date))
+            cur_period_commits = commits
+            cur_period = date_period
+        } else {
+            cur_period_commits = cur_period_commits + commits
+            past_date = date
+        }
+    }
+    if (date_period == cur_period) {
+        grouped_data[['id']] <- c(grouped_data[['id']], date)
+        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_commits)
+        grouped_data[['date']] <- c(grouped_data[['date']], 
+                GetDateText(period, date))
+    }
+    
+    grouped_data<-data.frame(id=grouped_data[['id']],metric=grouped_data[[metric]],
+            date=grouped_data[['date']],stringsAsFactors=FALSE)
+    colnames(grouped_data)[2]<-metric
+    
+    return (grouped_data)
 }
 
 #
