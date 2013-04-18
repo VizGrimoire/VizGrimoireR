@@ -54,7 +54,8 @@ if (conf$granularity == 'weeks'){
    nperiod = 7
 }
 
-sql_res = 1 # 1 day resolution  SQL
+# sql_res = 1 # 1 day resolution  SQL
+sql_res = nperiod
 
 #Commits per month
 # commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
