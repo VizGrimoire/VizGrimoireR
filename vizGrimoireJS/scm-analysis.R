@@ -61,7 +61,6 @@ sql_res = nperiod
 # commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
 commits <- evol_commits(sql_res, conf$startdate, conf$enddate)
 data_commits <- completePeriod(commits, nperiod, conf)
-print(data_commits)
 
 #Committers per month
 committers <- evol_committers(nperiod, conf$startdate, conf$enddate)
