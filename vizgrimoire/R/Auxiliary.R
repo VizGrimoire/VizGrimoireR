@@ -374,6 +374,22 @@ GetDateText <- function(period, date) {
     return (val)
 }
 
+# Normalize JSON for all metrics
+completePeriodMulti <- function(data, metrics, period,startdate, enddate) {    
+    for (metric in metrics) {        
+        metric_data <- data.frame(id=data$id,metric=data[[metric]])
+        colnames(metric_data)[2]<-metric
+        print(metric_data)      
+        metric_data <- completePeriod2(metric_data, period, 
+                conf$str_startdate, conf$str_enddate)
+        if (!(exists('new_data'))) new_data <- metric_data
+        else new_data <- merge(new_data, metric_data, all = TRUE)
+    }
+    print(new_data)
+    return(new_data)    
+}
+
+
 ## Group daily samples by selected period
 completePeriod2 <- function (data, period, start, end, metric='unknow') {
     
@@ -401,9 +417,9 @@ completePeriod2 <- function (data, period, start, end, metric='unknow') {
     grouped_data <- list()
     
     cur_period = GetPeriod(period,as.Date(conf$str_startdate))
-    cur_period_commits = 0
+    cur_period_metric_val = 0
     for (i in 1:nrow(new_data)) {
-        commits <- new_data[i,2]
+        metric_val <- new_data[i,2]
         date <- new_data[i,3]
         date_period <- GetPeriod(period,date)
         
@@ -413,17 +429,17 @@ completePeriod2 <- function (data, period, start, end, metric='unknow') {
             grouped_data[['date']] <- c(grouped_data[['date']], 
                                             GetDateText(period, past_date))                
             grouped_data[[metric]] <- c(grouped_data[[metric]], 
-                    cur_period_commits)
-            cur_period_commits = commits
+                    cur_period_metric_val)
+            cur_period_metric_val = metric_val
             cur_period = date_period
         } else {
-            cur_period_commits = cur_period_commits + commits
+            cur_period_metric_val = cur_period_metric_val + metric_val
             past_date = date
         }
     }
     if (date_period == cur_period) {
         grouped_data[['id']] <- c(grouped_data[['id']], date)
-        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_commits)
+        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_metric_val)
         grouped_data[['date']] <- c(grouped_data[['date']], 
                 GetDateText(period, date))
     }
