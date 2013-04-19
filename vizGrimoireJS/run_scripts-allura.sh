@@ -3,13 +3,14 @@
 #$2 = MLS database
 #$3 = ITS database
 
-# Example: ./run_scripts.sh dic_cvsanaly_openstack_1289_2013_04_04 dic_mlstats_openstack_1290_2013_04_04 lcanas_bicho_openstack_1291_2013_04_04
 # Allura: ./run_scripts-allura.sh acs_cvsanaly_allura_1049 acs_mlstats_allura_1049 acs_bicho_allura_1049
 
 rm -rf data/json
 mkdir -p data/json
 mkdir -p data/allura
 
+R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2009-10-14 -e 2009-11-28 -g months < scm-analysis.R
+exit
 #MLS
 R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R
 R --vanilla --args -d $2 -u root -i $1 -r companies -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R

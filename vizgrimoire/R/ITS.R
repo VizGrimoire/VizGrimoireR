@@ -41,7 +41,6 @@ evol_closed <- function (closed_condition, period, startdate, enddate) {
                 GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
-    print(data)
     return (data)	
 }
 
@@ -57,7 +56,6 @@ evol_changed <- function (period, startdate, enddate) {
                 GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
-    print(data)
     return (data)	
 }
 
@@ -72,7 +70,6 @@ evol_opened <- function (period, startdate, enddate) {
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
-    print(data)
     return (data)
 }
 
@@ -87,7 +84,6 @@ evol_opened_gerrit <- function (period, startdate, enddate) {
                       issues.id = issues_ext_gerrit.issue_id AND submitted_on<mod_date
                       AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -104,7 +100,6 @@ evol_closed_gerrit <- function (period, startdate, enddate) {
                       AND mod_date >= ",startdate," AND mod_date < ",enddate,"
                       AND (status='MERGED' or status='ABANDONED')
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -118,7 +113,6 @@ its_evol_repositories <- function(period, startdate, enddate) {
                 GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)
     data <- run(query)
-    print(data)
     return (data)
 }
 
@@ -134,7 +128,6 @@ its_evol_companies <- function(period, startdate, enddate, identities_db) {
                     GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
     query <- new ("Query", sql = q)    
     data <- run(query)
-    print(data)
     return (data)
 }
 
@@ -285,7 +278,6 @@ top_closers <- function(days = 0, startdate, enddate, identites_db) {
                 ORDER BY closed desc
                 LIMIT 10;", sep="")
 
-	print (q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

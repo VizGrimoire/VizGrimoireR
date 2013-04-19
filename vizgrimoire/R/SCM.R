@@ -35,7 +35,6 @@ evol_commits <- function(period, startdate, enddate){
                   where  s.date >=", startdate, " and
                          s.date < ", enddate,"
                          GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")" , sep="")
-      
       query <- new ("Query", sql = q)
       data_commits <- run(query)
       return (data_commits)
@@ -952,6 +951,7 @@ evol_companies <- function(period, startdate, enddate){
                            s.date >=", startdate, " and
                            s.date < ", enddate, "
                     group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+    print(q)
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)	

@@ -213,7 +213,7 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
     return (mls_monthly)
 }
 
-analyze.monthly.list <- function (listname, period, startdate, enddate) {
+analyze.monthly.list <- function (listname, period, startdate, enddate, gperiod='') {
     
     field = "mailing_list"
     listname_file = gsub("/","_",listname)
@@ -341,8 +341,10 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
     ## print(senders_monthly)
     
     
-    sent_monthly <- completePeriod(sent_monthly, period, conf)
-    senders_monthly <- completePeriod(senders_monthly, period, conf)
+    sent_monthly <- completePeriodMulti(sent_monthly, c('sent'),gperiod, 
+                conf$str_startdate, startdate)         
+    senders_monthly <- completePeriodMulti(senders_monthly, c('senders'),gperiod, 
+                conf$str_startdate, enddate)
     
     mls_monthly <- merge (sent_monthly, senders_monthly, all = TRUE)
     mls_monthly[is.na(mls_monthly)] <- 0

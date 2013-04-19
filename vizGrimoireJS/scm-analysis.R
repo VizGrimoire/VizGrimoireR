@@ -34,6 +34,7 @@
 
 library("vizgrimoire")
 
+
 ## Analyze args, and produce config params from them
 ## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
 ##                            user = "root", password = NULL,
@@ -45,55 +46,72 @@ library("vizgrimoire")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
-if (conf$granularity == 'months'){
-   period = 'month'
-   nperiod = 31
-}
-if (conf$granularity == 'weeks'){
-   period='week'
-   nperiod = 7
-}
 
-# sql_res = 1 # 1 day resolution  SQL
-sql_res = nperiod
+sql_res = 1 # 1 day resolution  SQL
+period = conf$granularity
+if (period == 'months'){
+       sql_period = 'month'
+}
+if (period == 'weeks'){
+       sql_period='week'
+}
+if (period == 'years'){
+    sql_period='year'
+}
 
 #Commits per month
 # commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
 commits <- evol_commits(sql_res, conf$startdate, conf$enddate)
-data_commits <- completePeriod(commits, nperiod, conf)
-print(data_commits)
+print(commits)
+data_commits <- completePeriod2(commits, period, 
+        conf$str_startdate, conf$str_enddate)
 
 #Committers per month
-committers <- evol_committers(nperiod, conf$startdate, conf$enddate)
-data_committers <- completePeriod(committers, nperiod, conf)
+committers <- evol_committers(sql_res, conf$startdate, conf$enddate)
+data_committers <- completePeriod2(committers, period, 
+        conf$str_startdate, conf$str_enddate)
 
 # Authors per month
-authors <- evol_authors(nperiod, conf$startdate, conf$enddate)
-data_authors <- completePeriod(authors, nperiod, conf)
+authors <- evol_authors(sql_res, conf$startdate, conf$enddate)
+data_authors <- completePeriod2(authors, period, 
+        conf$str_startdate, conf$str_enddate)
 
 #Files per month
-files <- evol_files(nperiod, conf$startdate, conf$enddate)
-data_files <- completePeriod(files, nperiod, conf)
+files <- evol_files(sql_res, conf$startdate, conf$enddate)
+data_files <- completePeriod2(files, period, 
+        conf$str_startdate, conf$str_enddate)
 
-#Lines
-lines <- evol_lines(nperiod, conf$startdate, conf$enddate)
-data_lines <- completePeriod(lines, nperiod, conf)
+#Lines: two metrics. process each one isolate and merge
+lines <- evol_lines(sql_res, conf$startdate, conf$enddate)
+data_lines<- completePeriodMulti(lines, c('added_lines','removed_lines'),period, 
+        conf$str_startdate, conf$str_enddate)
+
+#lines_added <- data.frame(id=lines$id,added_lines=lines$added_lines)
+#lines_added <- completePeriod2(lines_added, period, 
+#        conf$str_startdate, conf$str_enddate)
+#lines_removed <- data.frame(id=lines$id,removed_lines=lines$removed_lines)
+#lines_removed <- completePeriod2(lines_removed, period, 
+#        conf$str_startdate, conf$str_enddate)
+#data_lines <- merge(lines_added,lines_removed, all = TRUE)
 
 #Branches per month
-branches <- evol_branches(nperiod, conf$startdate, conf$enddate)
-data_branches <- completePeriod(branches, nperiod, conf)
+branches <- evol_branches(sql_res, conf$startdate, conf$enddate)
+data_branches <- completePeriod2(branches, period, 
+        conf$str_startdate, conf$str_enddate)
 
 #Repositories per month
-repositories <- evol_repositories(nperiod, conf$startdate, conf$enddate)
-data_repositories <- completePeriod(repositories, nperiod, conf)
+repositories <- evol_repositories(sql_res, conf$startdate, conf$enddate)
+data_repositories <- completePeriod2(repositories, period, 
+        conf$str_startdate, conf$str_enddate)
 
 if (conf$reports == 'companies') { 
-    companies <- evol_companies(nperiod, conf$startdate, conf$enddate)
-    data_companies <- completePeriod(companies, nperiod, conf)
+    companies <- evol_companies(sql_res, conf$startdate, conf$enddate)
+    data_companies <- completePeriod2(companies, period, 
+                    conf$str_startdate, conf$str_enddate)
 }
 
 # Fixed data
-info_data = evol_info_data(period, conf$startdate, conf$enddate)
+info_data = evol_info_data(sql_period, conf$startdate, conf$enddate)
 latest_activity7 = last_activity(7)
 latest_activity30 = last_activity(30)
 latest_activity90 = last_activity(90)
@@ -173,31 +191,37 @@ if (conf$reports == 'companies') {
 		company_aux = paste(c("", company, ""), collapse='')
 		print (company_name)
 		 
-		commits <- company_commits(company_name, nperiod, conf$startdate, conf$enddate)        
-        commits <- completePeriod(commits, nperiod, conf)
+		commits <- company_commits(company_name, sql_res, conf$startdate, conf$enddate)        
+        commits <- completePeriod2(commits, period, 
+                        conf$str_startdate, conf$str_enddate)
+
+        #Lines: two metrics. process each one isolate and merge
+        lines <-company_lines(company_name, sql_res, conf$startdate, conf$enddate)
+        lines<- completePeriodMulti(lines, c('added_lines','removed_lines'),period, 
+                        conf$str_startdate, conf$str_enddate)
         
-		lines <-company_lines(company_name, nperiod, conf$startdate, conf$enddate)
-        lines <- completePeriod(lines, nperiod, conf)
+		files <- company_files(company_name, sql_res, conf$startdate, conf$enddate)
+        files <- completePeriod2(files, period, 
+                conf$str_startdate, conf$str_enddate)
 
-		files <- company_files(company_name, nperiod, conf$startdate, conf$enddate)
-        files <- completePeriod(files, nperiod, conf)
+		authors <- company_authors(company_name, sql_res, conf$startdate, conf$enddate)
+        authors <- completePeriod2(authors, period, 
+                conf$str_startdate, conf$str_enddate)
 
-		authors <- company_authors(company_name, nperiod, conf$startdate, conf$enddate)
-        authors <- completePeriod(authors, nperiod, conf)
-
-		committers <- company_committers(company_name, nperiod, conf$startdate, conf$enddate)
-        committers <- completePeriod(committers, nperiod, conf)
+		committers <- company_committers(company_name, sql_res, conf$startdate, conf$enddate)
+        committers <- completePeriod2(committers, period, 
+                conf$str_startdate, conf$str_enddate, 'committers')
         		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)
 		agg_data = merge(agg_data, committers, all = TRUE)
-                agg_data <- agg_data[order(agg_data$id), ]
+        agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 				
 		print ("static info")
-		static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
+		static_info <- evol_info_data_company(company_name, sql_period, conf$startdate, conf$enddate)
 		createJSON(static_info, paste(c("data/json/",company_aux,"-scm-static.json"), collapse=''))
 		
 		print ("top authors")
@@ -222,32 +246,36 @@ if (conf$reports == 'repositories') {
 		repo_aux = paste(c("", repo, ""), collapse='')
 		print (repo_name)
         
-		commits <- repo_commits(repo_name, nperiod, conf$startdate, conf$enddate)
-        commits <- completePeriod(commits, nperiod, conf)
+		commits <- repo_commits(repo_name, sql_res, conf$startdate, conf$enddate)
+        commits <- completePeriod2(commits, period, 
+                conf$str_startdate, conf$str_enddate)
         
 		# print ("lines")
 		# lines <- repo_lines(repo_name, period, conf$startdate, conf$enddate)
 		lines <- ""
 
-		files <- repo_files(repo_name, nperiod, conf$startdate, conf$enddate)
-        files <- completePeriod(files, nperiod, conf)
+		files <- repo_files(repo_name, sql_res, conf$startdate, conf$enddate)
+        files <- completePeriod2(files, period, 
+                conf$str_startdate, conf$str_enddate)
 
-		authors <- repo_authors(repo_name, nperiod, conf$startdate, conf$enddate)
-        authors <- completePeriod(authors, nperiod, conf)
+		authors <- repo_authors(repo_name, sql_res, conf$startdate, conf$enddate)
+        authors <- completePeriod2(authors, period, 
+                conf$str_startdate, conf$str_enddate)
 
-		committers <- repo_committers(repo_name, nperiod, conf$startdate, conf$enddate)
-        committers <- completePeriod(committers, nperiod, conf)
+		committers <- repo_committers(repo_name, sql_res, conf$startdate, conf$enddate)
+        committers <- completePeriod2(committers, period, 
+                conf$str_startdate, conf$str_enddate)
 		
 		agg_data = merge(commits, lines, all = TRUE)
 		agg_data = merge(agg_data, files, all = TRUE)
 		agg_data = merge(agg_data, authors, all = TRUE)	
 		agg_data = merge(agg_data, committers, all = TRUE)
-                agg_data <- agg_data[order(agg_data$id), ]
+        agg_data <- agg_data[order(agg_data$id), ]
 		
 		createJSON(agg_data, paste(c("data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
 		print ("static info")
-		static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
+		static_info <- evol_info_data_repo(repo_name, sql_period, conf$startdate, conf$enddate)
 		createJSON(static_info, paste(c("data/json/",repo_aux,"-scm-static.json"), collapse=''))		
 	}		
 }
@@ -260,10 +288,19 @@ if (conf$reports == 'countries') {
 	for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- scm_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
-        data <- completePeriod(data, nperiod, conf) 
+        #data: two metrics. process each one isolate and merge
+        data <- scm_countries_evol(conf$identities_db, country, sql_res, conf$startdate, conf$enddate)        
+        data_commits <- data.frame(id=data$id,commits=data$commits)
+        data_commits <- completePeriod2(data_commits, period, 
+                conf$str_startdate, conf$str_enddate)
+        data_authors <- data.frame(id=data$id,authors=data$authors)
+        data_authors <- completePeriod2(data_authors, period, 
+                conf$str_startdate, conf$str_enddate)
+        data <- merge(data_commits,data_authors, all = TRUE)
+
         createJSON (data, paste("data/json/",country,"-scm-evolutionary.json",sep=''))
         
+        # TODO: not using sql_period???
         data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
         createJSON (data, paste("data/json/",country,"-scm-static.json",sep=''))        
     }
@@ -282,17 +319,13 @@ if (conf$reports == 'companies-countries'){
             ###########
             if (is.na(country)) next
             print (paste(country, "<->", company))
-            data <- scm_companies_countries_evol(conf$identities_db, company, country, nperiod, conf$startdate, conf$enddate)
-            if (length(data) == 0) {
-                data <- data.frame(id=numeric(0),commits=numeric(0),authors=numeric(0))
-            } 
-
-            data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
-            data$week <- as.Date(conf$str_startdate) + data$id * nperiod
-            data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
-            data <- data[order(data$id), ]
+            data <- scm_companies_countries_evol(conf$identities_db, company, country, sql_res, conf$startdate, conf$enddate)
+            data <- completePeriod2(data, period, 
+                                    conf$str_startdate, conf$str_enddate) 
+            
             createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-evolutionary.json",sep=''))
             
+            # TODO: not using sql_period???            
             data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
             createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-static.json",sep=''))        
 

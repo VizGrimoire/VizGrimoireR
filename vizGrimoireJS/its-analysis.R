@@ -29,6 +29,7 @@
 
 library("vizgrimoire")
 
+
 ## Analyze args, and produce config params from them
 ## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
 ##                            user = "root", password = NULL,
@@ -59,15 +60,16 @@ if (conf$backend == 'launchpad'){
     closed_condition <- "(new_value='Fix Committed')"
 }
 
-
-# period of time
-if (conf$granularity == 'months'){
-   period = 'month'
-   nperiod = 31
+sql_res = 1 # 1 day resolution  SQL
+period = conf$granularity
+if (period == 'months'){
+    sql_period = 'month'
 }
-if (conf$granularity == 'weeks'){
-   period = 'week'
-   nperiod = 7
+if (period == 'weeks'){
+    sql_period='week'
+}
+if (period == 'years'){
+    sql_period='year'
 }
 
 # dates
@@ -77,25 +79,29 @@ enddate <- conf$enddate
 # database with unique identities
 identities_db <- conf$identities_db
 
-closed <- evol_closed(closed_condition, nperiod, startdate, enddate)
-closed <- completePeriod(closed, nperiod, conf)
+closed <- evol_closed(closed_condition, sql_res, startdate, enddate)
+closed <- completePeriodMulti(closed, c('closers','closed'),period, 
+        conf$str_startdate, conf$str_enddate)
+# closed <- completePeriod(closed, nperiod, conf)
 
-changed <- evol_changed(nperiod, startdate, enddate)
-changed <- completePeriod(changed, nperiod, conf)
+changed <- evol_changed(sql_res, startdate, enddate)
+changed <- completePeriodMulti(changed, c('changed','changers'), period, 
+        conf$str_startdate, conf$str_enddate)
 
-open <- evol_opened(nperiod, startdate, enddate)
-open <- completePeriod(open, nperiod, conf)
+open <- evol_opened(sql_res, startdate, enddate)
+open <- completePeriodMulti(open,c('opened','openers'), period, conf$str_startdate, conf$str_enddate)
 
-repos <- its_evol_repositories(nperiod, startdate, enddate)
-repos <- completePeriod(repos, nperiod, conf)
+repos <- its_evol_repositories(sql_res, startdate, enddate)
+repos <- completePeriod2(repos, period, conf$str_startdate, conf$str_enddate)
 
 issues <- merge (open, closed, all = TRUE)
 issues <- merge (issues, changed, all = TRUE)
 issues <- merge (issues, repos, all = TRUE)
 
 if (conf$reports == 'companies') {
-    info_data_companies = its_evol_companies (nperiod, startdate, enddate, identities_db)
-    info_data_companies <- completePeriod(info_data_companies, nperiod, conf)
+    info_data_companies = its_evol_companies (sql_res, startdate, enddate, identities_db)
+    info_data_companies <- completePeriod2(info_data_companies, period, 
+            conf$str_startdate, conf$str_enddate)
     issues = merge(issues, info_data_companies, all = TRUE)
 }
 issues[is.na(issues)] <- 0
@@ -144,20 +150,24 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		# EVOLUTION INFO
-		closed <- repo_evol_closed(repo_name, closed_condition, nperiod, startdate, enddate)
-        closed <- completePeriod(closed, nperiod, conf)
+		closed <- repo_evol_closed(repo_name, closed_condition, sql_res, startdate, enddate)
+        closed <- completePeriodMulti(closed, c('closers','closed'),period, 
+                conf$str_startdate, conf$str_enddate)
 
-		changed <- repo_evol_changed(repo_name, nperiod, startdate, enddate)
-        changed <- completePeriod(changed, nperiod, conf)
-                
-		opened <- repo_evol_opened(repo_name, nperiod, startdate, enddate)
-        opened <- completePeriod(opened, nperiod, conf)
-                
+		changed <- repo_evol_changed(repo_name, sql_res, startdate, enddate)
+        changed <- completePeriodMulti(changed, c('changed','changers'), period, 
+                conf$str_startdate, conf$str_enddate)
+
+		opened <- repo_evol_opened(repo_name, sql_res, startdate, enddate)
+        opened <- completePeriodMulti(opened,c('opened','openers'), period, 
+                conf$str_startdate, conf$str_enddate)
+        
 		agg_data = merge(closed, changed, all = TRUE)
 		agg_data = merge(agg_data, opened, all = TRUE)
 		agg_data[is.na(agg_data)] <- 0
         agg_data <- agg_data[order(agg_data$id),]		
-		createJSON(agg_data, paste(c("data/json/",repo_file,"-its-evolutionary.json"), collapse=''))
+		
+        createJSON(agg_data, paste(c("data/json/",repo_file,"-its-evolutionary.json"), collapse=''))
 		
 		# STATIC INFO
 		static_info <- its_static_info_repo(repo_name)
@@ -177,14 +187,21 @@ if (conf$reports == 'companies') {
         company_name = paste(c("'", company, "'"), collapse='')
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
-        closed <- its_company_evol_closed(company_name, closed_condition, nperiod, startdate, enddate, identities_db)
-        closed <- completePeriod(closed, nperiod, conf)    
+        closed <- its_company_evol_closed(company_name, closed_condition, sql_res, 
+                startdate, enddate, identities_db)
+        closed <- completePeriodMulti(closed, c('closers','closed'),period, 
+                conf$str_startdate, conf$str_enddate)        
 
-        changed <- its_company_evol_changed(company_name, nperiod, startdate, enddate, identities_db)
-        changed <- completePeriod(changed, nperiod, conf)
+        changed <- its_company_evol_changed(company_name, sql_res, 
+                startdate, enddate, identities_db)
+        changed <- completePeriodMulti(changed, c('changed','changers'), period, 
+                conf$str_startdate, conf$str_enddate)
         
-        opened <- its_company_evol_opened(company_name, nperiod, startdate, enddate, identities_db)
-        opened <- completePeriod(opened, nperiod, conf)
+        opened <- its_company_evol_opened(company_name, sql_res, 
+                startdate, enddate, identities_db)               
+        opened <- completePeriodMulti(opened,c('opened','openers'), period, 
+                conf$str_startdate, conf$str_enddate)
+        
         
         agg_data = merge(closed, changed, all = TRUE)
         agg_data = merge(agg_data, opened, all = TRUE)
@@ -213,8 +230,9 @@ if (conf$reports == 'countries') {
         if (is.na(country)) next
         print (country)
         
-        data <- its_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)
-        data <- completePeriod(data, nperiod, conf)
+        data <- its_countries_evol(conf$identities_db, country, sql_res, conf$startdate, conf$enddate)        
+        data <- completePeriodMulti(data, c('closed','closers'), period, 
+                conf$str_startdate, conf$str_enddate)
         createJSON (data, paste("data/json/",country,"-its-evolutionary.json",sep=''))
         
         data <- its_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
@@ -222,6 +240,7 @@ if (conf$reports == 'countries') {
     }    
 }
     
+stop('Not creating ttf quantiles')
 
 ## Quantiles
 

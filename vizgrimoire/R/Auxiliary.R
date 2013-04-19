@@ -376,16 +376,18 @@ GetDateText <- function(period, date) {
 
 # Normalize JSON for all metrics
 completePeriodMulti <- function(data, metrics, period,startdate, enddate) {    
-    for (metric in metrics) {        
-        metric_data <- data.frame(id=data$id,metric=data[[metric]])
-        colnames(metric_data)[2]<-metric
-        print(metric_data)      
+    for (metric in metrics) {
+        if (length(data[[metric]]) == 0) {
+            metric_data <- data.frame(id=numeric(0), unknown=numeric(0))
+        } else {
+            metric_data <- data.frame(id=data$id,metric=data[[metric]])
+        }
+        colnames(metric_data)[2]<-metric      
         metric_data <- completePeriod2(metric_data, period, 
                 conf$str_startdate, conf$str_enddate)
         if (!(exists('new_data'))) new_data <- metric_data
         else new_data <- merge(new_data, metric_data, all = TRUE)
     }
-    print(new_data)
     return(new_data)    
 }
 

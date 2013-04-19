@@ -33,15 +33,18 @@ library("vizgrimoire")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
-# period of time
-if (conf$granularity == 'months'){
-   period = 'month'
-   nperiod = 31
+sql_res = 1 # 1 day resolution  SQL
+period = conf$granularity
+if (period == 'months'){
+    sql_period = 'month'
 }
-if (conf$granularity == 'weeks'){
-   period = 'week'
-   nperiod = 7
+if (period == 'weeks'){
+    sql_period='week'
 }
+if (period == 'years'){
+    sql_period='year'
+}
+
 
 identities_db = conf$identities_db
 
@@ -90,8 +93,11 @@ if (conf$reports == 'countries') {
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- analyze.monthly.mls.countries.evol(identities_db, country, nperiod, startdate, enddate)
-        data <- completePeriod(data, nperiod, conf)        
+        data <- analyze.monthly.mls.countries.evol(identities_db, country, sql_res, startdate, enddate)
+        # data <- completePeriod(data, period, conf)
+        data <- completePeriodMulti(data, c('sent','senders'),period, 
+                        conf$str_startdate, conf$str_enddate)
+        
         createJSON (data, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
         
         data <- analyze.monthly.mls.countries.static(identities_db, country, startdate, enddate)
@@ -100,11 +106,12 @@ if (conf$reports == 'countries') {
 }
 
 for (mlist in mailing_lists$mailing_list) {
-    analyze.monthly.list(mlist, nperiod, startdate, enddate)
+    analyze.monthly.list(mlist, sql_res, startdate, enddate, period)
 }
 
-data.monthly <- get.monthly(nperiod, startdate, enddate)
-data.monthly <- completePeriod(data.monthly, nperiod, conf)
+data.monthly <- get.monthly(sql_res, startdate, enddate)
+data.monthly <- completePeriodMulti(data.monthly, c('sent'),period, 
+        conf$str_startdate, conf$str_enddate) 
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders
@@ -134,8 +141,9 @@ if (conf$reports == 'companies'){
     for (company in company_names$name){       
         print (company)
         company_name = paste("'",company,"'",sep="")
-        post_posters = company_posts_posters (company_name, identities_db, nperiod, startdate, enddate)
-        post_posters <- completePeriod(post_posters, nperiod, conf)        
+        post_posters = company_posts_posters (company_name, identities_db, sql_res, startdate, enddate)
+        post_posters <- completePeriodMulti(post_posters, c('sent','senders'),period, 
+                conf$str_startdate, conf$str_enddate)        
         createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
 
         top_senders = company_top_senders (company_name, identities_db, period, startdate, enddate)
