@@ -96,7 +96,7 @@ if (conf$reports == 'countries') {
         data <- analyze.monthly.mls.countries.evol(identities_db, country, sql_res, startdate, enddate)
         # data <- completePeriod(data, period, conf)
         data <- completePeriodMulti(data, c('sent','senders'),period, 
-                        conf$str_startdate, conf$str_enddate)
+                        conf$str_startdate, conf$str_enddate)        
         
         createJSON (data, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
         
@@ -130,7 +130,7 @@ for (mlist in mailing_lists$mailing_list) {
 
 data.monthly <- get.monthly(sql_res, startdate, enddate)
 data.monthly <- completePeriodMulti(data.monthly, c('sent'),period, 
-        conf$str_startdate, conf$str_enddate) 
+        conf$str_startdate, conf$str_enddate)
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
 # Top senders

@@ -367,8 +367,9 @@ GetDateText <- function(period, date) {
     if (!(period %in% c('weeks','months','years'))) 
         stop (paste("WRONG PERIOD", period))
     if (period == "weeks") val = strftime(date, "%W %d %b %Y")
-    else if (period == "months") val = strftime(date, "%d %b %Y")
-    else if (period == "years") val = strftime(date, "%d %b %Y")
+    # else if (period == "months") val = strftime(date, "%d %b %Y")
+    else if (period == "months") val = strftime(date, "%b %Y")
+    else if (period == "years") val = strftime(date, "%Y")
     
     return (val)
 }
@@ -419,18 +420,21 @@ completePeriod2 <- function (data, period, start, end, metric='unknow') {
     
     cur_period = GetPeriod(period,as.Date(conf$str_startdate))
     cur_period_metric_val = 0
+    count = 0
     for (i in 1:nrow(new_data)) {
         metric_val <- new_data[i,2]
         date <- new_data[i,3]
         date_period <- GetPeriod(period,date)
         
         if (date_period != cur_period) {
-            # Store last period data 
+            # Store last period data
             grouped_data[['id']] <- c(grouped_data[['id']], past_date)
-            grouped_data[['date']] <- c(grouped_data[['date']], 
-                                            GetDateText(period, past_date))                
             grouped_data[[metric]] <- c(grouped_data[[metric]], 
                     cur_period_metric_val)
+            grouped_data[['date']] <- c(grouped_data[['date']], 
+                    GetDateText(period, past_date))                            
+            grouped_data[['id2']] <- c(grouped_data[['id2']], count)
+            count = count+1            
             cur_period_metric_val = metric_val
             cur_period = date_period
         } else {
@@ -440,15 +444,18 @@ completePeriod2 <- function (data, period, start, end, metric='unknow') {
     }
     if (date_period == cur_period) {
         grouped_data[['id']] <- c(grouped_data[['id']], date)
-        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_metric_val)
+        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_metric_val)        
         grouped_data[['date']] <- c(grouped_data[['date']], 
                 GetDateText(period, date))
+        grouped_data[['id2']] <- c(grouped_data[['id2']], count)
     }
 
-    grouped_data<-data.frame(id=grouped_data[['id']],metric=grouped_data[[metric]],
+    grouped_data<-data.frame(days=grouped_data[['id']],
+            metric=grouped_data[[metric]],
+            id=grouped_data[['id2']],
             date=grouped_data[['date']],stringsAsFactors=FALSE)
     colnames(grouped_data)[2]<-metric
-    
+
     return (grouped_data)
 }
 
