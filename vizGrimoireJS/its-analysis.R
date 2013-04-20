@@ -240,8 +240,7 @@ if (conf$reports == 'countries') {
     }    
 }
     
-stop('Not creating ttf quantiles')
-
+if (0) {
 ## Quantiles
 
 ## Which quantiles we're interested in
@@ -269,3 +268,4 @@ events.toatt <- new ("TimedEvents",
                      changed$open, changed$toattention %/% 60)
 quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
 JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')
+}

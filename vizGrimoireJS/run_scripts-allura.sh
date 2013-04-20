@@ -9,8 +9,6 @@ rm -rf data/json
 mkdir -p data/json
 mkdir -p data/allura
 
-R --vanilla --args -d $1 -u root -i $1 -r repositories -s 2009-10-14 -e 2009-11-28 -g months < scm-analysis.R
-exit
 #MLS
 R --vanilla --args -d $2 -u root -i $1 -r repositories -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R
 R --vanilla --args -d $2 -u root -i $1 -r companies -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R
