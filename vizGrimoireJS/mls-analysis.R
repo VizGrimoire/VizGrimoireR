@@ -106,7 +106,26 @@ if (conf$reports == 'countries') {
 }
 
 for (mlist in mailing_lists$mailing_list) {
-    analyze.monthly.list(mlist, sql_res, startdate, enddate, period)
+    # Evol data
+    data<-analyze.monthly.list.evol(mlist, sql_res, startdate, enddate)
+    data <- completePeriodMulti(data, c('sent','senders'),period, 
+            conf$str_startdate, conf$str_enddate)
+    data[is.na(data)] <- 0
+    data <- data[order(data$id),]
+    
+    listname_file = gsub("/","_",mlist)
+    
+    # TODO: Multilist approach. We will obsolete it in future
+    createJSON (data, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
+    # Multirepos filename
+    createJSON (data, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
+        
+    # Static data
+    data<-analyze.monthly.list.static(mlist, sql_res, startdate, enddate)
+    # TODO: Multilist approach. We will obsolete it in future
+	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
+	# Multirepos filename
+	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
 }
 
 data.monthly <- get.monthly(sql_res, startdate, enddate)

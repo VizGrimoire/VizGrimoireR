@@ -62,7 +62,7 @@ if (period == 'years'){
 #Commits per month
 # commits <- evol_commits(nperiod, conf$startdate, conf$enddate)
 commits <- evol_commits(sql_res, conf$startdate, conf$enddate)
-print(commits)
+
 data_commits <- completePeriod2(commits, period, 
         conf$str_startdate, conf$str_enddate)
 

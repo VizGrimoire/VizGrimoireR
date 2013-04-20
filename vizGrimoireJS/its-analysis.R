@@ -242,7 +242,7 @@ if (conf$reports == 'countries') {
     
 if (0) {
 ## Quantiles
-
+if (0) {
 ## Which quantiles we're interested in
 quantiles_spec = c(.99,.95,.5,.25)
 

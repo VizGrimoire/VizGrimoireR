@@ -335,14 +335,13 @@ GetWeek  <- function (time) {
 
 ## Group daily samples by selected period
 completePeriod <- function (data, period, conf) {
-    
-    nperiod = 1 # sql resolution, days
-    
+        
     if (length(data) == 0) {
+        # TODO: broken, only works for commit metric
         data <- data.frame(id=numeric(0), commits=numeric(0))
     }
-    new_data <- completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
-    new_data$week <- as.Date(conf$str_startdate) + new_data$id * nperiod
+    new_data <- completeZeroPeriod(data, period, conf$str_startdate, conf$str_enddate)
+    new_data$week <- as.Date(conf$str_startdate) + new_data$id * period
     new_data$date  <- toTextDate(GetYear(new_data$week), GetMonth(new_data$week)+1)
     new_data[is.na(new_data)] <- 0
     new_data <- new_data[order(new_data$id), ]
