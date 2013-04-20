@@ -213,35 +213,12 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
     return (mls_monthly)
 }
 
-analyze.monthly.list <- function (listname, period, startdate, enddate) {
+analyze.monthly.list.evol <- function (listname, period, startdate, enddate) {
     
     field = "mailing_list"
-    listname_file = gsub("/","_",listname)
-    
-    if(length(i <- grep("http",listname))) {
+    if (length(i <- grep("http",listname))) {
         field = "mailing_list_url"
-        cat(listname, " is a URL\n")
-    }
-    
-    ## q <- paste("SELECT p.id AS id,
-    ##                    p.year AS year,
-    ##                    p.",period," AS ",period,",
-    ##                    DATE_FORMAT(p.date, '%b %Y') AS date,
-    ##                    IFNULL(i.sent, 0) AS sent
-    ##             FROM ",period,"s p
-    ##             LEFT JOIN(
-    ##                       SELECT year(first_date) AS year,
-    ##                              ",period,"(first_date) AS ",period,",
-    ##                              count(message_ID) AS sent
-    ##                       FROM messages 
-    ##                       WHERE ",field,"='",listname,"'
-    ##                       GROUP BY year,",period,") i
-    ##             ON (
-    ##                  p.year = i.year AND 
-    ##                  p.",period," = i.",period,")
-    ##             WHERE p.date >= ",startdate," AND 
-    ##                   p.date < ",enddate,"
-    ##             ORDER BY p.id ASC;", sep="")
+    }            
      
     q <- paste("SELECT ((to_days(first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(message_ID) AS sent
@@ -251,40 +228,7 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                 GROUP BY ((to_days(first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)
     sent_monthly <- run(query)	
-    ##print (sent_monthly)
 	
-    ## All subjects	
-    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-    ##                                    year(first_date) AS year,
-    ##                                    month(first_date) AS month,
-    ##                                    DATE_FORMAT (first_date, '%b %Y') as date,
-    ##                                    subject
-    ##                                  FROM messages  WHERE ",field,"='",listname,"'
-    ##                                  ORDER BY year,month", sep = '')
-    q <- paste ("SELECT p.id AS id,
-                        p.year AS year,
-                        p.",period," AS ",period,",
-                        DATE_FORMAT(p.date, '%b %Y') AS date,
-                        i.subject AS subject
-                 FROM ",period,"s p
-                 LEFT JOIN(
-                           SELECT year(first_date) AS year,
-                                  ",period,"(first_date) AS ",period,",
-                                  subject
-                           FROM messages  
-                           WHERE ",field,"='",listname,"'
-                           ORDER BY year,",period,") i
-                 ON (
-                     p.year = i.year AND 
-                     p.",period," = i.",period,")
-                 WHERE p.date >= ",startdate," AND 
-                       p.date < ",enddate,"
-                ORDER BY p.id ASC;", sep="")
-    query <- new ("Query", sql = q)
-    #subjects_monthly <- run(query)
-	
-    ## Senders
-    
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                         count(distinct(pup.upeople_id)) as senders 
                 from messages m, 
@@ -299,63 +243,18 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
     query <- new ("Query", sql = q)
     senders_monthly <- run(query)
     
-	## TODO: this query not sure if it is correct. Not same results in VizGrimoireJS
-    ## All people monthly
-    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-    ##                    year(first_date) AS year,
-    ##                    month(first_date) AS month,
-    ##                    DATE_FORMAT (first_date, '%b %Y') as date,
-    ##                    email_address
-    ##                  FROM messages
-    ##                  JOIN messages_people on (messages_people.message_id = messages.message_ID)
-    ##                  WHERE type_of_recipient='From' AND ",field,"='",listname,"'
-    ##                  ORDER BY year,month", sep = '')
-    q <- paste("SELECT p.id AS id,
-                       p.year AS year,
-                       p.",period," AS ",period,",
-                       DATE_FORMAT(p.date, '%b %Y') AS date,
-                       i.email_address AS email_address
-                FROM ",period,"s p
-                LEFT JOIN(
-                          SELECT year(m.first_date) AS year,
-                                 ",period,"(m.first_date) AS ",period,",
-                                 mp.email_address
-                          FROM messages m,
-                               messages_people mp,
-                               people_upeople pup
-                          where mp.type_of_recipient='From' and
-                                m.",field,"='",listname,"' and
-                                mp.message_id = m.message_ID and
-                                mp.email_address = pup.people_id
-                          group by pup.upeople_id)i
-                ON (
-                    p.year = i.year AND 
-                    p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND 
-                      p.date < ",enddate,"
-                ORDER BY p.id ASC;", sep="")
-    query <- new ("Query", sql = q)
-    #emails_monthly <- run(query)
-
-    ## print(sent_monthly)
-    ## print(senders_monthly)
-    
-    
-    sent_monthly <- completePeriod(sent_monthly, period, conf)
-    senders_monthly <- completePeriod(senders_monthly, period, conf)
     
     mls_monthly <- merge (sent_monthly, senders_monthly, all = TRUE)
-    mls_monthly[is.na(mls_monthly)] <- 0
-    mls_monthly <- mls_monthly[order(mls_monthly$id),]
-    #print(mls_monthly)
-    # TODO: Multilist approach. We will obsolete it in future
-    createJSON (mls_monthly, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
-    # Multirepos filename
-    createJSON (mls_monthly, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
-    # createJSON (subjects_monthly, paste("data/json/mls-",listname,"-subjects-evolutionary.json",sep=''))
-    #createJSON (emails_monthly, paste("data/json/mls-",listname_file,"-emails-evolutionary.json",sep=''))
+    return(mls_monthly)	
+}
+
+analyze.monthly.list.static <- function (listname, period, startdate, enddate) {
 	
-	
+    field = "mailing_list"
+    if (length(i <- grep("http",listname))) {
+        field = "mailing_list_url"
+    }        
+    
     ## Get some general stats from the database
     ##
     q <- paste ("SELECT count(*) as sent,
@@ -372,10 +271,8 @@ analyze.monthly.list <- function (listname, period, startdate, enddate) {
                        first_date < ",enddate,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
-	# TODO: Multilist approach. We will obsolete it in future
-	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
-	# Multirepos filename
-	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))
+    
+    return(data)
 }
 
 

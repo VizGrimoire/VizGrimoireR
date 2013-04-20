@@ -337,6 +337,7 @@ GetWeek  <- function (time) {
 completePeriod <- function (data, period, conf) {
         
     if (length(data) == 0) {
+        # TODO: broken, only works for commit metric
         data <- data.frame(id=numeric(0), commits=numeric(0))
     }
     new_data <- completeZeroPeriod(data, period, conf$str_startdate, conf$str_enddate)

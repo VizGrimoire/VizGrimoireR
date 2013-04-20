@@ -224,7 +224,7 @@ if (conf$reports == 'countries') {
     
 
 ## Quantiles
-
+if (0) {
 ## Which quantiles we're interested in
 quantiles_spec = c(.99,.95,.5,.25)
 
@@ -250,3 +250,4 @@ events.toatt <- new ("TimedEvents",
                      changed$open, changed$toattention %/% 60)
 quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
 JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')
+}
