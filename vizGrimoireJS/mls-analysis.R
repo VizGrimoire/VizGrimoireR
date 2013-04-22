@@ -129,7 +129,12 @@ for (mlist in mailing_lists$mailing_list) {
 }
 
 data.monthly <- get.monthly(sql_res, startdate, enddate)
-data.monthly <- completePeriodMulti(data.monthly, c('sent'),period, 
+if (conf$reports == 'companies'){
+    metrics = c('sent','senders','repositories','companies')
+} else {
+    metrics = c('sent','senders','repositories')
+}
+data.monthly <- completePeriodMulti(data.monthly, metrics ,period, 
         conf$str_startdate, conf$str_enddate)
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
