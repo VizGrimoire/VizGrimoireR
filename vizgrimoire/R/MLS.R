@@ -27,38 +27,61 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
 
+get.sql.period <- function(period, date, fields, table, start, end) {
+    
+    kind = c('year','month','week','day')
+    # sql = paste('SELECT YEAR(',date,') * 12 + month(',date,') AS id, ')
+    sql = paste('SELECT UNIX_TIMESTAMP(',date,') AS id, ')
+    sql = paste(sql, 'DATE_FORMAT (',date,', \'%b %Y\') AS date, ')
+    sql = paste(sql, fields)
+    sql = paste(sql,'FROM', table)
+    sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
+    
+    if (period == 'year') {
+        sql = paste(sql,' GROUP BY YEAR(',date,')')
+        sql = paste(sql,' ORDER BY YEAR(',date,')')
+    }
+    else if (period == 'month') {
+        sql = paste(sql,' GROUP BY YEAR(',date,'),MONTH(',date,')')
+        sql = paste(sql,' ORDER BY YEAR(',date,'),MONTH(',date,')')
+    }
+    else if (period == 'week') {
+        sql = paste(sql,' GROUP BY YEAR(',date,'),WEEK(',date,')')
+        sql = paste(sql,' ORDER BY YEAR(',date,'),WEEK(',date,')')        
+    }
+    else if (period == 'day') {
+        sql = paste(sql,' GROUP BY YEAR(',date,'),DAYOFYEAR(',date,')')
+        sql = paste(sql,' ORDER BY YEAR(',date,'),DAYOFYEAR(',date,')')                
+    }
+    else {
+        stop(paste("PERIOD: ",period,' not supported'))
+    }
+    print(sql)
+}
+
+
 get.monthly <- function (period, startdate, enddate, i_db, reports="") {
     # i_db: identities database    
 
     ## Sent messages
-    ## q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
-    ##                     year(first_date) AS year,
-    ##     	            month(first_date) AS month,
-    ##     	            DATE_FORMAT (first_date, '%b %Y') as date,
-    ##     	            count(message_ID) AS sent
-    ##     	          FROM messages
-    ##     	          GROUP BY year,month
-    ##     	          ORDER BY year,month")
+    q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
+     	      	DATE_FORMAT (first_date, '%b %Y') as date,
+     	        count(message_ID) AS sent
+     	        FROM messages
+     	        GROUP BY year,month
+     	        ORDER BY year,month")
 
-    ## Sent messages
-    q <- paste("SELECT p.id AS id,
-                       p.year AS year,
-                       p.",period," AS ",period,",
-                       DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.sent, 0) AS sent
-                FROM ",period,"s p
-                LEFT JOIN(
-                          SELECT year(first_date) AS year,
-                                 ",period,"(first_date) AS ",period,",
-                                 count(message_ID) AS sent
-                          FROM messages
-                          GROUP BY year,",period,") i
-                ON (
-                    p.year = i.year AND 
-                    p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND 
-                      p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
+    q <- get.sql.period('year','first_date','COUNT(message_ID) AS sent',
+            'messages', startdate,enddate)
+    q <- get.sql.period('month','first_date','COUNT(message_ID) AS sent','messages', 
+            startdate, enddate)
+    q <- get.sql.period('week','first_date','COUNT(message_ID) AS sent','messages', 
+            startdate, enddate)
+    q <- get.sql.period('day','first_date','COUNT(message_ID) AS sent','messages', 
+            startdate, enddate)
+    
+    stop()
+
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(distinct(m.message_ID)) AS sent
                 FROM messages m
@@ -68,42 +91,6 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
     query <- new ("Query", sql = q)
     sent_monthly <- run(query)
 	
-    ## Senders
-    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-    ##     	             year(first_date) AS year,
-    ##     	             month(first_date) AS month,
-    ##     	             DATE_FORMAT (first_date, '%b %Y') as date,
-    ##     	             count(distinct(email_address)) AS senders
-    ##     	           FROM messages
-    ##     	           JOIN messages_people on (messages_people.message_id = messages.message_ID)
-    ##     	           WHERE type_of_recipient='From'
-    ##     	           GROUP BY year,month
-    ##     	           ORDER BY year,month")
-    q <- paste ("SELECT p.id AS id,
-                        p.year AS year,
-                        p.",period," AS ",period,",
-                        DATE_FORMAT(p.date, '%b %Y') AS date,
-                        IFNULL(i.senders, 0) AS senders
-                 FROM ",period,"s p
-                 LEFT JOIN(
-                           select year(m.first_date) as year, 
-                                  ",period,"(m.first_date) as ",period,", 
-                                  count(distinct(pup.upeople_id)) as senders 
-                           from messages m, 
-                                messages_people mp, 
-                                people_upeople pup 
-                           where m.message_ID = mp.message_id and 
-                                 mp.email_address = pup.people_id and 
-                                 mp.type_of_recipient='From' and
-                                 m.first_date>=",startdate," and m.first_date<=",enddate,"
-                           group by year, 
-                                    ",period,") i
-                 ON (
-                     p.year = i.year AND 
-                     p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND 
-                      p.date <= ",enddate,"
-                ORDER BY p.id ASC;", sep="")
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(distinct(pup.upeople_id)) as senders 
                            from messages m, 
@@ -135,24 +122,6 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
     ##              FROM messages
     ##              GROUP BY year,month
     ##              ORDER BY year,month")
-    q <- paste ("SELECT p.id AS id,
-                        p.year AS year,
-                        p.",period," AS ",period,",
-                        DATE_FORMAT(p.date, '%b %Y') AS date,
-                        IFNULL(i.repositories, 0) AS repositories
-                 FROM ",period,"s p
-                 LEFT JOIN(
-                           SELECT year(first_date) AS year,
-                                  ",period,"(first_date) AS ",period,",
-                                  count(DISTINCT(",field,")) AS repositories
-                           FROM messages
-                           GROUP BY year,",period,") i
-                 ON (
-                     p.year = i.year AND 
-                     p.",period," = i.",period,")
-                 WHERE p.date >= ",startdate," AND 
-                       p.date < ",enddate,"
-                 ORDER BY p.id ASC;", sep="")
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(DISTINCT(",field,")) AS repositories
                 FROM messages m
@@ -405,27 +374,6 @@ analyze.monthly.mls.countries.evol <- function (identities_db, country, period, 
         ##         WHERE country='",country,"'
         ##         GROUP BY year,month
         ##         ORDER BY year,month",sep = '')
-	q <- paste("SELECT p.id AS id,
-                p.year AS year,
-                p.",period," AS ",period,",
-                DATE_FORMAT(p.date, '%b %Y') AS date,
-                IFNULL(i.sent, 0) AS sent,
-                IFNULL(i.senders, 0) AS senders
-                FROM ",period,"s p
-                LEFT JOIN(
-                 SELECT year(first_date) AS year,
-                 ",period,"(first_date) AS ",period,",
-                 count(m.message_ID) AS sent,
-                 count(distinct(p.email_address)) AS senders
-                 FROM messages m
-                 JOIN messages_people mp ON mp.message_ID=m.message_id
-                 JOIN people p ON mp.email_address = p.email_address
-                 WHERE country='",country,"'
-                 GROUP BY year,",period,") i
-                ON (
-                 p.year = i.year AND p.",period," = i.",period,")
-                WHERE p.date >= ",startdate," AND p.date < ",enddate,"
-                ORDER BY p.id ASC;", sep="")
 
     q <- paste("SELECT ((to_days(first_date) - to_days(",startdate,")) div ",period,") as id,
                 count(m.message_ID) AS sent,
@@ -603,37 +551,6 @@ company_posts_posters <- function(company_name, i_db, period, startdate, enddate
     # period: granularity of weeks or months
     # startdate: initial date of analysis
     # enddate: final date of analysis
-
-    q <- paste("SELECT p.id AS id,
-                       p.year AS year,
-                       p.",period," AS ",period,",
-                       DATE_FORMAT(p.date, '%b %Y') AS date,
-                       IFNULL(i.sent, 0) AS sent,
-                       IFNULL(i.senders, 0) AS senders
-                FROM ",period,"s p
-                LEFT JOIN(
-                          SELECT year(first_date) AS year,
-                                 ",period,"(first_date) AS ",period,",
-                                 count(m.message_ID) AS sent,
-                                 count(distinct(mp.email_address)) AS senders
-                          FROM messages m,
-                               messages_people mp,
-                               people_upeople pup,
-                               ",i_db,".upeople_companies upc,
-                               ",i_db,".companies c
-                          where m.message_ID = mp.message_id and
-                                mp.email_address = pup.people_id and
-                                pup.upeople_id = upc.upeople_id and
-                                upc.company_id = c.id and
-                                c.name = ",company_name,"
-                          group by year(first_date),
-                                   ",period,"(first_date)) i
-                on(
-                   p.year = i.year and
-                   p.",period," = i.",period,")
-                where p.date >=",startdate," and
-                      p.date < ",enddate,"
-                order by p.id asc;", sep="")
 
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(m.message_ID) AS sent,
