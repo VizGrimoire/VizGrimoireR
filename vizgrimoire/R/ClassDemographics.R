@@ -27,20 +27,24 @@
 
 ## Query for getting first and last date in scmlog for all authors in scmlog
 ##
-query.scm <- "SELECT 
-    author_id as id, people.name as name, people.email as email,
-    count(scmlog.id) as actions,
-    MIN(scmlog.date) as firstdatestr, MAX(scmlog.date) as lastdatestr
-FROM
-    scmlog, people
-WHERE
-    scmlog.author_id = people.id
-GROUP by author_id"
+query.scm <- "SELECT author_id as id,
+                     people.name as name,
+                     people.email as email,
+                     count(scmlog.id) as actions,
+                     MIN(scmlog.date) as firstdatestr,
+                     MAX(scmlog.date) as lastdatestr
+              FROM
+                     scmlog, people
+              WHERE
+                     scmlog.author_id = people.id
+             GROUP by author_id"
 
 ## Query for getting first and last date in scmlog for all authors in scmlog,
 ## when upeople table (unique identities) is available
 ##
-query.scm.unique = "SELECT 
+
+
+query.scm.unique <- "SELECT 
     upeople.uid as id,
     people.name as name,
     people.email as email,
@@ -48,13 +52,11 @@ query.scm.unique = "SELECT
     MIN(scmlog.date) as firstdatestr,
     MAX(scmlog.date) as lastdatestr
 FROM
-    scmlog,
-    people,
-    upeople
-where
+    scmlog, people, upeople
+WHERE
     scmlog.author_id = upeople.id AND
     people.id = upeople.id
-group by upeople.uid"
+GROUP BY upeople.uid"
 
 # Query for getting first and last date from MLS database
 query.mls <- "SELECT people.email_address as id,
@@ -67,6 +69,12 @@ query.mls <- "SELECT people.email_address as id,
                     AND people.email_address = messages_people.email_address
               GROUP BY people.email_address"
 
+build.query <- function (query, months) {
+    q <- paste("SELECT * FROM ( ",query,")mytable
+                WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",months," month)")
+    return(q)
+}
+
 setClass(Class="Demographics",
          contains="data.frame",
          )
@@ -75,7 +83,7 @@ setClass(Class="Demographics",
 ##
 setMethod(f="initialize",
           signature="Demographics",
-          definition=function(.Object, type, unique = FALSE, query = NULL){
+          definition=function(.Object, type, months, unique = FALSE, query = NULL){
             cat("~~~ Demographics: initializator ~~~ \n")
             ## if (!is.null(query)) {
             ##   ## We have a query, forget about unique
@@ -89,13 +97,13 @@ setMethod(f="initialize",
             if (type == 'scm'){
                 cat("~~~ SCM query\n")
                 if (unique) {
-                    q <- new ("Query", sql = query.scm.unique)
+                    q <- new ("Query", sql = build.query(query.scm.unique,months))
                 } else {
-                    q <- new ("Query", sql = query.scm)
+                    q <- new ("Query", sql = build.query(query.scm,months))
                 }
             } else if (type == 'mls'){
                 cat("~~~ MLS query\n")
-                q <- new("Query", sql = query.mls)
+                q <- new("Query", sql = build.query(query.mls,months))
             }
             
             as(.Object,"data.frame") <- run (q)

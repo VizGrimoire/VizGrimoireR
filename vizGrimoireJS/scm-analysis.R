@@ -304,11 +304,11 @@ if (conf$reports == 'companies-countries'){
 
 # Demographics
 
-demos <- new ("Demographics","scm")
+demos <- new ("Demographics","scm", 6)
 demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
 demos$age[demos$age < 0 ] <- 0
 aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, "data/json/scm-demos-pyramid.json")
+createJSON (new, "data/json/scm-demographics-aging.json")
