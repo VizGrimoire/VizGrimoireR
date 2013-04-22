@@ -345,4 +345,4 @@ aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, "data/json/scm-demos-pyramid.json")
+createJSON (new, "data/json/scm-demographics.json")
