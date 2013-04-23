@@ -155,7 +155,10 @@ def main():
    for result in results:
       people_id = int(result[0])
       name = result[1]
-      name = name.replace("'", "\\'")  # avoiding ' errors in MySQL
+      if name is None:
+        name = ''
+      else:
+        name = name.replace("'", "\\'")  # avoiding ' errors in MySQL
       results_ids = search_identity(connector_ids, name)
       if len(results_ids) > 0:
         reuse_identity(connector_its, people_id, int(results_ids[0][0]))
