@@ -23,9 +23,9 @@ R --vanilla --args -d $2 -u root -i $1 -r companies -s $START -e $END -g months 
 R --vanilla --args -d $2 -u root -i $1 -r countries -s $START -e $END -g months < mls-analysis.R >> $LOGS 2>&1
 #SCM
 echo "In SCM Analysis ..."
-R --vanilla --args -d $1 -u root -i $1 -r repositories -s $START -e $END -g months < scm-analysis.R >> $LOGS 2>&1
-R --vanilla --args -d $1 -u root -i $1 -r companies -s $START -e $END -g months < scm-analysis.R >> $LOGS 2>&1
-R --vanilla --args -d $1 -u root -i $1 -r countries -s $START -e $END -g months < scm-analysis.R >> $LOGS 2>&1
+R --vanilla --args -d $1 -u root -p root -i $1 -r repositories -s $START -e $END -g months < scm-analysis.R >> $LOGS 2>&1
+R --vanilla --args -d $1 -u root -p root -i $1 -r companies -s $START -e $END -g months < scm-analysis.R >> $LOGS 2>&1
+R --vanilla --args -d $1 -u root -p root -i $1 -r countries -s $START -e $END -g months < scm-analysis.R >> $LOGS 2>&1
 #ITS
 echo "In ITS Analysis ..."
 R --vanilla --args -d $3 -u root -i $1 -r repositories -s $START -e $END -g months -t allura < its-analysis.R >> $LOGS 2>&1
