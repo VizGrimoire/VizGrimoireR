@@ -138,6 +138,22 @@ its_evol_companies <- function(period, startdate, enddate, identities_db) {
     return (data)
 }
 
+its_evol_countries <- function(period, startdate, enddate, identities_db) {
+    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
+                       COUNT(DISTINCT(upc.country_id)) AS countries
+                    FROM changes,
+                         people_upeople pup,
+                         ",identities_db,".upeople_countries upc
+                    WHERE pup.people_id = changes.changed_by
+                          AND pup.upeople_id = upc.upeople_id
+                          AND changed_on >= ",startdate," AND changed_on < ",enddate,"
+                    GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
+    query <- new ("Query", sql = q)    
+    data <- run(query)
+    print(data)
+    return (data)
+}
+
 its_people <- function() {
     q <- paste ("select id,name,email,user_id from people")
     query <- new ("Query", sql = q)
@@ -260,6 +276,19 @@ its_static_companies  <- function(startdate, enddate, identities_db) {
     return (data)               
 }
 
+its_static_countries  <- function(startdate, enddate, identities_db) {
+    q <- paste ("SELECT COUNT(DISTINCT(upc.country_id)) AS countries
+                 FROM changes,
+                     people_upeople pup,
+                     ",identities_db,".upeople_countries upc
+                 WHERE pup.people_id = changes.changed_by
+                     AND pup.upeople_id = upc.upeople_id
+                     AND changed_on >= ",startdate,"
+                     AND changed_on < ",enddate,"")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)               
+}
 
 # Top
 top_closers <- function(days = 0, startdate, enddate, identites_db) {

@@ -98,6 +98,11 @@ if (conf$reports == 'companies') {
     info_data_companies <- completePeriod(info_data_companies, nperiod, conf)
     issues = merge(issues, info_data_companies, all = TRUE)
 }
+if (conf$reports == 'countries') {
+    info_data_countries = its_evol_countries (nperiod, startdate, enddate, identities_db)
+    info_data_countries <- completePeriod(info_data_countries, nperiod, conf)
+    issues = merge(issues, info_data_countries, all = TRUE)
+}
 issues[is.na(issues)] <- 0
 issues <- issues[order(issues$id),]
 createJSON (issues, "data/json/its-evolutionary.json")
@@ -105,6 +110,10 @@ createJSON (issues, "data/json/its-evolutionary.json")
 all_static_info <- its_static_info(closed_condition, startdate, enddate)
 if (conf$reports == 'companies') {
     info_com = its_static_companies (startdate, enddate, identities_db)
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
+if (conf$reports == 'countries') {
+    info_com = its_static_countries (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 latest_activity7 = last_activity_its(7, closed_condition)
