@@ -251,3 +251,15 @@ events.toatt <- new ("TimedEvents",
 quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
 JSON(quantiles, 'data/json/its-quantiles-year-time_to_attention_min.json')
 }
+
+
+# Demographics
+
+demos <- new ("Demographics","its", 6)
+demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
+demos$age[demos$age < 0 ] <- 0
+aux <- data.frame(demos["id"], demos["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, "data/json/scm-demographics-aging.json")

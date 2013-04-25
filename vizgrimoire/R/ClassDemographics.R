@@ -69,6 +69,18 @@ query.mls <- "SELECT people.email_address as id,
                     AND people.email_address = messages_people.email_address
               GROUP BY people.email_address"
 
+## Query to get first and last date from ITS changes
+query.its <- "SELECT changes.changed_by as id,
+                     people.name as name,
+                     people.email as email,
+                     COUNT(changes.id) as actions,
+                     MIN(changes.changed_on) as firstdatestr,
+                     MAX(changes.changed_on) as lastdatestr
+              FROM changes, people
+              WHERE changes.changed_by = people.id
+              GROUP BY changes.changed_by"
+
+
 build.query <- function (query, months) {
     q <- paste("SELECT * FROM ( ",query,")mytable
                 WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",months," month)")
@@ -104,6 +116,9 @@ setMethod(f="initialize",
             } else if (type == 'mls'){
                 cat("~~~ MLS query\n")
                 q <- new("Query", sql = build.query(query.mls,months))
+            } else if (type == 'its'){
+                cat("~~~ ITS query\n")
+                q <- new("Query", sql = build.query(query.its,months))
             }
             
             as(.Object,"data.frame") <- run (q)
