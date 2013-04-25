@@ -262,4 +262,4 @@ aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, "data/json/scm-demographics-aging.json")
+createJSON (new, "data/json/its-demographics-aging.json")
