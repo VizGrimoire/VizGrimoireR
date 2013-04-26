@@ -27,12 +27,12 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
 
-get.sql.period <- function(period, date, fields, table, start, end) {
+getSQLPeriod <- function(period, date, fields, table, start, end) {
     
     kind = c('year','month','week','day')
     # sql = paste('SELECT YEAR(',date,') * 12 + month(',date,') AS id, ')
     sql = paste('SELECT UNIX_TIMESTAMP(',date,') AS id, ')
-    sql = paste(sql, 'DATE_FORMAT (',date,', \'%b %Y\') AS date, ')
+    sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date1, ')
     sql = paste(sql, fields)
     sql = paste(sql,'FROM', table)
     sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
@@ -57,39 +57,29 @@ get.sql.period <- function(period, date, fields, table, start, end) {
         stop(paste("PERIOD: ",period,' not supported'))
     }
     print(sql)
+    return(sql)
 }
 
 
-get.monthly <- function (period, startdate, enddate, i_db, reports="") {
+mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
     # i_db: identities database    
 
     ## Sent messages
-    q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
-     	      	DATE_FORMAT (first_date, '%b %Y') as date,
-     	        count(message_ID) AS sent
-     	        FROM messages
-     	        GROUP BY year,month
-     	        ORDER BY year,month")
 
-    q <- get.sql.period('year','first_date','COUNT(message_ID) AS sent',
-            'messages', startdate,enddate)
-    q <- get.sql.period('month','first_date','COUNT(message_ID) AS sent','messages', 
+    q <- getSQLPeriod('day','first_date','COUNT(message_ID) AS sent','messages', 
             startdate, enddate)
-    q <- get.sql.period('week','first_date','COUNT(message_ID) AS sent','messages', 
-            startdate, enddate)
-    q <- get.sql.period('day','first_date','COUNT(message_ID) AS sent','messages', 
-            startdate, enddate)
-    
-    stop()
-
-    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
-                       count(distinct(m.message_ID)) AS sent
-                FROM messages m
-                where m.first_date>=",startdate," and m.first_date < ",enddate,"
-                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
-
-    query <- new ("Query", sql = q)
+    query <- new ("Query", sql = q)  
     sent_monthly <- run(query)
+#
+#
+#    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
+#                       count(distinct(m.message_ID)) AS sent
+#                FROM messages m
+#                where m.first_date>=",startdate," and m.first_date < ",enddate,"
+#                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
+#
+#    query <- new ("Query", sql = q)
+#    sent_monthly <- run(query)
 	
     q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
                        count(distinct(pup.upeople_id)) as senders 
@@ -182,7 +172,7 @@ get.monthly <- function (period, startdate, enddate, i_db, reports="") {
     return (mls_monthly)
 }
 
-analyze.monthly.list.evol <- function (listname, period, startdate, enddate) {
+mlsEvolList <- function (listname, period, startdate, enddate) {
     
     field = "mailing_list"
     if (length(i <- grep("http",listname))) {
@@ -217,7 +207,7 @@ analyze.monthly.list.evol <- function (listname, period, startdate, enddate) {
     return(mls_monthly)	
 }
 
-analyze.monthly.list.static <- function (listname, period, startdate, enddate) {
+mlsStaticList <- function (listname, period, startdate, enddate) {
 	
     field = "mailing_list"
     if (length(i <- grep("http",listname))) {
@@ -360,7 +350,7 @@ countries_names <- function (identities_db, startdate, enddate) {
     
 
 
-analyze.monthly.mls.countries.evol <- function (identities_db, country, period, startdate, enddate) {           		
+mlsEvolCountries <- function (identities_db, country, period, startdate, enddate) {           		
     # Sent and sender time series evol	
 	## q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
         ##           year(first_date) AS year,
@@ -397,7 +387,7 @@ analyze.monthly.mls.countries.evol <- function (identities_db, country, period, 
     return (evol_monthly)
 }
 
-analyze.monthly.mls.countries.static <- function (identities_db, country, startdate, enddate) {
+mlsStaticCountries <- function (identities_db, country, startdate, enddate) {
     ## Get some general stats from mls
     q <- paste ("SELECT count(m.message_ID) as sent,
                    DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,

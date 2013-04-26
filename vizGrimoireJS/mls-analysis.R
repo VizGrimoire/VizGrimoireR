@@ -42,6 +42,10 @@ if (conf$granularity == 'weeks'){
    period = 'week'
    nperiod = 7
 }
+if (conf$granularity == 'days'){
+       period = 'day'
+       nperiod = 1
+}
 
 identities_db = conf$identities_db
 
@@ -94,11 +98,11 @@ if (conf$reports == 'countries') {
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- analyze.monthly.mls.countries.evol(identities_db, country, nperiod, startdate, enddate)
+        data <- mlsEvolCountries(identities_db, country, nperiod, startdate, enddate)
         data <- completePeriod(data, nperiod, conf)        
         createJSON (data, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
         
-        data <- analyze.monthly.mls.countries.static(identities_db, country, startdate, enddate)
+        data <- mlsStaticCountries(identities_db, country, startdate, enddate)
         createJSON (data, paste("data/json/",country,"-mls-static.json",sep=''))
     }
 }
@@ -106,7 +110,7 @@ if (conf$reports == 'countries') {
 for (mlist in mailing_lists$mailing_list) {
     
     # Evol data
-    data<-analyze.monthly.list.evol(mlist, nperiod, startdate, enddate)
+    data<-mlsEvolList(mlist, nperiod, startdate, enddate)
     data <- completePeriod(data, nperiod, conf)
     data[is.na(data)] <- 0
     data <- data[order(data$id),]
@@ -119,7 +123,7 @@ for (mlist in mailing_lists$mailing_list) {
     createJSON (data, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
         
     # Static data
-    data<-analyze.monthly.list.static(mlist, nperiod, startdate, enddate)
+    data<-mlsStaticList(mlist, nperiod, startdate, enddate)
     # TODO: Multilist approach. We will obsolete it in future
 	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
 	# Multirepos filename
@@ -127,9 +131,9 @@ for (mlist in mailing_lists$mailing_list) {
 }
 
 if (conf$reports == 'countries'){
-    data.monthly <- get.monthly(nperiod, startdate, enddate, conf$reports)
-} else{
-    data.monthly <- get.monthly(nperiod, startdate, enddate)
+    data.monthly <- mlsEvol(nperiod, startdate, enddate, conf$reports)
+} else {
+    data.monthly <- mlsEvol(nperiod, startdate, enddate)
 }
 data.monthly <- completePeriod(data.monthly, nperiod, conf)
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
