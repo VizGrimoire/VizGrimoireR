@@ -30,6 +30,35 @@
 
 library("vizgrimoire")
 
+
+
+completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){
+    first = 0
+    last = ceiling (difftime(as.POSIXlt(enddate), as.POSIXlt(startdate),units='days') / nperiod) - 1
+    periods = data.frame('id'=c(first:last))
+    completedata <- merge (data, periods, all=TRUE)
+    completedata[is.na(completedata)] <- 0
+    return (completedata)
+}
+
+
+## Group daily samples by selected period
+completePeriodIds <- function (data, period, conf) {
+    
+    if (length(data) == 0) {
+        # TODO: broken, only works for commit metric
+        data <- data.frame(id=numeric(0), commits=numeric(0))
+    }
+    new_data <- completeZeroPeriodIds(data, period, conf$str_startdate, conf$str_enddate)
+    # new_data$week <- as.Date(conf$str_startdate) + new_data$id * period
+    # new_data$date  <- toTextDate(GetYear(new_data$week), GetMonth(new_data$week)+1)
+    new_data[is.na(new_data)] <- 0
+    new_data <- new_data[order(new_data$id), ]
+    
+    return (new_data)
+}
+
+
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
@@ -131,12 +160,16 @@ for (mlist in mailing_lists$mailing_list) {
 }
 
 if (conf$reports == 'countries'){
-    data.monthly <- mlsEvol(nperiod, startdate, enddate, conf$reports)
+    data <- mlsEvol(nperiod, startdate, enddate, conf$reports)
 } else {
-    data.monthly <- mlsEvol(nperiod, startdate, enddate)
+    data <- mlsEvol(nperiod, startdate, enddate)
 }
-data.monthly <- completePeriod(data.monthly, nperiod, conf)
-createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
+print (data)
+data <- completePeriodIds(data, nperiod, conf)
+print (data)
+createJSON (data, paste("data/json/mls-evolutionary.json"))
+
+stop()
 
 # Top senders
 # top_senders_data <- top_senders_wo_affs(c("-Bot"), identities_db, startdate, enddate)
