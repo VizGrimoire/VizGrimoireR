@@ -30,8 +30,8 @@
 getSQLPeriod <- function(period, date, fields, table, start, end) {
     
     kind = c('year','month','week','day')
-    # sql = paste('SELECT YEAR(',date,') * 12 + month(',date,') AS id, ')
-    sql = paste('SELECT UNIX_TIMESTAMP(',date,') AS id, ')
+    # Remove time so unix timestamp is start of day    
+    sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS id, ')
     sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date1, ')
     sql = paste(sql, fields)
     sql = paste(sql,'FROM', table)

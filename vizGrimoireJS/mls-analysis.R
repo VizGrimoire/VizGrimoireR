@@ -31,11 +31,72 @@
 library("vizgrimoire")
 
 
+## Complete with zeros samples by selected period
+completeZeroPeriod2 <- function (data, period, start, end, metric='unknow') {
+    
+    if (!(period %in% c('days','weeks','months','years')))
+        stop (paste("WRONG PERIOD", period))
+    
+    nperiod = 1 # sql resolution, days
+    
+    cur_period = GetPeriod(period,as.Date(conf$str_startdate))
+    cur_period_metric_val = 0
+    for (i in 1:nrow(new_data)) {
+        metric_val <- new_data[i,2]
+        date <- new_data[i,3]
+        date_period <- GetPeriod(period,date)
+        
+        if (date_period != cur_period) {
+            # Store last period data 
+            grouped_data[['id']] <- c(grouped_data[['id']], past_date)
+            grouped_data[['date']] <- c(grouped_data[['date']],
+                    GetDateText(period, past_date))
+            grouped_data[[metric]] <- c(grouped_data[[metric]],
+                    cur_period_metric_val)
+            cur_period_metric_val = metric_val
+            cur_period = date_period
+        } else {
+            cur_period_metric_val = cur_period_metric_val + metric_val
+            past_date = date
+        }
+    }
+    if (date_period == cur_period) {
+        grouped_data[['id']] <- c(grouped_data[['id']], date)
+        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_metric_val)
+        grouped_data[['date']] <- c(grouped_data[['date']],
+                GetDateText(period, date))
+    }
+    
+    grouped_data<-data.frame(id=grouped_data[['id']],metric=grouped_data[[metric]],
+            date=grouped_data[['date']],stringsAsFactors=FALSE)
+    colnames(grouped_data)[2]<-metric
+    
+    return (grouped_data)
+}
 
-completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){
-    first = 0
-    last = ceiling (difftime(as.POSIXlt(enddate), as.POSIXlt(startdate),units='days') / nperiod) - 1
-    periods = data.frame('id'=c(first:last))
+
+completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){           
+    start = as.POSIXlt(startdate)
+    end = as.POSIXlt(enddate)
+    # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”    
+    last = ceiling (difftime(as.POSIXlt(enddate), as.POSIXlt(startdate),units='days') / nperiod)
+    # months and years are simple math
+    print(paste("MONTHS:",(end$year*12)+end$mon,(start$year*12)+start$mon))
+    print(paste("YEARS:",end$year,start$year))
+    
+    # samples = data.frame('id'=c(first:last))
+    
+    samples <- list('id'=c(1:last),'unix'=c(1:last)) 
+       
+    for (i in 1:last) {
+        samples$unix[i] = as.numeric(start)+((i-1)*60*60*24)
+    }        
+    print(samples)
+    
+    # dsamples<-data.frame(id=samples)
+    
+    stop()
+    
     completedata <- merge (data, periods, all=TRUE)
     completedata[is.na(completedata)] <- 0
     return (completedata)
