@@ -90,6 +90,10 @@ if (conf$reports == 'companies') {
     companies <- evol_companies(nperiod, conf$startdate, conf$enddate)
     data_companies <- completePeriod(companies, nperiod, conf)
 }
+if (conf$reports == 'countries') {
+    countries <- evol_countries(nperiod, conf$startdate, conf$enddate)
+    data_countries <- completePeriod(countries, nperiod, conf)
+}
 
 # Fixed data
 info_data = evol_info_data(period, conf$startdate, conf$enddate)
@@ -105,6 +109,10 @@ info_data = merge(info_data, latest_activity365)
 if (conf$reports == 'companies') {
 	info_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
 	info_data = merge(info_data, info_data_companies, all = TRUE)
+}
+if (conf$reports == 'countries') {
+	info_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
+	info_data = merge(info_data, info_data_countries, all = TRUE)
 }
 
 # Top committers
@@ -138,7 +146,9 @@ top_files_modified_data = top_files_modified()
 agg_data = merge(data_commits, data_committers, all = TRUE)
 agg_data = merge(agg_data, data_authors, all = TRUE)
 if (conf$reports == 'companies') 
-	agg_data = merge(agg_data, data_companies, all = TRUE)
+  agg_data = merge(agg_data, data_companies, all = TRUE)
+if (conf$reports == 'countries')
+  agg_data = merge(agg_data, data_countries, all = TRUE)
 agg_data = merge(agg_data, data_files, all = TRUE)
 agg_data = merge(agg_data, data_lines, all = TRUE)
 agg_data = merge(agg_data, data_branches, all = TRUE)
@@ -304,11 +314,11 @@ if (conf$reports == 'companies-countries'){
 
 # Demographics
 
-demos <- new ("Demographics","scm")
+demos <- new ("Demographics","scm", 6)
 demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
 demos$age[demos$age < 0 ] <- 0
 aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, "data/json/scm-demographics.json")
+createJSON (new, "data/json/scm-demographics-aging.json")

@@ -50,7 +50,11 @@ startdate <- conf$startdate
 enddate <- conf$enddate
 
 # Aggregated data
-static_data <- mls_static_info(startdate, enddate)
+if (conf$reports == 'countries'){
+    static_data <- mls_static_info(startdate, enddate, conf$reports)
+} else{
+    static_data <- mls_static_info(startdate, enddate)
+}
 latest_activity7 <- last_activity_mls(7)
 latest_activity30 <- last_activity_mls(30)
 latest_activity90 <- last_activity_mls(90)
@@ -122,7 +126,11 @@ for (mlist in mailing_lists$mailing_list) {
 	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
 }
 
-data.monthly <- get.monthly(nperiod, startdate, enddate)
+if (conf$reports == 'countries'){
+    data.monthly <- get.monthly(nperiod, startdate, enddate, conf$reports)
+} else{
+    data.monthly <- get.monthly(nperiod, startdate, enddate)
+}
 data.monthly <- completePeriod(data.monthly, nperiod, conf)
 createJSON (data.monthly, paste("data/json/mls-evolutionary.json"))
 
@@ -167,11 +175,11 @@ if (conf$reports == 'companies'){
 
 # Demographics
 
-demos <- new ("Demographics","mls")
+demos <- new ("Demographics","mls",6)
 demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
 demos$age[demos$age < 0 ] <- 0
 aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, "data/json/mls-demographics.json")
+createJSON (new, "data/json/mls-demographics-aging.json")

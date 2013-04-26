@@ -163,9 +163,27 @@ evol_companies <- function(period, startdate, enddate){
                           s.date >=", startdate, " and
                           s.date < ", enddate, "
                     group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-
-	companies<- query(q)
+        query <- new("Query", sql = q)
+	companies<- run(query)
 	return(companies)
+}
+
+evol_countries <- function(period, startdate, enddate){	
+
+        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                           count(distinct(upc.country_id)) as countries
+                    from scmlog s,
+                         people_upeople pup,
+                         upeople_countries upc
+                    where s.author_id = pup.people_id and
+                          pup.upeople_id = upc.upeople_id and
+                          s.date >=", startdate, " and
+                          s.date < ", enddate, "
+                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+
+        query <- new("Query", sql = q)
+	countries<- run(query)
+	return(countries)
 }
 
 evol_info_data <- function(period, startdate, enddate) {
@@ -882,6 +900,21 @@ evol_info_data_companies <- function(startdate, enddate) {
 	agg_data = merge(agg_data, data16)
 	return (agg_data)
 }
+
+evol_info_data_countries <- function(startdate, enddate) {
+	
+	q <- paste ("select count(distinct(upc.country_id)) as countries
+                     from upeople_countries upc,
+                          people_upeople pup,
+                          scmlog s
+                     where upc.upeople_id = pup.upeople_id and
+                           pup.people_id = s.author_id and
+                           s.date >=", startdate, " and
+                           s.date < ", enddate, ";", sep="") 
+	query <- new("Query", sql = q)
+	data <- run(query)
+        return (data)
+    }
 
 company_top_authors <- function(company_name, startdate, enddate) {
 	
