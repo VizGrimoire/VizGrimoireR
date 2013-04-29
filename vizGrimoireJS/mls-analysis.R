@@ -74,7 +74,21 @@ completeZeroPeriod2 <- function (data, period, start, end, metric='unknow') {
     return (grouped_data)
 }
 
+endDST <- function (date) {
+    value = FALSE
+    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
+    if (newdate$hour>0) value = TRUE   
+    return (value)
+}
 
+startDST <- function (date) {
+    value = FALSE
+    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
+    if (date$mday == newdate$mday) value = TRUE   
+    return (value)
+}
+
+# Work in seconds
 completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){           
     start = as.POSIXlt(startdate)
     end = as.POSIXlt(enddate)
@@ -84,21 +98,27 @@ completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){
     print(paste("MONTHS:",(end$year*12)+end$mon,(start$year*12)+start$mon))
     print(paste("YEARS:",end$year,start$year))
     
-    # samples = data.frame('id'=c(first:last))
-    
-    samples <- list('id'=c(1:last),'unix'=c(1:last)) 
-       
+    samples <- list('id'=c(1:last)) 
+    lastdate = start
+    dst = FALSE
     for (i in 1:last) {
-        samples$unix[i] = as.numeric(start)+((i-1)*60*60*24)
+        samples$unixtime[i] = as.numeric(start)+((i-1)*60*60*24)
+        if (startDST(lastdate)) dst = TRUE
+        else if (endDST(lastdate)) dst = FALSE
+        if (dst) samples$unixtime[i] = samples$unixtime[i] + 60*60
+        lastdate = as.POSIXlt(samples$unixtime[i], origin="1970-01-01")                   
+        samples$date[i]=format(lastdate)
+        # print(as.POSIXlt(as.numeric(start)+((i-1)*60*60*24),origin="1970-01-01"))
     }        
-    print(samples)
     
     # dsamples<-data.frame(id=samples)
-    
-    stop()
-    
-    completedata <- merge (data, periods, all=TRUE)
+
+    print(data)
+    print(samples)
+    completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0
+    print(completedata)
+    stop()
     return (completedata)
 }
 

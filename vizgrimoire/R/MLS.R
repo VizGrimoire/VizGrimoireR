@@ -31,8 +31,8 @@ getSQLPeriod <- function(period, date, fields, table, start, end) {
     
     kind = c('year','month','week','day')
     # Remove time so unix timestamp is start of day    
-    sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS id, ')
-    sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date1, ')
+    sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
+    # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)
     sql = paste(sql,'FROM', table)
     sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
@@ -69,7 +69,8 @@ mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
     q <- getSQLPeriod('day','first_date','COUNT(message_ID) AS sent','messages', 
             startdate, enddate)
     query <- new ("Query", sql = q)  
-    sent_monthly <- run(query)
+    sent <- run(query)
+    return(sent)
 #
 #
 #    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
@@ -92,7 +93,7 @@ mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
                                  m.first_date>=",startdate," and m.first_date<",enddate,"
                 group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)
-    senders_monthly <- run(query)
+    senders <- run(query)
       
     # repositories
     # FIXME: control of dates (startdate and enddate needed)
@@ -118,7 +119,7 @@ mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
                 where m.first_date>=",startdate," and m.first_date<",enddate,"
                 group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
     query <- new ("Query", sql = q)    
-    repos_monthly <- run(query)
+    repos <- run(query)
       
     if (reports == "countries") {
         # FIXME: Unique ids not included
@@ -156,7 +157,7 @@ mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
                            
 
         query <- new ("Query", sql = q)
-        countries_monthly <- run(query)
+        countries <- run(query)
     }
   
     ## mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
@@ -164,12 +165,12 @@ mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
     ## if (reports == "countries") 
     ##     mls_monthly <- completeZeroMonthly (merge (mls_monthly, countries_monthly, all = TRUE))
     ## mls_monthly[is.na(mls_monthly)] <- 0
-    mls_monthly <- merge (sent_monthly, senders_monthly, all = TRUE)
-    mls_monthly <- merge (mls_monthly, repos_monthly, all = TRUE)
+    mls <- merge (sent, senders, all = TRUE)
+    mls <- merge (mls, repos, all = TRUE)
     if (reports == "countries") 
-        mls_monthly <- merge (mls_monthly, countries_monthly, all = TRUE)
-    mls_monthly[is.na(mls_monthly)] <- 0
-    return (mls_monthly)
+        mls <- merge (mls, countries, all = TRUE)
+    mls[is.na(mls)] <- 0
+    return (mls)
 }
 
 mlsEvolList <- function (listname, period, startdate, enddate) {
