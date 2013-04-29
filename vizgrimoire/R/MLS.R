@@ -38,6 +38,8 @@ getSQLPeriod <- function(period, date, fields, table, start, end) {
         sql = paste(sql, 'YEARWEEK(',date,',',iso_8601_mode,') AS week, ')
     } else if (period == 'month') {
         sql = paste('SELECT YEAR(',date,')*12+MONTH(',date,') AS month, ')
+    }  else if (period == 'year') {
+        sql = paste('SELECT YEAR(',date,')*12 AS year, ')
     }
     # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)

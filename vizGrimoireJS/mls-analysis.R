@@ -30,91 +30,48 @@
 
 library("vizgrimoire")
 
-
-## Complete with zeros samples by selected period
-completeZeroPeriod2 <- function (data, period, start, end, metric='unknow') {
-    
-    if (!(period %in% c('days','weeks','months','years')))
-        stop (paste("WRONG PERIOD", period))
-    
-    nperiod = 1 # sql resolution, days
-    
-    cur_period = GetPeriod(period,as.Date(conf$str_startdate))
-    cur_period_metric_val = 0
-    for (i in 1:nrow(new_data)) {
-        metric_val <- new_data[i,2]
-        date <- new_data[i,3]
-        date_period <- GetPeriod(period,date)
-        
-        if (date_period != cur_period) {
-            # Store last period data 
-            grouped_data[['id']] <- c(grouped_data[['id']], past_date)
-            grouped_data[['date']] <- c(grouped_data[['date']],
-                    GetDateText(period, past_date))
-            grouped_data[[metric]] <- c(grouped_data[[metric]],
-                    cur_period_metric_val)
-            cur_period_metric_val = metric_val
-            cur_period = date_period
-        } else {
-            cur_period_metric_val = cur_period_metric_val + metric_val
-            past_date = date
-        }
-    }
-    if (date_period == cur_period) {
-        grouped_data[['id']] <- c(grouped_data[['id']], date)
-        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_metric_val)
-        grouped_data[['date']] <- c(grouped_data[['date']],
-                GetDateText(period, date))
-    }
-    
-    grouped_data<-data.frame(id=grouped_data[['id']],metric=grouped_data[[metric]],
-            date=grouped_data[['date']],stringsAsFactors=FALSE)
-    colnames(grouped_data)[2]<-metric
-    
-    return (grouped_data)
-}
-
-endDST <- function (date) {
-    value = FALSE
-    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
-    if (newdate$hour>0) value = TRUE   
-    return (value)
-}
-
-startDST <- function (date) {
-    value = FALSE
-    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
-    if (date$mday == newdate$mday) value = TRUE   
-    return (value)
-}
-
-completeZeroPeriodIdsMonths <- function (data, start, end) {
-    
-    start_month = ((1900+start$year)*12)+start$mon+1
-    end_month =  ((1900+end$year)*12)+end$mon+1 
-    last = end_month - start_month +1 
-    
-    samples <- list('id'=c(1:last))
+completeZeroPeriodIdsYears <- function (data, start, end) {    
+    last = end$year - start$year  + 1   
+    samples <- list('id'=c(1:last))    
     
     new_date = start
     new_date$mday = 1
+    new_date$mon = 0
+    for (i in 1:last) {
+        # convert to Date to remove DST from start of month
+        samples$unixtime[i] = as.numeric(as.POSIXlt(as.Date(new_date)))
+        samples$date[i]=format(new_date)
+        samples$year[i]=(1900+new_date$year)*12
+        new_date$year = new_date$year + 1
+    }
+    completedata <- merge (data, samples, all=TRUE)
+    completedata[is.na(completedata)] <- 0    
+    print(completedata)
+    stop()    
+    return(completedata)    
+}
+
+
+completeZeroPeriodIdsMonths <- function (data, start, end) {    
+    start_month = ((1900+start$year)*12)+start$mon+1
+    end_month =  ((1900+end$year)*12)+end$mon+1 
+    last = end_month - start_month + 1 
     
+    samples <- list('id'=c(1:last))    
+    new_date = start
+    new_date$mday = 1    
     for (i in 1:last) {
         # convert to Date to remove DST from start of month
         samples$unixtime[i] = as.numeric(as.POSIXlt(as.Date(new_date)))
         samples$date[i]=format(new_date)
         samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
         new_date$mon = new_date$mon + 1
-    }
-        
+    }        
     completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0
-    
+    completedata[is.na(completedata)] <- 0    
     print(completedata)
-    stop()
-    
-    return(completedata)
-    
+    stop()    
+    return(completedata)    
 }
 
 
@@ -133,19 +90,31 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
     }
     
     completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0
-    
+    completedata[is.na(completedata)] <- 0    
     print(completedata)        
-    stop()
-    
+    stop()    
     return(completedata)
     
 }
 
-# Work in seconds but supported days,weeks,mothns and years for now
+endDST <- function (date) {
+    value = FALSE
+    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
+    if (newdate$hour>0) value = TRUE   
+    return (value)
+}
+
+startDST <- function (date) {
+    value = FALSE
+    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
+    if (date$mday == newdate$mday) value = TRUE   
+    return (value)
+}
+
+# Work in seconds but supported days
 completeZeroPeriodIdsDays <- function (data, start, end) {        
     # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
-    last = ceiling (difftime(end, start,units=period))
+    last = ceiling (difftime(end, start,units=period)) + 1
     
     samples <- list('id'=c(1:last)) 
     lastdate = start
@@ -178,6 +147,9 @@ completeZeroPeriodIds <- function (data, period, startdate, enddate){
     }
     else if (period == "months") {
         return (completeZeroPeriodIdsMonths(data, start, end))
+    }
+    else if (period == "years") {
+        return (completeZeroPeriodIdsYears(data, start, end))
     } 
     else {
         stop (paste("Unknow period", period))
@@ -206,6 +178,10 @@ conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
 # period of time
+if (conf$granularity == 'years'){
+       period = 'year'
+       nperiod = 365
+}
 if (conf$granularity == 'months'){
    period = 'month'
    nperiod = 31
