@@ -88,9 +88,38 @@ startDST <- function (date) {
     return (value)
 }
 
-# Week of the year as decimal number (00–53) as defined in ISO 8601
+completeZeroPeriodIdsMonths <- function (data, start, end) {
+    
+    start_month = ((1900+start$year)*12)+start$mon+1
+    end_month =  ((1900+end$year)*12)+end$mon+1 
+    last = end_month - start_month +1 
+    
+    samples <- list('id'=c(1:last))
+    
+    new_date = start
+    new_date$mday = 1
+    
+    for (i in 1:last) {
+        # convert to Date to remove DST from start of month
+        samples$unixtime[i] = as.numeric(as.POSIXlt(as.Date(new_date)))
+        samples$date[i]=format(new_date)
+        samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
+        new_date$mon = new_date$mon + 1
+    }
+        
+    completedata <- merge (data, samples, all=TRUE)
+    completedata[is.na(completedata)] <- 0
+    
+    print(completedata)
+    stop()
+    
+    return(completedata)
+    
+}
+
+
+# Week of the year as decimal number (01–53) as defined in ISO 8601
 completeZeroPeriodIdsWeeks <- function (data, start, end) {
-    first_week = format(start, "%Y-%V")
     last = ceiling (difftime(end, start,units="weeks"))
     
     samples <- list('id'=c(1:last))     
@@ -117,9 +146,6 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
 completeZeroPeriodIdsDays <- function (data, start, end) {        
     # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
     last = ceiling (difftime(end, start,units=period))
-    # months and years are simple math
-    print(paste("MONTHS:",(end$year*12)+end$mon,(start$year*12)+start$mon))
-    print(paste("YEARS:",end$year,start$year))
     
     samples <- list('id'=c(1:last)) 
     lastdate = start
@@ -147,9 +173,16 @@ completeZeroPeriodIds <- function (data, period, startdate, enddate){
     if (period == "days") {
         return (completeZeroPeriodIdsDays(data, start, end))
     }    
-    if (period == "weeks") {
+    else if (period == "weeks") {
         return (completeZeroPeriodIdsWeeks(data, start, end))
     }
+    else if (period == "months") {
+        return (completeZeroPeriodIdsMonths(data, start, end))
+    } 
+    else {
+        stop (paste("Unknow period", period))
+    } 
+
 }
 
 ## Group daily samples by selected period
