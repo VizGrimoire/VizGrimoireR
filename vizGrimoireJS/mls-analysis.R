@@ -91,30 +91,19 @@ startDST <- function (date) {
 # Week of the year as decimal number (00–53) as defined in ISO 8601
 completeZeroPeriodIdsWeeks <- function (data, start, end) {
     first_week = format(start, "%Y-%V")
-    
     last = ceiling (difftime(end, start,units="weeks"))
-
-    print(data)
-    print(format(start, "%Y-%V"))
-    start_week_day = start
-    # Monday not Sunday
-    start_week_date = as.Date(start)-start$wday+1
-    print(format(end, "%Y-%V"))
-    # Monday not Sunday
-    end_week_date = as.Date(end)-end$wday+1
-    print(as.numeric(as.POSIXlt(start_week_date)))
-    print(start_week_date)
-    print(format(start_week_date, "%Y-%V"))
-    print(end_week_date)
-    print(format(end_week_date, "%Y-%V"))
     
-    year = format(start_week_date, "%Y")
-    week = format(start_week_date, "%V")
-    new_date = start_week_date
-    for (i in 1:last) {
+    samples <- list('id'=c(1:last))     
+    # Monday not Sunday
+    new_date = as.Date(start)-start$wday+1
+    for (i in 1:last) {                
+        samples$unixtime[i] = as.numeric(new_date)
+        samples$date[i]=format(new_date)
+        samples$week[i]=format(format(new_date, "%G-%V"))
         new_date = as.POSIXlt(as.Date(new_date)+7)
-        print(format(new_date, "%G-%V"))
     }
+    
+    print(samples)
         
     stop()
     
@@ -281,6 +270,7 @@ if (conf$reports == 'countries'){
 } else {
     data <- mlsEvol(period, startdate, enddate)
 }
+print(data)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste("data/json/mls-evolutionary.json"))
 

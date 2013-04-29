@@ -34,8 +34,10 @@ getSQLPeriod <- function(period, date, fields, table, start, end) {
     # Remove time so unix timestamp is start of day    
     sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
     if (period == 'week') {
+        # sql = paste(sql, 'CONCAT(YEARWEEK(',date,',',iso_8601_mode,'), "-",')
+        sql = paste(sql, date,' AS real_date, ')
         sql = paste(sql, 'CONCAT(YEAR(',date,'), "-",')
-		sql = paste(sql, 'WEEK(',date,' , ',iso_8601_mode,')) AS date, ')
+		sql = paste(sql, 'WEEK(',date,',',iso_8601_mode,')) AS week, ')
     }
     # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)
