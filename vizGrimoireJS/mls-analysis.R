@@ -89,7 +89,15 @@ startDST <- function (date) {
 }
 
 # Week of the year as decimal number (00–53) as defined in ISO 8601
-completeZeroPeriodIdsWeeks <- function (data, period, startdate, enddate){
+completeZeroPeriodIdsWeeks <- function (data, start, end) {
+    first_week = format(start, "%Y-%V")
+    
+    print(data)
+    print(format(start, "%Y-%V"))
+    print(format(end, "%Y-%V"))
+    
+    stop()
+    
 }
 
 # Work in seconds but supported days,weeks,mothns and years for now
@@ -113,9 +121,6 @@ completeZeroPeriodIdsDays <- function (data, start, end) {
         lastdate = as.POSIXlt(samples$unixtime[i], origin="1970-01-01")                   
         samples$date[i]=format(lastdate)
     }    
-    print(data)
-    print(samples)
-    stop()
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0
     print(completedata)

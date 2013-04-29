@@ -30,8 +30,13 @@
 getSQLPeriod <- function(period, date, fields, table, start, end) {
     
     kind = c('year','month','week','day')
+    iso_8601_mode = 3
     # Remove time so unix timestamp is start of day    
     sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
+    if (period == 'week') {
+        sql = paste(sql, 'CONCAT(YEAR(',date,'), "-",')
+		sql = paste(sql, 'WEEK(',date,' , ',iso_8601_mode,')) AS date, ')
+    }
     # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)
     sql = paste(sql,'FROM', table)
@@ -66,7 +71,7 @@ mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
 
     ## Sent messages
 
-    q <- getSQLPeriod('day','first_date','COUNT(message_ID) AS sent','messages', 
+    q <- getSQLPeriod(period,'first_date','COUNT(message_ID) AS sent','messages', 
             startdate, enddate)
     query <- new ("Query", sql = q)  
     sent <- run(query)
