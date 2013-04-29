@@ -95,17 +95,21 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
     
     samples <- list('id'=c(1:last))     
     # Monday not Sunday
-    new_date = as.Date(start)-start$wday+1
+    new_date = as.POSIXlt(as.Date(start)-start$wday+1)
     for (i in 1:last) {                
         samples$unixtime[i] = as.numeric(new_date)
         samples$date[i]=format(new_date)
-        samples$week[i]=format(format(new_date, "%G-%V"))
+        samples$week[i]=format(format(new_date, "%G%V"))
         new_date = as.POSIXlt(as.Date(new_date)+7)
     }
     
-    print(samples)
-        
+    completedata <- merge (data, samples, all=TRUE)
+    completedata[is.na(completedata)] <- 0
+    
+    print(completedata)        
     stop()
+    
+    return(completedata)
     
 }
 

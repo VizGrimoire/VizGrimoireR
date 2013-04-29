@@ -34,10 +34,11 @@ getSQLPeriod <- function(period, date, fields, table, start, end) {
     # Remove time so unix timestamp is start of day    
     sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
     if (period == 'week') {
-        # sql = paste(sql, 'CONCAT(YEARWEEK(',date,',',iso_8601_mode,'), "-",')
-        sql = paste(sql, date,' AS real_date, ')
-        sql = paste(sql, 'CONCAT(YEAR(',date,'), "-",')
-		sql = paste(sql, 'WEEK(',date,',',iso_8601_mode,')) AS week, ')
+        sql = paste('SELECT ')
+        sql = paste(sql, 'YEARWEEK(',date,',',iso_8601_mode,') AS week, ')
+#        sql = paste(sql, date,' AS real_date, ')
+#        sql = paste(sql, 'CONCAT(YEAR(',date,'), "-",')
+#		sql = paste(sql, 'WEEK(',date,',',iso_8601_mode,')) AS week, ')
     }
     # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)
@@ -53,8 +54,8 @@ getSQLPeriod <- function(period, date, fields, table, start, end) {
         sql = paste(sql,' ORDER BY YEAR(',date,'),MONTH(',date,')')
     }
     else if (period == 'week') {
-        sql = paste(sql,' GROUP BY YEAR(',date,'),WEEK(',date,')')
-        sql = paste(sql,' ORDER BY YEAR(',date,'),WEEK(',date,')')        
+        sql = paste(sql,' GROUP BY YEARWEEK(',date,',',iso_8601_mode,') ')
+        sql = paste(sql,' ORDER BY YEARWEEK(',date,',',iso_8601_mode,') ')        
     }
     else if (period == 'day') {
         sql = paste(sql,' GROUP BY YEAR(',date,'),DAYOFYEAR(',date,')')
