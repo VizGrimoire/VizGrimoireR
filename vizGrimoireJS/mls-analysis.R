@@ -88,12 +88,14 @@ startDST <- function (date) {
     return (value)
 }
 
-# Work in seconds
-completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){           
-    start = as.POSIXlt(startdate)
-    end = as.POSIXlt(enddate)
-    # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”    
-    last = ceiling (difftime(as.POSIXlt(enddate), as.POSIXlt(startdate),units='days') / nperiod)
+# Week of the year as decimal number (00–53) as defined in ISO 8601
+completeZeroPeriodIdsWeeks <- function (data, period, startdate, enddate){
+}
+
+# Work in seconds but supported days,weeks,mothns and years for now
+completeZeroPeriodIdsDays <- function (data, start, end) {        
+    # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
+    last = ceiling (difftime(end, start,units=period))
     # months and years are simple math
     print(paste("MONTHS:",(end$year*12)+end$mon,(start$year*12)+start$mon))
     print(paste("YEARS:",end$year,start$year))
@@ -101,20 +103,19 @@ completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){
     samples <- list('id'=c(1:last)) 
     lastdate = start
     dst = FALSE
-    for (i in 1:last) {
-        samples$unixtime[i] = as.numeric(start)+((i-1)*60*60*24)
+    hour.secs = 60*60
+    day.secs = hour.secs*24
+    for (i in 1:last) {        
+        samples$unixtime[i] = as.numeric(start)+((i-1)*day.secs)
         if (startDST(lastdate)) dst = TRUE
         else if (endDST(lastdate)) dst = FALSE
-        if (dst) samples$unixtime[i] = samples$unixtime[i] + 60*60
+        if (dst) samples$unixtime[i] = samples$unixtime[i] + hour.secs
         lastdate = as.POSIXlt(samples$unixtime[i], origin="1970-01-01")                   
         samples$date[i]=format(lastdate)
-        # print(as.POSIXlt(as.numeric(start)+((i-1)*60*60*24),origin="1970-01-01"))
-    }        
-    
-    # dsamples<-data.frame(id=samples)
-
+    }    
     print(data)
     print(samples)
+    stop()
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0
     print(completedata)
@@ -122,6 +123,16 @@ completeZeroPeriodIds <- function (data, nperiod, startdate, enddate){
     return (completedata)
 }
 
+completeZeroPeriodIds <- function (data, period, startdate, enddate){           
+    start = as.POSIXlt(startdate)
+    end = as.POSIXlt(enddate)    
+    if (period == "days") {
+        return (completeZeroPeriodIdsDays(data, start, end))
+    }    
+    if (period == "weeks") {
+        return (completeZeroPeriodIdsWeeks(data, start, end))
+    }
+}
 
 ## Group daily samples by selected period
 completePeriodIds <- function (data, period, conf) {
@@ -241,13 +252,11 @@ for (mlist in mailing_lists$mailing_list) {
 }
 
 if (conf$reports == 'countries'){
-    data <- mlsEvol(nperiod, startdate, enddate, conf$reports)
+    data <- mlsEvol(period, startdate, enddate, conf$reports)
 } else {
-    data <- mlsEvol(nperiod, startdate, enddate)
+    data <- mlsEvol(period, startdate, enddate)
 }
-print (data)
-data <- completePeriodIds(data, nperiod, conf)
-print (data)
+data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste("data/json/mls-evolutionary.json"))
 
 stop()
