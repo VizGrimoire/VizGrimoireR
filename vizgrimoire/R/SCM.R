@@ -324,6 +324,7 @@ EvolRepositories <- function(period, startdate, enddate, identities_db=NA, repos
 evol_commits <- function(period, startdate, enddate){
       #Commits evolution
 
+      print ("WARNING: evol_commits is a deprecated function, use instead EvolCommits")
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                          count(distinct(s.id)) as commits
                   from   scmlog s 
@@ -340,6 +341,7 @@ evol_commits <- function(period, startdate, enddate){
 evol_committers <- function(period, startdate, enddate){
       #Committers evolution
 
+      print ("WARNING: evol_committers is a deprecated function, use instead EvolCommiters")
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                          count(distinct(pup.upeople_id)) as committers
                   from   scmlog s,
@@ -357,6 +359,7 @@ evol_committers <- function(period, startdate, enddate){
 evol_authors <- function(period, startdate, enddate){
 	# Authors evolution
 
+       print ("WARNING: evol_authors is a deprecated function, use instead EvolAuthors")
        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(pup.upeople_id)) as authors
                    from   scmlog s,
@@ -376,7 +379,7 @@ evol_authors <- function(period, startdate, enddate){
 evol_files <- function(period, startdate, enddate){
     
       #Files per ",period,"
-
+      print ("WARNING: evol_files is a deprecated function, use instead EvolFiles")
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(a.file_id)) as files
                   from   scmlog s, 
@@ -394,7 +397,7 @@ evol_files <- function(period, startdate, enddate){
 evol_lines <- function(period, startdate, enddate) {
 
         # Lines added & removed per ",period,"
-	
+	print ("WARNING: evol_lines is a deprecated function, use instead EvolLines")
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            sum(cl.added) as added_lines,
                            sum(cl.removed) as removed_lines
@@ -412,7 +415,7 @@ evol_lines <- function(period, startdate, enddate) {
 evol_branches <- function(period, startdate, enddate){
     
       #Branches per ",period,"
-    
+       print ("WARNING: evol_branches is a deprecated function, use instead EvolBranches")
        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(a.branch_id)) as branches
                    from scmlog s, 
@@ -431,7 +434,7 @@ evol_branches <- function(period, startdate, enddate){
 evol_repositories <- function(period, startdate, enddate) {
     
       # Repositories per ",period,"
-
+      print ("WARNING: evol_repositories is a deprecated function, use instead EvolRepositories")
       q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id, 
                          count(distinct(s.repository_id)) as repositories
                   from scmlog s
@@ -824,6 +827,7 @@ companies_name <- function(startdate, enddate) {
 company_commits <- function(company_name, period, startdate, enddate){		
 	print (company_name)
 
+       print ("WARNING: company_commits is a deprecated function, use instead EvolCommits")
        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                           count(distinct(s.id)) as commits
                    from scmlog s,
@@ -847,7 +851,7 @@ company_commits <- function(company_name, period, startdate, enddate){
 
 company_files <- function(company_name, period, startdate, enddate) {
 	
-
+        print ("WARNING: company_files is a deprecated function, use instead EvolFiles")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                             count(distinct(a.file_id)) as files
                     from scmlog s,
@@ -873,6 +877,7 @@ company_files <- function(company_name, period, startdate, enddate) {
 
 company_authors <- function(company_name, period, startdate, enddate) {		
 	
+        print ("WARNING: company_authors is a deprecated function, use instead EvolAuthors")
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                             count(distinct(s.author_id)) as authors
                     from scmlog s,
@@ -896,6 +901,7 @@ company_authors <- function(company_name, period, startdate, enddate) {
 
 company_committers <- function(company_name, period, startdate, enddate) {		
 	
+        print ("WARNING: company_committers is a deprecated function, use instead EvolCommitters")
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            count(distinct(s.committer_id)) as committers
                     from scmlog s,
@@ -919,7 +925,7 @@ company_committers <- function(company_name, period, startdate, enddate) {
 
 company_lines <- function(company_name, period, startdate, enddate) {
 	
-	
+	print ("WARNING: company_lines is a deprecated function, use instead EvolLines")
         q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            sum(cl.added) as added_lines,
                            sum(cl.removed) as removed_lines
@@ -1300,6 +1306,7 @@ repos_name <- function(startdate, enddate) {
 
 repo_commits <- function(repo_name, period, startdate, enddate){
 	
+        print ("WARNING: repo_commits is a deprecated function, use instead EvolCommits")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                             COUNT(distinct(s.id)) as commits
                     FROM scmlog s, repositories r
@@ -1316,6 +1323,7 @@ repo_commits <- function(repo_name, period, startdate, enddate){
 
 repo_files <- function(repo_name, period, startdate, enddate) {
 	
+        print ("WARNING: repo_files is a deprecated function, use instead EvolFiles")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            COUNT(distinct(a.file_id)) as files
                     FROM scmlog s, actions a, repositories r
@@ -1334,6 +1342,7 @@ repo_files <- function(repo_name, period, startdate, enddate) {
 
 repo_committers <- function(repo_name, period, startdate, enddate) {
 	
+        print ("WARNING: repo_committers is a deprecated function, use instead EvolCommitters")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            COUNT(distinct(pup.upeople_id)) as committers
                     FROM scmlog s,
@@ -1354,6 +1363,7 @@ repo_committers <- function(repo_name, period, startdate, enddate) {
 
 repo_authors <- function(repo_name, period, startdate, enddate) {
 	
+        print ("WARNING: repo_authors is a deprecated function, use instead EvolAuthors")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            COUNT(distinct(pup.upeople_id)) as authors
                     FROM scmlog s,
@@ -1373,6 +1383,7 @@ repo_authors <- function(repo_name, period, startdate, enddate) {
 
 repo_lines <- function(repo_name, period, startdate, enddate) {
 	
+        print ("WARNING: repo_lines is a deprecated function, use instead EvolLines")
         q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
                            SUM(cl.added) as added_lines,
                            SUM(cl.removed) as removed_lines
