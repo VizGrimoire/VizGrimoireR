@@ -27,6 +27,16 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
 
+GetSQLGlobal <- function(date, fields, tables, filters, start, end) {        
+    sql = paste ('SELECT ', fields)
+    sql = paste(sql,'FROM', tables)
+    sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
+    if (filters != "") {
+        sql = paste(sql,' AND ',filters)
+    }
+    return(sql)    
+}
+
 GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
     
     kind = c('year','month','week','day')
@@ -71,47 +81,55 @@ GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
     return(sql)
 }
 
+GetTablesOwnUniqueIds <- function() {
+    return ('messages m, messages_people mp, people_upeople pup')
+}
+
+# Using senders only here!
+GetFiltersOwnUniqueIds <- function () {
+    return ('m.message_ID = mp.message_id AND 
+             mp.email_address = pup.people_id AND
+             pup.upeople_id = up.id AND 
+             mp.type_of_recipient=\'From\'') 
+}
+
 GetTablesCountries <- function(i_db) {
-    return (paste('messages m, messages_people mp, people_upeople pup,
-                    ',i_db,'.upeople up,
-                    ',i_db,'.countries c,
-                    ',i_db,'.upeople_countries upc',sep=''))
+    return (paste(GetTablesOwnUniqueIds(),' 
+                  ',i_db,'.upeople up,
+                  ',i_db,'.countries c,
+                  ',i_db,'.upeople_countries upc',sep=''))
 }
 
 GetFiltersCountries <- function() {
-    return ('m.message_ID = mp.message_id AND 
-            mp.email_address = pup.people_id AND
-            pup.upeople_id = up.id and
-            up.id  = upc.upeople_id and
-            upc.country_id = c.id')
+    return (paste(GetFiltersOwnUniqueIds(),' AND
+                  up.id  = upc.upeople_id and
+                  upc.country_id = c.id'))
 }
 
 GetTablesCompanies <- function(i_db) {
-    return (paste('messages m, messages_people mp, people_upeople pup,
+    return (paste(GetTablesOwnUniqueIds(),' 
                   ',i_db,'.upeople up,
-                  ',i_db,'.countries c,
+                  ',i_db,'.companies c,
                   ',i_db,'.upeople_companies upc',sep=''))
 }
 
 GetFiltersCompanies <- function() {
-    return ('m.message_ID = mp.message_id AND 
-             mp.email_address = pup.people_id AND
-             pup.upeople_id = up.id AND
-             up.id  = upc.upeople_id AND
-             upc.company_id = c.id AND
-             m.first_date >= upc.init AND
-             m.first_date < upc.end')
+    return (paste(GetFiltersOwnUniqueIds(),' AND
+                  up.id  = upc.upeople_id AND
+                  upc.company_id = c.id AND
+                  m.first_date >= upc.init AND
+                  m.first_date < upc.end'))
 }
 
+# GLOBAL
+
 mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports="") {    
-        
+    
     fields = paste('COUNT(m.message_ID) AS sent, 
-              COUNT(DISTINCT(pup.upeople_id)) as senders,
-              count(DISTINCT(',rfield,')) AS repositories')
-    tables = 'messages m, messages_people mp, people_upeople pup'
-    filters = 'm.message_ID = mp.message_id AND 
-               mp.email_address = pup.people_id AND 
-               mp.type_of_recipient=\'From\''
+                    COUNT(DISTINCT(pup.upeople_id)) as senders,
+                    COUNT(DISTINCT(',rfield,')) AS repositories')
+    tables = GetTablesOwnUniqueIds() 
+    filters = GetFiltersOwnUniqueIds()
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
     
@@ -130,7 +148,6 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
     if (reports == "companies") {
         fields = 'COUNT(DISTINCT(c.id)) AS companies' 
         tables = GetTablesCompanies(identities_db)
-        # TODO: pending start-end company affiliation support   
         filters = GetFiltersCompanies()         
         q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
                 startdate, enddate)
@@ -145,128 +162,97 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
     return (mls)
 }
 
-mlsEvolList <- function (listname, period, startdate, enddate) {
+mlsStatic <- function (rfield, startdate, enddate, reports="") {
     
-    field = "mailing_list"
-    if (length(i <- grep("http",listname))) {
-        field = "mailing_list_url"
-    }            
-     
-    q <- paste("SELECT ((to_days(first_date) - to_days(",startdate,")) div ",period,") as id,
-                       count(message_ID) AS sent
-                FROM messages 
-                WHERE ",field,"='",listname,"'
-                AND first_date >= ",startdate," AND first_date < ",enddate,"
-                GROUP BY ((to_days(first_date) - to_days(",startdate,")) div ",period,")", sep="")
+    fields = "COUNT(*) as sent,
+              DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
+              DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
+              COUNT(DISTINCT(pup.upeople_id)) as senders,
+              COUNT(DISTINCT(',rfield,')) AS repositories"
+    tables = GetTablesOwnUniqueIds()
+	filters = GetFiltersOwnUniqueIds()    
+    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+            startdate, enddate)    
     query <- new ("Query", sql = q)
-    sent_monthly <- run(query)	
+    sent.senders.first.last.repos <- run(query)
+    
+    q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
+    query <- new ("Query", sql = q)
+    repo_info <- run(query)
+    
+    if (reports == "countries") {
+        fields = 'COUNT(DISTINCT(c.id)) AS countries' 
+        tables = GetTablesCountries(identities_db)   
+        filters = GetFiltersCountries()         
+        q <- GetSQLGlobal('first_date', fields, tables, filters, 
+                startdate, enddate)
+        query <- new ("Query", sql = q)
+        countries <- run(query)        
+    }
+    if (reports == "companies") {
+        fields = 'COUNT(DISTINCT(c.id)) AS companies' 
+        tables = GetTablesCompanies(identities_db)   
+        filters = GetFiltersCompanies()         
+        q <- GetSQLGLobal(period,'first_date', fields, tables, filters, 
+                startdate, enddate)
+        query <- new ("Query", sql = q)
+        companies <- run(query)
+    }      
 	
-    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
-                        count(distinct(pup.upeople_id)) as senders 
-                from messages m, 
-                     messages_people mp, 
-                     people_upeople pup 
-                where m.message_ID = mp.message_id and 
-                      mp.email_address = pup.people_id and 
-                      mp.type_of_recipient='From' and
-                      first_date >= ",startdate," AND first_date < ",enddate," AND
-                      ",field,"='",listname,"'
-                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
-    query <- new ("Query", sql = q)
-    senders_monthly <- run(query)
-    
-    
-    mls_monthly <- merge (sent_monthly, senders_monthly, all = TRUE)
-    return(mls_monthly)	
+	agg_data = merge(sent.senders.first.last.repos, repo_info)
+    if (reports == "country") 
+        agg_data = merge(agg_data, countries)
+    if (reports == "companies") 
+        agg_data = merge(agg_data, companies)    
+	return (agg_data)
 }
 
-mlsStaticList <- function (listname, period, startdate, enddate) {
-	
-    field = "mailing_list"
-    if (length(i <- grep("http",listname))) {
-        field = "mailing_list_url"
-    }        
+# REPOSITORIES
+mlsEvolList <- function (listname, period, startdate, enddate) {
     
+    rfield = "mailing_list"
+    if (length(i <- grep("http",listname))) {
+        rfield = "mailing_list_url"
+    }          
+    
+    fields = paste('COUNT(m.message_ID) AS sent, 
+                    COUNT(DISTINCT(pup.upeople_id)) as senders')
+    tables = GetTablesOwnUniqueIds()
+    filters = paste(GetFiltersOwnUniqueIds(),' AND
+                    ',rfield,'=',listname,sep='') 
+                        
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    sent.senders <- run(query)
+        
+    return(sent.senders)	
+}
+
+mlsStaticList <- function (rfield, listname, period, startdate, enddate) {
+	
     ## Get some general stats from the database
     ##
-    q <- paste ("SELECT count(*) as sent,
-                        DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
-                        DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
-                        COUNT(DISTINCT(pup.upeople_id)) as senders
-                 FROM messages m,
-                      messages_people mp,
-                      people_upeople pup
-                 where mp.message_id = m.message_ID and
-                       mp.email_address = pup.people_id and
-                       ",field,"='",listname,"' and
-                       first_date >= ",startdate," AND 
-                       first_date < ",enddate,";",sep='')
+    
+    fields = "COUNT(*) as sent,
+              DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
+              DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
+              COUNT(DISTINCT(pup.upeople_id)) as senders"
+    tables = GetTablesOwnUniqueIds()
+	filters = paste(GetFiltersOwnUniqueIds(),' AND
+                    ',rfield,'=',listname,sep='')    
+    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+            startdate, enddate)
+    
     query <- new ("Query", sql = q)
     data <- run(query)
     
     return(data)
 }
 
-
-mls_static_info <- function (startdate, enddate, reports="") {
-	q <- paste ("SELECT count(*) as sent,
-                            DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
-                            DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date
-                     FROM messages")
-	query <- new ("Query", sql = q)
-	num_msg <- run(query)
-	
-	q <- paste ("SELECT count(distinct(pup.upeople_id)) as senders 
-                     from people_upeople pup,
-                          messages m,
-                          messages_people mp
-                     where pup.people_id = mp.email_address and
-                           mp.message_id = m.message_ID and
-                           m.first_date >= ",startdate," AND 
-                           m.first_date < ",enddate,";", sep="")
-	query <- new ("Query", sql = q)
-	num_ppl <- run(query)
-	
-	# num repositories
-	field = "mailing_list"
-	q <- paste ("select distinct(mailing_list) as mailing_list
-                     from messages
-                     where first_date >= ",startdate," AND 
-                           first_date < ",enddate,";",sep='')
-	query <- new ("Query", sql = q)
-	mailing_lists <- run(query)
-	
-	if (is.na(mailing_lists$mailing_list)) {
-		field = "mailing_list_url"
-	}
-	q <- paste("SELECT COUNT(DISTINCT(",field,")) AS repositories FROM messages")
-	query <- new ("Query", sql = q)
-	num_repos <- run(query)
-	
-	q <- paste("SELECT mailing_list_url as url FROM mailing_lists limit 1")
-	query <- new ("Query", sql = q)
-	repo_info <- run(query)
-    
-    # FIXME: this functionality is currently not working with the addition
-    # of startdate and enddate funcionality. Given that the final schema
-    # for the database has not been implemented, this is left as it is and 
-    # probably not working.
-    # In any case, as in other similar reports (companies or repositories), this 
-    # should be in another function (or then, the rest of the reports integrated here) 
-    if (reports == "country") {
-        q <- paste("SELECT COUNT(DISTINCT(country)) AS countries from people")
-	    query <- new ("Query", sql = q)
-	    countries_info <- run(query)
-    }
-	
-	agg_data = merge(num_msg,num_ppl)
-	agg_data = merge(agg_data, num_repos)
-	agg_data = merge(agg_data, repo_info)
-    if (reports == "country") 
-        agg_data = merge(agg_data, countries_info)
-	return (agg_data)
-}
-
+# 
+# Util
+#
 
 last_activity_mls <- function(days) {
     #commits
@@ -291,7 +277,6 @@ last_activity_mls <- function(days) {
     agg_data = merge(data1, data2)
 
     return(agg_data)    
-
 }
 
 #
@@ -317,8 +302,7 @@ countries_names <- function (identities_db, startdate, enddate) {
                  ORDER BY sent desc LIMIT ", country_limit)
     query <- new ("Query", sql = q)
     data <- run(query)
-    countries<-data$country
-    
+    countries<-data$country    
 }
     
 

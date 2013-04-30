@@ -201,29 +201,14 @@ identities_db = conf$identities_db
 startdate <- conf$startdate
 enddate <- conf$enddate
 
-# Aggregated data
-if (conf$reports == 'countries'){
-    static_data <- mls_static_info(startdate, enddate, conf$reports)
-} else {
-    static_data <- mls_static_info(startdate, enddate)
-}
-latest_activity7 <- last_activity_mls(7)
-latest_activity30 <- last_activity_mls(30)
-latest_activity90 <- last_activity_mls(90)
-latest_activity365 <- last_activity_mls(365)
-static_data = merge(static_data, latest_activity7)
-static_data = merge(static_data, latest_activity30)
-static_data = merge(static_data, latest_activity90)
-static_data = merge(static_data, latest_activity365)
-createJSON (static_data, paste("data/json/mls-static.json",sep=''))
-
+# TODO: Clean this mess!
 # Mailing lists
 rfield = 'mailing_list'
 query <- new ("Query", sql = "select distinct(mailing_list) from messages")
 mailing_lists <- run(query)
 
 if (is.na(mailing_lists$mailing_list)) {
-    print ("URL Mailing List")
+    rfield = "mailing_list_url"
     query <- new ("Query",
                   sql = "select distinct(mailing_list_url) from messages")
     mailing_lists <- run(query)
@@ -240,13 +225,53 @@ if (is.na(mailing_lists$mailing_list)) {
 	createJSON(repos, "data/json/mls-repos.json")	
 }
 
-# global
+#
+# GLOBAL
+#
 data <- mlsEvol(rfield, period, startdate, enddate, identities_db, conf$reports)
 print(data)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste("data/json/mls-evolutionary.json"))
-stop()
+# Aggregated data
+if (conf$reports == 'countries'){
+    static_data <- mlsStatic(rfield, startdate, enddate, conf$reports)
+} else {
+    static_data <- mlsStatic(rfield, startdate, enddate)
+}
+latest_activity7 <- last_activity_mls(7)
+latest_activity30 <- last_activity_mls(30)
+latest_activity90 <- last_activity_mls(90)
+latest_activity365 <- last_activity_mls(365)
+static_data = merge(static_data, latest_activity7)
+static_data = merge(static_data, latest_activity30)
+static_data = merge(static_data, latest_activity90)
+static_data = merge(static_data, latest_activity365)
+createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
+#
+# REPOS
+#
+for (mlist in mailing_lists$mailing_list) {    
+    # Evol data
+    data<-mlsEvolList(rfield, mlist, period, startdate, enddate)
+    data <- completePeriodIds(data, conf$granularity, conf)
+    
+    listname_file = gsub("/","_",mlist)
+    
+    # TODO: Multilist approach. We will obsolete it in future
+    createJSON (data, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
+    # Multirepos filename
+    createJSON (data, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
+    
+    # Static data
+    data<-mlsStaticList(rfield, mlist, nperiod, startdate, enddate)
+    # TODO: Multilist approach. We will obsolete it in future
+	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
+	# Multirepos filename
+	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
+}
+
+stop()
 
 # countries
 if (conf$reports == 'countries') {
@@ -265,28 +290,7 @@ if (conf$reports == 'countries') {
     }
 }
 
-# repos
-for (mlist in mailing_lists$mailing_list) {    
-    # Evol data
-    data<-mlsEvolList(mlist, nperiod, startdate, enddate)
-    data <- completePeriod(data, nperiod, conf)
-    data[is.na(data)] <- 0
-    data <- data[order(data$id),]
-    
-    listname_file = gsub("/","_",mlist)
-    
-    # TODO: Multilist approach. We will obsolete it in future
-    createJSON (data, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
-    # Multirepos filename
-    createJSON (data, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
-        
-    # Static data
-    data<-mlsStaticList(mlist, nperiod, startdate, enddate)
-    # TODO: Multilist approach. We will obsolete it in future
-	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
-	# Multirepos filename
-	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
-}
+
 
 # companies
 if (conf$reports == 'companies'){
