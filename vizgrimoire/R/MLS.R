@@ -71,19 +71,36 @@ GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
     return(sql)
 }
 
-GetTablesCompanies <- function(i_db) {
+GetTablesCountries <- function(i_db) {
     return (paste('messages m, messages_people mp, people_upeople pup,
                     ',i_db,'.upeople up,
                     ',i_db,'.countries c,
                     ',i_db,'.upeople_countries upc',sep=''))
 }
 
-GetFiltersCompanies <- function() {
+GetFiltersCountries <- function() {
     return ('m.message_ID = mp.message_id AND 
             mp.email_address = pup.people_id AND
             pup.upeople_id = up.id and
             up.id  = upc.upeople_id and
             upc.country_id = c.id')
+}
+
+GetTablesCompanies <- function(i_db) {
+    return (paste('messages m, messages_people mp, people_upeople pup,
+                  ',i_db,'.upeople up,
+                  ',i_db,'.countries c,
+                  ',i_db,'.upeople_companies upc',sep=''))
+}
+
+GetFiltersCompanies <- function() {
+    return ('m.message_ID = mp.message_id AND 
+             mp.email_address = pup.people_id AND
+             pup.upeople_id = up.id AND
+             up.id  = upc.upeople_id AND
+             upc.company_id = c.id AND
+             m.first_date >= upc.init AND
+             m.first_date < upc.end')
 }
 
 mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports="") {    
@@ -103,16 +120,28 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
         
     if (reports == "countries") {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
-        tables = GetTablesCompanies(identities_db)   
-        filters = GetFiltersCompanies()
-         
+        tables = GetTablesCountries(identities_db)   
+        filters = GetFiltersCountries()         
         q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
                         startdate, enddate)
         query <- new ("Query", sql = q)
         countries <- run(query)        
+    }
+    if (reports == "companies") {
+        fields = 'COUNT(DISTINCT(c.id)) AS companies' 
+        tables = GetTablesCompanies(identities_db)
+        # TODO: pending start-end company affiliation support   
+        filters = GetFiltersCompanies()         
+        q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+                startdate, enddate)
+        query <- new ("Query", sql = q)
+        companies <- run(query)
+        print(q)
     }  
+      
     mls <- sent.senders.repos
     if (reports == "countries") mls <- merge (mls, countries, all = TRUE)
+    if (reports == "companies") mls <- merge (mls, companies, all = TRUE)
     return (mls)
 }
 
