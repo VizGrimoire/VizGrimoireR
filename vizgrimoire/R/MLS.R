@@ -27,13 +27,14 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
 
-getSQLPeriod <- function(period, date, fields, table, start, end) {
+GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
     
     kind = c('year','month','week','day')
     iso_8601_mode = 3
-    # Remove time so unix timestamp is start of day    
-    sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
-    if (period == 'week') {
+    if (period == 'day') {
+        # Remove time so unix timestamp is start of day    
+        sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
+    } else if (period == 'week') {
         sql = paste('SELECT ')
         sql = paste(sql, 'YEARWEEK(',date,',',iso_8601_mode,') AS week, ')
     } else if (period == 'month') {
@@ -43,9 +44,11 @@ getSQLPeriod <- function(period, date, fields, table, start, end) {
     }
     # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)
-    sql = paste(sql,'FROM', table)
+    sql = paste(sql,'FROM', tables)
     sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
-    
+    if (filters != "") {
+        sql = paste(sql,' AND ',filters)
+    }    
     if (period == 'year') {
         sql = paste(sql,' GROUP BY YEAR(',date,')')
         sql = paste(sql,' ORDER BY YEAR(',date,')')
@@ -65,120 +68,51 @@ getSQLPeriod <- function(period, date, fields, table, start, end) {
     else {
         stop(paste("PERIOD: ",period,' not supported'))
     }
-    print(sql)
     return(sql)
 }
 
+GetTablesCompanies <- function(i_db) {
+    return (paste('messages m, messages_people mp, people_upeople pup,
+                    ',i_db,'.upeople up,
+                    ',i_db,'.countries c,
+                    ',i_db,'.upeople_countries upc',sep=''))
+}
 
-mlsEvol <- function (period, startdate, enddate, i_db, reports="") {
-    # i_db: identities database    
+GetFiltersCompanies <- function() {
+    return ('m.message_ID = mp.message_id AND 
+            mp.email_address = pup.people_id AND
+            pup.upeople_id = up.id and
+            up.id  = upc.upeople_id and
+            upc.country_id = c.id')
+}
 
-    ## Sent messages
-
-    q <- getSQLPeriod(period,'first_date','COUNT(message_ID) AS sent','messages', 
+mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports="") {    
+        
+    fields = paste('COUNT(m.message_ID) AS sent, 
+              COUNT(DISTINCT(pup.upeople_id)) as senders,
+              count(DISTINCT(',rfield,')) AS repositories')
+    tables = 'messages m, messages_people mp, people_upeople pup'
+    filters = 'm.message_ID = mp.message_id AND 
+               mp.email_address = pup.people_id AND 
+               mp.type_of_recipient=\'From\''
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
-    query <- new ("Query", sql = q)  
-    sent <- run(query)
-    return(sent)
-#
-#
-#    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
-#                       count(distinct(m.message_ID)) AS sent
-#                FROM messages m
-#                where m.first_date>=",startdate," and m.first_date < ",enddate,"
-#                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
-#
-#    query <- new ("Query", sql = q)
-#    sent_monthly <- run(query)
-	
-    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
-                       count(distinct(pup.upeople_id)) as senders 
-                           from messages m, 
-                                messages_people mp, 
-                                people_upeople pup 
-                           where m.message_ID = mp.message_id and 
-                                 mp.email_address = pup.people_id and 
-                                 mp.type_of_recipient='From' and
-                                 m.first_date>=",startdate," and m.first_date<",enddate,"
-                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
+    
     query <- new ("Query", sql = q)
-    senders <- run(query)
-      
-    # repositories
-    # FIXME: control of dates (startdate and enddate needed)
-    field = "mailing_list"
-    q <- paste ("select distinct(mailing_list) from messages")
-    query <- new ("Query", sql = q)
-    mailing_lists <- run(query)
-      
-    if (is.na(mailing_lists$mailing_list)) {
-        field = "mailing_list_url"
-    }		
-    ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-    ##                year(first_date) AS year,
-    ##                month(first_date) AS month,
-    ##                DATE_FORMAT (first_date, '%b %Y') as date,
-    ##                count(DISTINCT(",field,")) AS repositories
-    ##              FROM messages
-    ##              GROUP BY year,month
-    ##              ORDER BY year,month")
-    q <- paste("select ((to_days(m.first_date) - to_days(",startdate,")) div ",period,") as id,
-                       count(DISTINCT(",field,")) AS repositories
-                FROM messages m
-                where m.first_date>=",startdate," and m.first_date<",enddate,"
-                group by ((to_days(m.first_date) - to_days(",startdate,")) div ",period,")", sep="")
-    query <- new ("Query", sql = q)    
-    repos <- run(query)
-      
+    sent.senders.repos <- run(query)
+        
     if (reports == "countries") {
-        # FIXME: Unique ids not included
-        # countries
-        ## q <- paste ("SELECT year(first_date) * 12 + month(first_date) AS id,
-        ##                  year(first_date) AS year,
-        ##                  month(first_date) AS month,
-        ##                  DATE_FORMAT (first_date, '%b %Y') as date,
-        ##                  count(DISTINCT(country)) AS countries
-        ##                  FROM messages m
-        ##                JOIN messages_people mp ON mp.message_ID=m.message_id
-        ##                JOIN people p ON mp.email_address = p.email_address
-        ##                GROUP BY year,month
-        ##                ORDER BY year,month")
-        q <- paste ("SELECT p.id AS id,
-                            p.year AS year,
-                            p.",period," AS ",period,",
-                            DATE_FORMAT(p.date, '%b %Y') AS date,
-                            IFNULL(i.countries, 0) AS countries
-                     FROM ",period,"s p
-                     LEFT JOIN(
-                               SELECT year(first_date) AS year,
-                                      ",period,"(first_date) AS ",period,",
-                                      count(DISTINCT(country)) AS countries
-                               FROM messages m
-                               JOIN messages_people mp ON mp.message_ID=m.message_id
-                               JOIN people p ON mp.email_address = p.email_address
-                               GROUP BY year,",period,") i
-                     ON (
-                         p.year = i.year AND 
-                         p.",period," = i.",period,")
-                     WHERE p.date >= ",startdate," AND 
-                           p.date < ",enddate,"
-                    ORDER BY p.id ASC;", sep="")
-                           
-
+        fields = 'COUNT(DISTINCT(c.id)) AS countries' 
+        tables = GetTablesCompanies(identities_db)   
+        filters = GetFiltersCompanies()
+         
+        q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+                        startdate, enddate)
         query <- new ("Query", sql = q)
-        countries <- run(query)
-    }
-  
-    ## mls_monthly <- completeZeroMonthly (merge (sent_monthly, senders_monthly, all = TRUE))
-    ## mls_monthly <- completeZeroMonthly (merge (mls_monthly, repos_monthly, all = TRUE))
-    ## if (reports == "countries") 
-    ##     mls_monthly <- completeZeroMonthly (merge (mls_monthly, countries_monthly, all = TRUE))
-    ## mls_monthly[is.na(mls_monthly)] <- 0
-    mls <- merge (sent, senders, all = TRUE)
-    mls <- merge (mls, repos, all = TRUE)
-    if (reports == "countries") 
-        mls <- merge (mls, countries, all = TRUE)
-    mls[is.na(mls)] <- 0
+        countries <- run(query)        
+    }  
+    mls <- sent.senders.repos
+    if (reports == "countries") mls <- merge (mls, countries, all = TRUE)
     return (mls)
 }
 

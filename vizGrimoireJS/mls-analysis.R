@@ -127,6 +127,7 @@ completeZeroPeriodIdsDays <- function (data, start, end) {
         else if (endDST(lastdate)) dst = FALSE
         if (dst) samples$unixtime[i] = samples$unixtime[i] + hour.secs
         lastdate = as.POSIXlt(samples$unixtime[i], origin="1970-01-01")                   
+        # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
         samples$date[i]=format(lastdate)
     }    
     completedata <- merge (data, samples, all=TRUE)
@@ -179,20 +180,19 @@ SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpa
 
 # period of time
 if (conf$granularity == 'years'){
-       period = 'year'
-       nperiod = 365
-}
-if (conf$granularity == 'months'){
+   period = 'year'
+   nperiod = 365
+} else if (conf$granularity == 'months'){
    period = 'month'
    nperiod = 31
-}
-if (conf$granularity == 'weeks'){
+} else if (conf$granularity == 'weeks'){
    period = 'week'
    nperiod = 7
-}
-if (conf$granularity == 'days'){
+} else if (conf$granularity == 'days'){
        period = 'day'
        nperiod = 1
+} else {
+    stop(paste("Incorrect period:",conf$granularity))
 }
 
 identities_db = conf$identities_db
@@ -204,7 +204,7 @@ enddate <- conf$enddate
 # Aggregated data
 if (conf$reports == 'countries'){
     static_data <- mls_static_info(startdate, enddate, conf$reports)
-} else{
+} else {
     static_data <- mls_static_info(startdate, enddate)
 }
 latest_activity7 <- last_activity_mls(7)
@@ -218,6 +218,7 @@ static_data = merge(static_data, latest_activity365)
 createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 
 # Mailing lists
+rfield = 'mailing_list'
 query <- new ("Query", sql = "select distinct(mailing_list) from messages")
 mailing_lists <- run(query)
 
@@ -239,6 +240,15 @@ if (is.na(mailing_lists$mailing_list)) {
 	createJSON(repos, "data/json/mls-repos.json")	
 }
 
+# global
+data <- mlsEvol(rfield, period, startdate, enddate, identities_db, conf$reports)
+print(data)
+data <- completePeriodIds(data, conf$granularity, conf)
+createJSON (data, paste("data/json/mls-evolutionary.json"))
+stop()
+
+
+# countries
 if (conf$reports == 'countries') {
     countries <- countries_names(identities_db, startdate, enddate) 
     createJSON (countries, paste("data/json/mls-countries.json",sep=''))
@@ -255,8 +265,8 @@ if (conf$reports == 'countries') {
     }
 }
 
-for (mlist in mailing_lists$mailing_list) {
-    
+# repos
+for (mlist in mailing_lists$mailing_list) {    
     # Evol data
     data<-mlsEvolList(mlist, nperiod, startdate, enddate)
     data <- completePeriod(data, nperiod, conf)
@@ -278,34 +288,7 @@ for (mlist in mailing_lists$mailing_list) {
 	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
 }
 
-if (conf$reports == 'countries'){
-    data <- mlsEvol(period, startdate, enddate, conf$reports)
-} else {
-    data <- mlsEvol(period, startdate, enddate)
-}
-print(data)
-data <- completePeriodIds(data, conf$granularity, conf)
-createJSON (data, paste("data/json/mls-evolutionary.json"))
-
-stop()
-
-# Top senders
-# top_senders_data <- top_senders_wo_affs(c("-Bot"), identities_db, startdate, enddate)
-top_senders_data <- list()
-top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identites_db)
-top_senders_data[['senders.last year']]<-top_senders(365, conf$startdate, conf$enddate,identites_db)
-top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$enddate,identites_db)
-
-createJSON (top_senders_data, "data/json/mls-top.json")
-
-# People list
-# query <- new ("Query", 
-# 		sql = "select email_address as id, email_address, name, username from people")
-# people <- run(query)
-# createJSON (people, "data/json/mls-people.json")
-
-
-# Companies information
+# companies
 if (conf$reports == 'companies'){
     
     company_names = companies_names(identities_db, startdate, enddate)
@@ -329,7 +312,6 @@ if (conf$reports == 'companies'){
 }
 
 # Demographics
-
 demos <- new ("Demographics","mls",6)
 demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
 demos$age[demos$age < 0 ] <- 0
@@ -338,3 +320,18 @@ new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
 createJSON (new, "data/json/mls-demographics-aging.json")
+
+# Tops
+# top_senders_data <- top_senders_wo_affs(c("-Bot"), identities_db, startdate, enddate)
+top_senders_data <- list()
+top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identities_db)
+top_senders_data[['senders.last year']]<-top_senders(365, conf$startdate, conf$enddate,identities_db)
+top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$enddate,identities_db)
+
+createJSON (top_senders_data, "data/json/mls-top.json")
+
+# People list
+# query <- new ("Query", 
+# 		sql = "select email_address as id, email_address, name, username from people")
+# people <- run(query)
+# createJSON (people, "data/json/mls-people.json")
