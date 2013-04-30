@@ -26,6 +26,162 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
 
+
+
+##########
+# Specific FROM and WHERE clauses per type of report
+##########
+GetSQLRepositoriesFrom <- function(){
+    #tables necessaries for repositories
+    return (" , repositories r")
+}
+
+GetSQLRepositoriesWhere <- function(repository){
+    #fields necessaries to match info among tables
+    return (paste(" and r.name =", repository, " 
+                   and r.id = s.repository_id", sep=""))
+}
+
+GetSQLCompaniesFrom <- function(identities_db){
+    #tables necessaries for companies
+    return (paste(" , ",identities_db,".people_upeople pup,
+                  ",identities_db,".upeople_companies upc,
+                  ",identities_db,".companies c", sep=""))
+}
+
+GetSQLCompaniesWhere <- function(company){
+    #fields necessaries to match info among tables
+    return (paste("and s.author_id = pup.people_id
+                  and pup.upeople_id = upc.upeople_id
+                  and s.date >= upc.init
+                  and s.date < upc.end
+                  and upc.company_id = c.id
+                  and c.name =", company, sep=""))
+}
+
+GetSQLCountriesFrom <- function(identities_db){
+    #tables necessaries for companies
+    return (paste(" , ",identities_db,".people_upeople pup,
+                  ",identities_db,".upeople_countries upc,
+                  ",identities_db,".countries c", sep=""))
+}
+
+GetSQLCountriesWhere <- function(country){
+    #fields necessaries to match info among tables
+    return (paste("and s.author_id = pup.people_id
+                  and pup.upeople_id = upc.upeople_id
+                  and s.date >= upc.init
+                  and s.date < upc.end
+                  and upc.company_id = c.id
+                  and c.name =", country, sep=""))
+}
+
+##########
+#Generic functions to obtain FROM and WHERE clauses per type of report
+##########
+
+GetSQLReportFrom <- function(identities_db, repository, company, country){
+    #generic function to generate 'from' clauses
+
+    from = ""
+
+    if (! is.na(repository)){
+        #evolution of commits in a given repository
+        from <- paste(from, GetSQLRepositoriesFrom())
+    }
+    else if (! is.na(company)){
+        #evolution of commits in a given company
+        from <- paste(from, GetSQLCompaniesFrom(identities_db))
+    }
+    else if (! is.na(country)){
+        #evolution of commits in a given country
+        from <- paste(from, GetSQLCountriesFrom(identities_db))
+    }
+ 
+    return (from)
+}
+
+
+GetSQLReportWhere <- function(repository, company, country){
+    #generic function to generate 'where' clauses
+
+    where = ""
+
+    if (! is.na(repository)){
+        #evolution of commits in a given repository
+        where <- paste(where, GetSQLRepositoriesWhere(repository))
+    }
+    else if (! is.na(company)){
+        #evolution of commits in a given company
+        where <- paste(where, GetSQLCompaniesWhere(company))
+    }
+    else if (! is.na(country)){
+        #evolution of commits in a given country
+        where <- paste(where, GetSQLCountriesWhere(country))
+    }
+
+    return (where)
+}
+
+#########
+#Functions to obtain info per type of basic piece of data
+#########
+EvolCommits <- function(period, startdate, enddate, identities_db, repository, company, country){
+    #Evolution of commits
+
+    # basic parts of the query
+    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                     count(s.id) AS commits ", sep="")
+    from <- " FROM scmlog s "
+    where <- paste("WHERE s.date >=", startdate, " and
+                    s.date < ", enddate, sep="")
+    rest <- paste( "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+
+    # specific parts of the query depending on the report needed
+    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    where <- paste(where, GetSQLReportWhere(repository, company, country))
+    
+    #executing the query
+    q <- paste(select, from, where, rest)
+    print (q)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+EvolAuthors <- function(period, startdate, enddate, identities_db, repository, company, country){
+    #Evolution of unique authors per period
+
+    # basic parts of the query
+    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",p/iden/eriod,") as id,
+                     count(distinct(pup.upeople_id)) AS authors ", sep="")
+    from <- " FROM scmlog s "
+    where <- paste("WHERE s.date >=", startdate, " and
+                    s.date < ", enddate, sep="")
+    rest <- paste("GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+
+    #specific parts of the query depending on the report needed
+    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    where <- paste(where, GetSQLReportWhere(repository, company, country))
+
+    if (! is.na(repository) &&  ! is.na(company) && ! is.na(country)){
+        #Specific case for the basic option where people_upeople table is needed
+        #and not taken into account in the initial part of the query
+        from <- paste(from, ",  people_upeople pup", sep="")
+        where <- paste(where, " and s.author_id = pup.people_id", sep="")
+    }
+
+    #executing the query
+    q <- paste(select, from, where, rest)
+    print(q)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+
 evol_commits <- function(period, startdate, enddate){
       #Commits evolution
 
