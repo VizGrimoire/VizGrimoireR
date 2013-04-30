@@ -51,6 +51,8 @@ GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
         sql = paste('SELECT YEAR(',date,')*12+MONTH(',date,') AS month, ')
     }  else if (period == 'year') {
         sql = paste('SELECT YEAR(',date,')*12 AS year, ')
+    } else {
+        stop(paste("Wrong perdiod",period))
     }
     # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)
@@ -93,7 +95,7 @@ GetFiltersOwnUniqueIds <- function () {
 }
 
 GetTablesCountries <- function(i_db) {
-    return (paste(GetTablesOwnUniqueIds(),' 
+    return (paste(GetTablesOwnUniqueIds(),', 
                   ',i_db,'.upeople up,
                   ',i_db,'.countries c,
                   ',i_db,'.upeople_countries upc',sep=''))
@@ -107,7 +109,7 @@ GetFiltersCountries <- function() {
 }
 
 GetTablesCompanies <- function(i_db) {
-    return (paste(GetTablesOwnUniqueIds(),' 
+    return (paste(GetTablesOwnUniqueIds(),',
                   ',i_db,'.upeople up,
                   ',i_db,'.companies c,
                   ',i_db,'.upeople_companies upc',sep=''))
@@ -224,12 +226,8 @@ mlsEvolList <- function (rfield, listname, period, startdate, enddate) {
     return(sent.senders)	
 }
 
-mlsStaticList <- function (rfield, listname, period, startdate, enddate) {
-	
-    ## Get some general stats from the database
-    ##
-    
-    fields = "COUNT(*) as sent,
+mlsStaticList <- function (rfield, listname, startdate, enddate) {
+    fields = "COUNT(m.message_ID) as sent,
               DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
               COUNT(DISTINCT(pup.upeople_id)) as senders"
@@ -238,10 +236,9 @@ mlsStaticList <- function (rfield, listname, period, startdate, enddate) {
                     ',rfield,'=\'',listname,'\'',sep='')    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
             startdate, enddate)
-    
+
     query <- new ("Query", sql = q)
-    data <- run(query)
-    
+    data <- run(query)    
     return(data)
 }
 
@@ -279,6 +276,9 @@ lastActivity <- function(days) {
 #
 
 countries_names <- function (identities_db, startdate, enddate) {
+    
+    
+    
     # Countries
     country_limit = 30
     q <- paste("SELECT count(m.message_id) as sent, c.name as country 
@@ -303,66 +303,43 @@ countries_names <- function (identities_db, startdate, enddate) {
 
 
 mlsEvolCountries <- function (identities_db, country, period, startdate, enddate) {           		
-    # Sent and sender time series evol	
-	## q <- paste("SELECT year(first_date) * 12 + month(first_date) AS id,
-        ##           year(first_date) AS year,
-        ##           month(first_date) AS month,
-        ##           DATE_FORMAT (first_date, '%b %Y') as date,
-        ##           count(m.message_ID) AS sent,
-        ##           count(distinct(p.email_address)) AS senders
-        ##         FROM messages m
-        ##         JOIN messages_people mp ON mp.message_ID=m.message_id
-        ##         JOIN people p ON mp.email_address = p.email_address
-        ##         WHERE country='",country,"'
-        ##         GROUP BY year,month
-        ##         ORDER BY year,month",sep = '')
 
-    q <- paste("SELECT ((to_days(first_date) - to_days(",startdate,")) div ",period,") as id,
-                count(m.message_ID) AS sent,
-				COUNT(DISTINCT(m_p.email_address)) as senders
-                FROM  messages m, messages_people m_p, people_upeople pup,
-                  ",identities_db,".upeople up,
-				  ",identities_db,".countries c,
-				  ",identities_db,".upeople_countries upc
-                 WHERE m_p.message_id=m.message_ID AND 
-                   m_p.email_address = pup.people_id and
-                   pup.upeople_id = up.id and
-                   up.id  = upc.upeople_id and
-                   upc.country_id = c.id and
-                   m.first_date >= ", startdate, " and
-                   m.first_date < ", enddate, " and
-                   c.name = '", country, "'				
-                GROUP BY ((to_days(first_date) - to_days(",startdate,")) div ",period,")", sep="")
+    fields = paste('COUNT(m.message_ID) AS sent, 
+                    COUNT(DISTINCT(pup.upeople_id)) as senders')
+    tables = GetTablesCountries(identities_db)
+    filters = paste(GetFiltersCountries(),' AND
+                    c.name = \'', country, '\'',sep='') 
 
-	query <- new ("Query", sql = q)
-	evol_monthly <- run(query)
-    return (evol_monthly)
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+                    startdate, enddate)                
+            
+    query <- new ("Query", sql = q)
+    sent.senders <- run(query)
+    
+    return (sent.senders)
 }
 
 mlsStaticCountries <- function (identities_db, country, startdate, enddate) {
-    ## Get some general stats from mls
-    q <- paste ("SELECT count(m.message_ID) as sent,
-                   DATE_FORMAT (min(first_date), '%Y-%m-%d') as first_date,
-                   DATE_FORMAT (max(first_date), '%Y-%m-%d') as last_date,
-                   COUNT(DISTINCT(m_p.email_address)) as senders
-                FROM  messages m, messages_people m_p, people_upeople pup,
-                  ",identities_db,".upeople up,
-				  ",identities_db,".countries c,
-				  ",identities_db,".upeople_countries upc
-                 WHERE m_p.message_id=m.message_ID AND 
-                   m_p.email_address = pup.people_id and
-                   pup.upeople_id = up.id and
-                   up.id  = upc.upeople_id and
-                   upc.country_id = c.id and
-                   m.first_date >= ", startdate, " and
-                   m.first_date < ", enddate, " and
-                   c.name = '", country, "'", sep="")
+    
+    fields = "COUNT(m.message_ID) as sent,
+              DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
+              DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
+              COUNT(DISTINCT(pup.upeople_id)) as senders"
+    tables = GetTablesCountries(identities_db)
+	filters = paste(GetFiltersCountries(),' AND 
+                    c.name = \'', country, '\'',sep='')
+    
+    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+            startdate, enddate)
     query <- new ("Query", sql = q)
-    data <- run(query)
-    return (data)
+    sent.first.last.senders <- run(query)    
+    
+    return (sent.first.last.senders)
 }
 
-
+# 
+# TOPS
+#
 top_senders <- function(days = 0, startdate, enddate, identites_db) {
     
     date_limit = ""
@@ -421,8 +398,9 @@ top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
    return (data)
 }
 
-
-#Companies information
+#
+# COMPANIES
+# 
 
 companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
 

@@ -250,9 +250,7 @@ if (conf$reports == 'repositories') {
     for (mlist in repos) {    
         # Evol data
         data<-mlsEvolList(rfield, mlist, period, startdate, enddate)
-        data <- completePeriodIds(data, conf$granularity, conf)
-        print(data)
-        
+        data <- completePeriodIds(data, conf$granularity, conf)        
         listname_file = gsub("/","_",mlist)
         
         # TODO: Multilist approach. We will obsolete it in future
@@ -261,15 +259,13 @@ if (conf$reports == 'repositories') {
         createJSON (data, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
         
         # Static data
-        data<-mlsStaticList(rfield, mlist, nperiod, startdate, enddate)
+        data<-mlsStaticList(rfield, mlist, startdate, enddate)
         # TODO: Multilist approach. We will obsolete it in future
     	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
     	# Multirepos filename
     	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
     }
 }
-
-stop()
 
 # countries
 if (conf$reports == 'countries') {
@@ -279,8 +275,8 @@ if (conf$reports == 'countries') {
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- mlsEvolCountries(identities_db, country, nperiod, startdate, enddate)
-        data <- completePeriod(data, nperiod, conf)        
+        data <- mlsEvolCountries(identities_db, country, period, startdate, enddate)
+        data <- completePeriodIds(data, conf$granularity, conf)        
         createJSON (data, paste("data/json/",country,"-mls-evolutionary.json",sep=''))
         
         data <- mlsStaticCountries(identities_db, country, startdate, enddate)
