@@ -271,10 +271,7 @@ lastActivity <- function(days) {
 # COUNTRIES
 #
 
-countries_names <- function (identities_db, startdate, enddate) {
-    
-    
-    
+countries_names <- function (identities_db, startdate, enddate) {    
     # Countries
     country_limit = 30
     q <- paste("SELECT count(m.message_id) as sent, c.name as country 
@@ -368,37 +365,20 @@ mlsEvolCompanies <- function(company_name, i_db, period, startdate, enddate) {
     return (sent.senders)   
 }
 
-companies_names_wo_affs <- function(list_affs, i_db, startdate, enddate) {
+companies_names <- function (i_db, startdate, enddate, filter=c()) {
 
+    companies_limit = 30
+    
     affiliations = ""
-    for (aff in list_affs){
-        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    for (aff in filter){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' AND ",sep="")
     }
-
+    
     q <- paste("SELECT c.name as name, COUNT(DISTINCT(m.message_ID)) as sent
                 FROM ", GetTablesCompanies(i_db), "
                 WHERE ", GetFiltersCompanies(), " AND
                   upc.company_id = c.id AND
                   ", affiliations, "
-                  m.first_date >= ",startdate," AND
-                  m.first_date < ",enddate,"
-                GROUP BY c.name
-                ORDER BY COUNT((m.message_ID)) DESC;" , sep="")
-
-    query <- new("Query", sql = q)
-    
-    data <- run(query)
-    return (data)
-}
-
-companies_names <- function (i_db, startdate, enddate){
-
-    companies_limit = 30
-
-    q <- paste("SELECT c.name as name, COUNT(DISTINCT(m.message_ID)) as sent
-                FROM ", GetTablesCompanies(i_db), "
-                WHERE ", GetFiltersCompanies(), " AND
-                  upc.company_id = c.id AND
                   m.first_date >= ",startdate," AND
                   m.first_date < ",enddate,"
                 GROUP BY c.name
@@ -412,28 +392,17 @@ companies_names <- function (i_db, startdate, enddate){
 
 company_top_senders <- function(company_name, i_db, startdate, enddate){
 
-    q <- paste("select p.name as senders, 
-                       count(distinct(m.message_id)) as sent 
-                from messages m,
-                     messages_people mp,
-                     people p,
-                     people_upeople pup,
-                     ",i_db,".upeople_companies upc,
-                     ",i_db,".companies c
-                where m.message_ID = mp.message_id and
-                      mp.email_address = pup.people_id and
-                      mp.email_address = p.email_address and
-                      pup.upeople_id = upc.upeople_id and
-                      upc.company_id = c.id and
-                      m.first_date >= upc.init and
-                      m.first_date < upc.end and
-                      c.name = '",company_name,"' and
-                      m.first_date >= ",startdate," and
-                      m.first_date < ",enddate,"
-                group by p.name
-                order by count(distinct(m.message_id)) desc 
-                limit 10", sep="")
-
+    q <- paste("SELECT up.identifier as senders, 
+                  COUNT(DISTINCT(m.message_id)) as sent 
+                FROM ", GetTablesCompanies(i_db), ", ",i_db,".upeople up
+                WHERE ", GetFiltersCompanies(), " AND
+                  up.id = upc.upeople_id AND
+                  upc.company_id = c.id AND
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate," AND
+                  c.name = '",company_name,"'
+                GROUP BY up.identifier
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

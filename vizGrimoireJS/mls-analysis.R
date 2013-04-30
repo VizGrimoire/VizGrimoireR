@@ -290,7 +290,7 @@ if (conf$reports == 'countries') {
 if (conf$reports == 'companies'){
     
     company_names = companies_names(identities_db, startdate, enddate)
-    # company_names = companies_names_wo_affs(c("-Bot", "-Individual", "-Unknown"), identities_db, startdate, enddate)
+    # company_names = companies_names(identities_db, startdate, enddate, c("barrapunto"))
 
     createJSON(company_names$name, "data/json/mls-companies.json")
    
