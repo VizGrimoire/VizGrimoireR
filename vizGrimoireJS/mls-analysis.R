@@ -97,40 +97,34 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
     
 }
 
-startDST <- function (date) {
-    value = FALSE
-    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
-    if (newdate$hour>0) value = TRUE   
-    return (value)
-}
-
-endDST <- function (date) {
-    value = FALSE
-    newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
-    if (date$mday == newdate$mday) value = TRUE   
-    return (value)
-}
-
-# Work in seconds but supported days
+# Work in seconds as a future investment
 completeZeroPeriodIdsDays <- function (data, start, end) {        
     # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
     last = ceiling (difftime(end, start,units=period)) + 1
     
     samples <- list('id'=c(1:last)) 
     lastdate = start
-    dst = FALSE
+    start_dst = start$isdst
+    dst = start_dst
+    dst_offset_hour = 0
     hour.secs = 60*60
     day.secs = hour.secs*24
+    
     for (i in 1:last) {        
         samples$unixtime[i] = as.numeric(start)+((i-1)*day.secs)
-        if (startDST(lastdate)) dst = TRUE
-        else if (endDST(lastdate)) dst = FALSE
-        if (dst) samples$unixtime[i] = samples$unixtime[i] - hour.secs
+        new_date = as.POSIXlt(samples$unixtime[i],origin="1970-01-01") 
+        if (new_date$isdst != dst) {
+            dst = new_date$isdst
+            if (dst == start_dst) offset_hour = 0
+            else if (start_dst == 1) dst_offset_hour = hour.secs
+            else if (start_dst == 0) dst_offset_hour = -hour.secs
+        }
+        samples$unixtime[i] = samples$unixtime[i] + dst_offset_hour
         lastdate = as.POSIXlt(samples$unixtime[i], origin="1970-01-01")                   
         # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
         samples$date[i]=format(lastdate)
-    }    
-    completedata <- merge (data, samples, all=TRUE)
+    }
+    completedata <- merge (data, samples, all=TRUE, stringsAsFactors=FALSE)
     completedata[is.na(completedata)] <- 0
     return (completedata)
 }
@@ -160,8 +154,7 @@ completeZeroPeriodIds <- function (data, period, startdate, enddate){
 completePeriodIds <- function (data, period, conf) {
     
     if (length(data) == 0) {
-        # TODO: broken, only works for commit metric
-        data <- data.frame(id=numeric(0), commits=numeric(0))
+        data <- data.frame(id=numeric(0))
     }
     new_data <- completeZeroPeriodIds(data, period, conf$str_startdate, conf$str_enddate)
     # new_data$week <- as.Date(conf$str_startdate) + new_data$id * period
@@ -228,7 +221,6 @@ if (is.na(mailing_lists$mailing_list)) {
 # GLOBAL
 #
 data <- mlsEvol(rfield, period, startdate, enddate, identities_db, conf$reports)
-print(data)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste("data/json/mls-evolutionary.json"))
 # Aggregated data

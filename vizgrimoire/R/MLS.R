@@ -134,7 +134,6 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
     
-    print(q)
     query <- new ("Query", sql = q)
     sent.senders.repos <- run(query)
         
@@ -155,7 +154,6 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
                 startdate, enddate)
         query <- new ("Query", sql = q)
         companies <- run(query)
-        print(q)
     }  
       
     mls <- sent.senders.repos
@@ -393,7 +391,6 @@ top_senders <- function(days = 0, startdate, enddate, identites_db) {
                GROUP BY u.identifier
                ORDER BY sent desc
                LIMIT 10;", sep="")    
-	print (q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -424,7 +421,6 @@ top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
                 m.first_date < ",enddate,"
           GROUP by mp.email_address 
           ORDER BY sent DESC LIMIT 10;", sep="")
-   # print(q)
    query <- new ("Query", sql = q)
    data <- run(query)
    return (data)
