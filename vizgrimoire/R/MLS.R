@@ -208,18 +208,13 @@ mlsStatic <- function (rfield, startdate, enddate, reports="") {
 }
 
 # REPOSITORIES
-mlsEvolList <- function (listname, period, startdate, enddate) {
-    
-    rfield = "mailing_list"
-    if (length(i <- grep("http",listname))) {
-        rfield = "mailing_list_url"
-    }          
+mlsEvolList <- function (rfield, listname, period, startdate, enddate) {
     
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders')
     tables = GetTablesOwnUniqueIds()
     filters = paste(GetFiltersOwnUniqueIds(),' AND
-                    ',rfield,'=',listname,sep='') 
+                    ',rfield,'=\'',listname,'\'',sep='') 
                         
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
@@ -240,7 +235,7 @@ mlsStaticList <- function (rfield, listname, period, startdate, enddate) {
               COUNT(DISTINCT(pup.upeople_id)) as senders"
     tables = GetTablesOwnUniqueIds()
 	filters = paste(GetFiltersOwnUniqueIds(),' AND
-                    ',rfield,'=',listname,sep='')    
+                    ',rfield,'=\'',listname,'\'',sep='')    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
             startdate, enddate)
     

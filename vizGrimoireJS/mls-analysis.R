@@ -198,6 +198,7 @@ enddate <- conf$enddate
 rfield = 'mailing_list'
 query <- new ("Query", sql = "select distinct(mailing_list) from messages")
 mailing_lists <- run(query)
+repos = ''
 
 if (is.na(mailing_lists$mailing_list)) {
     rfield = "mailing_list_url"
@@ -242,24 +243,30 @@ createJSON (static_data, paste("data/json/mls-static.json",sep=''))
 #
 # REPOS
 #
-for (mlist in mailing_lists$mailing_list) {    
-    # Evol data
-    data<-mlsEvolList(rfield, mlist, period, startdate, enddate)
-    data <- completePeriodIds(data, conf$granularity, conf)
+
+if (conf$reports == 'repositories') {
+    print (repos)
     
-    listname_file = gsub("/","_",mlist)
-    
-    # TODO: Multilist approach. We will obsolete it in future
-    createJSON (data, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
-    # Multirepos filename
-    createJSON (data, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
-    
-    # Static data
-    data<-mlsStaticList(rfield, mlist, nperiod, startdate, enddate)
-    # TODO: Multilist approach. We will obsolete it in future
-	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
-	# Multirepos filename
-	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
+    for (mlist in repos) {    
+        # Evol data
+        data<-mlsEvolList(rfield, mlist, period, startdate, enddate)
+        data <- completePeriodIds(data, conf$granularity, conf)
+        print(data)
+        
+        listname_file = gsub("/","_",mlist)
+        
+        # TODO: Multilist approach. We will obsolete it in future
+        createJSON (data, paste("data/json/mls-",listname_file,"-evolutionary.json",sep=''))
+        # Multirepos filename
+        createJSON (data, paste("data/json/",listname_file,"-mls-evolutionary.json",sep=''))
+        
+        # Static data
+        data<-mlsStaticList(rfield, mlist, nperiod, startdate, enddate)
+        # TODO: Multilist approach. We will obsolete it in future
+    	createJSON (data, paste("data/json/mls-",listname_file,"-static.json",sep=''))
+    	# Multirepos filename
+    	createJSON (data, paste("data/json/",listname_file,"-mls-static.json",sep=''))    
+    }
 }
 
 stop()
