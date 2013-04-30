@@ -97,14 +97,14 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
     
 }
 
-endDST <- function (date) {
+startDST <- function (date) {
     value = FALSE
     newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
     if (newdate$hour>0) value = TRUE   
     return (value)
 }
 
-startDST <- function (date) {
+endDST <- function (date) {
     value = FALSE
     newdate = as.POSIXlt(as.numeric(date)+ 60*60*24, origin="1970-01-01")
     if (date$mday == newdate$mday) value = TRUE   
@@ -125,15 +125,13 @@ completeZeroPeriodIdsDays <- function (data, start, end) {
         samples$unixtime[i] = as.numeric(start)+((i-1)*day.secs)
         if (startDST(lastdate)) dst = TRUE
         else if (endDST(lastdate)) dst = FALSE
-        if (dst) samples$unixtime[i] = samples$unixtime[i] + hour.secs
+        if (dst) samples$unixtime[i] = samples$unixtime[i] - hour.secs
         lastdate = as.POSIXlt(samples$unixtime[i], origin="1970-01-01")                   
         # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
         samples$date[i]=format(lastdate)
     }    
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0
-    print(completedata)
-    stop()
     return (completedata)
 }
 
@@ -177,6 +175,7 @@ completePeriodIds <- function (data, period, conf) {
 
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
+# Sys.setenv( TZ="Etc/GMT+8" )
 
 # period of time
 if (conf$granularity == 'years'){
@@ -238,10 +237,10 @@ if (conf$reports == 'countries'){
 } else {
     static_data <- mlsStatic(rfield, startdate, enddate)
 }
-latest_activity7 <- last_activity_mls(7)
-latest_activity30 <- last_activity_mls(30)
-latest_activity90 <- last_activity_mls(90)
-latest_activity365 <- last_activity_mls(365)
+latest_activity7 <- lastActivity(7)
+latest_activity30 <- lastActivity(30)
+latest_activity90 <- lastActivity(90)
+latest_activity365 <- lastActivity(365)
 static_data = merge(static_data, latest_activity7)
 static_data = merge(static_data, latest_activity30)
 static_data = merge(static_data, latest_activity90)

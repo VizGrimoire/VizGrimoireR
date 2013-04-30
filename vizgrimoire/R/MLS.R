@@ -88,8 +88,7 @@ GetTablesOwnUniqueIds <- function() {
 # Using senders only here!
 GetFiltersOwnUniqueIds <- function () {
     return ('m.message_ID = mp.message_id AND 
-             mp.email_address = pup.people_id AND
-             pup.upeople_id = up.id AND 
+             mp.email_address = pup.people_id AND 
              mp.type_of_recipient=\'From\'') 
 }
 
@@ -102,6 +101,7 @@ GetTablesCountries <- function(i_db) {
 
 GetFiltersCountries <- function() {
     return (paste(GetFiltersOwnUniqueIds(),' AND
+                  pup.upeople_id = up.id AND
                   up.id  = upc.upeople_id and
                   upc.country_id = c.id'))
 }
@@ -115,6 +115,7 @@ GetTablesCompanies <- function(i_db) {
 
 GetFiltersCompanies <- function() {
     return (paste(GetFiltersOwnUniqueIds(),' AND
+                  pup.upeople_id = up.id AND
                   up.id  = upc.upeople_id AND
                   upc.company_id = c.id AND
                   m.first_date >= upc.init AND
@@ -133,6 +134,7 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
     
+    print(q)
     query <- new ("Query", sql = q)
     sent.senders.repos <- run(query)
         
@@ -254,7 +256,7 @@ mlsStaticList <- function (rfield, listname, period, startdate, enddate) {
 # Util
 #
 
-last_activity_mls <- function(days) {
+lastActivity <- function(days) {
     #commits
     q <- paste("select count(distinct(message_ID)) as sent_",days,"
                 from messages
@@ -426,8 +428,6 @@ top_senders_wo_affs <- function(list_affs, i_db, startdate, enddate){
    query <- new ("Query", sql = q)
    data <- run(query)
    return (data)
-
-
 }
 
 
