@@ -296,15 +296,15 @@ if (conf$reports == 'companies'){
    
     for (company in company_names$name){       
         print (company)
-        company_name = paste("'",company,"'",sep="")
-        post_posters = company_posts_posters (company_name, identities_db, nperiod, startdate, enddate)
-        post_posters <- completePeriod(post_posters, nperiod, conf)        
-        createJSON(post_posters, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
+        sent.senders = mlsEvolCompanies(company, identities_db, period, startdate, enddate)
+        # sent.senders <- completePeriod(sent.senders, nperiod, conf): Nice unixtime!!!
+        sent.senders <- completePeriodIds(sent.senders, conf$granularity, conf)
+        createJSON(sent.senders, paste("data/json/",company,"-mls-evolutionary.json", sep=""))
 
-        top_senders = company_top_senders (company_name, identities_db, period, startdate, enddate)
+        top_senders = company_top_senders (company, identities_db, startdate, enddate)
         createJSON(top_senders, paste("data/json/",company,"-mls-top-senders.json", sep=""))
 
-        static_info = company_static_info(company_name, identities_db, startdate, enddate)
+        static_info = mlsStaticCompanies(company, identities_db, startdate, enddate)
         createJSON(static_info, paste("data/json/",company,"-mls-static.json", sep=""))
     }
 }
