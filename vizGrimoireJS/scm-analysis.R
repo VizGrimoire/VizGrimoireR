@@ -54,6 +54,9 @@ if (conf$granularity == 'weeks'){
    nperiod = 7
 }
 
+# destination directory
+destdir <- conf$destination
+
 # sql_res = 1 # 1 day resolution  SQL
 sql_res = nperiod
 
@@ -138,7 +141,7 @@ top_authors_data <- top_authors(conf$startdate, conf$enddate)
 #top_authors_data_2012 <- top_authors_year(2012)
 top_authors_data <- list()
 top_authors_data[['authors.']] <- top_authors_wo_affiliations(c("-Bot"), conf$startdate, conf$enddate)
-createJSON (top_authors_data, "data/json/scm-top.json")
+createJSON (top_authors_data, paste(c(destdir,"/data/json/scm-top.json"), collapse=''))
 
 # Top files
 top_files_modified_data = top_files_modified()
@@ -157,12 +160,12 @@ agg_data <- agg_data[order(agg_data$id), ]
 agg_data[is.na(agg_data)] <- 0
 
 # TODO: output dir read from params in command line
-createJSON (agg_data, "data/json/scm-evolutionary.json")
-createJSON (info_data, "data/json/scm-static.json")
+createJSON (agg_data, paste(c(destdir,"/data/json/scm-evolutionary.json"), collapse=''))
+createJSON (info_data, paste(c(destdir,"/data/json/scm-static.json"), collapse=''))
 #createJSON (top_committers_data, "data/json/scm-top.json")
 
 people_list = people()
-createJSON (people_list, "data/json/scm-people.json")
+createJSON (people_list, paste(c(destdir,"/data/json/scm-people.json"), collapse=''))
 
 # TODO: Have a unique file, scm-top.json already exists, with all metrics
 # createJSON (top_authors_data, "data/json/scm-top.json")
@@ -175,7 +178,7 @@ if (conf$reports == 'companies') {
 	companies  <- companies_name(conf$startdate, conf$enddate)
     # companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
 	companies <- companies$name
-	createJSON(companies, "data/json/scm-companies.json")
+	createJSON(companies, paste(c(destdir,"/data/json/scm-companies.json"), collapse=''))
 	
 	for (company in companies){
 		company_name = paste(c("'", company, "'"), collapse='')
@@ -203,28 +206,28 @@ if (conf$reports == 'companies') {
 		agg_data = merge(agg_data, committers, all = TRUE)
                 agg_data <- agg_data[order(agg_data$id), ]
 		
-		createJSON(agg_data, paste(c("data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
+		createJSON(agg_data, paste(c(destdir,"/data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 				
 		print ("static info")
 		static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
-		createJSON(static_info, paste(c("data/json/",company_aux,"-scm-static.json"), collapse=''))
+		createJSON(static_info, paste(c(destdir,"/data/json/",company_aux,"-scm-static.json"), collapse=''))
 		
 		print ("top authors")
 		top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
-		createJSON(top_authors, paste(c("data/json/",company_aux,"-scm-top-authors.json"), collapse=''))
+		createJSON(top_authors, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors.json"), collapse=''))
 		top_authors_2006 <- company_top_authors_year(company_name, 2006) 
-		createJSON(top_authors_2006, paste(c("data/json/",company_aux,"-scm-top-authors_2006.json"), collapse=''))
+		createJSON(top_authors_2006, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2006.json"), collapse=''))
 		top_authors_2009 <- company_top_authors_year(company_name, 2009)
-		createJSON(top_authors_2009, paste(c("data/json/",company_aux,"-scm-top-authors_2009.json"), collapse=''))
+		createJSON(top_authors_2009, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2009.json"), collapse=''))
 		top_authors_2012 <- company_top_authors_year(company_name, 2012)
-		createJSON(top_authors_2012, paste(c("data/json/",company_aux,"-scm-top-authors_2012.json"), collapse=''))	
+		createJSON(top_authors_2012, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2012.json"), collapse=''))	
 	}
 }
 
 if (conf$reports == 'repositories') {
 	repos  <- repos_name(conf$startdate, conf$enddate)
 	repos <- repos$name
-	createJSON(repos, "data/json/scm-repos.json")
+	createJSON(repos, paste(c(destdir,"/data/json/scm-repos.json"), collapse=''))
 	
 	for (repo in repos) {
 		repo_name = paste(c("'", repo, "'"), collapse='')
@@ -253,28 +256,28 @@ if (conf$reports == 'repositories') {
 		agg_data = merge(agg_data, committers, all = TRUE)
                 agg_data <- agg_data[order(agg_data$id), ]
 		
-		createJSON(agg_data, paste(c("data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
+		createJSON(agg_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
 		print ("static info")
 		static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
-		createJSON(static_info, paste(c("data/json/",repo_aux,"-scm-static.json"), collapse=''))		
+		createJSON(static_info, paste(c(destdir, "/data/json/",repo_aux,"-scm-static.json"), collapse=''))		
 	}		
 }
 
 if (conf$reports == 'countries') {
 	countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
 	countries <- countries$name
-	createJSON(countries, "data/json/scm-countries.json")
+	createJSON(countries, paste(c(destdir,"/data/json/scm-countries.json"), collapse=''))
 	
 	for (country in countries) {
         if (is.na(country)) next
         print (country)
         data <- scm_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
         data <- completePeriod(data, nperiod, conf) 
-        createJSON (data, paste("data/json/",country,"-scm-evolutionary.json",sep=''))
+        createJSON (data, paste(c(destdir, "/data/json/",country,"-scm-evolutionary.json"),collapse=''))
         
         data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
-        createJSON (data, paste("data/json/",country,"-scm-static.json",sep=''))        
+        createJSON (data, paste(c(destdir, "/data/json/",country,"-scm-static.json"),collapse=''))        
     }
 }
 
@@ -300,10 +303,10 @@ if (conf$reports == 'companies-countries'){
             data$week <- as.Date(conf$str_startdate) + data$id * nperiod
             data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
             data <- data[order(data$id), ]
-            createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-evolutionary.json",sep=''))
+            createJSON (data, paste(c(destdir,"/data/json/companycountry/",company,".",country,"-scm-evolutionary.json"),collapse=''))
             
             data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
-            createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-static.json",sep=''))        
+            createJSON (data, paste(c(destdir,"/data/json/companycountry/",company,".",country,"-scm-static.json"),collapse=''))        
 
             #################
             
@@ -321,4 +324,4 @@ aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, "data/json/scm-demographics-aging.json")
+createJSON (new, paste(c(destdir,"/data/json/scm-demographics-aging.json"), collapse=''))
