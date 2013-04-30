@@ -17,7 +17,7 @@
 ## This file is a part of the vizGrimoire.R package
 ## http://vizgrimoire.bitergia.org/
 ##
-## Analyze and extract metrics data gathered by Bicho tool
+## Analyze and extract metrics data gathered by CVSAnalY tool
 ## http://metricsgrimoire.github.com/CVSAnalY
 ##
 ## Authors:
@@ -34,14 +34,7 @@
 
 library("vizgrimoire")
 
-## Analyze args, and produce config params from them
-## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
-##                            user = "root", password = NULL,
-##                            host = "127.0.0.1", port = 3308)
-## SetDBChannel (database = conf$database,
-##               user = conf$user, password = conf$password,
-##               host = conf$host, port = conf$port)
-## conf <- ConfFromParameters(dbschema = "kdevelop", user = "jgb", password = "XXX")
+
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
@@ -218,101 +211,101 @@ createJSON (people_list, paste(c(destdir,"/data/json/scm-people.json"), collapse
 #createJSON (top_authors_data_2012, "data/json/scm-top-authors_2012.json")
 
 if (conf$reports == 'companies') {
-	companies  <- companies_name(conf$startdate, conf$enddate)
-    # companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
-	companies <- companies$name
-	createJSON(companies, paste(c(destdir,"/data/json/scm-companies.json"), collapse=''))
+
+    companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
+    companies <- companies$name
+    createJSON(companies, paste(c(destdir,"/data/json/scm-companies.json"), collapse=''))
 	
-	for (company in companies){
-		company_name = paste(c("'", company, "'"), collapse='')
-		company_aux = paste(c("", company, ""), collapse='')
-		print (company_name)
+    for (company in companies){
+        company_name = paste(c("'", company, "'"), collapse='')
+        company_aux = paste(c("", company, ""), collapse='')
+        print (company_name)
 		 
-		commits <- company_commits(company_name, nperiod, conf$startdate, conf$enddate)        
+        commits <- company_commits(company_name, nperiod, conf$startdate, conf$enddate)        
         commits <- completePeriod(commits, nperiod, conf)
         
-		lines <-company_lines(company_name, nperiod, conf$startdate, conf$enddate)
+        lines <-company_lines(company_name, nperiod, conf$startdate, conf$enddate)
         lines <- completePeriod(lines, nperiod, conf)
 
-		files <- company_files(company_name, nperiod, conf$startdate, conf$enddate)
+        files <- company_files(company_name, nperiod, conf$startdate, conf$enddate)
         files <- completePeriod(files, nperiod, conf)
 
-		authors <- company_authors(company_name, nperiod, conf$startdate, conf$enddate)
+        authors <- company_authors(company_name, nperiod, conf$startdate, conf$enddate)
         authors <- completePeriod(authors, nperiod, conf)
 
-		committers <- company_committers(company_name, nperiod, conf$startdate, conf$enddate)
+        committers <- company_committers(company_name, nperiod, conf$startdate, conf$enddate)
         committers <- completePeriod(committers, nperiod, conf)
         		
-		agg_data = merge(commits, lines, all = TRUE)
-		agg_data = merge(agg_data, files, all = TRUE)
-		agg_data = merge(agg_data, authors, all = TRUE)
-		agg_data = merge(agg_data, committers, all = TRUE)
-                agg_data <- agg_data[order(agg_data$id), ]
+        agg_data = merge(commits, lines, all = TRUE)
+        agg_data = merge(agg_data, files, all = TRUE)
+        agg_data = merge(agg_data, authors, all = TRUE)
+        agg_data = merge(agg_data, committers, all = TRUE)
+        agg_data <- agg_data[order(agg_data$id), ]
 		
-		createJSON(agg_data, paste(c(destdir,"/data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
+        createJSON(agg_data, paste(c(destdir,"/data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 				
-		print ("static info")
-		static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
-		createJSON(static_info, paste(c(destdir,"/data/json/",company_aux,"-scm-static.json"), collapse=''))
+        print ("static info")
+        static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
+        createJSON(static_info, paste(c(destdir,"/data/json/",company_aux,"-scm-static.json"), collapse=''))
 		
-		print ("top authors")
-		top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
-		createJSON(top_authors, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors.json"), collapse=''))
-		top_authors_2006 <- company_top_authors_year(company_name, 2006) 
-		createJSON(top_authors_2006, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2006.json"), collapse=''))
-		top_authors_2009 <- company_top_authors_year(company_name, 2009)
-		createJSON(top_authors_2009, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2009.json"), collapse=''))
-		top_authors_2012 <- company_top_authors_year(company_name, 2012)
-		createJSON(top_authors_2012, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2012.json"), collapse=''))	
-	}
+        print ("top authors")
+        top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
+        createJSON(top_authors, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors.json"), collapse=''))
+        top_authors_2006 <- company_top_authors_year(company_name, 2006) 
+        createJSON(top_authors_2006, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2006.json"), collapse=''))
+        top_authors_2009 <- company_top_authors_year(company_name, 2009)
+        createJSON(top_authors_2009, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2009.json"), collapse=''))
+        top_authors_2012 <- company_top_authors_year(company_name, 2012)
+        createJSON(top_authors_2012, paste(c(destdir,"/data/json/",company_aux,"-scm-top-authors_2012.json"), collapse=''))	
+    }
 }
 
 if (conf$reports == 'repositories') {
-	repos  <- repos_name(conf$startdate, conf$enddate)
-	repos <- repos$name
-	createJSON(repos, paste(c(destdir,"/data/json/scm-repos.json"), collapse=''))
+    repos  <- repos_name(conf$startdate, conf$enddate)
+    repos <- repos$name
+    createJSON(repos, paste(c(destdir,"/data/json/scm-repos.json"), collapse=''))
 	
-	for (repo in repos) {
-		repo_name = paste(c("'", repo, "'"), collapse='')
-		repo_aux = paste(c("", repo, ""), collapse='')
-		print (repo_name)
+    for (repo in repos) {
+        repo_name = paste(c("'", repo, "'"), collapse='')
+        repo_aux = paste(c("", repo, ""), collapse='')
+        print (repo_name)
         
-		commits <- repo_commits(repo_name, nperiod, conf$startdate, conf$enddate)
+        commits <- repo_commits(repo_name, nperiod, conf$startdate, conf$enddate)
         commits <- completePeriod(commits, nperiod, conf)
         
-		# print ("lines")
-		# lines <- repo_lines(repo_name, period, conf$startdate, conf$enddate)
-		lines <- ""
+        # print ("lines")
+        # lines <- repo_lines(repo_name, period, conf$startdate, conf$enddate)
+        lines <- ""
 
-		files <- repo_files(repo_name, nperiod, conf$startdate, conf$enddate)
+        files <- repo_files(repo_name, nperiod, conf$startdate, conf$enddate)
         files <- completePeriod(files, nperiod, conf)
 
-		authors <- repo_authors(repo_name, nperiod, conf$startdate, conf$enddate)
+        authors <- repo_authors(repo_name, nperiod, conf$startdate, conf$enddate)
         authors <- completePeriod(authors, nperiod, conf)
 
-		committers <- repo_committers(repo_name, nperiod, conf$startdate, conf$enddate)
+        committers <- repo_committers(repo_name, nperiod, conf$startdate, conf$enddate)
         committers <- completePeriod(committers, nperiod, conf)
 		
-		agg_data = merge(commits, lines, all = TRUE)
-		agg_data = merge(agg_data, files, all = TRUE)
-		agg_data = merge(agg_data, authors, all = TRUE)	
-		agg_data = merge(agg_data, committers, all = TRUE)
-                agg_data <- agg_data[order(agg_data$id), ]
+        agg_data = merge(commits, lines, all = TRUE)
+        agg_data = merge(agg_data, files, all = TRUE)
+        agg_data = merge(agg_data, authors, all = TRUE)	
+        agg_data = merge(agg_data, committers, all = TRUE)
+        agg_data <- agg_data[order(agg_data$id), ]
 		
-		createJSON(agg_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
+        createJSON(agg_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
-		print ("static info")
-		static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
-		createJSON(static_info, paste(c(destdir, "/data/json/",repo_aux,"-scm-static.json"), collapse=''))		
+        print ("static info")
+        static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
+        createJSON(static_info, paste(c(destdir, "/data/json/",repo_aux,"-scm-static.json"), collapse=''))		
 	}		
 }
 
 if (conf$reports == 'countries') {
-	countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
-	countries <- countries$name
-	createJSON(countries, paste(c(destdir,"/data/json/scm-countries.json"), collapse=''))
+    countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
+    countries <- countries$name
+    createJSON(countries, paste(c(destdir,"/data/json/scm-countries.json"), collapse=''))
 	
-	for (country in countries) {
+    for (country in countries) {
         if (is.na(country)) next
         print (country)
         data <- scm_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
