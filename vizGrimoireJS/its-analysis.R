@@ -108,7 +108,7 @@ if (conf$reports == 'countries') {
 }
 issues[is.na(issues)] <- 0
 issues <- issues[order(issues$id),]
-createJSON (issues, paste(c(destdir,"/data/json/its-evolutionary.json"), collapse=''))
+createJSON (issues, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
 all_static_info <- its_static_info(closed_condition, startdate, enddate)
 if (conf$reports == 'companies') {
@@ -127,7 +127,7 @@ all_static_info = merge(all_static_info, latest_activity7)
 all_static_info = merge(all_static_info, latest_activity30)
 all_static_info = merge(all_static_info, latest_activity90)
 all_static_info = merge(all_static_info, latest_activity365)
-createJSON (all_static_info, paste(c(destdir,"/data/json/its-static.json"), collapse=''))
+createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 
 # Top closers
@@ -137,17 +137,17 @@ top_closers_data[['closers.last year']]<-top_closers(365, conf$startdate, conf$e
 top_closers_data[['closers.last month']]<-top_closers(31, conf$startdate, conf$enddate,identites_db)
 
 # top_closers_data <- its_top_closers_wo_affiliations(c("-Bot"), startdate, enddate, identites_db)
-createJSON (top_closers_data, paste(c(destdir,"/data/json/its-top.json"), collapse=''))
+createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # People List for working in unique identites
 people_list <- its_people()
-createJSON (people_list, paste(c(destdir,"/data/json/its-people.json"), collapse=''))
+createJSON (people_list, paste(c(destdir,"/its-people.json"), collapse=''))
 
 # Repositories
 if (conf$reports == 'repositories') {	
 	repos  <- its_repos_name()
 	repos <- repos$name
-	createJSON(repos, paste(c(destdir,"/data/json/its-repos.json"), collapse=''))
+	createJSON(repos, paste(c(destdir,"/its-repos.json"), collapse=''))
 	
 	for (repo in repos) {
 		repo_name = paste(c("'", repo, "'"), collapse='')
@@ -183,7 +183,7 @@ if (conf$reports == 'companies') {
     companies <- its_companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate, identities_db)
     #companies  <- its_companies_name(startdate, enddate, identities_db)
     companies <- companies$name
-    createJSON(companies, paste(c(destdir,"/data/json/its-companies.json"), collapse=''))
+    createJSON(companies, paste(c(destdir,"/its-companies.json"), collapse=''))
     
     for (company in companies){
         company_name = paste(c("'", company, "'"), collapse='')
@@ -202,15 +202,15 @@ if (conf$reports == 'companies') {
         agg_data = merge(agg_data, opened, all = TRUE)
         agg_data[is.na(agg_data)] <- 0
         agg_data <- agg_data[order(agg_data$id),]               
-        createJSON(agg_data, paste(c(destdir,"/data/json/",company_aux,"-its-evolutionary.json"), collapse=''))
+        createJSON(agg_data, paste(c(destdir,"/",company_aux,"-its-evolutionary.json"), collapse=''))
 
         print ("static info")
         static_info <- its_company_static_info(company_name, startdate, enddate, identities_db)
-        createJSON(static_info, paste(c(destdir,"/data/json/",company_aux,"-its-static.json"), collapse=''))
+        createJSON(static_info, paste(c(destdir,"/",company_aux,"-its-static.json"), collapse=''))
 		
         print ("top closers")
         top_closers <- its_company_top_closers(company_name, startdate, enddate, identities_db)
-        createJSON(top_closers, paste(c(destdir,"/data/json/",company_aux,"-its-top-closers.json"), collapse=''))
+        createJSON(top_closers, paste(c(destdir,"/",company_aux,"-its-top-closers.json"), collapse=''))
 
     }
 }
@@ -219,7 +219,7 @@ if (conf$reports == 'companies') {
 if (conf$reports == 'countries') {
     countries  <- its_countries_names(conf$identities_db,conf$startdate, conf$enddate)
 	countries <- countries$name
-	createJSON(countries, paste(c(destdir,"/data/json/its-countries.json"), collapse=''))
+	createJSON(countries, paste(c(destdir,"/its-countries.json"), collapse=''))
     
     for (country in countries) {
         if (is.na(country)) next
@@ -227,10 +227,10 @@ if (conf$reports == 'countries') {
         
         data <- its_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)
         data <- completePeriod(data, nperiod, conf)
-        createJSON (data, paste(c(destdir,"/data/json/",country,"-its-evolutionary.json",sep=''), collapse=''))
+        createJSON (data, paste(c(destdir,"/",country,"-its-evolutionary.json",sep=''), collapse=''))
         
         data <- its_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
-        createJSON (data, paste(c(destdir,"/data/json/",country,"-its-static.json",sep=''), collapse=''))
+        createJSON (data, paste(c(destdir,"/",country,"-its-static.json",sep=''), collapse=''))
     }    
 }
     
@@ -247,13 +247,13 @@ closed <- new ("ITSTicketsTimes")
 events.tofix <- new ("TimedEvents",
                      closed$open, closed$tofix %/% 60)
 quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-JSON(quantiles, paste(c(destdir,'/data/json/its-quantiles-year-time_to_fix_min.json'), collapse=''))
+JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
 
 ## Monthly quantiles of time to fix (hours)
 events.tofix.hours <- new ("TimedEvents",
                            closed$open, closed$tofix %/% 3600)
 quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
-JSON(quantiles.month, paste(c(destdir,'/data/json/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
+JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
 
 ## Changed tickets: time ticket was attended, last move
 changed <- new ("ITSTicketsChangesTimes")
@@ -261,7 +261,7 @@ changed <- new ("ITSTicketsChangesTimes")
 events.toatt <- new ("TimedEvents",
                      changed$open, changed$toattention %/% 60)
 quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-JSON(quantiles, paste(c(destdir,'/data/json/its-quantiles-year-time_to_attention_min.json'), collapse=''))
+JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
 }
 
 
@@ -274,4 +274,4 @@ aux <- data.frame(demos["id"], demos["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, paste(c(destdir,'/data/json/its-demographics-aging.json'), collapse=''))
+createJSON (new, paste(c(destdir,'/its-demographics-aging.json'), collapse=''))
