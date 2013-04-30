@@ -57,34 +57,33 @@ if (conf$granularity == 'weeks'){
 # destination directory
 destdir <- conf$destination
 
+#########
+#EVOLUTIONARY DATA
+#########
+
+# 1- Retrieving information
 #Commits
 commits <- EvolCommits(nperiod, conf$startdate, conf$enddate)
 data_commits <- completePeriod(commits, nperiod, conf)
-
 #Committers
 committers <- EvolCommitters(nperiod, conf$startdate, conf$enddate)
 data_committers <- completePeriod(committers, nperiod, conf)
-
 # Authors
 authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate)
 data_authors <- completePeriod(authors, nperiod, conf)
-
 #Files
 files <- EvolFiles(nperiod, conf$startdate, conf$enddate)
 data_files <- completePeriod(files, nperiod, conf)
-
 #Lines
 lines <- EvolLines(nperiod, conf$startdate, conf$enddate)
 data_lines <- completePeriod(lines, nperiod, conf)
-
 #Branches
 branches <- EvolBranches(nperiod, conf$startdate, conf$enddate)
 data_branches <- completePeriod(branches, nperiod, conf)
-
 #Repositories
 repositories <- EvolRepositories(nperiod, conf$startdate, conf$enddate)
 data_repositories <- completePeriod(repositories, nperiod, conf)
-
+#Specific information if specific analysis are required
 if (conf$reports == 'companies') { 
     companies <- evol_companies(nperiod, conf$startdate, conf$enddate)
     data_companies <- completePeriod(companies, nperiod, conf)
@@ -94,25 +93,85 @@ if (conf$reports == 'countries') {
     data_countries <- completePeriod(countries, nperiod, conf)
 }
 
-# Fixed data
-info_data = evol_info_data(period, conf$startdate, conf$enddate)
+# 2- Merging information
+#Creating JSON file with all data
+evol_data = merge(data_commits, data_committers, all = TRUE)
+evol_data = merge(evol_data, data_authors, all = TRUE)
+if (conf$reports == 'companies') 
+  evol_data = merge(evol_data, data_companies, all = TRUE)
+if (conf$reports == 'countries')
+  evol_data = merge(evol_data, data_countries, all = TRUE)
+evol_data = merge(evol_data, data_files, all = TRUE)
+evol_data = merge(evol_data, data_lines, all = TRUE)
+evol_data = merge(evol_data, data_branches, all = TRUE)
+evol_data = merge(evol_data, data_repositories, all = TRUE)
+evol_data <- evol_data[order(evol_data$id), ]
+evol_data[is.na(evol_data)] <- 0
+
+# 3- Creating a JSON file 
+createJSON (evol_data, paste(c(destdir,"/data/json/scm-evolutionary.json"), collapse=''))
+
+
+#########
+#STATIC DATA
+#########
+
+# 1- Retrieving information
+static_commits <- StaticNumCommits(nperiod, conf$startdate, conf$enddate)
+static_committers <- StaticNumAuthors(nperiod, conf$startdate, conf$enddate)
+static_authors <- StaticNumCommitters(nperiod, conf$startdate, conf$enddate)
+static_files <- StaticNumFiles(nperiod, conf$startdate, conf$enddate)
+static_branches <- StaticNumBranches(nperiod, conf$startdate, conf$enddate)
+static_repositories <- StaticNumRepositories(nperiod, conf$startdate, conf$enddate)
+static_actions <- StaticNumActions(nperiod, conf$startdate, conf$enddate)
+static_lines <- StaticNumLines(nperiod, conf$startdate, conf$enddate)
+avg_commits_period <- StaticAvgCommitsPeriod(period, conf$startdate, conf$enddate)
+avg_files_period <- StaticAvgFilesPeriod(period, conf$startdate, conf$enddate)
+avg_commits_author <- StaticAvgCommitsAuthor(nperiod, conf$startdate, conf$enddate)
+avg_authors_period <- StaticAvgAuthorPeriod(period, conf$startdate, conf$enddate)
+avg_committer_period <- StaticAvgCommitterPeriod(period, conf$startdate, conf$enddate)
+avg_files_author <- StaticAvgFilesAuthor(nperiod, conf$startdate, conf$enddate)
 latest_activity7 = last_activity(7)
 latest_activity30 = last_activity(30)
 latest_activity90 = last_activity(90)
 latest_activity365 = last_activity(365)
-info_data = merge(info_data, latest_activity7)
-info_data = merge(info_data, latest_activity30)
-info_data = merge(info_data, latest_activity90)
-info_data = merge(info_data, latest_activity365)
-
+#Specific data if specific analysis are specified
 if (conf$reports == 'companies') {
-	info_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
-	info_data = merge(info_data, info_data_companies, all = TRUE)
+	static_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
 }
 if (conf$reports == 'countries') {
-	info_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
-	info_data = merge(info_data, info_data_countries, all = TRUE)
+	static_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
 }
+
+# 2- Merging information
+static_data = merge(static_commits, static_committers)
+static_data = merge(static_data, static_authors)
+static_data = merge(static_data, static_files)
+static_data = merge(static_data, static_branches)
+static_data = merge(static_data, static_repositories)
+static_data = merge(static_data, static_actions)
+static_data = merge(static_data, static_lines)
+static_data = merge(static_data, avg_commits_period)
+static_data = merge(static_data, avg_files_period)
+static_data = merge(static_data, avg_commits_author)
+#static_data = merge(static_data, avg_authors_period)
+#static_data = merge(static_data, avg_committer_period)
+static_data = merge(static_data, avg_files_author)
+static_data = merge(static_data, latest_activity7)
+static_data = merge(static_data, latest_activity30)
+static_data = merge(static_data, latest_activity90)
+static_data = merge(static_data, latest_activity365)
+if (conf$reports == 'companies') 
+  static_data = merge(static_data, data_companies)
+if (conf$reports == 'countries')
+  static_data = merge(static_data, data_countries)
+
+# 3- Creating file with static data
+createJSON (static_data, paste(c(destdir,"/data/json/scm-static.json"), collapse=''))
+
+
+
+
 
 # Top committers
 #top_committers_data <- list()
@@ -142,22 +201,10 @@ createJSON (top_authors_data, paste(c(destdir,"/data/json/scm-top.json"), collap
 # Top files
 top_files_modified_data = top_files_modified()
 
-agg_data = merge(data_commits, data_committers, all = TRUE)
-agg_data = merge(agg_data, data_authors, all = TRUE)
-if (conf$reports == 'companies') 
-  agg_data = merge(agg_data, data_companies, all = TRUE)
-if (conf$reports == 'countries')
-  agg_data = merge(agg_data, data_countries, all = TRUE)
-agg_data = merge(agg_data, data_files, all = TRUE)
-agg_data = merge(agg_data, data_lines, all = TRUE)
-agg_data = merge(agg_data, data_branches, all = TRUE)
-agg_data = merge(agg_data, data_repositories, all = TRUE)
-agg_data <- agg_data[order(agg_data$id), ]
-agg_data[is.na(agg_data)] <- 0
+
 
 # TODO: output dir read from params in command line
-createJSON (agg_data, paste(c(destdir,"/data/json/scm-evolutionary.json"), collapse=''))
-createJSON (info_data, paste(c(destdir,"/data/json/scm-static.json"), collapse=''))
+
 #createJSON (top_committers_data, "data/json/scm-top.json")
 
 people_list = people()
