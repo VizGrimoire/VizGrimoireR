@@ -141,7 +141,7 @@ top_authors_data <- top_authors(conf$startdate, conf$enddate)
 #top_authors_data_2012 <- top_authors_year(2012)
 top_authors_data <- list()
 top_authors_data[['authors.']] <- top_authors_wo_affiliations(c("-Bot"), conf$startdate, conf$enddate)
-createJSON (top_authors_data, paste(c(destdir,"/data/json/scm-top.json"), collapse=''))
+createJSON (top_authors_data, paste(c(destdir,"/scm-top.json"), collapse=''))
 
 # Top files
 top_files_modified_data = top_files_modified()
@@ -160,12 +160,12 @@ agg_data <- agg_data[order(agg_data$id), ]
 agg_data[is.na(agg_data)] <- 0
 
 # TODO: output dir read from params in command line
-createJSON (agg_data, paste(c(destdir,"/data/json/scm-evolutionary.json"), collapse=''))
-createJSON (info_data, paste(c(destdir,"/data/json/scm-static.json"), collapse=''))
+createJSON (agg_data, paste(c(destdir,"/scm-evolutionary.json"), collapse=''))
+createJSON (info_data, paste(c(destdir,"/scm-static.json"), collapse=''))
 #createJSON (top_committers_data, "data/json/scm-top.json")
 
 people_list = people()
-createJSON (people_list, paste(c(destdir,"/data/json/scm-people.json"), collapse=''))
+createJSON (people_list, paste(c(destdir,"/scm-people.json"), collapse=''))
 
 # TODO: Have a unique file, scm-top.json already exists, with all metrics
 # createJSON (top_authors_data, "data/json/scm-top.json")

@@ -169,11 +169,11 @@ if (conf$reports == 'repositories') {
 		agg_data = merge(agg_data, opened, all = TRUE)
 		agg_data[is.na(agg_data)] <- 0
         agg_data <- agg_data[order(agg_data$id),]		
-		createJSON(agg_data, paste(c("data/json/",repo_file,"-its-evolutionary.json"), collapse=''))
+		createJSON(agg_data, paste(c(destdir,"/",repo_file,"-its-evolutionary.json"), collapse=''))
 		
 		# STATIC INFO
 		static_info <- its_static_info_repo(repo_name)
-		createJSON(static_info, paste(c("data/json/",repo_file,"-its-static.json"), collapse=''))		
+		createJSON(static_info, paste(c(destdir,"/",repo_file,"-its-static.json"), collapse=''))
 	}
 }
 
