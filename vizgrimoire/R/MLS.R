@@ -52,7 +52,7 @@ GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
     }  else if (period == 'year') {
         sql = paste('SELECT YEAR(',date,')*12 AS year, ')
     } else {
-        stop(paste("Wrong perdiod",period))
+        stop(paste("Wrong period",period))
     }
     # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
     sql = paste(sql, fields)
@@ -420,8 +420,7 @@ mlsEvolCompanies <- function(company_name, i_db, period, startdate, enddate) {
 	filters = paste(GetFiltersCompanies(),' AND
                     c.name = \'',company_name,'\'',sep='')
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
-            startdate, enddate)                
-    
+            startdate, enddate)                    
     query <- new ("Query", sql = q)
     sent.senders <- run(query)    
     return (sent.senders)   
