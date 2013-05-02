@@ -100,8 +100,7 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
 # Work in seconds as a future investment
 completeZeroPeriodIdsDays <- function (data, start, end) {        
     # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
-    last = ceiling (difftime(end, start,units=period)) + 1
-    
+    last = ceiling (difftime(end, start,units=period)) + 1                
     samples <- list('id'=c(1:last)) 
     lastdate = start
     start_dst = start$isdst
@@ -111,20 +110,22 @@ completeZeroPeriodIdsDays <- function (data, start, end) {
     day.secs = hour.secs*24
     
     for (i in 1:last) {        
-        samples$unixtime[i] = as.numeric(start)+((i-1)*day.secs)
-        new_date = as.POSIXlt(samples$unixtime[i],origin="1970-01-01") 
+        unixtime = as.numeric(start)+((i-1)*day.secs)
+        new_date = as.POSIXlt(unixtime,origin="1970-01-01") 
         if (new_date$isdst != dst) {
-            dst = new_date$isdst
-            if (dst == start_dst) offset_hour = 0
+            dst = new_date$isdst            
+            if (dst == start_dst) dst_offset_hour = 0
             else if (start_dst == 1) dst_offset_hour = hour.secs
             else if (start_dst == 0) dst_offset_hour = -hour.secs
         }
-        samples$unixtime[i] = samples$unixtime[i] + dst_offset_hour
-        lastdate = as.POSIXlt(samples$unixtime[i], origin="1970-01-01")                   
-        # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
+        unixtime = unixtime + dst_offset_hour
+        lastdate = as.POSIXlt(unixtime, origin="1970-01-01")
+        unixtime = unixtime + dst_offset_hour
+        samples$unixtime[i] = toString(unixtime)
+        samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
         samples$date[i]=format(lastdate)
     }
-    completedata <- merge (data, samples, all=TRUE, stringsAsFactors=FALSE)
+    completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0
     return (completedata)
 }
@@ -196,11 +197,14 @@ enddate <- conf$enddate
 #
 # GLOBAL
 #
+options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 rfield = reposField()
 
 data <- mlsEvol(rfield, period, startdate, enddate, identities_db, conf$reports)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste("data/json/mls-evolutionary.json"))
+
+stop()
 
 static_data <- mlsStatic(rfield, startdate, enddate, conf$reports)
 latest_activity7 <- lastActivity(7)
