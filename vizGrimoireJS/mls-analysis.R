@@ -32,22 +32,21 @@ library("vizgrimoire")
 
 completeZeroPeriodIdsYears <- function (data, start, end) {    
     last = end$year - start$year  + 1   
-    samples <- list('id'=c(1:last))    
+    samples <- list('id'=c(0:(last-1)))    
     
     new_date = start
     new_date$mday = 1
     new_date$mon = 0
     for (i in 1:last) {
         # convert to Date to remove DST from start of month
-        samples$unixtime[i] = as.numeric(as.POSIXlt(as.Date(new_date)))
-        samples$date[i]=format(new_date)
+        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
+        samples$date[i]=format(new_date, "%b %Y")
         samples$year[i]=(1900+new_date$year)*12
         new_date$year = new_date$year + 1
     }
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0    
-    print(completedata)
-    stop()    
+    print(completedata)    
     return(completedata)    
 }
 
@@ -57,20 +56,19 @@ completeZeroPeriodIdsMonths <- function (data, start, end) {
     end_month =  ((1900+end$year)*12)+end$mon+1 
     last = end_month - start_month + 1 
     
-    samples <- list('id'=c(1:last))    
+    samples <- list('id'=c(0:(last-1)))
     new_date = start
     new_date$mday = 1    
     for (i in 1:last) {
         # convert to Date to remove DST from start of month
-        samples$unixtime[i] = as.numeric(as.POSIXlt(as.Date(new_date)))
-        samples$date[i]=format(new_date)
+        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
+        samples$date[i]=format(new_date, "%b %Y")
         samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
         new_date$mon = new_date$mon + 1
     }        
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0    
-    print(completedata)
-    stop()    
+    print(completedata)    
     return(completedata)    
 }
 
@@ -79,12 +77,12 @@ completeZeroPeriodIdsMonths <- function (data, start, end) {
 completeZeroPeriodIdsWeeks <- function (data, start, end) {
     last = ceiling (difftime(end, start,units="weeks"))
     
-    samples <- list('id'=c(1:last))     
+    samples <- list('id'=c(0:(last-1)))     
     # Monday not Sunday
     new_date = as.POSIXlt(as.Date(start)-start$wday+1)
     for (i in 1:last) {                
-        samples$unixtime[i] = as.numeric(new_date)
-        samples$date[i]=format(new_date)
+        samples$unixtime[i] = toString(as.numeric(new_date))
+        samples$date[i]=format(new_date, "%b %Y")
         samples$week[i]=format(format(new_date, "%G%V"))
         new_date = as.POSIXlt(as.Date(new_date)+7)
     }
@@ -92,16 +90,14 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0    
     print(completedata)        
-    stop()    
-    return(completedata)
-    
+    return(completedata)    
 }
 
 # Work in seconds as a future investment
 completeZeroPeriodIdsDays <- function (data, start, end) {        
     # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
     last = ceiling (difftime(end, start,units=period))               
-    samples <- list('id'=c(1:last)) 
+    samples <- list('id'=c(0:(last-1))) 
     lastdate = start
     start_dst = start$isdst
     dst = start_dst
@@ -121,7 +117,7 @@ completeZeroPeriodIdsDays <- function (data, start, end) {
         lastdate = as.POSIXlt(unixtime, origin="1970-01-01")
         samples$unixtime[i] = toString(unixtime)
         # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
-        samples$date[i]=format(lastdate)
+        samples$date[i]=format(lastdate, "%b %Y")
     }
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0
@@ -201,8 +197,6 @@ rfield = reposField()
 data <- mlsEvol(rfield, period, startdate, enddate, identities_db, conf$reports)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste("data/json/mls-evolutionary.json"))
-
-stop()
 
 static_data <- mlsStatic(rfield, startdate, enddate, conf$reports)
 latest_activity7 <- lastActivity(7)
