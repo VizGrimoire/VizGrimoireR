@@ -96,7 +96,7 @@ ConfFromOptParse <- function (datasource="") {
 			make_option(c("-e", "--end"), dest="enddate", 
 					help="End date for the report", default="2100-01-01"),
           		make_option(c("-o", "--destination"), dest="destination", 
-					help="Destination directory", default="./")
+					help="Destination directory", default="data/json")
 	)	
 	if (datasource == 'its') {
 		option_list = c(option_list, make_option(

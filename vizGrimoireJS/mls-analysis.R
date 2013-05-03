@@ -23,164 +23,20 @@
 ##
 ##
 ## Usage:
-##  R --no-restore --no-save < mls-milestone0.R
-## or
-##  R CMD BATCH mls-milestone0.R
-##
+##  R --vanilla --args -h for help < < mls-analysis.R
 
 library("vizgrimoire")
-
-completeZeroPeriodIdsYears <- function (data, start, end) {    
-    last = end$year - start$year  + 1   
-    samples <- list('id'=c(0:(last-1)))    
-    
-    new_date = start
-    new_date$mday = 1
-    new_date$mon = 0
-    for (i in 1:last) {
-        # convert to Date to remove DST from start of month
-        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$year[i]=(1900+new_date$year)*12
-        new_date$year = new_date$year + 1
-    }
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)    
-    return(completedata)    
-}
-
-
-completeZeroPeriodIdsMonths <- function (data, start, end) {    
-    start_month = ((1900+start$year)*12)+start$mon+1
-    end_month =  ((1900+end$year)*12)+end$mon+1 
-    last = end_month - start_month + 1 
-    
-    samples <- list('id'=c(0:(last-1)))
-    new_date = start
-    new_date$mday = 1    
-    for (i in 1:last) {
-        # convert to Date to remove DST from start of month
-        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
-        new_date$mon = new_date$mon + 1
-    }        
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)    
-    return(completedata)    
-}
-
-
-# Week of the year as decimal number (01–53) as defined in ISO 8601
-completeZeroPeriodIdsWeeks <- function (data, start, end) {
-    last = ceiling (difftime(end, start,units="weeks"))
-    
-    samples <- list('id'=c(0:(last-1)))     
-    # Monday not Sunday
-    new_date = as.POSIXlt(as.Date(start)-start$wday+1)
-    for (i in 1:last) {                
-        samples$unixtime[i] = toString(as.numeric(new_date))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$week[i]=format(format(new_date, "%G%V"))
-        new_date = as.POSIXlt(as.Date(new_date)+7)
-    }
-    
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)        
-    return(completedata)    
-}
-
-# Work in seconds as a future investment
-completeZeroPeriodIdsDays <- function (data, start, end) {        
-    # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
-    last = ceiling (difftime(end, start,units=period))               
-    samples <- list('id'=c(0:(last-1))) 
-    lastdate = start
-    start_dst = start$isdst
-    dst = start_dst
-    dst_offset_hour = 0
-    hour.secs = 60*60
-    day.secs = hour.secs*24
-    for (i in 1:last) {        
-        unixtime = as.numeric(start)+((i-1)*day.secs)
-        new_date = as.POSIXlt(unixtime,origin="1970-01-01") 
-        if (new_date$isdst != dst) {
-            dst = new_date$isdst            
-            if (dst == start_dst) dst_offset_hour = 0
-            else if (start_dst == 0) dst_offset_hour = -hour.secs
-            else if (start_dst == 1) dst_offset_hour = hour.secs
-        }
-        unixtime = unixtime + dst_offset_hour
-        lastdate = as.POSIXlt(unixtime, origin="1970-01-01")
-        samples$unixtime[i] = toString(unixtime)
-        # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
-        samples$date[i]=format(lastdate, "%b %Y")
-    }
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0
-    return (completedata)
-}
-
-completeZeroPeriodIds <- function (data, period, startdate, enddate){           
-    start = as.POSIXlt(startdate)
-    end = as.POSIXlt(enddate)    
-    if (period == "days") {
-        return (completeZeroPeriodIdsDays(data, start, end))
-    }    
-    else if (period == "weeks") {
-        return (completeZeroPeriodIdsWeeks(data, start, end))
-    }
-    else if (period == "months") {
-        return (completeZeroPeriodIdsMonths(data, start, end))
-    }
-    else if (period == "years") {
-        return (completeZeroPeriodIdsYears(data, start, end))
-    } 
-    else {
-        stop (paste("Unknow period", period))
-    } 
-
-}
-
-## Group daily samples by selected period
-completePeriodIds <- function (data, period, conf) {
-    
-    if (length(data) == 0) {
-        data <- data.frame(id=numeric(0))
-    }
-    new_data <- completeZeroPeriodIds(data, period, conf$str_startdate, conf$str_enddate)
-    # new_data$week <- as.Date(conf$str_startdate) + new_data$id * period
-    # new_data$date  <- toTextDate(GetYear(new_data$week), GetMonth(new_data$week)+1)
-    new_data[is.na(new_data)] <- 0
-    new_data <- new_data[order(new_data$id), ]
-    
-    return (new_data)
-}
-
 
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 destdir <- conf$destination
 
 # period of time
-if (conf$granularity == 'years'){
-   period = 'year'
-   nperiod = 365
-} else if (conf$granularity == 'months'){
-   period = 'month'
-   nperiod = 31
-} else if (conf$granularity == 'weeks'){
-   period = 'week'
-   nperiod = 7
-} else if (conf$granularity == 'days'){
-       period = 'day'
-       nperiod = 1
-} else {
-    stop(paste("Incorrect period:",conf$granularity))
-}
+if (conf$granularity == 'years') { period = 'year'
+} else if (conf$granularity == 'months') { period = 'month'
+} else if (conf$granularity == 'weeks') { period = 'week'
+} else if (conf$granularity == 'days'){ period = 'day'
+} else {stop(paste("Incorrect period:",conf$granularity))}
 
 identities_db = conf$identities_db
 
