@@ -41,6 +41,22 @@ library("vizgrimoire")
 conf <- ConfFromOptParse('its')
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
+# period of time
+if (conf$granularity == 'years') { 
+    period = 'year'
+    nperiod = 365
+} else if (conf$granularity == 'months') { 
+    period = 'month'
+    nperiod = 31
+} else if (conf$granularity == 'weeks') { 
+    period = 'week'
+    nperiod = 7
+} else if (conf$granularity == 'days'){ 
+    period = 'day'
+    nperiod = 1
+} else {stop(paste("Incorrect period:",conf$granularity))}
+
+
 # backends
 if (conf$backend == 'allura'){
     closed_condition <- "new_value='CLOSED'"
@@ -59,17 +75,6 @@ if (conf$backend == 'launchpad'){
     closed_condition <- "(new_value='Fix Committed')"
 }
 
-
-# period of time
-if (conf$granularity == 'months'){
-   period = 'month'
-   nperiod = 31
-}
-if (conf$granularity == 'weeks'){
-   period = 'week'
-   nperiod = 7
-}
-
 # dates
 startdate <- conf$startdate
 enddate <- conf$enddate
@@ -80,35 +85,38 @@ identities_db <- conf$identities_db
 # destination directory
 destdir <- conf$destination
 
-closed <- evol_closed(closed_condition, nperiod, startdate, enddate)
-closed <- completePeriod(closed, nperiod, conf)
+options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
-changed <- evol_changed(nperiod, startdate, enddate)
-changed <- completePeriod(changed, nperiod, conf)
 
-open <- evol_opened(nperiod, startdate, enddate)
-open <- completePeriod(open, nperiod, conf)
+closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
+closed <- completePeriodIds(closed, conf$granularity, conf)
 
-repos <- its_evol_repositories(nperiod, startdate, enddate)
-repos <- completePeriod(repos, nperiod, conf)
+changed <- GetEvolChanged(period, startdate, enddate)
+changed <- completePeriodIds(changed, conf$granularity, conf)
 
-issues <- merge (open, closed, all = TRUE)
-issues <- merge (issues, changed, all = TRUE)
-issues <- merge (issues, repos, all = TRUE)
+open <- GetEvolOpened(period, startdate, enddate)
+open <- completePeriodIds(open, conf$granularity, conf)
+
+repos <- GetEvolReposITS(period, startdate, enddate)
+repos <- completePeriodIds(repos, conf$granularity, conf)
+
+evol <- merge (open, closed, all = TRUE)
+evol <- merge (evol, changed, all = TRUE)
+evol <- merge (evol, repos, all = TRUE)
 
 if (conf$reports == 'companies') {
     info_data_companies = its_evol_companies (nperiod, startdate, enddate, identities_db)
     info_data_companies <- completePeriod(info_data_companies, nperiod, conf)
-    issues = merge(issues, info_data_companies, all = TRUE)
+    evol = merge(evol, info_data_companies, all = TRUE)
 }
 if (conf$reports == 'countries') {
     info_data_countries = its_evol_countries (nperiod, startdate, enddate, identities_db)
     info_data_countries <- completePeriod(info_data_countries, nperiod, conf)
-    issues = merge(issues, info_data_countries, all = TRUE)
+    evol = merge(evol, info_data_countries, all = TRUE)
 }
-issues[is.na(issues)] <- 0
-issues <- issues[order(issues$id),]
-createJSON (issues, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
+evol[is.na(evol)] <- 0
+evol <- evol[order(evol$id),]
+createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
 all_static_info <- its_static_info(closed_condition, startdate, enddate)
 if (conf$reports == 'companies') {

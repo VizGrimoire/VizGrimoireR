@@ -390,66 +390,130 @@ completePeriodMulti <- function(data, metrics, period,startdate, enddate) {
 }
 
 
-## Group daily samples by selected period
-completePeriod2 <- function (data, period, start, end, metric='unknow') {
+completeZeroPeriodIdsYears <- function (data, start, end) {    
+    last = end$year - start$year  + 1   
+    samples <- list('id'=c(0:(last-1)))    
     
-    if (!(period %in% c('weeks','months','years'))) 
-        stop (paste("WRONG PERIOD", period))   
-    
-    nperiod = 1 # sql resolution, days
-
-    if (length(data) == 0) {
-        data <- data.frame(id=numeric(0), unknown=numeric(0))
-        colnames(data)[2]<-metric
+    new_date = start
+    new_date$mday = 1
+    new_date$mon = 0
+    for (i in 1:last) {
+        # convert to Date to remove DST from start of month
+        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
+        samples$date[i]=format(new_date, "%b %Y")
+        samples$year[i]=(1900+new_date$year)*12
+        new_date$year = new_date$year + 1
     }
-    
-    for (column in names(data)) {
-        if (column == "id") {next}
-        else {metric = column; break}
-    }
-        
-    new_data <- completeZeroPeriod(data, nperiod, start, end)
-    new_data$week <- as.Date(start) + new_data$id * nperiod
-    new_data$date  <- toTextDate(GetYear(new_data$week), GetMonth(new_data$week)+1)
-    new_data[is.na(new_data)] <- 0
-    new_data <- new_data[order(new_data$id), ]
-    
-    grouped_data <- list()
-    
-    cur_period = GetPeriod(period,as.Date(conf$str_startdate))
-    cur_period_metric_val = 0
-    for (i in 1:nrow(new_data)) {
-        metric_val <- new_data[i,2]
-        date <- new_data[i,3]
-        date_period <- GetPeriod(period,date)
-        
-        if (date_period != cur_period) {
-            # Store last period data 
-            grouped_data[['id']] <- c(grouped_data[['id']], past_date)
-            grouped_data[['date']] <- c(grouped_data[['date']], 
-                                            GetDateText(period, past_date))                
-            grouped_data[[metric]] <- c(grouped_data[[metric]], 
-                    cur_period_metric_val)
-            cur_period_metric_val = metric_val
-            cur_period = date_period
-        } else {
-            cur_period_metric_val = cur_period_metric_val + metric_val
-            past_date = date
-        }
-    }
-    if (date_period == cur_period) {
-        grouped_data[['id']] <- c(grouped_data[['id']], date)
-        grouped_data[[metric]] <- c(grouped_data[[metric]], cur_period_metric_val)
-        grouped_data[['date']] <- c(grouped_data[['date']], 
-                GetDateText(period, date))
-    }
-
-    grouped_data<-data.frame(id=grouped_data[['id']],metric=grouped_data[[metric]],
-            date=grouped_data[['date']],stringsAsFactors=FALSE)
-    colnames(grouped_data)[2]<-metric
-    
-    return (grouped_data)
+    completedata <- merge (data, samples, all=TRUE)
+    completedata[is.na(completedata)] <- 0    
+    print(completedata)    
+    return(completedata)    
 }
+
+
+completeZeroPeriodIdsMonths <- function (data, start, end) {    
+    start_month = ((1900+start$year)*12)+start$mon+1
+    end_month =  ((1900+end$year)*12)+end$mon+1 
+    last = end_month - start_month + 1 
+    
+    samples <- list('id'=c(0:(last-1)))
+    new_date = start
+    new_date$mday = 1    
+    for (i in 1:last) {
+        # convert to Date to remove DST from start of month
+        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
+        samples$date[i]=format(new_date, "%b %Y")
+        samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
+        new_date$mon = new_date$mon + 1
+    }        
+    completedata <- merge (data, samples, all=TRUE)
+    completedata[is.na(completedata)] <- 0    
+    print(completedata)    
+    return(completedata)    
+}
+
+# Week of the year as decimal number (01–53) as defined in ISO 8601
+completeZeroPeriodIdsWeeks <- function (data, start, end) {
+    last = ceiling (difftime(end, start,units="weeks"))
+    
+    samples <- list('id'=c(0:(last-1)))     
+    # Monday not Sunday
+    new_date = as.POSIXlt(as.Date(start)-start$wday+1)
+    for (i in 1:last) {                
+        samples$unixtime[i] = toString(as.numeric(new_date))
+        samples$date[i]=format(new_date, "%b %Y")
+        samples$week[i]=format(format(new_date, "%G%V"))
+        new_date = as.POSIXlt(as.Date(new_date)+7)
+    }
+    
+    completedata <- merge (data, samples, all=TRUE)
+    completedata[is.na(completedata)] <- 0    
+    print(completedata)        
+    return(completedata)    
+}
+
+# Work in seconds as a future investment
+completeZeroPeriodIdsDays <- function (data, start, end) {        
+    # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
+    last = ceiling (difftime(end, start,units=period))               
+    samples <- list('id'=c(0:(last-1))) 
+    lastdate = start
+    start_dst = start$isdst
+    dst = start_dst
+    dst_offset_hour = 0
+    hour.secs = 60*60
+    day.secs = hour.secs*24
+    for (i in 1:last) {        
+        unixtime = as.numeric(start)+((i-1)*day.secs)
+        new_date = as.POSIXlt(unixtime,origin="1970-01-01") 
+        if (new_date$isdst != dst) {
+            dst = new_date$isdst            
+            if (dst == start_dst) dst_offset_hour = 0
+            else if (start_dst == 0) dst_offset_hour = -hour.secs
+            else if (start_dst == 1) dst_offset_hour = hour.secs
+        }
+        unixtime = unixtime + dst_offset_hour
+        lastdate = as.POSIXlt(unixtime, origin="1970-01-01")
+        samples$unixtime[i] = toString(unixtime)
+        # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
+        samples$date[i]=format(lastdate, "%b %Y")
+    }
+    completedata <- merge (data, samples, all=TRUE)
+    completedata[is.na(completedata)] <- 0
+    return (completedata)
+}
+
+completeZeroPeriodIds <- function (data, period, startdate, enddate){           
+    start = as.POSIXlt(startdate)
+    end = as.POSIXlt(enddate)    
+    if (period == "days") {
+        return (completeZeroPeriodIdsDays(data, start, end))
+    }    
+    else if (period == "weeks") {
+        return (completeZeroPeriodIdsWeeks(data, start, end))
+    }
+    else if (period == "months") {
+        return (completeZeroPeriodIdsMonths(data, start, end))
+    }
+    else if (period == "years") {
+        return (completeZeroPeriodIdsYears(data, start, end))
+    } 
+    else {
+        stop (paste("Unknow period", period))
+    } 
+    
+}
+
+completePeriodIds <- function (data, period, conf) {    
+    if (length(data) == 0) {
+        data <- data.frame(id=numeric(0))
+    }
+    new_data <- completeZeroPeriodIds(data, period, conf$str_startdate, conf$str_enddate)
+    new_data[is.na(new_data)] <- 0
+    new_data <- new_data[order(new_data$id), ]    
+    return (new_data)
+}
+
 
 #
 # Plot several columns of a timeserie
@@ -802,6 +866,67 @@ createJSON <- function (data, filename) {
    cat(toJSON(data))
    sink()
 }
+
+##
+## METAQUERIES
+##
+
+GetSQLGlobal <- function(date, fields, tables, filters, start, end) {        
+    sql = paste ('SELECT ', fields)
+    sql = paste(sql,'FROM', tables)
+    sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
+    if (filters != "") {
+        sql = paste(sql,' AND ',filters)
+    }
+    return(sql)    
+}
+
+GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
+    
+    kind = c('year','month','week','day')
+    iso_8601_mode = 3
+    if (period == 'day') {
+        # Remove time so unix timestamp is start of day    
+        sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
+    } else if (period == 'week') {
+        sql = paste('SELECT ')
+        sql = paste(sql, 'YEARWEEK(',date,',',iso_8601_mode,') AS week, ')
+    } else if (period == 'month') {
+        sql = paste('SELECT YEAR(',date,')*12+MONTH(',date,') AS month, ')
+    }  else if (period == 'year') {
+        sql = paste('SELECT YEAR(',date,')*12 AS year, ')
+    } else {
+        stop(paste("Wrong period",period))
+    }
+    # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
+    sql = paste(sql, fields)
+    sql = paste(sql,'FROM', tables)
+    sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
+    if (filters != "") {
+        sql = paste(sql,' AND ',filters)
+    }    
+    if (period == 'year') {
+        sql = paste(sql,' GROUP BY YEAR(',date,')')
+        sql = paste(sql,' ORDER BY YEAR(',date,')')
+    }
+    else if (period == 'month') {
+        sql = paste(sql,' GROUP BY YEAR(',date,'),MONTH(',date,')')
+        sql = paste(sql,' ORDER BY YEAR(',date,'),MONTH(',date,')')
+    }
+    else if (period == 'week') {
+        sql = paste(sql,' GROUP BY YEARWEEK(',date,',',iso_8601_mode,') ')
+        sql = paste(sql,' ORDER BY YEARWEEK(',date,',',iso_8601_mode,') ')        
+    }
+    else if (period == 'day') {
+        sql = paste(sql,' GROUP BY YEAR(',date,'),DAYOFYEAR(',date,')')
+        sql = paste(sql,' ORDER BY YEAR(',date,'),DAYOFYEAR(',date,')')                
+    }
+    else {
+        stop(paste("PERIOD: ",period,' not supported'))
+    }
+    return(sql)
+}
+
 
 source('R/SCM.R')
 source('R/MLS.R')

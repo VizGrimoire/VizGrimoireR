@@ -27,224 +27,44 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
 
-GetSQLGlobal <- function(date, fields, tables, filters, start, end) {        
-    sql = paste ('SELECT ', fields)
-    sql = paste(sql,'FROM', tables)
-    sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
-    if (filters != "") {
-        sql = paste(sql,' AND ',filters)
-    }
-    return(sql)    
-}
 
-GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
-    
-    kind = c('year','month','week','day')
-    iso_8601_mode = 3
-    if (period == 'day') {
-        # Remove time so unix timestamp is start of day    
-        sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
-    } else if (period == 'week') {
-        sql = paste('SELECT ')
-        sql = paste(sql, 'YEARWEEK(',date,',',iso_8601_mode,') AS week, ')
-    } else if (period == 'month') {
-        sql = paste('SELECT YEAR(',date,')*12+MONTH(',date,') AS month, ')
-    }  else if (period == 'year') {
-        sql = paste('SELECT YEAR(',date,')*12 AS year, ')
-    } else {
-        stop(paste("Wrong period",period))
-    }
-    # sql = paste(sql, 'DATE_FORMAT (',date,', \'%d %b %Y\') AS date, ')
-    sql = paste(sql, fields)
-    sql = paste(sql,'FROM', tables)
-    sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
-    if (filters != "") {
-        sql = paste(sql,' AND ',filters)
-    }    
-    if (period == 'year') {
-        sql = paste(sql,' GROUP BY YEAR(',date,')')
-        sql = paste(sql,' ORDER BY YEAR(',date,')')
-    }
-    else if (period == 'month') {
-        sql = paste(sql,' GROUP BY YEAR(',date,'),MONTH(',date,')')
-        sql = paste(sql,' ORDER BY YEAR(',date,'),MONTH(',date,')')
-    }
-    else if (period == 'week') {
-        sql = paste(sql,' GROUP BY YEARWEEK(',date,',',iso_8601_mode,') ')
-        sql = paste(sql,' ORDER BY YEARWEEK(',date,',',iso_8601_mode,') ')        
-    }
-    else if (period == 'day') {
-        sql = paste(sql,' GROUP BY YEAR(',date,'),DAYOFYEAR(',date,')')
-        sql = paste(sql,' ORDER BY YEAR(',date,'),DAYOFYEAR(',date,')')                
-    }
-    else {
-        stop(paste("PERIOD: ",period,' not supported'))
-    }
-    return(sql)
-}
-
-GetTablesOwnUniqueIds <- function() {
+GetTablesOwnUniqueIdsMLS <- function() {
     return ('messages m, messages_people mp, people_upeople pup')
 }
 
 # Using senders only here!
-GetFiltersOwnUniqueIds <- function () {
+GetFiltersOwnUniqueIdsMLS <- function () {
     return ('m.message_ID = mp.message_id AND 
              mp.email_address = pup.people_id AND 
              mp.type_of_recipient=\'From\'') 
 }
 
 GetTablesCountries <- function(i_db) {
-    return (paste(GetTablesOwnUniqueIds(),', 
+    return (paste(GetTablesOwnUniqueIdsMLS(),', 
                   ',i_db,'.countries c,
                   ',i_db,'.upeople_countries upc',sep=''))
 }
 
 GetFiltersCountries <- function() {
-    return (paste(GetFiltersOwnUniqueIds(),' AND
+    return (paste(GetFiltersOwnUniqueIdsMLS(),' AND
                   pup.upeople_id = upc.upeople_id AND
                   upc.country_id = c.id'))
 }
 
 GetTablesCompanies <- function(i_db) {
-    return (paste(GetTablesOwnUniqueIds(),',
+    return (paste(GetTablesOwnUniqueIdsMLS(),',
                   ',i_db,'.companies c,
                   ',i_db,'.upeople_companies upc',sep=''))
 }
 
 GetFiltersCompanies <- function() {
-    return (paste(GetFiltersOwnUniqueIds(),' AND
+    return (paste(GetFiltersOwnUniqueIdsMLS(),' AND
                   pup.upeople_id = upc.upeople_id AND
                   upc.company_id = c.id AND
                   m.first_date >= upc.init AND
                   m.first_date < upc.end'))
 }
 
-completeZeroPeriodIdsYears <- function (data, start, end) {    
-    last = end$year - start$year  + 1   
-    samples <- list('id'=c(0:(last-1)))    
-    
-    new_date = start
-    new_date$mday = 1
-    new_date$mon = 0
-    for (i in 1:last) {
-        # convert to Date to remove DST from start of month
-        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$year[i]=(1900+new_date$year)*12
-        new_date$year = new_date$year + 1
-    }
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)    
-    return(completedata)    
-}
-
-
-completeZeroPeriodIdsMonths <- function (data, start, end) {    
-    start_month = ((1900+start$year)*12)+start$mon+1
-    end_month =  ((1900+end$year)*12)+end$mon+1 
-    last = end_month - start_month + 1 
-    
-    samples <- list('id'=c(0:(last-1)))
-    new_date = start
-    new_date$mday = 1    
-    for (i in 1:last) {
-        # convert to Date to remove DST from start of month
-        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
-        new_date$mon = new_date$mon + 1
-    }        
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)    
-    return(completedata)    
-}
-
-
-# Week of the year as decimal number (01–53) as defined in ISO 8601
-completeZeroPeriodIdsWeeks <- function (data, start, end) {
-    last = ceiling (difftime(end, start,units="weeks"))
-    
-    samples <- list('id'=c(0:(last-1)))     
-    # Monday not Sunday
-    new_date = as.POSIXlt(as.Date(start)-start$wday+1)
-    for (i in 1:last) {                
-        samples$unixtime[i] = toString(as.numeric(new_date))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$week[i]=format(format(new_date, "%G%V"))
-        new_date = as.POSIXlt(as.Date(new_date)+7)
-    }
-    
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)        
-    return(completedata)    
-}
-
-# Work in seconds as a future investment
-completeZeroPeriodIdsDays <- function (data, start, end) {        
-    # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
-    last = ceiling (difftime(end, start,units=period))               
-    samples <- list('id'=c(0:(last-1))) 
-    lastdate = start
-    start_dst = start$isdst
-    dst = start_dst
-    dst_offset_hour = 0
-    hour.secs = 60*60
-    day.secs = hour.secs*24
-    for (i in 1:last) {        
-        unixtime = as.numeric(start)+((i-1)*day.secs)
-        new_date = as.POSIXlt(unixtime,origin="1970-01-01") 
-        if (new_date$isdst != dst) {
-            dst = new_date$isdst            
-            if (dst == start_dst) dst_offset_hour = 0
-            else if (start_dst == 0) dst_offset_hour = -hour.secs
-            else if (start_dst == 1) dst_offset_hour = hour.secs
-        }
-        unixtime = unixtime + dst_offset_hour
-        lastdate = as.POSIXlt(unixtime, origin="1970-01-01")
-        samples$unixtime[i] = toString(unixtime)
-        # samples$datedbg[i]=format(lastdate,"%H:%M %d-%m-%y")
-        samples$date[i]=format(lastdate, "%b %Y")
-    }
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0
-    return (completedata)
-}
-
-completeZeroPeriodIds <- function (data, period, startdate, enddate){           
-    start = as.POSIXlt(startdate)
-    end = as.POSIXlt(enddate)    
-    if (period == "days") {
-        return (completeZeroPeriodIdsDays(data, start, end))
-    }    
-    else if (period == "weeks") {
-        return (completeZeroPeriodIdsWeeks(data, start, end))
-    }
-    else if (period == "months") {
-        return (completeZeroPeriodIdsMonths(data, start, end))
-    }
-    else if (period == "years") {
-        return (completeZeroPeriodIdsYears(data, start, end))
-    } 
-    else {
-        stop (paste("Unknow period", period))
-    } 
-    
-}
-
-## Group daily samples by selected period
-completePeriodIds <- function (data, period, conf) {    
-    if (length(data) == 0) {
-        data <- data.frame(id=numeric(0))
-    }
-    new_data <- completeZeroPeriodIds(data, period, conf$str_startdate, conf$str_enddate)
-    new_data[is.na(new_data)] <- 0
-    new_data <- new_data[order(new_data$id), ]    
-    return (new_data)
-}
 
 # GLOBAL
 
@@ -253,8 +73,8 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders,
                     COUNT(DISTINCT(',rfield,')) AS repositories')
-    tables = GetTablesOwnUniqueIds() 
-    filters = GetFiltersOwnUniqueIds()
+    tables = GetTablesOwnUniqueIdsMLS() 
+    filters = GetFiltersOwnUniqueIdsMLS()
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
     
@@ -293,8 +113,8 @@ mlsStatic <- function (rfield, startdate, enddate, reports="") {
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
               COUNT(DISTINCT(pup.upeople_id)) as senders,
               COUNT(DISTINCT(',rfield,')) AS repositories"
-    tables = GetTablesOwnUniqueIds()
-	filters = GetFiltersOwnUniqueIds()    
+    tables = GetTablesOwnUniqueIdsMLS()
+	filters = GetFiltersOwnUniqueIdsMLS()    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
             startdate, enddate)    
     query <- new ("Query", sql = q)
@@ -367,8 +187,8 @@ reposNames <- function (rfield, startdate, enddate) {
 mlsEvolRepos <- function (rfield, repo, period, startdate, enddate) {    
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders')
-    tables = GetTablesOwnUniqueIds()
-    filters = paste(GetFiltersOwnUniqueIds(),' AND
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = paste(GetFiltersOwnUniqueIdsMLS(),' AND
                     ',rfield,'=\'',repo,'\'',sep='') 
                         
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
@@ -384,8 +204,8 @@ mlsStaticRepos <- function (rfield, repo, startdate, enddate) {
               DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
               COUNT(DISTINCT(pup.upeople_id)) as senders"
-    tables = GetTablesOwnUniqueIds()
-	filters = paste(GetFiltersOwnUniqueIds(),' AND
+    tables = GetTablesOwnUniqueIdsMLS()
+	filters = paste(GetFiltersOwnUniqueIdsMLS(),' AND
                     ',rfield,'=\'',repo,'\'',sep='')    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
             startdate, enddate)
@@ -398,8 +218,8 @@ mlsStaticRepos <- function (rfield, repo, startdate, enddate) {
 repoTopSenders <- function(repo, identities_db, startdate, enddate){
     q <- paste("SELECT up.identifier as senders,
                 COUNT(m.message_id) as sent
-                FROM ", GetTablesOwnUniqueIds(), ",",identities_db,".upeople up
-                WHERE ", GetFiltersOwnUniqueIds(), " AND
+                FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up
+                WHERE ", GetFiltersOwnUniqueIdsMLS(), " AND
                   pup.upeople_id = up.id AND
                   m.first_date >= ",startdate," AND
                   m.first_date < ",enddate," AND
@@ -590,8 +410,8 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
     
     q <- paste("SELECT up.identifier as senders,
                 COUNT(m.message_id) as sent
-                FROM ", GetTablesOwnUniqueIds(), ",",identities_db,".upeople up
-    			WHERE ", GetFiltersOwnUniqueIds(), " AND
+                FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up
+    			WHERE ", GetFiltersOwnUniqueIdsMLS(), " AND
                   pup.upeople_id = up.id AND
                   ", clean_people, "
                   m.first_date >= ",startdate," AND
