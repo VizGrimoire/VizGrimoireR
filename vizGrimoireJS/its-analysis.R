@@ -89,34 +89,30 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 
 
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
-closed <- completePeriodIds(closed, conf$granularity, conf)
-
 changed <- GetEvolChanged(period, startdate, enddate)
-changed <- completePeriodIds(changed, conf$granularity, conf)
-
 open <- GetEvolOpened(period, startdate, enddate)
-open <- completePeriodIds(open, conf$granularity, conf)
-
 repos <- GetEvolReposITS(period, startdate, enddate)
-repos <- completePeriodIds(repos, conf$granularity, conf)
-
 evol <- merge (open, closed, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
 
 if (conf$reports == 'companies') {
-    info_data_companies = its_evol_companies (nperiod, startdate, enddate, identities_db)
-    info_data_companies <- completePeriod(info_data_companies, nperiod, conf)
+    info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_companies, all = TRUE)
 }
 if (conf$reports == 'countries') {
-    info_data_countries = its_evol_countries (nperiod, startdate, enddate, identities_db)
+    info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
     info_data_countries <- completePeriod(info_data_countries, nperiod, conf)
     evol = merge(evol, info_data_countries, all = TRUE)
 }
+
+evol <- completePeriodIds(evol, conf$granularity, conf)
 evol[is.na(evol)] <- 0
 evol <- evol[order(evol$id),]
 createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
+
+stop()
+
 
 all_static_info <- its_static_info(closed_condition, startdate, enddate)
 if (conf$reports == 'companies') {

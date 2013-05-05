@@ -83,84 +83,53 @@ GetEvolReposITS <- function(period, startdate, enddate) {
     return (data)
 }
 
+GetTablesCompaniesITS <- function (i_db) {
+    tables = GetTablesOwnUniqueIdsITS()
+    tables = paste(tables,',',i_db,'.upeople_companies upc',sep='')    
+}
+
+GetTablesCountriesITS <- function (i_db) {
+    tables = GetTablesOwnUniqueIdsITS()
+    tables = paste(tables,',',i_db,'.upeople_countries upc',sep='')    
+}
+
+GetFiltersCompaniesITS <- function () {
+    filters = GetFiltersOwnUniqueIdsITS()
+    filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
+}
+
+GetFiltersCountriesITS <- function () {
+    filters = GetFiltersOwnUniqueIdsITS()
+    filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
+}
+
+GetEvolCompaniesITS <- function(period, startdate, enddate, identities_db) {
+    fields = 'COUNT(DISTINCT(upc.company_id)) AS companies'
+    tables = GetTablesCompaniesITS(identities_db)
+    filters = GetFiltersCompaniesITS()
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetEvolCountriesITS <- function(period, startdate, enddate, identities_db) {
+    fields = 'COUNT(DISTINCT(upc.country_id)) AS countries'
+    tables = GetTablesCountriesITS(identities_db)
+    filters = GetFiltersCountriesITS()
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+            startdate, enddate)    
+    query <- new ("Query", sql = q)    
+    data <- run(query)
+    print(data)
+    return (data)
+}
+
+
 #
 # NOT CONVERTED YET
 #
-
-its_evol_companies <- function(period, startdate, enddate, identities_db) {
-    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                    COUNT(DISTINCT(upc.company_id)) AS num_companies
-                    FROM changes,
-                    people_upeople pup,
-                    ",identities_db,".upeople_companies upc
-                    WHERE pup.people_id = changes.changed_by
-                    AND pup.upeople_id = upc.upeople_id
-                    AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                    GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
-    query <- new ("Query", sql = q)    
-    data <- run(query)
-    print(data)
-    return (data)
-}
-
-its_evol_countries <- function(period, startdate, enddate, identities_db) {
-    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                    COUNT(DISTINCT(upc.country_id)) AS countries
-                    FROM changes,
-                    people_upeople pup,
-                    ",identities_db,".upeople_countries upc
-                    WHERE pup.people_id = changes.changed_by
-                    AND pup.upeople_id = upc.upeople_id
-                    AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                    GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
-    query <- new ("Query", sql = q)    
-    data <- run(query)
-    print(data)
-    return (data)
-}
-
-
-# evol_opened but with an extra condition to filter strange cases in OpenStack gerrit
-evol_opened_gerrit <- function (period, startdate, enddate) {
-    q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(submitted_by) AS opened,
-                       COUNT(DISTINCT(pup.upeople_id)) AS openers
-                FROM issues, issues_ext_gerrit,
-                     people_upeople pup
-                WHERE pup.people_id = issues.submitted_by AND
-                      issues.id = issues_ext_gerrit.issue_id AND submitted_on<mod_date
-                      AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
-                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
-    print(q)
-    query <- new ("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-evol_closed_gerrit <- function (period, startdate, enddate) {
-    q <- paste("SELECT ((to_days(mod_date) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(submitted_by) AS closed,
-                       COUNT(DISTINCT(pup.upeople_id)) AS closers
-                FROM issues, issues_ext_gerrit,
-                     people_upeople pup
-                WHERE pup.people_id = issues.submitted_by AND
-                      issues.id = issues_ext_gerrit.issue_id AND submitted_on<mod_date
-                      AND mod_date >= ",startdate," AND mod_date < ",enddate,"
-                      AND (status='MERGED' or status='ABANDONED')
-                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
-    print(q)
-    query <- new ("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-
-its_people <- function() {
-    q <- paste ("select id,name,email,user_id from people")
-    query <- new ("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
 
 its_static_info <- function (closed_condition, startdate, enddate) {
     ## Get some general stats from the database and url info
@@ -733,4 +702,55 @@ its_countries_static <- function(identities_db, country, startdate, enddate) {
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
-} 
+}
+
+#
+# Identities tool
+#
+
+its_people <- function() {
+    q <- paste ("select id,name,email,user_id from people")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+#
+# SCR: Gerrit support
+#
+
+# evol_opened but with an extra condition to filter strange cases in OpenStack gerrit
+evol_opened_gerrit <- function (period, startdate, enddate) {
+    q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
+                    COUNT(submitted_by) AS opened,
+                    COUNT(DISTINCT(pup.upeople_id)) AS openers
+                                    FROM issues, issues_ext_gerrit,
+                    people_upeople pup
+                                    WHERE pup.people_id = issues.submitted_by AND
+                    issues.id = issues_ext_gerrit.issue_id AND submitted_on<mod_date
+                    AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
+                                    GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+evol_closed_gerrit <- function (period, startdate, enddate) {
+    q <- paste("SELECT ((to_days(mod_date) - to_days(",startdate,")) div ",period,") as id,
+                    COUNT(submitted_by) AS closed,
+                    COUNT(DISTINCT(pup.upeople_id)) AS closers
+                                    FROM issues, issues_ext_gerrit,
+                    people_upeople pup
+                                    WHERE pup.people_id = issues.submitted_by AND
+                    issues.id = issues_ext_gerrit.issue_id AND submitted_on<mod_date
+                    AND mod_date >= ",startdate," AND mod_date < ",enddate,"
+                    AND (status='MERGED' or status='ABANDONED')
+                                    GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
