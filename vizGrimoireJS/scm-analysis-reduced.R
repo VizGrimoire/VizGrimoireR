@@ -53,16 +53,16 @@ destdir <- conf$destination
 #########
 #EVOLUTIONARY DATA
 #########
-
+print(conf$identities_db)
 # 1- Retrieving information
 #Commits
 commits <- EvolCommits(nperiod, conf$startdate, conf$enddate)
 data_commits <- completePeriod(commits, nperiod, conf)
 #Committers
-committers <- EvolCommitters(nperiod, conf$startdate, conf$enddate)
+committers <- EvolCommitters(period=nperiod, startdate=conf$startdate, enddate=conf$enddate, identities_db=conf$identities_db)
 data_committers <- completePeriod(committers, nperiod, conf)
 # Authors
-authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate)
+authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db)
 data_authors <- completePeriod(authors, nperiod, conf)
 #Files
 files <- EvolFiles(nperiod, conf$startdate, conf$enddate)
@@ -163,52 +163,15 @@ if (conf$reports == 'countries')
 createJSON (static_data, paste(c(destdir,"/data/json/scm-static.json"), collapse=''))
 
 
-
-
-
-# Top committers
-#top_committers_data <- list()
-#top_committers_data[['committers.']]<-top_people(0, conf$startdate, conf$enddate, "committer")
-#top_committers_data[['committers.last year']]<-top_people(365, conf$startdate, conf$enddate, "committer")
-#top_committers_data[['committers.last month']]<-top_people(31, conf$startdate, conf$enddate, "committer")
-
-# Top authors
-#top_authors_data <- list()
-#top_authors_data[['authors.']]<-top_people(0, conf$startdate, conf$enddate, "author")
-#top_authors_data[['authors.last year']]<-top_people(365, conf$startdate, conf$enddate, "author")
-#top_authors_data[['authors.last month']]<-top_people(31, conf$startdate, conf$enddate, "author")
-
-#top_data <- c(top_committers_data, top_authors_data)
-#createJSON (top_data, "data/json/scm-top.json")
-
 # Top authors
 
 top_authors_data <- top_authors(conf$startdate, conf$enddate)
-#top_authors_data_2006 <- top_authors_year(2006)
-#top_authors_data_2009 <- top_authors_year(2009)
-#top_authors_data_2012 <- top_authors_year(2012)
 top_authors_data <- list()
 top_authors_data[['authors.']] <- top_authors_wo_affiliations(c("-Bot"), conf$startdate, conf$enddate)
 createJSON (top_authors_data, paste(c(destdir,"/data/json/scm-top.json"), collapse=''))
 
 # Top files
 top_files_modified_data = top_files_modified()
-
-
-
-# TODO: output dir read from params in command line
-
-#createJSON (top_committers_data, "data/json/scm-top.json")
-
-people_list = people()
-createJSON (people_list, paste(c(destdir,"/data/json/scm-people.json"), collapse=''))
-
-# TODO: Have a unique file, scm-top.json already exists, with all metrics
-# createJSON (top_authors_data, "data/json/scm-top.json")
-# createJSON (top_data, "data/json/scm-top.json")
-#createJSON (top_authors_data_2006, "data/json/scm-top-authors_2006.json")
-#createJSON (top_authors_data_2009, "data/json/scm-top-authors_2009.json")
-#createJSON (top_authors_data_2012, "data/json/scm-top-authors_2012.json")
 
 if (conf$reports == 'companies') {
 
@@ -220,33 +183,82 @@ if (conf$reports == 'companies') {
         company_name = paste(c("'", company, "'"), collapse='')
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
-		 
-        commits <- company_commits(company_name, nperiod, conf$startdate, conf$enddate)        
+	
+        ######
+        #Evolutionary data per company
+        ######	
+        # 1- Retrieving info 
+        commits <- EvolCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)        
         commits <- completePeriod(commits, nperiod, conf)
+        print(commits)
         
-        lines <-company_lines(company_name, nperiod, conf$startdate, conf$enddate)
+        lines <-EvolLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
         lines <- completePeriod(lines, nperiod, conf)
 
-        files <- company_files(company_name, nperiod, conf$startdate, conf$enddate)
+        files <- EvolFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
         files <- completePeriod(files, nperiod, conf)
 
-        authors <- company_authors(company_name, nperiod, conf$startdate, conf$enddate)
+        authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
         authors <- completePeriod(authors, nperiod, conf)
 
-        committers <- company_committers(company_name, nperiod, conf$startdate, conf$enddate)
+        committers <- EvolCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
         committers <- completePeriod(committers, nperiod, conf)
         		
+        # 2- Merging info
         agg_data = merge(commits, lines, all = TRUE)
         agg_data = merge(agg_data, files, all = TRUE)
         agg_data = merge(agg_data, authors, all = TRUE)
         agg_data = merge(agg_data, committers, all = TRUE)
         agg_data <- agg_data[order(agg_data$id), ]
 		
+        # 3- Creating JSON
         createJSON(agg_data, paste(c(destdir,"/data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 				
+        ########
+        #Static data per company
+        ########
+        # 1- Retrieving information
+        static_commits <- StaticNumCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_committers <- StaticNumAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_authors <- StaticNumCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_files <- StaticNumFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_branches <- StaticNumBranches(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_repositories <- StaticNumRepositories(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_actions <- StaticNumActions(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_lines <- StaticNumLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_commits_period <- StaticAvgCommitsPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_files_period <- StaticAvgFilesPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_commits_author <- StaticAvgCommitsAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_authors_period <- StaticAvgAuthorPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_committer_period <- StaticAvgCommitterPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_files_author <- StaticAvgFilesAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+
+        #2- Merging info
+        static_data = merge(static_commits, static_committers)
+        static_data = merge(static_data, static_authors)
+        static_data = merge(static_data, static_files)
+        static_data = merge(static_data, static_branches)
+        static_data = merge(static_data, static_repositories)
+        static_data = merge(static_data, static_actions)
+        static_data = merge(static_data, static_lines)
+        static_data = merge(static_data, avg_commits_period)
+        static_data = merge(static_data, avg_files_period)
+        static_data = merge(static_data, avg_commits_author)
+        #static_data = merge(static_data, avg_authors_period)
+        #static_data = merge(static_data, avg_committer_period)
+        static_data = merge(static_data, avg_files_author)
+        static_data = merge(static_data, latest_activity7)
+        static_data = merge(static_data, latest_activity30)
+        static_data = merge(static_data, latest_activity90)
+        static_data = merge(static_data, latest_activity365)
+
+        #3- Creating JSON
         print ("static info")
-        static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
-        createJSON(static_info, paste(c(destdir,"/data/json/",company_aux,"-scm-static.json"), collapse=''))
+        #static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
+        #createJSON(static_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-static.json"), collapse='')) 
+        #print ("static info")
+        #static_info <- evol_info_data_company(company_name, period, conf$startdate, conf$enddate)
+        createJSON(static_data, paste(c(destdir,"/data/json/",company_aux,"-scm-static.json"), collapse=''))
 		
         print ("top authors")
         top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
@@ -270,34 +282,78 @@ if (conf$reports == 'repositories') {
         repo_aux = paste(c("", repo, ""), collapse='')
         print (repo_name)
         
-        commits <- repo_commits(repo_name, nperiod, conf$startdate, conf$enddate)
+        ###########
+        #EVOLUTIONARY DATA
+        ###########
+        #1- Retrieving data
+        commits <- EvolCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         commits <- completePeriod(commits, nperiod, conf)
         
-        # print ("lines")
-        # lines <- repo_lines(repo_name, period, conf$startdate, conf$enddate)
-        lines <- ""
+        lines <- EvolLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        lines <- completePeriod(lines, nperiod, conf)
 
-        files <- repo_files(repo_name, nperiod, conf$startdate, conf$enddate)
+        files <- EvolFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         files <- completePeriod(files, nperiod, conf)
 
-        authors <- repo_authors(repo_name, nperiod, conf$startdate, conf$enddate)
+        authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         authors <- completePeriod(authors, nperiod, conf)
 
-        committers <- repo_committers(repo_name, nperiod, conf$startdate, conf$enddate)
+        committers <- EvolCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         committers <- completePeriod(committers, nperiod, conf)
 		
+        #2- Merging data
         agg_data = merge(commits, lines, all = TRUE)
         agg_data = merge(agg_data, files, all = TRUE)
         agg_data = merge(agg_data, authors, all = TRUE)	
         agg_data = merge(agg_data, committers, all = TRUE)
         agg_data <- agg_data[order(agg_data$id), ]
 		
+        #3- Creating JSON
         createJSON(agg_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
+        ##########
+        #STATIC DATA
+        ##########
+        # 1- Retrieving information
+        static_commits <- StaticNumCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_committers <- StaticNumAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_authors <- StaticNumCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_files <- StaticNumFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_branches <- StaticNumBranches(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        #static_repositories <- StaticNumRepositories(nperiod, conf$startdate, conf$enddate)
+        static_actions <- StaticNumActions(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_lines <- StaticNumLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_commits_period <- StaticAvgCommitsPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_files_period <- StaticAvgFilesPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_commits_author <- StaticAvgCommitsAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_authors_period <- StaticAvgAuthorPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_committer_period <- StaticAvgCommitterPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_files_author <- StaticAvgFilesAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+
+        #2- Merging info
+        static_data = merge(static_commits, static_committers)
+        static_data = merge(static_data, static_authors)
+        static_data = merge(static_data, static_files)
+        static_data = merge(static_data, static_branches)
+        #static_data = merge(static_data, static_repositories)
+        static_data = merge(static_data, static_actions)
+        static_data = merge(static_data, static_lines)
+        static_data = merge(static_data, avg_commits_period)
+        static_data = merge(static_data, avg_files_period)
+        static_data = merge(static_data, avg_commits_author)
+        #static_data = merge(static_data, avg_authors_period)
+        #static_data = merge(static_data, avg_committer_period)
+        static_data = merge(static_data, avg_files_author)
+        static_data = merge(static_data, latest_activity7)
+        static_data = merge(static_data, latest_activity30)
+        static_data = merge(static_data, latest_activity90)
+        static_data = merge(static_data, latest_activity365)
+
+        #3- Creating JSON
         print ("static info")
-        static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
-        createJSON(static_info, paste(c(destdir, "/data/json/",repo_aux,"-scm-static.json"), collapse=''))		
-	}		
+        #static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
+        createJSON(static_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-static.json"), collapse=''))		
+    }		
 }
 
 if (conf$reports == 'countries') {
