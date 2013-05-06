@@ -211,7 +211,7 @@ if (conf$reports == 'companies') {
 
 # COUNTRIES
 if (conf$reports == 'countries') {
-    countries  <- its_countries_names(conf$identities_db,conf$startdate, conf$enddate)
+    countries  <- GetCountriesNamesITS(conf$identities_db,conf$startdate, conf$enddate)
 	countries <- countries$name
 	createJSON(countries, paste(c(destdir,"/its-countries.json"), collapse=''))
     
@@ -219,11 +219,13 @@ if (conf$reports == 'countries') {
         if (is.na(country)) next
         print (country)
         
-        data <- its_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)
-        data <- completePeriod(data, nperiod, conf)
-        createJSON (data, paste(c(destdir,"/",country,"-its-evolutionary.json",sep=''), collapse=''))
+        evol <- GetCountriesEvolITS(conf$identities_db, country, period, conf$startdate, conf$enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        evol <- evol[order(evol$id),]
+        createJSON (evol, paste(c(destdir,"/",country,"-its-evolutionary.json",sep=''), collapse=''))
         
-        data <- its_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
+        data <- GetCountriesStaticITS(conf$identities_db, country, conf$startdate, conf$enddate)
         createJSON (data, paste(c(destdir,"/",country,"-its-static.json",sep=''), collapse=''))
     }    
 }

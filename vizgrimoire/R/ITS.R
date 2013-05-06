@@ -125,7 +125,6 @@ GetEvolCountriesITS <- function(period, startdate, enddate, identities_db) {
             startdate, enddate)    
     query <- new ("Query", sql = q)    
     data <- run(query)
-    print(data)
     return (data)
 }
 
@@ -379,6 +378,7 @@ GetStaticRepoITS <- function (repo, startdate, enddate) {
 #
 # Companies
 #
+# TODO: Strange companies name order using issues and not closed like countries
 GetCompaniesNameITS <- function(startdate, enddate, identities_db, filter=c()) {
     # companies_limit = 30    
     affiliations = ""
@@ -560,66 +560,72 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
 
 # COUNTRIES
 
-its_countries_names <- function (identities_db,startdate, enddate) {
+GetCountriesNamesITS <- function (identities_db,startdate, enddate, filter=c()) {
     countries_limit = 30
     
-    q <- paste("SELECT count(ch.id) as closed, c.name as name
-                FROM changes ch, people_upeople pup,
-                  ",identities_db,".countries c,
-                   ",identities_db,".upeople_countries upc
-                WHERE 
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " cou.name<>'",aff,"' and ",sep="")
+    }
+
+    tables = GetTablesCountriesITS(identities_db)
+    tables = paste(tables,",",identities_db,".countries cou")
+    
+    
+    q <- paste("SELECT count(c.id) as closed, cou.name as name
+                FROM ", tables,"
+                WHERE ", GetFiltersCountriesITS()," AND
                    ", closed_condition, "
-                   AND pup.people_id = ch.changed_by
-                   AND pup.upeople_id = upc.upeople_id
-                   AND upc.country_id = c.id
+                   AND upc.country_id = cou.id
                    AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                GROUP BY c.name order by closed desc limit ", countries_limit, sep="")
+                GROUP BY cou.name order by closed desc limit ", countries_limit, sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)	
-	return (data)    
+	return (data)             
 }
 
-its_countries_evol <- function(identities_db, country, period, startdate, enddate) {
+GetCountriesITS <- function(identities_db, country, period, startdate, enddate, evol) {
     
-    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                count(ch.id) AS closed,
-                COUNT(DISTINCT(ch.changed_by)) as closers
-                FROM changes ch, people_upeople pup,
-                  ",identities_db,".countries c,
-                   ",identities_db,".upeople_countries upc
-                WHERE 
-                   ", closed_condition, "
-                   AND pup.people_id = ch.changed_by
-                   AND pup.upeople_id = upc.upeople_id
-                   AND upc.country_id = c.id
-                   AND changed_on >= ",startdate," AND changed_on < ",enddate," AND
-                   c.name = '", country, "'
-                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")", sep="")
+    fields = "COUNT(c.id) AS closed,
+              COUNT(DISTINCT(c.changed_by)) as closers"
+    tables = GetTablesCountriesITS(identities_db)
+    tables = paste(tables,",",identities_db,".countries cou")
+          
+    filters = paste(GetFiltersCountriesITS()," AND ", closed_condition, "
+            AND upc.country_id = cou.id
+            AND changed_on >= ",startdate," AND changed_on < ",enddate," AND
+            cou.name = '", country,"' ", sep='')
+
+    if (evol) {
+        q = GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+            startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(changed_on),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(changed_on),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('changed_on', fields, tables, filters, 
+            startdate, enddate)
+    }
+    return (q)
+}
+
+GetCountriesEvolITS <- function(identities_db, country, period, startdate, enddate) {
+    q <- GetCountriesITS(identities_db, country, period, startdate, enddate, TRUE)    
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
 }
 
-its_countries_static <- function(identities_db, country, startdate, enddate) {
-    q <- paste("SELECT
-                count(ch.id) AS closed,
-                COUNT(DISTINCT(ch.changed_by)) as closers,
-                DATE_FORMAT (min(changed_on), '%Y-%m-%d') as first_date,
-                DATE_FORMAT (max(changed_on), '%Y-%m-%d') as last_date
-                FROM changes ch, people_upeople pup,
-                  ",identities_db,".countries c,
-                   ",identities_db,".upeople_countries upc
-                WHERE 
-                   ", closed_condition, "
-                   AND pup.people_id = ch.changed_by
-                   AND pup.upeople_id = upc.upeople_id
-                   AND upc.country_id = c.id
-                   AND changed_on >= ",startdate," AND changed_on < ",enddate," AND
-                  c.name = '", country, "'", sep="")
+GetCountriesStaticITS <- function(identities_db, country, startdate, enddate) {
+    q <- GetCountriesITS(identities_db, country, period, startdate, enddate, FALSE)      
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
 }
+
+#
+# EXPERIMENTAL ZONE
+#
 
 #
 # Identities tool
