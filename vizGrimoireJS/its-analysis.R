@@ -102,7 +102,6 @@ if (conf$reports == 'companies') {
 }
 if (conf$reports == 'countries') {
     info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
-    info_data_countries <- completePeriod(info_data_countries, nperiod, conf)
     evol = merge(evol, info_data_countries, all = TRUE)
 }
 
@@ -111,10 +110,9 @@ evol[is.na(evol)] <- 0
 evol <- evol[order(evol$id),]
 createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
-stop()
 
+all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
 
-all_static_info <- its_static_info(closed_condition, startdate, enddate)
 if (conf$reports == 'companies') {
     info_com = its_static_companies (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)

@@ -34,7 +34,7 @@ GetTablesOwnUniqueIdsITS <- function() {
 
 # Using senders only here!
 GetFiltersOwnUniqueIdsITS <- function () {
-    return (paste('pup.people_id = c.changed_by')) 
+    return ('pup.people_id = c.changed_by') 
 }
 
 GetEvolMetricsITS <- function (fields, period, startdate, enddate, filters='') {    
@@ -131,51 +131,38 @@ GetEvolCountriesITS <- function(period, startdate, enddate, identities_db) {
 # NOT CONVERTED YET
 #
 
-its_static_info <- function (closed_condition, startdate, enddate) {
-    ## Get some general stats from the database and url info
-    ##
-    q <- paste ("SELECT count(*) as tickets,
-                 COUNT(distinct(pup.upeople_id)) as openers,
-                 DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
-                 DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
-                 FROM issues, people_upeople pup
-                 WHERE issues.submitted_by = pup.people_id
-                 AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"")
+GetStaticITS <- function (closed_condition, startdate, enddate) {
+    
+    fields = "COUNT(*) as tickets,
+              COUNT(*) as opened,
+              COUNT(distinct(pup.upeople_id)) as openers,
+              DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
+              DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date"
+    tables = 'issues, people_upeople pup'
+    filters = 'issues.submitted_by = pup.people_id'
+    q = GetSQLGlobal('submitted_on',fields,tables, filters, startdate, enddate)
+    
     query <- new ("Query", sql = q)
     data <- run(query)
 	
-    q <- paste ("SELECT COUNT(DISTINCT(pup.upeople_id)) as closers
-                 FROM changes, people_upeople pup
-                 WHERE pup.people_id = changes.changed_by
-                 AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                 AND ", closed_condition)
+    fields = 'COUNT(DISTINCT(pup.upeople_id)) as closers,
+              COUNT(DISTINCT(issue_id)) as closed'
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(),"AND",closed_condition)
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)    
     query <- new ("Query", sql = q)
     data1 <- run(query)
     
-    q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers
-                 FROM changes, people_upeople pup
-                 WHERE pup.people_id = changes.changed_by
-                 AND changed_on >= ",startdate," AND changed_on < ",enddate,"")
+    fields = 'COUNT(DISTINCT(pup.upeople_id)) as changers,
+              COUNT(DISTINCT(issue_id)) as changed'
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS())
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)    
     query <- new ("Query", sql = q)
     data2 <- run(query)
     
-    q <- paste ("SELECT count(*) as opened FROM issues
-                 WHERE submitted_on >= ",startdate," AND submitted_on < ",enddate,"")
-    query <- new ("Query", sql = q)
-    data3 <- run(query)
-    
-    q <- paste ("SELECT count(distinct(issue_id)) as changed FROM changes
-                 WHERE changed_on >= ",startdate," AND changed_on < ",enddate,"")
-    query <- new ("Query", sql = q)
-    data4 <- run(query)
-    
-    q <- paste ("SELECT count(distinct(issue_id)) as closed FROM changes
-                 WHERE ", closed_condition, "
-                 AND changed_on >= ",startdate," AND changed_on < ",enddate,"")
-    query <- new ("Query", sql = q)
-    data5 <- run(query)
-    
-    q <- paste ("SELECT url,name as type FROM trackers t JOIN supported_trackers s ON t.type = s.id limit 1")	
+    q <- paste ("SELECT url, name as type FROM trackers t JOIN 
+                 supported_trackers s ON t.type = s.id limit 1")	
     query <- new ("Query", sql = q)
     data6 <- run(query)
     
@@ -185,9 +172,6 @@ its_static_info <- function (closed_condition, startdate, enddate) {
     
     agg_data = merge(data, data1)
     agg_data = merge(agg_data, data2)
-    agg_data = merge(agg_data, data3)
-    agg_data = merge(agg_data, data4)
-    agg_data = merge(agg_data, data5)
     agg_data = merge(agg_data, data6)
     agg_data = merge(agg_data, data7)
     return(agg_data)
