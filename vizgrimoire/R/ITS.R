@@ -283,6 +283,9 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db) {
     return (data)
 }
 
+#
+# REPOSITORIES
+#
 
 GetReposNameITS <- function() {
     # q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
@@ -292,9 +295,6 @@ GetReposNameITS <- function() {
     return (data)
 }
 
-#
-# NOT CONVERTED YET
-#
 GetRepoEvolClosed <- function(repo, closed_condition, period, startdate, enddate){    
     fields = 'COUNT(DISTINCT(issue_id)) AS closed, 
               COUNT(DISTINCT(pup.upeople_id)) AS closers'
@@ -376,25 +376,41 @@ GetStaticRepoITS <- function (repo, startdate, enddate) {
 #
 # Companies
 #
-GetCompanyEvolClosed <- function(company_name, closed_condition, period, 
-        startdate, enddate, identities_db){    
-    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(DISTINCT(issue_id)) AS closed,
-                       COUNT(DISTINCT(pup.upeople_id)) AS closers
-                FROM changes,
-                     people_upeople pup,
-                     ",identities_db,".upeople_companies upc,
-                     ",identities_db,".companies com    
-                WHERE ",closed_condition,"
-                      AND pup.people_id = changes.changed_by
-                      AND pup.upeople_id = upc.upeople_id
-                      AND upc.company_id = com.id
-                      AND com.name = ",company_name,"
-                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                      AND changed_on >= upc.init
-                      AND changed_on < upc.end
-                      GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
+GetCompaniesNameITS <- function(startdate, enddate, identities_db, filter=c()) {
+    # companies_limit = 30    
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'",aff,"' and ",sep="")
+    }
+    tables = GetTablesCompaniesITS(identities_db)
+    tables = paste(tables,",",identities_db,".companies com")
+                    
+    q <- paste ("SELECT DISTINCT(com.name)
+                 FROM ", tables, "
+                 WHERE ", GetFiltersCompaniesITS()," AND
+                 com.id = upc.company_id and
+                 ",affiliations,"
+                 c.changed_on >= ", startdate, " AND
+                 c.changed_on < ", enddate, "
+                 group by com.name
+                 order by count(distinct(c.issue_id)) desc", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
 
+GetCompanyEvolClosed <- function(company_name, closed_condition, period, 
+        startdate, enddate, identities_db){
+    
+    fields = "COUNT(DISTINCT(issue_id)) AS closed,
+              COUNT(DISTINCT(pup.upeople_id)) AS closers"
+    tables = GetTablesCompaniesITS(identities_db)
+    tables = paste(tables,",",identities_db,".companies com")
+    filters = paste(GetFiltersCompaniesITS()," AND ",closed_condition,"
+                AND upc.company_id = com.id
+                AND com.name = ",company_name,"")
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+            startdate, enddate)
     
     query <- new("Query", sql = q)
     data <- run(query)	
@@ -464,33 +480,6 @@ its_companies_name <- function(startdate, enddate, identities_db) {
     data <- run(query)	
     return (data)
 }
-
-its_companies_name_wo_affs <- function(affs_list, startdate, enddate, identities_db) {
-    #List of companies without certain affiliations
-    affiliations = ""
-    for (aff in affs_list){
-        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
-    }
-    
-    q <- paste ("select distinct(c.name)
-                 from ",identities_db,".companies c,
-                      people_upeople pup,
-                      ",identities_db,".upeople_companies upc,
-                      changes s
-                 where c.id = upc.company_id and
-                       upc.upeople_id = pup.upeople_id and
-                       pup.people_id = s.changed_by and
-                       ",affiliations,"
-                       s.changed_on >= ", startdate, " and
-                       s.changed_on < ", enddate, "
-                 group by c.name
-                 order by count(distinct(s.id)) desc;", sep="")
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-
 
 its_company_static_info <- function (company_name, startdate, enddate, identities_db) {
     ## Get some general stats from the database and url info

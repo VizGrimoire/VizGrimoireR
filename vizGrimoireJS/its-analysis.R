@@ -164,17 +164,11 @@ if (conf$reports == 'repositories') {
 		
 		# EVOLUTION INFO
 		closed <- GetRepoEvolClosed(repo_name, closed_condition, period, startdate, enddate)
-        # closed <- completePeriod(closed, nperiod, conf)
-
 		changed <- GetRepoEvolChanged(repo_name, period, startdate, enddate)
-        # changed <- completePeriod(changed, nperiod, conf)
-                
 		opened <- GetRepoEvolOpened(repo_name, period, startdate, enddate)
-        # opened <- completePeriod(opened, nperiod, conf)
-                
-		evol = merge(closed, changed, all = TRUE)
-		evol = merge(evol, opened, all = TRUE)
         
+		evol = merge(closed, changed, all = TRUE)
+		evol = merge(evol, opened, all = TRUE)        
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
         evol <- evol[order(evol$id),]
@@ -189,8 +183,8 @@ if (conf$reports == 'repositories') {
 # Companies
 if (conf$reports == 'companies') {
 
-    companies <- its_companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate, identities_db)
-    #companies  <- its_companies_name(startdate, enddate, identities_db)
+    # companies <- its_companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate, identities_db)
+    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, c("-Bot", "-Individual", "-Unknown"))
     companies <- companies$name
     createJSON(companies, paste(c(destdir,"/its-companies.json"), collapse=''))
     
@@ -198,7 +192,7 @@ if (conf$reports == 'companies') {
         company_name = paste(c("'", company, "'"), collapse='')
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
-        closed <- GetRepoEvolClosed(company_name, closed_condition, nperiod, startdate, enddate, identities_db)
+        closed <- GetCompanyEvolClosed(company_name, closed_condition, period, startdate, enddate, identities_db)
         closed <- completePeriod(closed, nperiod, conf)    
 
         changed <- its_company_evol_changed(company_name, nperiod, startdate, enddate, identities_db)
