@@ -377,6 +377,13 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, repos
         where <- paste(where, " and s.author_id = pup.people_id", sep="")
     }
 
+    if (! is.na(repository)){
+        #Adding people_upeople table
+        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
+        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
+    }
+    
+
     #executing the query
     q <- paste(select, from, where, rest)
     print (q)
@@ -405,6 +412,13 @@ StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, re
         from <- paste(from, ",  people_upeople pup", sep="")
         where <- paste(where, " and s.committer_id = pup.people_id", sep="")
     }
+
+    if (! is.na(repository)){
+        #Adding people_upeople table
+        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
+        where <- paste(where, " and s.committer_id = pup.people_id ", sep="")
+    }
+
 
     #executing the query
     q <- paste(select, from, where, rest)
@@ -602,6 +616,14 @@ StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA,
         where <- paste(where, " and s.author_id = pup.people_id", sep="")
     }
 
+    if (! is.na(repository)){
+        #Adding people_upeople table
+        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
+        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
+    }
+
+
+
     #executing the query
     q <- paste(select, from, where, rest)
     print (q)
@@ -630,6 +652,14 @@ StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, 
         where <- paste(where, " and s.author_id = pup.people_id", sep="")
     }
 
+    if (! is.na(repository)){
+        #Adding people_upeople table
+        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
+        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
+    }
+
+
+
     #executing the query
     q <- paste(select, from, where, rest)
     print (q)
@@ -657,6 +687,14 @@ StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=N
         from <- paste(from, ",  people_upeople pup", sep="")
         where <- paste(where, " and s.committer_id = pup.people_id", sep="")
     }
+
+    if (! is.na(repository)){
+        #Adding people_upeople table
+        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
+        where <- paste(where, " and s.committer_id = pup.people_id ", sep="")
+    }
+
+
 
     #executing the query
     q <- paste(select, from, where, rest)
@@ -687,6 +725,13 @@ StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, r
         from <- paste(from, ",  people_upeople pup", sep="")
         where <- paste(where, " and s.committer_id = pup.people_id", sep="")
     }
+    if (! is.na(repository)){
+        #Adding people_upeople table
+        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
+        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
+    }
+
+
 
     #executing the query
     q <- paste(select, from, where, rest)
