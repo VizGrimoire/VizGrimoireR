@@ -26,6 +26,8 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
+## TODO
+# issues table queries should be converted as changes table is done
 
 
 GetTablesOwnUniqueIdsITS <- function() {
@@ -95,7 +97,8 @@ GetTablesCountriesITS <- function (i_db) {
 
 GetFiltersCompaniesITS <- function () {
     filters = GetFiltersOwnUniqueIdsITS()
-    filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
+    filters = paste(filters,"AND pup.upeople_id = upc.upeople_id 
+                    AND changed_on >= upc.init AND changed_on < upc.end")
 }
 
 GetFiltersCountriesITS <- function () {
@@ -399,8 +402,8 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, filter=c()) {
     return (data)
 }
 
-GetCompanyEvolClosed <- function(company_name, closed_condition, period, 
-        startdate, enddate, identities_db){
+GetCompanyClosed <- function(company_name, closed_condition, period, 
+        startdate, enddate, identities_db, evol){
     
     fields = "COUNT(DISTINCT(issue_id)) AS closed,
               COUNT(DISTINCT(pup.upeople_id)) AS closers"
@@ -409,134 +412,104 @@ GetCompanyEvolClosed <- function(company_name, closed_condition, period,
     filters = paste(GetFiltersCompaniesITS()," AND ",closed_condition,"
                 AND upc.company_id = com.id
                 AND com.name = ",company_name,"")
-    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+    if (evol) {
+        q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
             startdate, enddate)
-    
-    query <- new("Query", sql = q)
-    data <- run(query)	
-    return (data)	
+    } else {
+        q <- GetSQLGlobal('changed_on', fields, tables, filters, 
+                            startdate, enddate)
+    }
+    return (q) 
 }
 
-its_company_evol_changed <- function(company_name, period, startdate, enddate, identities_db){
-    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(DISTINCT(issue_id)) AS changed,
-                       COUNT(DISTINCT(pup.upeople_id)) AS changers
-                FROM changes,
-                     people_upeople pup,
-                     ",identities_db,".upeople_companies upc,
-                     ",identities_db,".companies com    
-                WHERE pup.people_id = changes.changed_by
-                      AND pup.upeople_id = upc.upeople_id
-                      AND upc.company_id = com.id
-                      AND com.name = ",company_name,"
-                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                      AND changed_on >= upc.init
-                      AND changed_on < upc.end
-                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")");    
+GetCompanyEvolClosed <- function(company_name, closed_condition, period, 
+        startdate, enddate, identities_db){
+    q <- GetCompanyClosed (company_name, closed_condition, period, 
+                    startdate, enddate, identities_db, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
+
+GetCompanyChanged <- function(company_name, period, startdate, enddate, identities_db, evol){
     
-    
+    fields = "COUNT(DISTINCT(issue_id)) AS changed,
+            COUNT(DISTINCT(pup.upeople_id)) AS changers"
+    tables = GetTablesCompaniesITS(identities_db)
+    tables = paste(tables,",",identities_db,".companies com")
+    filters = paste(GetFiltersCompaniesITS(), 
+            "AND upc.company_id = com.id AND com.name = ",company_name,"")
+    if (evol) {
+        q = GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+                startdate, enddate)
+    } else {
+        q = GetSQLGlobal('changed_on', fields, tables, filters, 
+                startdate, enddate)
+    }
+    return (q)            
+}
+
+GetCompanyEvolChanged <- function(company_name, period, startdate, enddate, identities_db){    
+    q <- GetCompanyChanged(company_name, period, startdate, enddate, identities_db, TRUE)
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)    
 }
 
-its_company_evol_opened <- function(company_name, period, startdate, enddate, identities_db){
-    q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(submitted_by) AS opened,
-                       COUNT(DISTINCT(pup.upeople_id)) AS openers
-                FROM issues,
-                     people_upeople pup,
-                     ",identities_db,".upeople_companies upc,
-                     ",identities_db,".companies com
-                WHERE pup.people_id = issues.submitted_by
-                      AND pup.upeople_id = upc.upeople_id
-                      AND upc.company_id = com.id
-                      AND com.name = ",company_name,"
-                      AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
-                      AND submitted_on >= upc.init
-                      AND submitted_on < upc.end
-                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
+GetCompanyOpened <- function(company_name, period, startdate, enddate, identities_db, evol){    
+    q=''
+    fields = "COUNT(submitted_by) AS opened,
+            COUNT(DISTINCT(pup.upeople_id)) AS openers"
+    tables = paste("issues, people_upeople pup,",
+            identities_db,".upeople_companies upc,",
+            identities_db,".companies com")
+    filters = paste("pup.people_id = issues.submitted_by
+                    AND pup.upeople_id = upc.upeople_id
+                    AND upc.company_id = com.id
+                    AND submitted_on >= upc.init
+                    AND submitted_on < upc.end
+                    AND com.name = ",company_name)
+    if (evol) {
+        q = GetSQLPeriod(period,'submitted_on', fields, tables, filters, 
+                startdate, enddate)
+    } else {
+        fields = paste(fields,
+                       ",DATE_FORMAT (min(submitted_on),'%Y-%m-%d') as first_date,
+                        DATE_FORMAT (max(submitted_on),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('submitted_on', fields, tables, filters, 
+                startdate, enddate)
+    }
+    return (q)
+}
+    
+
+GetCompanyEvolOpened <- function(company_name, period, startdate, enddate, identities_db){    
+    q <- GetCompanyOpened (company_name, period, startdate, enddate, identities_db, TRUE)
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
 }
 
-its_companies_name <- function(startdate, enddate, identities_db) {
-    # companies_limit = 30
-    q <- paste ("select distinct(c.name)
-                    from ",identities_db,".companies c,
-                         people_upeople pup,
-                         ",identities_db,".upeople_companies upc,
-                         changes s
-                    where c.id = upc.company_id and
-                          upc.upeople_id = pup.upeople_id and
-                          pup.people_id = s.changed_by and
-                          s.changed_on >= ", startdate, " and
-                          s.changed_on < ", enddate, "
-                    group by c.name
-                    order by count(distinct(s.issue_id)) desc", sep="")
-    #                order by count(distinct(s.issue_id)) desc LIMIT ", companies_limit, sep="")
-    query <- new("Query", sql = q)
-    data <- run(query)	
-    return (data)
-}
 
-its_company_static_info <- function (company_name, startdate, enddate, identities_db) {
-    ## Get some general stats from the database and url info
-    ##
-
-    q <- paste ("SELECT COUNT(DISTINCT(issues.id)) as tickets,
-                        COUNT(DISTINCT(issues.id)) as opened,
-                        COUNT(distinct(pup.upeople_id)) as openers,
-                        DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
-                        DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date
-                 FROM issues,
-                      people_upeople pup,
-                      ",identities_db,".upeople_companies upc,
-                      ",identities_db,".companies com
-                 WHERE issues.submitted_by = pup.people_id
-                       AND pup.upeople_id = upc.upeople_id
-                       AND upc.company_id = com.id
-                       AND com.name = ",company_name,"
-                       AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
-                       AND submitted_on >= upc.init
-                       AND submitted_on < upc.end")
+GetCompanyStaticITS <- function (company_name, closed_condition, startdate, 
+        enddate, identities_db) {
+    
+    period = ''
+    q <- GetCompanyOpened (company_name, period, startdate, enddate, identities_db, FALSE)
     query <- new ("Query", sql = q)
     data0 <- run(query)
 
-    q <- paste ("SELECT COUNT(DISTINCT(pup.upeople_id)) as closers,
-                        COUNT(DISTINCT(issue_id)) AS closed
-                 FROM changes,
-                      people_upeople pup,
-                      ",identities_db,".upeople_companies upc,
-                      ",identities_db,".companies com
-                 WHERE pup.people_id = changes.changed_by
-                       AND pup.upeople_id = upc.upeople_id
-                       AND upc.company_id = com.id
-                       AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                       AND changed_on >= upc.init
-                       AND changed_on < upc.end
-                       AND ", closed_condition)
+    q <- GetCompanyClosed (company_name, closed_condition, period, startdate, 
+            enddate, identities_db, FALSE)
+    
     query <- new ("Query", sql = q)
     data1 <- run(query)
 
-    q <- paste ("SELECT COUNT(distinct(issue_id)) as changed,
-                        COUNT(distinct(pup.upeople_id)) as changers
-                 FROM changes,
-                      people_upeople pup,
-                      ",identities_db,".upeople_companies upc,
-                      ",identities_db,".companies com
-                 WHERE pup.people_id = changes.changed_by
-                       AND pup.upeople_id = upc.upeople_id
-                       AND upc.company_id = com.id
-                       AND com.name = ",company_name,"
-                       AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                       AND changed_on >= upc.init
-                       AND changed_on < upc.end")
+    q <- GetCompanyChanged (company_name, period, startdate, 
+            enddate, identities_db, FALSE)
+    
     query <- new ("Query", sql = q)
     data2 <- run(query)
-
 
     q <- paste ("SELECT count(distinct(tracker_id)) as trackers
                  FROM issues,
@@ -562,54 +535,25 @@ its_company_static_info <- function (company_name, startdate, enddate, identitie
     return(agg_data)
 }
 
-its_company_top_closers <- function(company_name, startdate, enddate, identities_db) {
-    q <- paste("SELECT people.name as closers,
-                       COUNT(DISTINCT(changes.id)) as closed
-                FROM changes,
-                     people,
-                     people_upeople pup,
-                     ",identities_db,".upeople_companies upc,
-                     ",identities_db,".companies com
-                WHERE ", closed_condition, "
-                      AND changes.changed_by = people.id
-                      AND pup.people_id = changes.changed_by
-                      AND pup.upeople_id = upc.upeople_id
+GetCompanyTopClosers <- function(company_name, startdate, enddate, 
+        identities_db, filter = c('')) {
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
+    }
+    q <- paste("SELECT up.identifier as closers,
+                       COUNT(DISTINCT(c.id)) as closed
+                FROM ", GetTablesCompaniesITS(identities_db),",
+                     ",identities_db,".companies com,
+                     ",identities_db,".upeople up
+                WHERE ", GetFiltersCompaniesITS()," AND ", closed_condition, "
+                      AND pup.people_id = up.id
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
-                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                      AND changed_on >= upc.init
-                      AND changed_on < upc.end
-                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,
+                      affiliations, "
+                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
     query <- new ("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-its_top_closers_wo_affiliations <- function(list_affs, startdate, enddate, identites_db) {
-    #list_affs
-    affiliations = ""
-    for (aff in list_affs){
-        affiliations <- paste(affiliations, "AND com.name<>'",aff,"' ",sep="")
-    }
-    
-    q <- paste("SELECT people.name as closers,
-                       COUNT(DISTINCT(changes.id)) as closed
-                FROM changes,
-                     people,
-                     people_upeople pup,
-                     ",identities_db,".upeople_companies upc,
-                     ",identities_db,".companies com
-                WHERE ", closed_condition, "
-                      AND changes.changed_by = people.id
-                      AND pup.people_id = changes.changed_by
-                      AND pup.upeople_id = upc.upeople_id
-                      AND upc.company_id = com.id
-                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                      AND changed_on >= upc.init
-                      AND changed_on < upc.end
-                      ",affiliations,"
-                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;")	    
-    query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
