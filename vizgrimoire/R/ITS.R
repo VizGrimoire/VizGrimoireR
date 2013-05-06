@@ -126,10 +126,27 @@ GetEvolCountriesITS <- function(period, startdate, enddate, identities_db) {
     return (data)
 }
 
+GetTablesReposITS <- function () {
+    return (paste(GetTablesOwnUniqueIdsITS(),",issues,trackers"))
+}
 
-#
-# NOT CONVERTED YET
-#
+GetFiltersReposITS <- function () {
+    filters = paste(GetFiltersOwnUniqueIdsITS(),
+            "AND c.issue_id = issues.id AND issues.tracker_id = trackers.id")    
+    return(filters)    
+}
+
+GetEvolReposITS <- function(period, startdate, enddate) {        
+    fields = 'COUNT(DISTINCT(trackers.url)) AS repos'
+    tables= GetTablesReposITS()
+    filters = GetFiltersReposITS()
+
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
 
 GetStaticITS <- function (closed_condition, startdate, enddate) {
     
@@ -177,8 +194,7 @@ GetStaticITS <- function (closed_condition, startdate, enddate) {
     return(agg_data)
 }
 
-
-last_activity_its <- function(days, closed_condition) {
+GetLastActivityITS <- function(days, closed_condition) {
     # opened issues
     q <- paste("select count(*) as opened_",days,"
                 from issues
@@ -198,7 +214,7 @@ last_activity_its <- function(days, closed_condition) {
     query <- new("Query", sql = q)
     data2 = run(query)
 
-    # people_involved
+    # people_involved    
     q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers_",days,"
                  FROM changes, people_upeople pup
                  WHERE pup.people_id = changes.changed_by and
@@ -216,36 +232,31 @@ last_activity_its <- function(days, closed_condition) {
 
 }
 
-its_static_companies  <- function(startdate, enddate, identities_db) {
-    q <- paste ("SELECT COUNT(DISTINCT(upc.company_id)) AS companies
-                 FROM changes,
-                     people_upeople pup,
-                     ",identities_db,".upeople_companies upc
-                 WHERE pup.people_id = changes.changed_by
-                     AND pup.upeople_id = upc.upeople_id
-                     AND changed_on >= ",startdate,"
-                     AND changed_on < ",enddate,"")
+GetStaticCompaniesITS  <- function(startdate, enddate, identities_db) {    
+    fields = 'COUNT(DISTINCT(upc.company_id)) AS companies'
+    tables = GetTablesCompaniesITS(identities_db)
+    filters = GetFiltersCompaniesITS()
+    q <- GetSQLGlobal('changed_on', fields, tables, filters, 
+            startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)               
 }
 
-its_static_countries  <- function(startdate, enddate, identities_db) {
-    q <- paste ("SELECT COUNT(DISTINCT(upc.country_id)) AS countries
-                 FROM changes,
-                     people_upeople pup,
-                     ",identities_db,".upeople_countries upc
-                 WHERE pup.people_id = changes.changed_by
-                     AND pup.upeople_id = upc.upeople_id
-                     AND changed_on >= ",startdate,"
-                     AND changed_on < ",enddate,"")
+GetStaticCountriesITS  <- function(startdate, enddate, identities_db) {
+    fields = 'COUNT(DISTINCT(upc.country_id)) AS countries'
+    tables = GetTablesCountriesITS(identities_db)
+    filters = GetFiltersCountriesITS()
+    q <- GetSQLGlobal('changed_on', fields, tables, filters, 
+            startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)               
 }
 
 # Top
-top_closers <- function(days = 0, startdate, enddate, identites_db) {
+## TODO: use last activity subquery
+GetTopClosers <- function(days = 0, startdate, enddate, identites_db) {
     
     date_limit = ""
     if (days != 0 ) {
@@ -267,15 +278,13 @@ top_closers <- function(days = 0, startdate, enddate, identites_db) {
                 GROUP BY u.identifier
                 ORDER BY closed desc
                 LIMIT 10;", sep="")
-
-	print (q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 
-its_repos_name <- function() {
+GetReposNameITS <- function() {
     # q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
     q <- paste ("SELECT url AS name FROM trackers")
     query <- new ("Query", sql = q)
@@ -283,63 +292,92 @@ its_repos_name <- function() {
     return (data)
 }
 
-repo_evol_closed <- function(repo, closed_condition, period, startdate, enddate){
-    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(DISTINCT(issue_id)) AS closed,
-                       COUNT(DISTINCT(pup.upeople_id)) AS closers
-                FROM changes,
-                     issues,
-                     trackers,
-                     people_upeople pup
-                WHERE ",closed_condition,"
-                      AND trackers.url=",repo,"
-                      AND changes.issue_id = issues.id
-                      AND issues.tracker_id = trackers.id
-                      AND pup.people_id = changes.changed_by
-                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                      GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")    
+#
+# NOT CONVERTED YET
+#
+GetRepoEvolClosed <- function(repo, closed_condition, period, startdate, enddate){    
+    fields = 'COUNT(DISTINCT(issue_id)) AS closed, 
+              COUNT(DISTINCT(pup.upeople_id)) AS closers'
+    tables= GetTablesReposITS()
+    filters = paste(GetFiltersReposITS(),'AND',closed_condition,
+            "AND trackers.url=",repo)    
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+            startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-repo_evol_changed <- function(repo, period, startdate, enddate){
-    q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(DISTINCT(changes.issue_id)) AS changed,
-                       COUNT(DISTINCT(pup.upeople_id)) AS changers
-                FROM changes,
-                     issues,
-                     trackers,
-                     people_upeople pup
-                WHERE trackers.url=",repo,"
-                      AND changes.issue_id = issues.id
-                      AND issues.tracker_id = trackers.id
-                      AND pup.people_id = changes.changed_by
-                      AND changed_on >= ",startdate," AND changed_on < ",enddate,"
-                GROUP BY ((to_days(changed_on) - to_days(",startdate,")) div ",period,")")
+GetRepoEvolChanged <- function(repo, period, startdate, enddate){
+    fields = 'COUNT(DISTINCT(c.issue_id)) AS changed,
+              COUNT(DISTINCT(pup.upeople_id)) AS changers'
+    tables= GetTablesReposITS()
+    filters = paste(GetFiltersReposITS(),"AND trackers.url=",repo)
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+            startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-repo_evol_opened <- function(repo, period, startdate, enddate){
-    q <- paste("SELECT ((to_days(submitted_on) - to_days(",startdate,")) div ",period,") as id,
-                       COUNT(submitted_by) AS opened,
-                       COUNT(DISTINCT(pup.upeople_id)) AS openers
-                FROM issues,
-                     trackers,
-                     people_upeople pup
-                WHERE trackers.url=",repo,"                      
-                      AND issues.tracker_id = trackers.id
-                      AND pup.people_id = issues.submitted_by
-                      AND submitted_on >= ",startdate," AND submitted_on < ",enddate,"
-                GROUP BY ((to_days(submitted_on) - to_days(",startdate,")) div ",period,")")    
+GetRepoEvolOpened <- function(repo, period, startdate, enddate){
+    fields = "COUNT(submitted_by) AS opened, 
+              COUNT(DISTINCT(pup.upeople_id)) AS openers"
+    tables = "issues, trackers, people_upeople pup"
+    filters = paste("trackers.url=",repo,"                      
+                     AND issues.tracker_id = trackers.id
+                     AND pup.people_id = issues.submitted_by")
+    q <- GetSQLPeriod(period,'submitted_on', fields, tables, filters, 
+                      startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-its_company_evol_closed <- function(company_name, closed_condition, period, startdate, enddate, identities_db){    
+GetStaticRepoITS <- function (repo, startdate, enddate) {
+    fields = "COUNT(submitted_by) AS opened, 
+              COUNT(DISTINCT(pup.upeople_id)) AS openers"
+    tables = "issues, trackers, people_upeople pup"
+    filters = paste("trackers.url=",repo,"          
+                    AND issues.tracker_id = trackers.id
+                    AND pup.people_id = issues.submitted_by")
+    
+    q <- GetSQLGlobal('submitted_on',fields, tables, 
+            filters, startdate, enddate)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    
+    fields = "COUNT(DISTINCT(pup.upeople_id)) as closers, 
+              COUNT(DISTINCT(issue_id)) as closed"
+    tables= GetTablesReposITS()
+    filters = paste(GetFiltersReposITS(),'AND',closed_condition,
+            "AND trackers.url=",repo)    
+    q <- GetSQLGlobal('changed_on',fields, tables, 
+            filters, startdate, enddate)
+                         
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+    
+    fields = "COUNT(DISTINCT(pup.upeople_id)) as changers,
+              COUNT(DISTINCT(issue_id)) as changed"
+    tables= GetTablesReposITS()
+    filters = paste(GetFiltersReposITS(),"AND trackers.url=",repo)    
+    q <- GetSQLGlobal('changed_on',fields, tables, 
+            filters, startdate, enddate)    
+    query <- new ("Query", sql = q)
+    data2 <- run(query)
+    
+    agg_data = merge(data, data1)
+    agg_data = merge(agg_data, data2)
+    return(agg_data)
+}
+
+
+#
+# Companies
+#
+GetCompanyEvolClosed <- function(company_name, closed_condition, period, 
+        startdate, enddate, identities_db){    
     q <- paste("SELECT ((to_days(changed_on) - to_days(",startdate,")) div ",period,") as id,
                        COUNT(DISTINCT(issue_id)) AS closed,
                        COUNT(DISTINCT(pup.upeople_id)) AS closers
@@ -405,44 +443,6 @@ its_company_evol_opened <- function(company_name, period, startdate, enddate, id
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
-}
-
-its_static_info_repo <- function (repo) {
-    q <- paste ("SELECT COUNT(distinct(pup.upeople_id)) as openers,
-                 count(*) as opened,
-                 DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date,
-                 DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date 
-                 FROM issues
-                 JOIN people_upeople pup ON (pup.people_id = submitted_by)
-                 JOIN trackers ON (issues.tracker_id = trackers.id)
-                 WHERE trackers.url=",repo)
-    query <- new ("Query", sql = q)
-    data <- run(query)
-    
-    q <- paste ("SELECT COUNT(distinct(pup.upeople_id)) as closers,
-                 count(distinct(issue_id)) as closed
-                 FROM changes
-                 JOIN issues ON (changes.issue_id = issues.id)
-                 JOIN trackers ON (issues.tracker_id = trackers.id)
-                 JOIN people_upeople pup ON (pup.people_id = changed_by)
-                 WHERE ",closed_condition,"
-                 AND trackers.url=",repo)
-    query <- new ("Query", sql = q)
-    data1 <- run(query)
-    
-    q <- paste ("SELECT COUNT(distinct(pup.upeople_id)) as changers,
-                 count(distinct(issue_id)) as changed
-                 FROM changes
-                 JOIN issues ON (changes.issue_id = issues.id)
-                 JOIN trackers ON (issues.tracker_id = trackers.id)
-                 JOIN people_upeople pup ON (pup.people_id = changed_by)
-                 WHERE trackers.url=",repo)	
-    query <- new ("Query", sql = q)
-    data2 <- run(query)
-    
-    agg_data = merge(data, data1)
-    agg_data = merge(agg_data, data2)
-    return(agg_data)
 }
 
 its_companies_name <- function(startdate, enddate, identities_db) {

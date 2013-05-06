@@ -104,6 +104,10 @@ if (conf$reports == 'countries') {
     info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_countries, all = TRUE)
 }
+if (conf$reports == 'repositories') {
+    data = GetEvolReposITS(period, startdate, enddate)
+    evol = merge(evol, data, all = TRUE)
+}
 
 evol <- completePeriodIds(evol, conf$granularity, conf)
 evol[is.na(evol)] <- 0
@@ -114,17 +118,18 @@ createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
 
 if (conf$reports == 'companies') {
-    info_com = its_static_companies (startdate, enddate, identities_db)
+    info_com = GetStaticCompaniesITS (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 if (conf$reports == 'countries') {
-    info_com = its_static_countries (startdate, enddate, identities_db)
+    info_com = GetStaticCountriesITS (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
-latest_activity7 = last_activity_its(7, closed_condition)
-latest_activity30 = last_activity_its(30, closed_condition)
-latest_activity90 = last_activity_its(90, closed_condition)
-latest_activity365 = last_activity_its(365, closed_condition)
+
+latest_activity7 = GetLastActivityITS(7, closed_condition)
+latest_activity30 = GetLastActivityITS(30, closed_condition)
+latest_activity90 = GetLastActivityITS(90, closed_condition)
+latest_activity365 = GetLastActivityITS(365, closed_condition)
 all_static_info = merge(all_static_info, latest_activity7)
 all_static_info = merge(all_static_info, latest_activity30)
 all_static_info = merge(all_static_info, latest_activity90)
@@ -134,20 +139,20 @@ createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 # Top closers
 top_closers_data <- list()
-top_closers_data[['closers.']]<-top_closers(0, conf$startdate, conf$enddate,identites_db)
-top_closers_data[['closers.last year']]<-top_closers(365, conf$startdate, conf$enddate,identites_db)
-top_closers_data[['closers.last month']]<-top_closers(31, conf$startdate, conf$enddate,identites_db)
+top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db)
+top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db)
+top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db)
 
 # top_closers_data <- its_top_closers_wo_affiliations(c("-Bot"), startdate, enddate, identites_db)
 createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # People List for working in unique identites
-people_list <- its_people()
-createJSON (people_list, paste(c(destdir,"/its-people.json"), collapse=''))
+# people_list <- its_people()
+# createJSON (people_list, paste(c(destdir,"/its-people.json"), collapse=''))
 
 # Repositories
 if (conf$reports == 'repositories') {	
-	repos  <- its_repos_name()
+	repos  <- GetReposNameITS()
 	repos <- repos$name
 	createJSON(repos, paste(c(destdir,"/its-repos.json"), collapse=''))
 	
@@ -158,23 +163,25 @@ if (conf$reports == 'repositories') {
 		print (repo_name)
 		
 		# EVOLUTION INFO
-		closed <- repo_evol_closed(repo_name, closed_condition, nperiod, startdate, enddate)
-        closed <- completePeriod(closed, nperiod, conf)
+		closed <- GetRepoEvolClosed(repo_name, closed_condition, period, startdate, enddate)
+        # closed <- completePeriod(closed, nperiod, conf)
 
-		changed <- repo_evol_changed(repo_name, nperiod, startdate, enddate)
-        changed <- completePeriod(changed, nperiod, conf)
+		changed <- GetRepoEvolChanged(repo_name, period, startdate, enddate)
+        # changed <- completePeriod(changed, nperiod, conf)
                 
-		opened <- repo_evol_opened(repo_name, nperiod, startdate, enddate)
-        opened <- completePeriod(opened, nperiod, conf)
+		opened <- GetRepoEvolOpened(repo_name, period, startdate, enddate)
+        # opened <- completePeriod(opened, nperiod, conf)
                 
-		agg_data = merge(closed, changed, all = TRUE)
-		agg_data = merge(agg_data, opened, all = TRUE)
-		agg_data[is.na(agg_data)] <- 0
-        agg_data <- agg_data[order(agg_data$id),]		
-		createJSON(agg_data, paste(c(destdir,"/",repo_file,"-its-evolutionary.json"), collapse=''))
+		evol = merge(closed, changed, all = TRUE)
+		evol = merge(evol, opened, all = TRUE)
+        
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        evol <- evol[order(evol$id),]
+		createJSON(evol, paste(c(destdir,"/",repo_file,"-its-evolutionary.json"), collapse=''))
 		
 		# STATIC INFO
-		static_info <- its_static_info_repo(repo_name)
+		static_info <- GetStaticRepoITS(repo_name, startdate, enddate)
 		createJSON(static_info, paste(c(destdir,"/",repo_file,"-its-static.json"), collapse=''))
 	}
 }
@@ -191,7 +198,7 @@ if (conf$reports == 'companies') {
         company_name = paste(c("'", company, "'"), collapse='')
         company_aux = paste(c("", company, ""), collapse='')
         print (company_name)
-        closed <- its_company_evol_closed(company_name, closed_condition, nperiod, startdate, enddate, identities_db)
+        closed <- GetRepoEvolClosed(company_name, closed_condition, nperiod, startdate, enddate, identities_db)
         closed <- completePeriod(closed, nperiod, conf)    
 
         changed <- its_company_evol_changed(company_name, nperiod, startdate, enddate, identities_db)
