@@ -130,7 +130,6 @@ EvolCommits <- function(period, startdate, enddate, identities_db=NA, repository
     filters = GetSQLReportWhere(repository, company, country, "author")
     q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
             startdate, enddate)
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -149,17 +148,17 @@ EvolAuthors <- function(period, startdate, enddate, identities_db=NA, repository
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
-        filters <- paste(filters, " s.author_id = pup.people_id", sep="")
+        filters <- paste(filters, " and s.author_id = pup.people_id", sep="")
     }
     
     if (! is.na(repository)){
         #Adding people_upeople table
         tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
-        filters <- paste(filters, " s.author_id = pup.people_id ", sep="")
+        filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
     }
     
     q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-            startdate, enddate)    
+            startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -177,12 +176,12 @@ EvolCommitters <- function(period, startdate, enddate, identities_db=NA, reposit
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         tables <- paste(tables, " ,  ",identities_db,".people_upeople pup ", sep="")
-        filters <- paste(filters, " s.committer_id = pup.people_id", sep="")
+        filters <- paste(filters, " and s.committer_id = pup.people_id", sep="")
     }
     if (! is.na(repository)){
         #Adding people_upeople table
         tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
-        filters <- paste(filters, " s.committer_id = pup.people_id ", sep="")
+        filters <- paste(filters, " and s.committer_id = pup.people_id ", sep="")
     }
 
     q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
@@ -334,7 +333,6 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, repos
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -370,7 +368,6 @@ StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, re
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -394,7 +391,6 @@ StaticNumFiles <- function(period, startdate, enddate, identities_db=NA, reposit
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -419,7 +415,6 @@ StaticNumBranches <- function(period, startdate, enddate, identities_db=NA, repo
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -442,7 +437,6 @@ StaticNumRepositories <- function(period, startdate, enddate, identities_db=NA, 
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -466,7 +460,6 @@ StaticNumActions <- function(period, startdate, enddate, identities_db=NA, repos
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -491,7 +484,6 @@ StaticNumLines <- function(period, startdate, enddate, identities_db=NA, reposit
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -513,7 +505,6 @@ StaticAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA,
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -537,7 +528,6 @@ StaticAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, r
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -574,7 +564,6 @@ StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA,
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -610,7 +599,6 @@ StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, 
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -646,7 +634,6 @@ StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=N
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -681,7 +668,6 @@ StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, r
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -1178,7 +1164,6 @@ companies_name <- function(startdate, enddate) {
                     group by c.name
                     order by count(distinct(s.id)) desc", sep="")
                     # order by count(distinct(s.id)) desc LIMIT ", companies_limit, sep="")
-    print(q)
 	query <- new("Query", sql = q)
 	data <- run(query)	
 	return (data)
