@@ -405,8 +405,7 @@ completeZeroPeriodIdsYears <- function (data, start, end) {
         new_date$year = new_date$year + 1
     }
     completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)    
+    completedata[is.na(completedata)] <- 0        
     return(completedata)    
 }
 
@@ -427,8 +426,7 @@ completeZeroPeriodIdsMonths <- function (data, start, end) {
         new_date$mon = new_date$mon + 1
     }        
     completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)    
+    completedata[is.na(completedata)] <- 0        
     return(completedata)    
 }
 
@@ -447,8 +445,7 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
     }
     
     completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0    
-    print(completedata)        
+    completedata[is.na(completedata)] <- 0              
     return(completedata)    
 }
 
@@ -513,7 +510,6 @@ completePeriodIds <- function (data, period, conf) {
     new_data <- new_data[order(new_data$id), ]    
     return (new_data)
 }
-
 
 #
 # Plot several columns of a timeserie

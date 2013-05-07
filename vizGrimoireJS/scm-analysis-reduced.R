@@ -33,7 +33,7 @@
 ##
 
 library("vizgrimoire")
-
+options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
@@ -91,6 +91,8 @@ evol_data[is.na(evol_data)] <- 0
 
 # 3- Creating a JSON file 
 createJSON (evol_data, paste(destdir,"/scm-evolutionary.json", sep=''))
+
+stop()
 
 #########
 #STATIC DATA
