@@ -18,8 +18,6 @@ SCMdb=acs_cvsanaly_allura_1049
 MLSdb=acs_mlstats_allura_1049
 ITSdb=acs_bicho_allura_1049
 
-R --vanilla --args -d $SCMdb -u root -i $SCMdb -s 2011-10-14 -e 2013-01-07 -g months < scm-analysis-reduced.R
-exit
 #MLS
 R --vanilla --args -d $MLSdb -u root -i $SCMdb -r repositories -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R
 R --vanilla --args -d $MLSdb -u root -i $SCMdb -r countries -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R

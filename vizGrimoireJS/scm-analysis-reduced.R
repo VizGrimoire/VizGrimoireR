@@ -92,13 +92,12 @@ evol_data[is.na(evol_data)] <- 0
 # 3- Creating a JSON file 
 createJSON (evol_data, paste(destdir,"/scm-evolutionary.json", sep=''))
 
-stop()
-
 #########
 #STATIC DATA
 #########
 
 # 1- Retrieving information
+static_url <- StaticURL()
 static_commits <- StaticNumCommits(period, conf$startdate, conf$enddate)
 static_committers <- StaticNumAuthors(period, conf$startdate, conf$enddate)
 static_authors <- StaticNumCommitters(period, conf$startdate, conf$enddate)
@@ -125,6 +124,7 @@ if (conf$reports == 'countries')
 
 # 2- Merging information
 static_data = merge(static_commits, static_committers)
+static_data = merge(static_data, static_url)
 static_data = merge(static_data, static_authors)
 static_data = merge(static_data, static_files)
 static_data = merge(static_data, static_branches)

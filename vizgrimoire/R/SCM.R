@@ -674,6 +674,13 @@ StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, r
 
 }
 
+StaticURL <- function() {
+    q <- paste("select uri as url,type from repositories limit 1")
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)    
+}
+
 evol_commits <- function(period, startdate, enddate){
       #Commits evolution
 
