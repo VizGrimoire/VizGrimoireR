@@ -38,14 +38,19 @@ library("vizgrimoire")
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
-if (conf$granularity == 'months'){
-   period = 'month'
-   nperiod = 31
-}
-if (conf$granularity == 'weeks'){
-   period='week'
-   nperiod = 7
-}
+if (conf$granularity == 'years') { 
+    period = 'year'
+    nperiod = 365
+} else if (conf$granularity == 'months') { 
+    period = 'month'
+    nperiod = 31
+} else if (conf$granularity == 'weeks') { 
+    period = 'week'
+    nperiod = 7
+} else if (conf$granularity == 'days'){ 
+    period = 'day'
+    nperiod = 1
+} else {stop(paste("Incorrect period:",conf$granularity))}
 
 # destination directory
 destdir <- conf$destination

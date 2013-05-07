@@ -142,9 +142,18 @@ EvolCommits <- function(period, startdate, enddate, identities_db=NA, repository
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
     where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
     
+    # new period query
+    period = "week"
+    filters = GetSQLReportWhere(repository, company, country, "author")
+    tables = paste("scmlog s", GetSQLReportFrom(identities_db, repository, company, country))
+    q <- GetSQLPeriod(period,'s.date', 'count(s.id) AS commits', tables, filters, 
+            startdate, enddate)
+    print(q)
+    
     #executing the query
     q <- paste(select, from, where, rest)
     print (q)
+    stop()
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
