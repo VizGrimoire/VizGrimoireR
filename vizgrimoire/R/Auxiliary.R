@@ -889,8 +889,7 @@ GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
         # Remove time so unix timestamp is start of day    
         sql = paste('SELECT UNIX_TIMESTAMP(DATE(',date,')) AS unixtime, ')
     } else if (period == 'week') {
-        sql = paste('SELECT ')
-        sql = paste(sql, 'YEARWEEK(',date,',',iso_8601_mode,') AS week, ')
+        sql = paste('SELECT YEARWEEK(',date,',',iso_8601_mode,') AS week, ')
     } else if (period == 'month') {
         sql = paste('SELECT YEAR(',date,')*12+MONTH(',date,') AS month, ')
     }  else if (period == 'year') {
@@ -903,7 +902,8 @@ GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
     sql = paste(sql,'FROM', tables)
     sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
     if (filters != "") {
-        sql = paste(sql,' AND ',filters)
+        if (regexpr("^[ ]*and", tolower(filters)) > 0 ) sql = paste(sql, filters)
+        else sql = paste(sql,' AND ',filters)
     }    
     if (period == 'year') {
         sql = paste(sql,' GROUP BY YEAR(',date,')')

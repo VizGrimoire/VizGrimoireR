@@ -70,9 +70,7 @@ GetSQLCountriesWhere <- function(country, role){
     #fields necessaries to match info among tables
     return (paste("and s.",role,"_id = pup.people_id
                   and pup.upeople_id = upc.upeople_id
-                  and s.date >= upc.init
-                  and s.date < upc.end
-                  and upc.company_id = c.id
+                  and upc.country_id = c.id
                   and c.name =", country, sep=""))
 }
 
@@ -127,33 +125,12 @@ GetSQLReportWhere <- function(repository, company, country, role){
 #Functions to obtain info per type of basic piece of data
 #########
 EvolCommits <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    #Evolution of commits
-
-    # basic parts of the query
-    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                     count(s.id) AS commits ", sep="")
-    from <- " FROM scmlog s "
-    where <- paste("WHERE s.date >=", startdate, " and
-                    s.date < ", enddate, sep="")
-    rest <- paste( "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
-    
-    # new period query
-    period = "week"
-    filters = GetSQLReportWhere(repository, company, country, "author")
+    fields ='count(s.id) AS commits'
     tables = paste("scmlog s", GetSQLReportFrom(identities_db, repository, company, country))
-    q <- GetSQLPeriod(period,'s.date', 'count(s.id) AS commits', tables, filters, 
+    filters = GetSQLReportWhere(repository, company, country, "author")
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
             startdate, enddate)
     print(q)
-    
-    #executing the query
-    q <- paste(select, from, where, rest)
-    print (q)
-    stop()
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -161,72 +138,55 @@ EvolCommits <- function(period, startdate, enddate, identities_db=NA, repository
 
 
 EvolAuthors <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    #Evolution of unique authors per period
-
-    # basic parts of the query
-    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                     count(distinct(pup.upeople_id)) AS authors ", sep="")
-    from <- " FROM scmlog s "
-    where <- paste("WHERE s.date >=", startdate, " and
-                    s.date < ", enddate, sep="")
-    rest <- paste("GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+    fields <- 'count(distinct(pup.upeople_id)) AS authors '
+    tables <- "scmlog s "
+    filters = GetSQLReportWhere(repository, company, country, "author")
 
     #specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
 
     if (is.na(repository) &&  is.na(company) && is.na(country)){
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.author_id = pup.people_id", sep="")
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " s.author_id = pup.people_id", sep="")
     }
     
     if (! is.na(repository)){
         #Adding people_upeople table
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " s.author_id = pup.people_id ", sep="")
     }
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    print(q)
+    
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+            startdate, enddate)    
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 EvolCommitters <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    #Evolution of unique committers per period
-
-    # basic parts of the query
-    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                     count(distinct(pup.upeople_id)) AS committers ", sep="")
-    from <- " FROM scmlog s "
-    where <- paste("WHERE s.date >=", startdate, " and
-                    s.date < ", enddate, sep="")
-    rest <- paste("GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-
+    fields <- 'count(distinct(pup.upeople_id)) AS committers '
+    tables <- "scmlog s "
+    filters = GetSQLReportWhere(repository, company, country, "committer")
+    
     #specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "committer"))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
 
     if (is.na(repository) &&  is.na(company) && is.na(country)){
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
-        from <- paste(from, " ,  ",identities_db,".people_upeople pup ", sep="")
-        where <- paste(where, " and s.committer_id = pup.people_id", sep="")
+        tables <- paste(tables, " ,  ",identities_db,".people_upeople pup ", sep="")
+        filters <- paste(filters, " s.committer_id = pup.people_id", sep="")
     }
     if (! is.na(repository)){
         #Adding people_upeople table
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.committer_id = pup.people_id ", sep="")
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " s.committer_id = pup.people_id ", sep="")
     }
 
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    print(q)
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+            startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -235,25 +195,19 @@ EvolCommitters <- function(period, startdate, enddate, identities_db=NA, reposit
 
 EvolFiles <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
     #Evolution of files
-
-    # basic parts of the query
-    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                     count(distinct(a.file_id)) as files ", sep="")
-    from <- " FROM scmlog s,
-                   actions a "
-    where <- paste("WHERE s.date >=", startdate, " and
-                    s.date < ", enddate ," and
-                    a.commit_id = s.id " , sep="")
-    rest <- paste( "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    
+    fields <- 'count(distinct(a.file_id)) as files  '
+    tables <- "scmlog s, actions a "
+    filters = "a.commit_id = s.id "
+    
+    #specific parts of the query depending on the report needed
+    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
     
     #executing the query
-    q <- paste(select, from, where, rest)
-    print (q)
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+            startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -264,24 +218,18 @@ EvolLines <- function(period, startdate, enddate, identities_db=NA, repository=N
     #Evolution of files
 
     # basic parts of the query
-    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                     sum(cl.added) as added_lines,
-                     sum(cl.removed) as removed_lines ", sep="")
-    from <- " FROM scmlog s,
-                   commits_lines cl "
-    where <- paste("WHERE s.date >=", startdate, " and
-                    s.date < ", enddate ," and
-                    cl.commit_id = s.id " , sep="")
-    rest <- paste( "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+    fields <- "sum(cl.added) as added_lines, sum(cl.removed) as removed_lines"
+    tables <- "scmlog s, commits_lines cl "
+    filters <- "cl.commit_id = s.id "
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
     
     #executing the query
-    q <- paste(select, from, where, rest)
-    print (q)
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+            startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -292,23 +240,18 @@ EvolBranches <- function(period, startdate, enddate, identities_db=NA, repositor
     #Evolution of files
 
     # basic parts of the query
-    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                     count(distinct(a.branch_id)) as branches ", sep="")
-    from <- " FROM scmlog s,
-                   actions a "
-    where <- paste("WHERE s.date >=", startdate, " and
-                    s.date < ", enddate ," and
-                    a.commit_id = s.id " , sep="")
-    rest <- paste( "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+    fields <- "count(distinct(a.branch_id)) as branches "
+    tables <- " scmlog s, actions a "
+    filters <- " a.commit_id = s.id "
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
     
     #executing the query
-    q <- paste(select, from, where, rest)
-    print (q)
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+            startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -318,21 +261,17 @@ EvolRepositories <- function(period, startdate, enddate, identities_db=NA, repos
     #Evolution of commits
 
     # basic parts of the query
-    select <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                     count(distinct(s.repository_id)) AS repositories ", sep="")
-    from <- " FROM scmlog s "
-    where <- paste("WHERE s.date >=", startdate, " and
-                    s.date < ", enddate, sep="")
-    rest <- paste( "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+    fields <- "count(distinct(s.repository_id)) AS repositories "
+    tables <- "scmlog s "
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    filters <- GetSQLReportWhere(repository, company, country, "author")
     
     #executing the query
-    q <- paste(select, from, where, rest)
-    print (q)
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+            startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -740,8 +679,6 @@ StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, r
         where <- paste(where, " and s.author_id = pup.people_id ", sep="")
     }
 
-
-
     #executing the query
     q <- paste(select, from, where, rest)
     print (q)
@@ -750,8 +687,6 @@ StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, r
     return (data)    
 
 }
-	
-
 
 evol_commits <- function(period, startdate, enddate){
       #Commits evolution
@@ -879,39 +814,31 @@ evol_repositories <- function(period, startdate, enddate) {
       return (data_repositories)
 }
 
-evol_companies <- function(period, startdate, enddate){	
+EvolCompanies <- function(period, startdate, enddate){	
 
-        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                           count(distinct(upc.company_id)) as companies
-                    from scmlog s,
-                         people_upeople pup,
-                         upeople_companies upc
-                    where s.author_id = pup.people_id and
-                          pup.upeople_id = upc.upeople_id and
-                          s.date >= upc.init and 
-                          s.date < upc.end and
-                          s.date >=", startdate, " and
-                          s.date < ", enddate, "
-                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-        query <- new("Query", sql = q)
+    fields = "count(distinct(upc.company_id)) as companies"
+    tables = " scmlog s, people_upeople pup, upeople_companies upc"
+    filters = "s.author_id = pup.people_id and
+               pup.upeople_id = upc.upeople_id and
+               s.date >= upc.init and 
+               s.date < upc.end"
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+                           startdate, enddate)
+    print(q)       
+    query <- new("Query", sql = q)
 	companies<- run(query)
 	return(companies)
 }
 
-evol_countries <- function(period, startdate, enddate){	
+EvolCountries <- function(period, startdate, enddate){	
 
-        q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                           count(distinct(upc.country_id)) as countries
-                    from scmlog s,
-                         people_upeople pup,
-                         upeople_countries upc
-                    where s.author_id = pup.people_id and
-                          pup.upeople_id = upc.upeople_id and
-                          s.date >=", startdate, " and
-                          s.date < ", enddate, "
-                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-
-        query <- new("Query", sql = q)
+    fields = "count(distinct(upc.country_id)) as countries"
+    tables = "scmlog s, people_upeople pup, upeople_countries upc"
+    filters = "s.author_id = pup.people_id and
+               pup.upeople_id = upc.upeople_id"
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+               startdate, enddate)      
+    query <- new("Query", sql = q)
 	countries<- run(query)
 	return(countries)
 }

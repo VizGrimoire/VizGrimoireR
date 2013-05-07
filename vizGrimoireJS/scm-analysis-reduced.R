@@ -60,86 +60,66 @@ destdir <- conf$destination
 #########
 print(conf$identities_db)
 # 1- Retrieving information
-#Commits
-commits <- EvolCommits(nperiod, conf$startdate, conf$enddate)
-data_commits <- completePeriod(commits, nperiod, conf)
-#Committers
-committers <- EvolCommitters(period=nperiod, startdate=conf$startdate, enddate=conf$enddate, identities_db=conf$identities_db)
-data_committers <- completePeriod(committers, nperiod, conf)
-# Authors
-authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db)
-data_authors <- completePeriod(authors, nperiod, conf)
-#Files
-files <- EvolFiles(nperiod, conf$startdate, conf$enddate)
-data_files <- completePeriod(files, nperiod, conf)
-#Lines
-lines <- EvolLines(nperiod, conf$startdate, conf$enddate)
-data_lines <- completePeriod(lines, nperiod, conf)
-#Branches
-branches <- EvolBranches(nperiod, conf$startdate, conf$enddate)
-data_branches <- completePeriod(branches, nperiod, conf)
-#Repositories
-repositories <- EvolRepositories(nperiod, conf$startdate, conf$enddate)
-data_repositories <- completePeriod(repositories, nperiod, conf)
-#Specific information if specific analysis are required
+commits <- EvolCommits(period, conf$startdate, conf$enddate)
+authors <- EvolAuthors(period, conf$startdate, conf$enddate, conf$identities_db)
+committers <- EvolCommitters(period, conf$startdate, conf$enddate, conf$identities_db)
+files <- EvolFiles(period, conf$startdate, conf$enddate)
+lines <- EvolLines(period, conf$startdate, conf$enddate)
+branches <- EvolBranches(period, conf$startdate, conf$enddate)
+repositories <- EvolRepositories(period, conf$startdate, conf$enddate)
 if (conf$reports == 'companies') { 
-    companies <- evol_companies(nperiod, conf$startdate, conf$enddate)
-    data_companies <- completePeriod(companies, nperiod, conf)
+    companies <- EvolCompanies(period, conf$startdate, conf$enddate)
 }
 if (conf$reports == 'countries') {
-    countries <- evol_countries(nperiod, conf$startdate, conf$enddate)
-    data_countries <- completePeriod(countries, nperiod, conf)
+    countries <- EvolCountries(period, conf$startdate, conf$enddate)
 }
-
 # 2- Merging information
 #Creating JSON file with all data
-evol_data = merge(data_commits, data_committers, all = TRUE)
-evol_data = merge(evol_data, data_authors, all = TRUE)
+evol_data = merge(commits, committers, all = TRUE)
+evol_data = merge(evol_data, authors, all = TRUE)
+evol_data = merge(evol_data, files, all = TRUE)
+evol_data = merge(evol_data, lines, all = TRUE)
+evol_data = merge(evol_data, branches, all = TRUE)
+evol_data = merge(evol_data, repositories, all = TRUE)
 if (conf$reports == 'companies') 
-  evol_data = merge(evol_data, data_companies, all = TRUE)
+      evol_data = merge(evol_data, companies, all = TRUE)
 if (conf$reports == 'countries')
-  evol_data = merge(evol_data, data_countries, all = TRUE)
-evol_data = merge(evol_data, data_files, all = TRUE)
-evol_data = merge(evol_data, data_lines, all = TRUE)
-evol_data = merge(evol_data, data_branches, all = TRUE)
-evol_data = merge(evol_data, data_repositories, all = TRUE)
+      evol_data = merge(evol_data, countries, all = TRUE)
+evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 evol_data <- evol_data[order(evol_data$id), ]
 evol_data[is.na(evol_data)] <- 0
 
 # 3- Creating a JSON file 
 createJSON (evol_data, paste(c(destdir,"/data/json/scm-evolutionary.json"), collapse=''))
 
-
 #########
 #STATIC DATA
 #########
 
 # 1- Retrieving information
-static_commits <- StaticNumCommits(nperiod, conf$startdate, conf$enddate)
-static_committers <- StaticNumAuthors(nperiod, conf$startdate, conf$enddate)
-static_authors <- StaticNumCommitters(nperiod, conf$startdate, conf$enddate)
-static_files <- StaticNumFiles(nperiod, conf$startdate, conf$enddate)
-static_branches <- StaticNumBranches(nperiod, conf$startdate, conf$enddate)
-static_repositories <- StaticNumRepositories(nperiod, conf$startdate, conf$enddate)
-static_actions <- StaticNumActions(nperiod, conf$startdate, conf$enddate)
-static_lines <- StaticNumLines(nperiod, conf$startdate, conf$enddate)
+static_commits <- StaticNumCommits(period, conf$startdate, conf$enddate)
+static_committers <- StaticNumAuthors(period, conf$startdate, conf$enddate)
+static_authors <- StaticNumCommitters(period, conf$startdate, conf$enddate)
+static_files <- StaticNumFiles(period, conf$startdate, conf$enddate)
+static_branches <- StaticNumBranches(period, conf$startdate, conf$enddate)
+static_repositories <- StaticNumRepositories(period, conf$startdate, conf$enddate)
+static_actions <- StaticNumActions(period, conf$startdate, conf$enddate)
+static_lines <- StaticNumLines(period, conf$startdate, conf$enddate)
 avg_commits_period <- StaticAvgCommitsPeriod(period, conf$startdate, conf$enddate)
 avg_files_period <- StaticAvgFilesPeriod(period, conf$startdate, conf$enddate)
-avg_commits_author <- StaticAvgCommitsAuthor(nperiod, conf$startdate, conf$enddate)
+avg_commits_author <- StaticAvgCommitsAuthor(period, conf$startdate, conf$enddate)
 avg_authors_period <- StaticAvgAuthorPeriod(period, conf$startdate, conf$enddate)
 avg_committer_period <- StaticAvgCommitterPeriod(period, conf$startdate, conf$enddate)
-avg_files_author <- StaticAvgFilesAuthor(nperiod, conf$startdate, conf$enddate)
+avg_files_author <- StaticAvgFilesAuthor(period, conf$startdate, conf$enddate)
 latest_activity7 = last_activity(7)
 latest_activity30 = last_activity(30)
 latest_activity90 = last_activity(90)
 latest_activity365 = last_activity(365)
 #Specific data if specific analysis are specified
-if (conf$reports == 'companies') {
+if (conf$reports == 'companies')
 	static_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
-}
-if (conf$reports == 'countries') {
+if (conf$reports == 'countries')
 	static_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
-}
 
 # 2- Merging information
 static_data = merge(static_commits, static_committers)
@@ -159,10 +139,10 @@ static_data = merge(static_data, latest_activity7)
 static_data = merge(static_data, latest_activity30)
 static_data = merge(static_data, latest_activity90)
 static_data = merge(static_data, latest_activity365)
-if (conf$reports == 'companies') 
-  static_data = merge(static_data, data_companies)
+if (conf$reports == 'companies')  
+    static_data = merge(static_data, static_data_companies)
 if (conf$reports == 'countries')
-  static_data = merge(static_data, data_countries)
+    static_data = merge(static_data, static_data_countries)
 
 # 3- Creating file with static data
 createJSON (static_data, paste(c(destdir,"/data/json/scm-static.json"), collapse=''))
@@ -193,50 +173,42 @@ if (conf$reports == 'companies') {
         #Evolutionary data per company
         ######	
         # 1- Retrieving info 
-        commits <- EvolCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)        
-        commits <- completePeriod(commits, nperiod, conf)
-        print(commits)
-        
-        lines <-EvolLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
-        lines <- completePeriod(lines, nperiod, conf)
-
-        files <- EvolFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
-        files <- completePeriod(files, nperiod, conf)
-
-        authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
-        authors <- completePeriod(authors, nperiod, conf)
-
-        committers <- EvolCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
-        committers <- completePeriod(committers, nperiod, conf)
+        commits <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        lines <-EvolLines(period, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
+        files <- EvolFiles(period, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
+        authors <- EvolAuthors(period, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
+        committers <- EvolCommitters(period, conf$startdate, conf$enddate, conf$identities_db, company=company_name)
         		
         # 2- Merging info
-        agg_data = merge(commits, lines, all = TRUE)
-        agg_data = merge(agg_data, files, all = TRUE)
-        agg_data = merge(agg_data, authors, all = TRUE)
-        agg_data = merge(agg_data, committers, all = TRUE)
-        agg_data <- agg_data[order(agg_data$id), ]
+        evol_data = merge(commits, lines, all = TRUE)
+        evol_data = merge(evol_data, files, all = TRUE)
+        evol_data = merge(evol_data, authors, all = TRUE)
+        evol_data = merge(evol_data, committers, all = TRUE)
+        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+        evol_data <- evol_data[order(evol_data$id), ]
+        evol_data[is.na(evol_data)] <- 0
 		
         # 3- Creating JSON
-        createJSON(agg_data, paste(c(destdir,"/data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
+        createJSON(evol_data, paste(c(destdir,"/data/json/",company_aux,"-scm-evolutionary.json"), collapse=''))
 				
         ########
         #Static data per company
         ########
         # 1- Retrieving information
-        static_commits <- StaticNumCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        static_committers <- StaticNumAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        static_authors <- StaticNumCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        static_files <- StaticNumFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        static_branches <- StaticNumBranches(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        static_repositories <- StaticNumRepositories(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        static_actions <- StaticNumActions(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        static_lines <- StaticNumLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_commits <- StaticNumCommits(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_committers <- StaticNumAuthors(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_authors <- StaticNumCommitters(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_files <- StaticNumFiles(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_branches <- StaticNumBranches(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_repositories <- StaticNumRepositories(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_actions <- StaticNumActions(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        static_lines <- StaticNumLines(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
         avg_commits_period <- StaticAvgCommitsPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
         avg_files_period <- StaticAvgFilesPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        avg_commits_author <- StaticAvgCommitsAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_commits_author <- StaticAvgCommitsAuthor(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
         avg_authors_period <- StaticAvgAuthorPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
         avg_committer_period <- StaticAvgCommitterPeriod(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
-        avg_files_author <- StaticAvgFilesAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
+        avg_files_author <- StaticAvgFilesAuthor(period, conf$startdate, conf$enddate, conf$identities_db, company = company_name)
 
         #2- Merging info
         static_data = merge(static_commits, static_committers)
@@ -291,49 +263,42 @@ if (conf$reports == 'repositories') {
         #EVOLUTIONARY DATA
         ###########
         #1- Retrieving data
-        commits <- EvolCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        commits <- completePeriod(commits, nperiod, conf)
-        
-        lines <- EvolLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        lines <- completePeriod(lines, nperiod, conf)
-
-        files <- EvolFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        files <- completePeriod(files, nperiod, conf)
-
-        authors <- EvolAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        authors <- completePeriod(authors, nperiod, conf)
-
-        committers <- EvolCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        committers <- completePeriod(committers, nperiod, conf)
+        commits <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        lines <- EvolLines(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        files <- EvolFiles(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        authors <- EvolAuthors(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        committers <- EvolCommitters(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
 		
         #2- Merging data
-        agg_data = merge(commits, lines, all = TRUE)
-        agg_data = merge(agg_data, files, all = TRUE)
-        agg_data = merge(agg_data, authors, all = TRUE)	
-        agg_data = merge(agg_data, committers, all = TRUE)
-        agg_data <- agg_data[order(agg_data$id), ]
-		
+        evol_data = merge(commits, lines, all = TRUE)
+        evol_data = merge(evol_data, files, all = TRUE)
+        evol_data = merge(evol_data, authors, all = TRUE)	
+        evol_data = merge(evol_data, committers, all = TRUE)
+        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+        evol_data <- evol_data[order(evol_data$id), ]
+        evol_data[is.na(evol_data)] <- 0
+        
         #3- Creating JSON
-        createJSON(agg_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
+        createJSON(evol_data, paste(c(destdir, "/data/json/",repo_aux,"-scm-evolutionary.json"), collapse=''))
 		
         ##########
         #STATIC DATA
         ##########
         # 1- Retrieving information
-        static_commits <- StaticNumCommits(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        static_committers <- StaticNumAuthors(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        static_authors <- StaticNumCommitters(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        static_files <- StaticNumFiles(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        static_branches <- StaticNumBranches(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        #static_repositories <- StaticNumRepositories(nperiod, conf$startdate, conf$enddate)
-        static_actions <- StaticNumActions(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        static_lines <- StaticNumLines(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_commits <- StaticNumCommits(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_committers <- StaticNumAuthors(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_authors <- StaticNumCommitters(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_files <- StaticNumFiles(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_branches <- StaticNumBranches(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        #static_repositories <- StaticNumRepositories(period, conf$startdate, conf$enddate)
+        static_actions <- StaticNumActions(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        static_lines <- StaticNumLines(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         avg_commits_period <- StaticAvgCommitsPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         avg_files_period <- StaticAvgFilesPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        avg_commits_author <- StaticAvgCommitsAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_commits_author <- StaticAvgCommitsAuthor(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         avg_authors_period <- StaticAvgAuthorPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
         avg_committer_period <- StaticAvgCommitterPeriod(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
-        avg_files_author <- StaticAvgFilesAuthor(nperiod, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
+        avg_files_author <- StaticAvgFilesAuthor(period, conf$startdate, conf$enddate, conf$identities_db, repository=repo_name)
 
         #2- Merging info
         static_data = merge(static_commits, static_committers)
@@ -369,9 +334,16 @@ if (conf$reports == 'countries') {
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- scm_countries_evol(conf$identities_db, country, nperiod, conf$startdate, conf$enddate)        
-        data <- completePeriod(data, nperiod, conf) 
-        createJSON (data, paste(c(destdir, "/data/json/",country,"-scm-evolutionary.json"),collapse=''))
+        country_name = paste("'", country, "'", sep='')
+        
+        evol_data <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, country=country_name)        
+        # data <- scm_countries_evol(conf$identities_db, country, period, conf$startdate, conf$enddate)        
+        # data <- completePeriod(data, period, conf)
+        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+        evol_data <- evol_data[order(evol_data$id), ]
+        evol_data[is.na(evol_data)] <- 0
+        
+        createJSON (evol_data, paste(c(destdir, "/data/json/",country,"-scm-evolutionary.json"),collapse=''))
         
         data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
         createJSON (data, paste(c(destdir, "/data/json/",country,"-scm-static.json"),collapse=''))        
@@ -391,13 +363,13 @@ if (conf$reports == 'companies-countries'){
             ###########
             if (is.na(country)) next
             print (paste(country, "<->", company))
-            data <- scm_companies_countries_evol(conf$identities_db, company, country, nperiod, conf$startdate, conf$enddate)
+            data <- scm_companies_countries_evol(conf$identities_db, company, country, period, conf$startdate, conf$enddate)
             if (length(data) == 0) {
                 data <- data.frame(id=numeric(0),commits=numeric(0),authors=numeric(0))
             } 
 
-            data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
-            data$week <- as.Date(conf$str_startdate) + data$id * nperiod
+            data = completeZeroPeriod(data, period, conf$str_startdate, conf$str_enddate)
+            data$week <- as.Date(conf$str_startdate) + data$id * period
             data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
             data <- data[order(data$id), ]
             createJSON (data, paste(c(destdir,"/data/json/companycountry/",company,".",country,"-scm-evolutionary.json"),collapse=''))
