@@ -154,7 +154,9 @@ createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 
 top_authors_data <- top_authors(conf$startdate, conf$enddate)
 top_authors_data <- list()
-top_authors_data[['authors.']] <- top_authors_wo_affiliations(c("-Bot"), conf$startdate, conf$enddate)
+top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
+top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
+top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
 createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 
 # Top files
@@ -390,11 +392,11 @@ if (conf$reports == 'companies-countries'){
 
 # Demographics
 
-demos <- new ("Demographics","scm", 6)
-demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
-demos$age[demos$age < 0 ] <- 0
-aux <- data.frame(demos["id"], demos["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(destdir,"/scm-demographics-aging.json", sep=''))
+#demos <- new ("Demographics","scm", 6)
+#demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
+#demos$age[demos$age < 0 ] <- 0
+#aux <- data.frame(demos["id"], demos["age"])
+#new <- list()
+#new[['date']] <- conf$str_enddate
+#new[['persons']] <- aux
+#createJSON (new, paste(destdir,"/scm-demographics-aging.json", sep=''))

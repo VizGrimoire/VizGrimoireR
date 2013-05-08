@@ -1014,8 +1014,13 @@ last_activity <- function(days) {
     return (agg_data)
 }
 
-top_people <- function(days, startdate, enddate, rol) {
-    
+top_people <- function(days, startdate, enddate, role, filters="") {
+
+    affiliations = ""
+    for (aff in filters){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+ 
     date_limit = ""
     if (days != 0 ) {
         query <- new("Query",
@@ -1024,19 +1029,25 @@ top_people <- function(days, startdate, enddate, rol) {
         date_limit <- paste(" AND DATEDIFF(@maxdate, date)<",days)
     }
     
-    q <- paste("SELECT u.identifier as ", rol, "s,
+    q <- paste("SELECT u.identifier as ", role, "s,
                  count(distinct(s.id)) as commits
                FROM scmlog s,
                  people_upeople pup,
-                 upeople u
-               WHERE s.", rol, "_id = pup.people_id and
+                 upeople u,
+                 upeople_companies upc,
+                 companies c
+               WHERE s.", role, "_id = pup.people_id and
                  pup.upeople_id = u.id and
+                 u.id = upc.upeople_id and
                  s.date >= ", startdate, " and
-                 s.date < ", enddate," ", date_limit, "
+                 s.date < ", enddate," ", date_limit, " and
+                 s.date >= upc.init and
+                 s.date < upc.end and ", affiliations, "
+                 upc.company_id = c.id
                GROUP BY u.identifier
                ORDER BY commits desc
                LIMIT 10;", sep="")
-
+    
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)	
