@@ -262,12 +262,21 @@ JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'
 
 
 # Demographics
-
-demos <- new ("Demographics","its", 6)
-demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
-demos$age[demos$age < 0 ] <- 0
-aux <- data.frame(demos["id"], demos["age"])
+d <- new ("Demographics","its",6)
+people <- Aging(d)
+people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
+people$age[people$age < 0 ] <- 0
+aux <- data.frame(people["id"], people["age"])
 new <- list()
 new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
-createJSON (new, paste(c(destdir,'/its-demographics-aging.json'), collapse=''))
+createJSON (new, paste(c(destdir, "/its-demographics-aging.json"), collapse=''))
+
+newcomers <- Birth(d)
+newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
+newcomers$age[newcomers$age < 0 ] <- 0
+aux <- data.frame(newcomers["id"], newcomers["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, paste(c(destdir, "/its-demographics-birth.json"), collapse=''))
