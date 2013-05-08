@@ -349,7 +349,7 @@ mlsStaticCompanies <- function(company_name, i_db, startdate, enddate){
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
               COUNT(DISTINCT(pup.upeople_id)) as senders"
     tables = GetTablesCompanies(i_db)
-	filters = paste(GetFiltersCompanies(),' AND
+    filters = paste(GetFiltersCompanies(),' AND
                     c.name = \'',company_name,'\'',sep='')    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
                       startdate, enddate)
@@ -363,7 +363,7 @@ mlsEvolCompanies <- function(company_name, i_db, period, startdate, enddate) {
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders')
     tables = GetTablesCompanies(i_db)
-	filters = paste(GetFiltersCompanies(),' AND
+    filters = paste(GetFiltersCompanies(),' AND
                     c.name = \'',company_name,'\'',sep='')
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)                    
@@ -395,9 +395,9 @@ companyTopSenders <- function(company_name, identities_db, startdate, enddate){
 #
 top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
 
-    clean_people = ""
-    for (person in filter){
-        clean_people <- paste(clean_people, " up.identifier<>'",person,"' and ",sep="")
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " c.name<>'", aff ,"' and ", sep="")
     }
         
     date_limit = ""
@@ -409,18 +409,18 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
     }    
     
     q <- paste("SELECT up.identifier as senders,
-                COUNT(m.message_id) as sent
-                FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up
-    			WHERE ", GetFiltersOwnUniqueIdsMLS(), " AND
+                COUNT(distinct(m.message_id)) as sent
+                FROM ", GetTablesCompanies(identities_db), 
+                     ",",identities_db,".upeople up
+                WHERE ", GetFiltersCompanies(), " AND
                   pup.upeople_id = up.id AND
-                  ", clean_people, "
+                  ", affiliations , "
                   m.first_date >= ",startdate," AND
                   m.first_date < ",enddate,
                   date_limit, "
                 GROUP BY up.identifier
                 ORDER BY sent desc
                 LIMIT 10;", sep="")    
-    
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
