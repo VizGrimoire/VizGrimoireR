@@ -135,6 +135,27 @@ if (conf$reports == 'companies'){
     }
 }
 
+## Quantiles
+## Which quantiles we're interested in
+quantiles_spec = c(.99,.95,.5,.25)
+
+## Replied messages: time ticket was submitted, first replied
+replied <- new ("MLSTimes")
+
+## Yearly quantiles of time to attention (minutes)
+events.toattend <- new ("TimedEvents",
+                        replied$submitted_on, replied$toattend %/% 60)
+quantiles <- QuantilizeYears (events.toattend, quantiles_spec)
+JSON(quantiles, paste(c(destdir,'/mls-quantiles-year-time_to_attention_min.json'), collapse=''))
+
+## Monthly quantiles of time to attention (hours)
+events.toattend.hours <- new ("TimedEvents",
+                              replied$submitted_on, replied$toattend %/% 3600)
+quantiles.month <- QuantilizeMonths (events.toattend.hours, quantiles_spec)
+JSON(quantiles.month, paste(c(destdir,'/mls-quantiles-month-time_to_attention_hour.json'), collapse=''))
+
+
+
 # Demographics
 d <- new ("Demographics","mls",6)
 people <- Aging(d)
