@@ -211,8 +211,6 @@ if (conf$reports == 'countries') {
         country_name = paste("'", country, "'", sep='')
         
         evol_data <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, country=country_name)        
-        # data <- scm_countries_evol(conf$identities_db, country, period, conf$startdate, conf$enddate)        
-        # data <- completePeriod(data, period, conf)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
         evol_data <- evol_data[order(evol_data$id), ]
         evol_data[is.na(evol_data)] <- 0
@@ -224,43 +222,6 @@ if (conf$reports == 'countries') {
     }
 }
 
-#
-# EXPERIMENTAL
-#
-
-if (conf$reports == 'companies-countries'){
-    companies  <- companies_name(conf$startdate, conf$enddate)
-    companies <- companies$name
-    for (company in companies){
-        countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
-	countries <- countries$name
-	for (country in countries) {
-            company_name = paste("'", company, "'", sep='')
-            company_aux = paste("", company, "", sep='')
-
-            ###########
-            if (is.na(country)) next
-            print (paste(country, "<->", company))
-            data <- scm_companies_countries_evol(conf$identities_db, company, country, period, conf$startdate, conf$enddate)
-            if (length(data) == 0) {
-                data <- data.frame(id=numeric(0),commits=numeric(0),authors=numeric(0))
-            } 
-
-            data = completeZeroPeriod(data, period, conf$str_startdate, conf$str_enddate)
-            data$week <- as.Date(conf$str_startdate) + data$id * period
-            data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
-            data <- data[order(data$id), ]
-            createJSON (data, paste(destdir,"/companycountry/",company,".",country,"-scm-evolutionary.json",sep=''))
-            
-            data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
-            createJSON (data, paste(destdir,"/companycountry/",company,".",country,"-scm-static.json",sep=''))
-
-            #################
-            
-            
-        }
-    }
-}
 
 # Demographics
 

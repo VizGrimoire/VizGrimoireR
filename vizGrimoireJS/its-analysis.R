@@ -139,9 +139,9 @@ createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 # Top closers
 top_closers_data <- list()
-top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db)
-top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db)
-top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db)
+top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 
 # top_closers_data <- its_top_closers_wo_affiliations(c("-Bot"), startdate, enddate, identites_db)
 createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
