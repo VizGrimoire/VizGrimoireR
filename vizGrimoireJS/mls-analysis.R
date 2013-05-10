@@ -157,9 +157,9 @@ createJSON (new, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
 
 # Tops
 top_senders_data <- list()
-top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identities_db,c("NULL"))
-top_senders_data[['senders.last year']]<-top_senders(365, conf$startdate, conf$enddate,identities_db,c("NULL"))
-top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$enddate,identities_db,c("NULL"))
+top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identities_db,c("-Bot"))
+top_senders_data[['senders.last year']]<-top_senders(365, conf$startdate, conf$enddate,identities_db,c("-Bot"))
+top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$enddate,identities_db,c("-Bot"))
 
 createJSON (top_senders_data, paste(destdir,"/mls-top.json",sep=''))
 
