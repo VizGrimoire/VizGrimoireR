@@ -258,8 +258,14 @@ GetStaticCountriesITS  <- function(startdate, enddate, identities_db) {
 
 # Top
 ## TODO: use last activity subquery
-GetTopClosers <- function(days = 0, startdate, enddate, identites_db) {
+GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
     
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
+    }
+
+
     date_limit = ""
     if (days != 0 ) {
         query <- new("Query",
@@ -268,18 +274,21 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db) {
         date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
     }
     q <- paste("SELECT u.identifier as closers,
-                  count(c.id) as closed
-                FROM changes c,
-                  people_upeople pup,
-                  ",identities_db,".upeople u
-                WHERE c.changed_by = pup.people_id and
-                  pup.upeople_id = u.id and
-                  c.changed_on >= ", startdate, " and
-                  c.changed_on < ", enddate, " and ",
-			      closed_condition, " ", date_limit, "
+                       count(distinct(c.id)) as closed
+                FROM ",GetTablesCompaniesITS(identities_db), ", ",
+                     identities_db,".companies com,
+                     ",identities_db,".upeople u
+                WHERE ",GetFiltersCompaniesITS() ," and
+                      ", affiliations, "
+                      c.changed_by = pup.people_id and
+                      pup.upeople_id = u.id and
+                      c.changed_on >= ", startdate, " and
+                      c.changed_on < ", enddate, " and ",
+                      closed_condition, " ", date_limit, "
                 GROUP BY u.identifier
                 ORDER BY closed desc
                 LIMIT 10;", sep="")
+    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

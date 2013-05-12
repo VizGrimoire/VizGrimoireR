@@ -27,6 +27,66 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 
 
+##########
+# Meta-functions to automatically call metrics functions and merge them
+##########
+
+GetSCMEvolutionaryData <- function(period, startdate, enddate, i_db=NA, repository_name=NA, company_name=NA, country_name=NA){
+
+    # 1- Retrieving information
+    commits <- EvolCommits(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    authors <- EvolAuthors(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    committers <- EvolCommitters(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    files <- EvolFiles(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    lines <- EvolLines(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    branches <- EvolBranches(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    repositories <- EvolRepositories(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+
+    # 2- Merging information
+    evol_data = merge(commits, committers, all = TRUE)
+    evol_data = merge(evol_data, authors, all = TRUE)
+    evol_data = merge(evol_data, files, all = TRUE)
+    evol_data = merge(evol_data, lines, all = TRUE)
+    evol_data = merge(evol_data, branches, all = TRUE)
+    evol_data = merge(evol_data, repositories, all = TRUE)
+
+    return (evol_data)
+}
+
+GetSCMStaticData <- function(period, startdate, enddate, i_db=NA, repository_name=NA, company_name=NA, country_name=NA){
+
+    # 1- Retrieving information
+    static_commits <- StaticNumCommits(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    static_committers <- StaticNumAuthors(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    static_authors <- StaticNumCommitters(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    static_files <- StaticNumFiles(period, conf$startdate, enddate, i_db, repository_name, company_name, country_name)
+    static_branches <- StaticNumBranches(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    static_repositories <- StaticNumRepositories(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    static_actions <- StaticNumActions(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    static_lines <- StaticNumLines(period, conf$startdate, enddate, i_db, repository_name, company_name, country_name)
+    avg_commits_period <- StaticAvgCommitsPeriod(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    avg_files_period <- StaticAvgFilesPeriod(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    avg_commits_author <- StaticAvgCommitsAuthor(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    avg_authors_period <- StaticAvgAuthorPeriod(period, startdate, conf$enddate, i_db, repository_name, company_name, country_name)
+    avg_committer_period <- StaticAvgCommitterPeriod(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+    avg_files_author <- StaticAvgFilesAuthor(period, startdate, enddate, i_db, repository_name, company_name, country_name)
+
+    # 2- Merging information
+    static_data = merge(static_commits, static_committers)
+    static_data = merge(static_data, static_authors)
+    static_data = merge(static_data, static_files)
+    static_data = merge(static_data, static_branches)
+    static_data = merge(static_data, static_repositories)
+    static_data = merge(static_data, static_actions)
+    static_data = merge(static_data, static_lines)
+    static_data = merge(static_data, avg_commits_period)
+    static_data = merge(static_data, avg_files_period)
+    static_data = merge(static_data, avg_commits_author)
+    static_data = merge(static_data, avg_files_author)
+
+    return (static_data)
+}
+
 
 ##########
 # Specific FROM and WHERE clauses per type of report
@@ -1014,8 +1074,13 @@ last_activity <- function(days) {
     return (agg_data)
 }
 
-top_people <- function(days, startdate, enddate, rol) {
-    
+top_people <- function(days, startdate, enddate, role, filters="") {
+
+    affiliations = ""
+    for (aff in filters){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+ 
     date_limit = ""
     if (days != 0 ) {
         query <- new("Query",
@@ -1024,19 +1089,25 @@ top_people <- function(days, startdate, enddate, rol) {
         date_limit <- paste(" AND DATEDIFF(@maxdate, date)<",days)
     }
     
-    q <- paste("SELECT u.identifier as ", rol, "s,
+    q <- paste("SELECT u.identifier as ", role, "s,
                  count(distinct(s.id)) as commits
                FROM scmlog s,
                  people_upeople pup,
-                 upeople u
-               WHERE s.", rol, "_id = pup.people_id and
+                 upeople u,
+                 upeople_companies upc,
+                 companies c
+               WHERE s.", role, "_id = pup.people_id and
                  pup.upeople_id = u.id and
+                 u.id = upc.upeople_id and
                  s.date >= ", startdate, " and
-                 s.date < ", enddate," ", date_limit, "
+                 s.date < ", enddate," ", date_limit, " and
+                 s.date >= upc.init and
+                 s.date < upc.end and ", affiliations, "
+                 upc.company_id = c.id
                GROUP BY u.identifier
                ORDER BY commits desc
                LIMIT 10;", sep="")
-
+    
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)	
