@@ -74,6 +74,7 @@ setMethod(
     ## Column names will be quantiles (as strings), row names will be
     ## years (as strings)
     years <- firstYear:lastYear
+    print(years) 
     quantiles <- matrix(nrow=length(years),ncol=length(qspec))
     colnames (quantiles) <- qspec
     rownames (quantiles) <- years
@@ -139,7 +140,8 @@ setMethod(
     }
     ## Now, build a data frame out of the matrix, with
     ## one column per quantile, plus one 'year' column, and one row per year
-    quantilesdf <- as.data.frame(quantiles,row.names=FALSE)
+    # quantilesdf <- as.data.frame(quantiles,row.names=FALSE)
+    quantilesdf <- as.data.frame(quantiles)
     quantilesdf$period <- periods
     ## Creat a TimeSeriesMonths object, and return it
     return (new ("TimeSeriesMonths",quantilesdf,qspec))
