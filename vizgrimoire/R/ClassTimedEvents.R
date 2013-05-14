@@ -86,7 +86,8 @@ setMethod(
     }
     ## Now, build a data frame out of the matrix, with
     ## one column per quantile, plus one 'year' column, and one row per year
-    quantilesdf <- as.data.frame(quantiles,row.names=FALSE)
+    quantilesdf <- as.data.frame(quantiles)
+    # quantilesdf <- as.data.frame(quantiles,row.names=FALSE)
     quantilesdf$year <- years
     ## Creat a TimeSeriesYears object, and return it
     return (new ("TimeSeriesYears",quantilesdf,qspec))
