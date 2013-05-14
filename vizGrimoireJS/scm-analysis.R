@@ -58,6 +58,12 @@ destdir <- conf$destination
 
 if (conf$reports == 'people') {
     print ('Starting people analysis')
+    people  <- GetSCMPeople(conf$startdate, conf$enddate)
+    createJSON(people, paste(destdir,"/scm-people.json", sep=''))
+	
+    for (developer in people) {
+        print (paste("New developer",developer))
+    }        
     stop()
 }
 

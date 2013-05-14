@@ -134,6 +134,17 @@ GetSQLCountriesWhere <- function(country, role){
                   and c.name =", country, sep=""))
 }
 
+GetSQLPeopleFrom <- function(identities_db){
+    #tables necessaries for people
+    return (paste(" , ",identities_db,".people_upeople pup", sep=""))
+}
+
+GetSQLPeopleWhere <- function(identity, role){
+    #fields necessaries to match info among tables
+    return (paste("and s.",role,"_id = pup.people_id
+                   and pup.upeople_id = ", identity, sep=""))
+}
+
 ##########
 #Generic functions to obtain FROM and WHERE clauses per type of report
 ##########
@@ -740,6 +751,25 @@ StaticURL <- function() {
 	data <- run(query)
 	return (data)    
 }
+
+#
+# People
+#
+
+GetSCMPeople <- function(startdate, enddate) {
+    # TODO: use metaqueries
+    q <- paste("SELECT DISTINCT(up.id) FROM 
+            upeople up, people_upeople pup, scmlog s 
+          WHERE up.id=pup.upeople_id AND s.author_id=pup.people_id
+          AND s.date<",enddate,"AND s.date>=",startdate)
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)        
+}
+
+# 
+# Legacy and non legacy code - Cleanup
+#
 
 evol_commits <- function(period, startdate, enddate){
       #Commits evolution
