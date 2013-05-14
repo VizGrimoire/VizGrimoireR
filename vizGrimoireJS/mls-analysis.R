@@ -141,10 +141,12 @@ quantiles_spec = c(.99,.95,.5,.25)
 
 ## Replied messages: time ticket was submitted, first replied
 replied <- new ("MLSTimes")
+# print(replied)
 
 ## Yearly quantiles of time to attention (minutes)
 events.toattend <- new ("TimedEvents",
                         replied$submitted_on, replied$toattend %/% 60)
+# print(events.toattend)
 quantiles <- QuantilizeYears (events.toattend, quantiles_spec)
 JSON(quantiles, paste(c(destdir,'/mls-quantiles-year-time_to_attention_min.json'), collapse=''))
 

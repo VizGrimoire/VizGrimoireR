@@ -391,6 +391,26 @@ if (conf$reports == 'companies-countries'){
 }
 
 # Demographics
+d <- new ("Demographics","scm",6)
+people <- Aging(d)
+people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
+people$age[people$age < 0 ] <- 0
+aux <- data.frame(people["id"], people["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, paste(c(destdir, "/scm-demographics-aging.json"), collapse=''))
+
+newcomers <- Birth(d)
+newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
+newcomers$age[newcomers$age < 0 ] <- 0
+aux <- data.frame(newcomers["id"], newcomers["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, paste(c(destdir, "/scm-demographics-birth.json"), collapse=''))
+
+# Demographics
 
 #demos <- new ("Demographics","scm", 6)
 #demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
