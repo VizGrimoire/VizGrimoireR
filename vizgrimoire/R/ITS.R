@@ -632,6 +632,73 @@ GetCountriesStaticITS <- function(identities_db, country, startdate, enddate) {
 }
 
 #
+# People
+# 
+
+
+GetTablesPeopleSCM <- function(identities_db) {
+    #tables necessaries for people
+    tables = GetTablesOwnUniqueIdsITS()
+    tables = paste (tables, " , ",identities_db,".upeople up", sep="")
+    return (tables)
+}
+
+GetFiltersOwnUniqueIdsSCM <- function () {
+    return ('pup.people_id = s.author_id') 
+}
+
+GetFiltersPeopleSCM <- function () {
+    filters = GetFiltersOwnUniqueIdsSCM()
+    filters = paste(filters,"AND up.id=pup.upeople_id")
+}
+
+# TODO: It is the same than SCM because unique identites
+GetPeopleListITS <- function(identities_db, startdate, enddate) {
+    fields = "DISTINCT(up.id) as id"
+    tables = GetTablesPeopleITS(identities_db)
+    filters = GetFiltersPeopleITS()
+    q = GetSQLGlobal('s.date',fields,tables, filters, startdate, enddate)        
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)        
+}
+
+GetPeopleQueryITS <- function(identities_db, developer_id, period, startdate, enddate, evol) {    
+    fields = "COUNT(c.id) AS closed"
+    tables = GetTablesPeopleITS(identities_db)
+    filters = paste(GetFiltersPeopleITS(), "AND up.id = ", developer_id)
+    
+    if (evol) {
+        q = GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+                            startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(changed_on),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(changed_on),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('changed_on', fields, tables, filters, 
+                            startdate, enddate)
+    }
+    return (q)
+}
+
+
+GetPeopleEvolITS <- function(identities_db, developer_id, period, startdate, enddate) {
+    q <- GetPeopleQueryITS(identities_db, developer_id, period, startdate, enddate, TRUE)    
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
+
+GetPeopleStaticITS <- function(identities_db, developer_id, startdate, enddate) {
+    q <- GetPeopleQueryITS(identities_db, developer_id, period, startdate, enddate, FALSE)      
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
+    
+
+
+#
 # EXPERIMENTAL ZONE
 #
 

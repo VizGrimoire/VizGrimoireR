@@ -55,29 +55,6 @@ if (conf$granularity == 'years') {
 # destination directory
 destdir <- conf$destination
 
-
-if (conf$reports == 'people') {
-    print ('Starting people analysis')
-    people  <- GetPeopleListSCM(conf$identities_db,conf$startdate, conf$enddate)
-    createJSON(people, paste(destdir,"/scm-people.json", sep=''))
-	
-    for (upeople_id in people$id) {
-        evol_data <- GetEvolPeopleSCM(upeople_id, period, conf$identities_db, 
-                        conf$startdate, conf$enddate)
-        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
-        evol_data[is.na(evol_data)] <- 0
-        createJSON (evol_data, paste(destdir,"/people-",
-                        upeople_id,"-scm-evolutionary.json", sep=''))
-        static_data <- GetStaticPeopleSCM(upeople_id, conf$identities_db, 
-                conf$startdate, conf$enddate)
-        createJSON (static_data, paste(destdir,"/people-",
-                        upeople_id,"-scm-static.json", sep=''))
-        
-    }        
-}
-
-stop()
-
 #########
 #EVOLUTIONARY DATA
 #########
@@ -243,6 +220,25 @@ if (conf$reports == 'countries') {
         data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
         createJSON (data, paste(destdir, "/",country,"-scm-static.json",sep=''))        
     }
+}
+
+if (conf$reports == 'people') {
+    print ('Starting people analysis')
+    people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
+    createJSON(people, paste(destdir,"/scm-people.json", sep=''))
+	
+    for (upeople_id in people$id) {
+        evol_data <- GetEvolPeopleSCM(upeople_id, period, 
+                conf$startdate, conf$enddate)
+        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+        evol_data[is.na(evol_data)] <- 0
+        createJSON (evol_data, paste(destdir,"/people-",
+                        upeople_id,"-scm-evolutionary.json", sep=''))
+        static_data <- GetStaticPeopleSCM(upeople_id, 
+                conf$startdate, conf$enddate)
+        createJSON (static_data, paste(destdir,"/people-",
+                        upeople_id,"-scm-static.json", sep=''))        
+    }        
 }
 
 # Demographics
