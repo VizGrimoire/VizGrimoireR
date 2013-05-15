@@ -653,11 +653,11 @@ GetFiltersPeopleSCM <- function () {
 }
 
 # TODO: It is the same than SCM because unique identites
-GetPeopleListITS <- function(identities_db, startdate, enddate) {
-    fields = "DISTINCT(up.id) as id"
-    tables = GetTablesPeopleITS(identities_db)
-    filters = GetFiltersPeopleITS()
-    q = GetSQLGlobal('s.date',fields,tables, filters, startdate, enddate)        
+GetPeopleListITS <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id"
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = GetFiltersOwnUniqueIdsITS()
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)        
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)        
@@ -665,8 +665,8 @@ GetPeopleListITS <- function(identities_db, startdate, enddate) {
 
 GetPeopleQueryITS <- function(identities_db, developer_id, period, startdate, enddate, evol) {    
     fields = "COUNT(c.id) AS closed"
-    tables = GetTablesPeopleITS(identities_db)
-    filters = paste(GetFiltersPeopleITS(), "AND up.id = ", developer_id)
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(), "AND pup.upeople_id = ", developer_id)
     
     if (evol) {
         q = GetSQLPeriod(period,'changed_on', fields, tables, filters, 
@@ -682,14 +682,14 @@ GetPeopleQueryITS <- function(identities_db, developer_id, period, startdate, en
 }
 
 
-GetPeopleEvolITS <- function(identities_db, developer_id, period, startdate, enddate) {
+GetPeopleEvolITS <- function(developer_id, period, startdate, enddate) {
     q <- GetPeopleQueryITS(identities_db, developer_id, period, startdate, enddate, TRUE)    
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
 }
 
-GetPeopleStaticITS <- function(identities_db, developer_id, startdate, enddate) {
+GetPeopleStaticITS <- function(developer_id, startdate, enddate) {
     q <- GetPeopleQueryITS(identities_db, developer_id, period, startdate, enddate, FALSE)      
     query <- new("Query", sql = q)
     data <- run(query)	

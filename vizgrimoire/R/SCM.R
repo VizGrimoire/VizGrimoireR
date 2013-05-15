@@ -772,6 +772,9 @@ GetPeopleQuerySCM <- function(developer_id, period, startdate, enddate, evol) {
         q = GetSQLPeriod(period,'s.date', fields, tables, filters, 
                 startdate, enddate)
     } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(s.date),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(s.date),'%Y-%m-%d') as last_date")        
         q = GetSQLGlobal('s.date', fields, tables, filters, 
                 startdate, enddate)
     }

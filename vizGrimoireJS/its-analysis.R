@@ -229,8 +229,24 @@ if (conf$reports == 'countries') {
         createJSON (data, paste(c(destdir,"/",country,"-its-static.json",sep=''), collapse=''))
     }    
 }
+
+# People
+if (conf$reports == 'people') {
+    people  <- GetPeopleListITS(conf$startdate, conf$enddate)
+	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
     
-# Other backends not yet supported
+    for (upeople_id in people$id) {
+        evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        createJSON (evol, paste(c(destdir,"/people-",upeople_id,"-its-evolutionary.json",sep=''), collapse=''))
+        
+        data <- GetPeopleStaticITS(upeople_id, conf$startdate, conf$enddate)
+        createJSON (data, paste(c(destdir,"/people-",upeople_id,"-its-static.json",sep=''), collapse=''))
+    }    
+}
+    
+# Time to Close: Other backends not yet supported
 if (conf$backend == 'bugzilla' || 
     conf$backend == 'allura' || 
     conf$backend == 'jira' ||
