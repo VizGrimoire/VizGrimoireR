@@ -58,14 +58,20 @@ destdir <- conf$destination
 
 if (conf$reports == 'people') {
     print ('Starting people analysis')
-    people  <- GetSCMPeople(conf$startdate, conf$enddate)
+    people  <- GetPeopleSCM(conf$identities_db,conf$startdate, conf$enddate)
     createJSON(people, paste(destdir,"/scm-people.json", sep=''))
 	
-    for (developer in people) {
-        print (paste("New developer",developer))
+    for (upeople_id in people$id) {
+        evol_data <- GetEvolPeopleSCM(upeople_id, conf$identities_db, 
+                        conf$startdate, conf$enddate)
+        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+        evol_data[is.na(evol_data)] <- 0
+        createJSON (evol_data, paste(destdir,"/people-",
+                        upeople_id,"-scm-evolutionary.json", sep=''))        
     }        
-    stop()
 }
+
+stop()
 
 #########
 #EVOLUTIONARY DATA

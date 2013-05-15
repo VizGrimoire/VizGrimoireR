@@ -34,7 +34,6 @@ GetTablesOwnUniqueIdsITS <- function() {
     return ('changes c, people_upeople pup')
 }
 
-# Using senders only here!
 GetFiltersOwnUniqueIdsITS <- function () {
     return ('pup.people_id = c.changed_by') 
 }
