@@ -135,6 +135,21 @@ if (conf$reports == 'companies'){
     }
 }
 
+if (conf$reports == 'people'){
+    people = GetPeopleListMLS(startdate, enddate)
+    createJSON(people, paste(destdir,"/mls-people.json",sep=''))
+       
+    for (upeople_id in people$id){
+        evol = GetPeopleEvolMLS(upeople_id, period, startdate, enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        createJSON(evol, paste(destdir,"/people-",upeople_id,"-mls-evolutionary.json", sep=''))
+
+        static <- GetPeopleStaticMLS(upeople_id, startdate, enddate)
+        createJSON(static, paste(destdir,"/people-",upeople_id,"-mls-static.json", sep=''))
+    }
+}
+
 ## Quantiles
 ## Which quantiles we're interested in
 quantiles_spec = c(.99,.95,.5,.25)

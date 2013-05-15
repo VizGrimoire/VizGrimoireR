@@ -635,23 +635,6 @@ GetCountriesStaticITS <- function(identities_db, country, startdate, enddate) {
 # People
 # 
 
-
-GetTablesPeopleSCM <- function(identities_db) {
-    #tables necessaries for people
-    tables = GetTablesOwnUniqueIdsITS()
-    tables = paste (tables, " , ",identities_db,".upeople up", sep="")
-    return (tables)
-}
-
-GetFiltersOwnUniqueIdsSCM <- function () {
-    return ('pup.people_id = s.author_id') 
-}
-
-GetFiltersPeopleSCM <- function () {
-    filters = GetFiltersOwnUniqueIdsSCM()
-    filters = paste(filters,"AND up.id=pup.upeople_id")
-}
-
 # TODO: It is the same than SCM because unique identites
 GetPeopleListITS <- function(startdate, enddate) {
     fields = "DISTINCT(pup.upeople_id) as id"
@@ -663,7 +646,7 @@ GetPeopleListITS <- function(startdate, enddate) {
 	return (data)        
 }
 
-GetPeopleQueryITS <- function(identities_db, developer_id, period, startdate, enddate, evol) {    
+GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol) {    
     fields = "COUNT(c.id) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
     filters = paste(GetFiltersOwnUniqueIdsITS(), "AND pup.upeople_id = ", developer_id)
@@ -683,14 +666,14 @@ GetPeopleQueryITS <- function(identities_db, developer_id, period, startdate, en
 
 
 GetPeopleEvolITS <- function(developer_id, period, startdate, enddate) {
-    q <- GetPeopleQueryITS(identities_db, developer_id, period, startdate, enddate, TRUE)    
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, TRUE)    
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
 }
 
 GetPeopleStaticITS <- function(developer_id, startdate, enddate) {
-    q <- GetPeopleQueryITS(identities_db, developer_id, period, startdate, enddate, FALSE)      
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, FALSE)      
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)

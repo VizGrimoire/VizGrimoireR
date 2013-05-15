@@ -389,6 +389,54 @@ companyTopSenders <- function(company_name, identities_db, startdate, enddate){
     return (data)
 }
 
+#
+# People
+#
+
+# TODO: It is the same than SCM because unique identites
+GetPeopleListMLS <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id"
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = GetFiltersOwnUniqueIdsMLS()
+    q = GetSQLGlobal('first_date',fields,tables, filters, startdate, enddate)        
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)        
+}
+
+GetPeopleQueryMLS <- function(developer_id, period, startdate, enddate, evol) {    
+    fields = "COUNT(m.message_ID) AS sent"
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = paste(GetFiltersOwnUniqueIdsMLS(), "AND pup.upeople_id = ", developer_id)
+    
+    if (evol) {
+        q = GetSQLPeriod(period,'first_date', fields, tables, filters, 
+                startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(first_date),'%Y-%m-%d') as first_date,
+                DATE_FORMAT (max(first_date),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('first_date', fields, tables, filters, 
+                startdate, enddate)
+    }
+    return (q)
+}
+
+
+GetPeopleEvolMLS <- function(developer_id, period, startdate, enddate) {
+    q <- GetPeopleQueryMLS(developer_id, period, startdate, enddate, TRUE)    
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
+
+GetPeopleStaticMLS <- function(developer_id, startdate, enddate) {
+    q <- GetPeopleQueryMLS(developer_id, period, startdate, enddate, FALSE)      
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
+}
+
 
 # 
 # TOPS
