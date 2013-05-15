@@ -456,7 +456,7 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
         date_limit <- paste(" AND DATEDIFF(@maxdate,first_date)<",days)
     }    
     
-    q <- paste("SELECT up.identifier as senders,
+    q <- paste("SELECT up.id as id, up.identifier as senders,
                 COUNT(distinct(m.message_id)) as sent
                 FROM ", GetTablesCompanies(identities_db), 
                      ",",identities_db,".upeople up
