@@ -765,7 +765,7 @@ GetFiltersPeopleSCM <- function () {
     filters = paste(filters,"AND up.id=pup.upeople_id")
 }
 
-GetPeopleSCM <- function(identities_db, startdate, enddate) {
+GetPeopleListSCM <- function(identities_db, startdate, enddate) {
     fields = "DISTINCT(up.id) as id"
     tables = GetTablesPeopleSCM(identities_db)
     filters = GetFiltersPeopleSCM()
@@ -775,19 +775,38 @@ GetPeopleSCM <- function(identities_db, startdate, enddate) {
 	return (data)        
 }
 
-GetEvolPeopleSCM <- function(developer_id,identities_db,startdate, enddate) {
+GetPeopleQuerySCM <- function(developer_id, period, identities_db, 
+        startdate, enddate, evol) {
     fields ='COUNT(s.id) AS commits'
     tables = GetTablesPeopleSCM(identities_db)
     filters = GetFiltersPeopleSCM()
     filters = paste(filters,"AND up.id=",developer_id)
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-            startdate, enddate)
+    if (evol) {
+        q = GetSQLPeriod(period,'s.date', fields, tables, filters, 
+                startdate, enddate)
+    } else {
+        q = GetSQLGlobal('s.date', fields, tables, filters, 
+                startdate, enddate)
+    }
+    return (q)            
+}
+
+GetEvolPeopleSCM <- function(developer_id, period, identities_db, 
+        startdate, enddate) {
+    q <- GetPeopleQuerySCM (developer_id, period, identities_db, 
+                    startdate, enddate, TRUE)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
 }
 
-GetStaticPeopleSCM <- function(startdate, enddate) {
+GetStaticPeopleSCM <- function(developer_id, identities_db, 
+        startdate, enddate) {
+    q <- GetPeopleQuerySCM (developer_id, NA, identities_db, 
+            startdate, enddate, FALSE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)        
 }
 
 
