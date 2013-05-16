@@ -68,7 +68,7 @@ GetFiltersCompanies <- function() {
 
 # GLOBAL
 
-mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports="") {    
+GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, reports="") {    
     
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders,
@@ -106,7 +106,7 @@ mlsEvol <- function (rfield, period, startdate, enddate, identities_db, reports=
     return (mls)
 }
 
-mlsStatic <- function (rfield, startdate, enddate, reports="") {
+GetStaticMLS <- function (rfield, startdate, enddate, reports="") {
     
     fields = "COUNT(*) as sent,
               DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
@@ -184,7 +184,7 @@ reposNames <- function (rfield, startdate, enddate) {
     return (names)    
 }
 
-mlsEvolRepos <- function (rfield, repo, period, startdate, enddate) {    
+GetEvolReposMLS <- function (rfield, repo, period, startdate, enddate) {    
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders')
     tables = GetTablesOwnUniqueIdsMLS()
@@ -199,7 +199,7 @@ mlsEvolRepos <- function (rfield, repo, period, startdate, enddate) {
     return(sent.senders)	
 }
 
-mlsStaticRepos <- function (rfield, repo, startdate, enddate) {
+GetStaticReposMLS <- function (rfield, repo, startdate, enddate) {
     fields = "COUNT(m.message_ID) as sent,
               DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
@@ -261,7 +261,7 @@ countriesNames <- function (identities_db, startdate, enddate, filter=c()) {
     return(data$name)
 }
     
-mlsStaticCountries <- function (country, identities_db, startdate, enddate) {
+GetStaticCountriesMLS <- function (country, identities_db, startdate, enddate) {
     
     fields = "COUNT(m.message_ID) as sent,
             DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
@@ -279,7 +279,7 @@ mlsStaticCountries <- function (country, identities_db, startdate, enddate) {
     return (sent.first.last.senders)
 }
 
-mlsEvolCountries <- function (country, identities_db, period, startdate, enddate) {           		
+GetEvolCountriesMLS <- function (country, identities_db, period, startdate, enddate) {           		
 
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders')
@@ -342,7 +342,7 @@ companiesNames <- function (i_db, startdate, enddate, filter=c()) {
 }
 
 
-mlsStaticCompanies <- function(company_name, i_db, startdate, enddate){
+GetStaticCompaniesMLS <- function(company_name, i_db, startdate, enddate){
     
     fields = "COUNT(m.message_ID) as sent,
               DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
@@ -358,7 +358,7 @@ mlsStaticCompanies <- function(company_name, i_db, startdate, enddate){
     return (sent.first.last.senders)    
 }
 
-mlsEvolCompanies <- function(company_name, i_db, period, startdate, enddate) {
+GetEvolCompaniesMLS <- function(company_name, i_db, period, startdate, enddate) {
     
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders')
@@ -394,7 +394,7 @@ companyTopSenders <- function(company_name, identities_db, startdate, enddate){
 #
 
 # TODO: It is the same than SCM because unique identites
-GetPeopleListMLS <- function(startdate, enddate) {
+GetListPeopleMLS <- function(startdate, enddate) {
     fields = "DISTINCT(pup.upeople_id) as id"
     tables = GetTablesOwnUniqueIdsMLS()
     filters = GetFiltersOwnUniqueIdsMLS()
@@ -404,7 +404,7 @@ GetPeopleListMLS <- function(startdate, enddate) {
 	return (data)        
 }
 
-GetPeopleQueryMLS <- function(developer_id, period, startdate, enddate, evol) {    
+GetQueryPeopleMLS <- function(developer_id, period, startdate, enddate, evol) {    
     fields = "COUNT(m.message_ID) AS sent"
     tables = GetTablesOwnUniqueIdsMLS()
     filters = paste(GetFiltersOwnUniqueIdsMLS(), "AND pup.upeople_id = ", developer_id)
@@ -423,15 +423,15 @@ GetPeopleQueryMLS <- function(developer_id, period, startdate, enddate, evol) {
 }
 
 
-GetPeopleEvolMLS <- function(developer_id, period, startdate, enddate) {
-    q <- GetPeopleQueryMLS(developer_id, period, startdate, enddate, TRUE)    
+GetEvolPeopleMLS <- function(developer_id, period, startdate, enddate) {
+    q <- GetQueryPeopleMLS(developer_id, period, startdate, enddate, TRUE)    
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
 }
 
-GetPeopleStaticMLS <- function(developer_id, startdate, enddate) {
-    q <- GetPeopleQueryMLS(developer_id, period, startdate, enddate, FALSE)      
+GetStaticPeopleMLS <- function(developer_id, startdate, enddate) {
+    q <- GetQueryPeopleMLS(developer_id, period, startdate, enddate, FALSE)      
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
