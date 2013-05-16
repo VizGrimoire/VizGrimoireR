@@ -40,6 +40,9 @@ if (conf$granularity == 'years') { period = 'year'
 
 identities_db = conf$identities_db
 
+# multireport
+reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
+
 # dates
 startdate <- conf$startdate
 enddate <- conf$enddate
@@ -50,11 +53,11 @@ enddate <- conf$enddate
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 rfield = reposField()
 
-data <- GetEvolMLS(rfield, period, startdate, enddate, identities_db, conf$reports)
+data <- GetEvolMLS(rfield, period, startdate, enddate, identities_db, reports)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
-static_data <- GetStaticMLS(rfield, startdate, enddate, conf$reports)
+static_data <- GetStaticMLS(rfield, startdate, enddate, reports)
 latest_activity7 <- lastActivity(7)
 latest_activity30 <- lastActivity(30)
 latest_activity90 <- lastActivity(90)
@@ -66,7 +69,7 @@ static_data = merge(static_data, latest_activity365)
 createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
 
-if (conf$reports == 'repositories') {
+if ('repositories' %in% reports) {
     repos <- reposNames(rfield, startdate, enddate)
     createJSON (repos, "data/json/mls-lists.json")
     repos <- repos$mailing_list
@@ -97,7 +100,7 @@ if (conf$reports == 'repositories') {
     }
 }
 
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     countries <- countriesNames(identities_db, startdate, enddate) 
     createJSON (countries, paste(destdir, "/mls-countries.json",sep=''))
     
@@ -116,7 +119,7 @@ if (conf$reports == 'countries') {
     }
 }
 
-if (conf$reports == 'companies'){    
+if ('companies' %in% reports){    
     companies = companiesNames(identities_db, startdate, enddate)
     createJSON(companies, paste(destdir,"/mls-companies.json",sep=''))
    
@@ -135,7 +138,7 @@ if (conf$reports == 'companies'){
     }
 }
 
-if (conf$reports == 'people'){
+if ('people' %in% reports){
     people = GetListPeopleMLS(startdate, enddate)
     createJSON(people, paste(destdir,"/mls-people.json",sep=''))
        

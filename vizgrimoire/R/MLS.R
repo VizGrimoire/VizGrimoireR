@@ -68,7 +68,7 @@ GetFiltersCompanies <- function() {
 
 # GLOBAL
 
-GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, reports="") {    
+GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, reports=c('')) {    
     
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders,
@@ -81,7 +81,7 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     query <- new ("Query", sql = q)
     sent.senders.repos <- run(query)
         
-    if (reports == "countries") {
+    if ("countries" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
         tables = GetTablesCountries(identities_db)   
         filters = GetFiltersCountries()         
@@ -90,7 +90,7 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
         query <- new ("Query", sql = q)
         countries <- run(query)        
     }
-    if (reports == "companies") {
+    if ("companies" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS companies' 
         tables = GetTablesCompanies(identities_db)
         filters = GetFiltersCompanies()         
@@ -101,12 +101,12 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     }  
       
     mls <- sent.senders.repos
-    if (reports == "countries") mls <- merge (mls, countries, all = TRUE)
-    if (reports == "companies") mls <- merge (mls, companies, all = TRUE)
+    if ("countries" %in% reports) mls <- merge (mls, countries, all = TRUE)
+    if ("companies" %in% reports) mls <- merge (mls, companies, all = TRUE)
     return (mls)
 }
 
-GetStaticMLS <- function (rfield, startdate, enddate, reports="") {
+GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     
     fields = "COUNT(*) as sent,
               DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
@@ -124,7 +124,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports="") {
     query <- new ("Query", sql = q)
     repo_info <- run(query)
     
-    if (reports == "countries") {
+    if ("countries"  %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
         tables = GetTablesCountries(identities_db)   
         filters = GetFiltersCountries()         
@@ -133,7 +133,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports="") {
         query <- new ("Query", sql = q)
         countries <- run(query)        
     }
-    if (reports == "companies") {
+    if ("companies" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS companies' 
         tables = GetTablesCompanies(identities_db)   
         filters = GetFiltersCompanies()         
@@ -144,10 +144,8 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports="") {
     }      
 	
 	agg_data = merge(sent.senders.first.last.repos, repo_info)
-    if (reports == "country") 
-        agg_data = merge(agg_data, countries)
-    if (reports == "companies") 
-        agg_data = merge(agg_data, companies)    
+    if ("countries"  %in% reports) agg_data = merge(agg_data, countries)
+    if ("companies"  %in% reports) agg_data = merge(agg_data, companies)
 	return (agg_data)
 }
 
