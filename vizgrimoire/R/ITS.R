@@ -278,6 +278,7 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                      ",identities_db,".upeople up
                 WHERE ",GetFiltersCompaniesITS() ," and
                       ", affiliations, "
+                      upc.company_id = com.id and
                       c.changed_by = pup.people_id and
                       pup.upeople_id = up.id and
                       c.changed_on >= ", startdate, " and
@@ -286,7 +287,6 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                 GROUP BY up.identifier
                 ORDER BY closed desc
                 LIMIT 10;", sep="")
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
