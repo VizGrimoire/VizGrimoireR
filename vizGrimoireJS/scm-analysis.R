@@ -55,6 +55,9 @@ if (conf$granularity == 'years') {
 # destination directory
 destdir <- conf$destination
 
+# multireport
+reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
+
 #########
 #EVOLUTIONARY DATA
 #########
@@ -62,11 +65,11 @@ destdir <- conf$destination
 # 1- Retrieving and 2- merging data
 evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db)
 
-if (conf$reports == 'companies') { 
+if ('companies' %in% reports) { 
     companies <- EvolCompanies(period, conf$startdate, conf$enddate)
     evol_data = merge(evol_data, companies, all = TRUE)
 }
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     countries <- EvolCountries(period, conf$startdate, conf$enddate)
     evol_data = merge(evol_data, countries, all = TRUE)
 }
@@ -91,11 +94,11 @@ latest_activity90 = last_activity(90)
 latest_activity365 = last_activity(365)
 
 #Data for specific analysis
-if (conf$reports == 'companies'){
+if ('companies' %in% reports){
 	static_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
         static_data = merge(static_data, static_data_companies)
 }
-if (conf$reports == 'countries'){ 
+if ('countries' %in% reports){ 
 	static_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
         static_data = merge(static_data, static_data_countries)
 }
@@ -123,7 +126,7 @@ createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 # Top files
 top_files_modified_data = top_files_modified()
 
-if (conf$reports == 'companies') {
+if ('companies' %in% reports) {
 
     companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
     companies <- companies$name
@@ -165,7 +168,7 @@ if (conf$reports == 'companies') {
     }
 }
 
-if (conf$reports == 'repositories') {
+if ('repositories' %in% reports) {
     repos  <- repos_name(conf$startdate, conf$enddate)
     repos <- repos$name
     createJSON(repos, paste(destdir,"/scm-repos.json", sep=''))
@@ -200,7 +203,7 @@ if (conf$reports == 'repositories') {
     }		
 }
 
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
     countries <- countries$name
     createJSON(countries, paste(destdir,"/scm-countries.json", sep=''))
@@ -222,7 +225,7 @@ if (conf$reports == 'countries') {
     }
 }
 
-if (conf$reports == 'people') {
+if ('people' %in% reports) {
     print ('Starting people analysis')
     people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
     createJSON(people, paste(destdir,"/scm-people.json", sep=''))

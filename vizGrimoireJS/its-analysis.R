@@ -82,6 +82,9 @@ enddate <- conf$enddate
 # database with unique identities
 identities_db <- conf$identities_db
 
+# multireport
+reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
+
 # destination directory
 destdir <- conf$destination
 
@@ -96,15 +99,15 @@ evol <- merge (open, closed, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
 
-if (conf$reports == 'companies') {
+if ('companies' %in% reports) {
     info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_companies, all = TRUE)
 }
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_countries, all = TRUE)
 }
-if (conf$reports == 'repositories') {
+if ('repositories' %in% reports) {
     data = GetEvolReposITS(period, startdate, enddate)
     evol = merge(evol, data, all = TRUE)
 }
@@ -117,11 +120,11 @@ createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
 all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
 
-if (conf$reports == 'companies') {
+if ('companies' %in% reports) {
     info_com = GetStaticCompaniesITS (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     info_com = GetStaticCountriesITS (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
@@ -151,7 +154,7 @@ createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
 # createJSON (people_list, paste(c(destdir,"/its-people.json"), collapse=''))
 
 # Repositories
-if (conf$reports == 'repositories') {	
+if ('repositories' %in% reports) {	
 	repos  <- GetReposNameITS()
 	repos <- repos$name
 	createJSON(repos, paste(c(destdir,"/its-repos.json"), collapse=''))
@@ -178,7 +181,7 @@ if (conf$reports == 'repositories') {
 }
 
 # COMPANIES
-if (conf$reports == 'companies') {
+if ('companies' %in% reports) {
 
     # companies <- its_companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate, identities_db)
     companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, c("-Bot", "-Individual", "-Unknown"))
@@ -210,7 +213,7 @@ if (conf$reports == 'companies') {
 }
 
 # COUNTRIES
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     countries  <- GetCountriesNamesITS(conf$identities_db,conf$startdate, conf$enddate)
 	countries <- countries$name
 	createJSON(countries, paste(c(destdir,"/its-countries.json"), collapse=''))
@@ -231,7 +234,7 @@ if (conf$reports == 'countries') {
 }
 
 # People
-if (conf$reports == 'people') {
+if ('people' %in% reports) {
     people  <- GetPeopleListITS(conf$startdate, conf$enddate)
 	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
     
