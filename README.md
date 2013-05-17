@@ -10,6 +10,11 @@ From the parent directory of vizgrimoire:
 
 % R CMD INSTALL vizgrimoire
 
+Or locally:
+
+% R CMD INSTALL -l <local_dir> vizgrimoire
+% R_LIBS=<local_dir>:$R_LIBS R --vanilla ....
+
 Or, to produce a tarball, from the vizgrimoire directory:
 
 % R CMD build # To build the package tarball
