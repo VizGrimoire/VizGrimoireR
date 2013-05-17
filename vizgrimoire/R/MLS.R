@@ -169,7 +169,6 @@ reposNames <- function (rfield, startdate, enddate) {
                              m.first_date < ",enddate))   
         mailing_lists <- run(query)
         mailing_lists_files <- run(query)
-        mailing_lists_files$mailing_list = gsub("/","_",mailing_lists$mailing_list)
         names = mailing_lists_files
     } else {
         query <- new ("Query", 
