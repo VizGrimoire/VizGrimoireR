@@ -89,7 +89,7 @@ if ('repositories' %in% reports) {
         createJSON (data, paste(destdir,"/",listname_file,"-mls-evolutionary.json",sep=''))
         
         top_senders = repoTopSenders (repo, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir, "/",repo,"-mls-top-senders.json", sep=''))        
+        createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-top-senders.json", sep=''))        
         
         # Static data
         data<-GetStaticReposMLS(rfield, repo, startdate, enddate)
