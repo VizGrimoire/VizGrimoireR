@@ -741,6 +741,64 @@ StaticURL <- function() {
 	return (data)    
 }
 
+#
+# People
+#
+
+GetTablesOwnUniqueIdsSCM <- function() {
+    return ('scmlog s, people_upeople pup')
+}
+
+GetFiltersOwnUniqueIdsSCM <- function () {
+    return ('pup.people_id = s.author_id') 
+}
+
+GetPeopleListSCM <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id"
+    tables = GetTablesOwnUniqueIdsSCM()
+    filters = GetFiltersOwnUniqueIdsSCM()
+    q = GetSQLGlobal('s.date',fields,tables, filters, startdate, enddate)        
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)        
+}
+
+GetPeopleQuerySCM <- function(developer_id, period, startdate, enddate, evol) {
+    fields ='COUNT(s.id) AS commits'
+    tables = GetTablesOwnUniqueIdsSCM()
+    filters = GetFiltersOwnUniqueIdsSCM()
+    filters = paste(filters,"AND pup.upeople_id=",developer_id)
+    if (evol) {
+        q = GetSQLPeriod(period,'s.date', fields, tables, filters, 
+                startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(s.date),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(s.date),'%Y-%m-%d') as last_date")        
+        q = GetSQLGlobal('s.date', fields, tables, filters, 
+                startdate, enddate)
+    }
+    return (q)            
+}
+
+GetEvolPeopleSCM <- function(developer_id, period, startdate, enddate) {
+    q <- GetPeopleQuerySCM (developer_id, period, startdate, enddate, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetStaticPeopleSCM <- function(developer_id, startdate, enddate) {
+    q <- GetPeopleQuerySCM (developer_id, NA, startdate, enddate, FALSE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)        
+}
+
+# 
+# Legacy and non legacy code - Cleanup
+#
+
 evol_commits <- function(period, startdate, enddate){
       #Commits evolution
 
@@ -1089,7 +1147,7 @@ top_people <- function(days, startdate, enddate, role, filters="") {
         date_limit <- paste(" AND DATEDIFF(@maxdate, date)<",days)
     }
     
-    q <- paste("SELECT u.identifier as ", role, "s,
+    q <- paste("SELECT u.id as id, u.identifier as ", role, "s,
                  count(distinct(s.id)) as commits
                FROM scmlog s,
                  people_upeople pup,
@@ -1127,7 +1185,7 @@ top_files_modified <- function() {
 
 ## TODO: Follow top_committers implementation
 top_authors <- function(startdate, enddate) {
-    q <- paste("SELECT u.identifier as authors,
+    q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
                      people_upeople pup,
@@ -1152,7 +1210,7 @@ top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
         affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
     }
 
-    q <- paste("SELECT u.identifier as authors,
+    q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
                      people_upeople pup,
@@ -1175,7 +1233,7 @@ top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
 }
 
 top_authors_year <- function(year) {
-    q <- paste("SELECT u.identifier as authors,
+    q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
                      people_upeople pup,
@@ -1643,7 +1701,7 @@ evol_info_data_countries <- function(startdate, enddate) {
 
 company_top_authors <- function(company_name, startdate, enddate) {
 	
-	q <- paste ("select u.identifier  as authors,
+	q <- paste ("select u.id as id, u.identifier  as authors,
                             count(distinct(s.id)) as commits                         
                      from people p,
                           scmlog s,
@@ -1671,7 +1729,7 @@ company_top_authors <- function(company_name, startdate, enddate) {
 
 company_top_authors_year <- function(company_name, year){
 	
-	q <- paste ("select u.identifier as authors,
+	q <- paste ("select u.id as id, u.identifier as authors,
                             count(distinct(s.id)) as commits                         
                     from people p,
                          scmlog s,

@@ -18,6 +18,7 @@
 ##
 ## Authors:
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
+##   Alvaro del Castillo <acs@bitergia.com>
 ##
 ##
 ## MLSTimes class
@@ -26,22 +27,35 @@
 ##  (open, replied so far)
 ##
 
+liferay = FALSE
+
 query.pre = "
 CREATE TEMPORARY TABLE replies AS (
-SELECT is_response_of, MIN(arrival_date) as firstreply, MAX(arrival_date) AS lastreply
-FROM messages
-WHERE message_ID <> is_response_of
-AND subject <> message_body
-GROUP BY is_response_of);"
+ SELECT is_response_of, MIN(UNIX_TIMESTAMP(first_date)-first_date_tz) as firstreply, MAX(UNIX_TIMESTAMP(first_date)-first_date_tz) AS lastreply
+ FROM messages
+ WHERE "
+
+if (liferay) {
+    query.pre = paste(query.pre,"message_ID <> is_response_of")
+} else {
+    query.pre = paste(query.pre,"is_response_of IS NOT NULL")
+}
+query.pre = paste(query.pre, "GROUP BY is_response_of);")
 
 query.replied = "
-SELECT m.message_ID, m.arrival_date as submitted_on, rep.firstreply, rep.lastreply
-FROM messages m
-JOIN replies rep
-ON m.message_ID = rep.is_response_of
-WHERE m.message_ID = m.is_response_of
-AND m.subject <> m.message_body
-ORDER BY submitted_on ASC"
+SELECT m.message_ID, m.first_date as submitted_on,
+ (UNIX_TIMESTAMP(m.first_date)-first_date_tz) as submitted_on_stamp, rep.firstreply, rep.lastreply
+ FROM messages m
+ JOIN replies rep
+ ON m.message_ID = rep.is_response_of
+ WHERE "
+
+if (liferay) {
+      query.replied = paste(query.replied,"m.message_ID = m.is_response_of")
+} else {
+    query.replied = paste(query.replied,"m.is_response_of IS NULL")
+}
+query.replied = paste(query.replied, "ORDER BY submitted_on ASC")
 
 setClass(Class="MLSTimes",
          contains="data.frame",
@@ -58,15 +72,7 @@ setMethod(f="initialize",
             run (q0)
             q <- new ("Query", sql = query.replied)
             as(.Object,"data.frame") <- run (q)
-            .Object$submitted_on <- strptime(.Object$submitted_on,
-                                     format="%Y-%m-%d %H:%M:%S")
-            .Object$firstreply <- strptime(.Object$firstreply,
-                                       format="%Y-%m-%d %H:%M:%S")
-            .Object$toattend <- round (as.numeric(
-                                      difftime(.Object$firstreply,
-                                               .Object$submitted_on,
-                                               units="secs")
-                                      ))
+            .Object$toattend <- .Object$firstreply - .Object$submitted_on_stamp                   
             return(.Object)
           }
           )

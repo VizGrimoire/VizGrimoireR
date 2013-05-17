@@ -40,6 +40,9 @@ if (conf$granularity == 'years') { period = 'year'
 
 identities_db = conf$identities_db
 
+# multireport
+reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
+
 # dates
 startdate <- conf$startdate
 enddate <- conf$enddate
@@ -50,11 +53,11 @@ enddate <- conf$enddate
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 rfield = reposField()
 
-data <- mlsEvol(rfield, period, startdate, enddate, identities_db, conf$reports)
+data <- GetEvolMLS(rfield, period, startdate, enddate, identities_db, reports)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
-static_data <- mlsStatic(rfield, startdate, enddate, conf$reports)
+static_data <- GetStaticMLS(rfield, startdate, enddate, reports)
 latest_activity7 <- lastActivity(7)
 latest_activity30 <- lastActivity(30)
 latest_activity90 <- lastActivity(90)
@@ -66,7 +69,7 @@ static_data = merge(static_data, latest_activity365)
 createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
 
-if (conf$reports == 'repositories') {
+if ('repositories' %in% reports) {
     repos <- reposNames(rfield, startdate, enddate)
     createJSON (repos, "data/json/mls-lists.json")
     repos <- repos$mailing_list
@@ -76,7 +79,7 @@ if (conf$reports == 'repositories') {
     
     for (repo in repos) {    
         # Evol data
-        data<-mlsEvolRepos(rfield, repo, period, startdate, enddate)
+        data<-GetEvolReposMLS(rfield, repo, period, startdate, enddate)
         data <- completePeriodIds(data, conf$granularity, conf)        
         listname_file = gsub("/","_",repo)
         
@@ -86,10 +89,10 @@ if (conf$reports == 'repositories') {
         createJSON (data, paste(destdir,"/",listname_file,"-mls-evolutionary.json",sep=''))
         
         top_senders = repoTopSenders (repo, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir, "/",repo,"-mls-top-senders.json", sep=''))        
+        createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-top-senders.json", sep=''))        
         
         # Static data
-        data<-mlsStaticRepos(rfield, repo, startdate, enddate)
+        data<-GetStaticReposMLS(rfield, repo, startdate, enddate)
         # TODO: Multilist approach. We will obsolete it in future
     	createJSON (data, paste(destdir, "/",listname_file,"-static.json",sep=''))
     	# Multirepos filename
@@ -97,32 +100,32 @@ if (conf$reports == 'repositories') {
     }
 }
 
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     countries <- countriesNames(identities_db, startdate, enddate) 
     createJSON (countries, paste(destdir, "/mls-countries.json",sep=''))
     
     for (country in countries) {
         if (is.na(country)) next
         print (country)
-        data <- mlsEvolCountries(country, identities_db, period, startdate, enddate)
+        data <- GetEvolCountriesMLS(country, identities_db, period, startdate, enddate)
         data <- completePeriodIds(data, conf$granularity, conf)        
         createJSON (data, paste(destdir,"/",country,"-mls-evolutionary.json",sep=''))
         
         top_senders = countryTopSenders (country, identities_db, startdate, enddate)
         createJSON(top_senders, paste(destdir,"/",country,"-mls-top-senders.json", sep=''))        
         
-        data <- mlsStaticCountries(country, identities_db, startdate, enddate)
+        data <- GetStaticCountriesMLS(country, identities_db, startdate, enddate)
         createJSON (data, paste(destdir,"/",country,"-mls-static.json",sep=''))
     }
 }
 
-if (conf$reports == 'companies'){    
+if ('companies' %in% reports){    
     companies = companiesNames(identities_db, startdate, enddate)
     createJSON(companies, paste(destdir,"/mls-companies.json",sep=''))
    
     for (company in companies){       
         print (company)
-        sent.senders = mlsEvolCompanies(company, identities_db, period, startdate, enddate)
+        sent.senders = GetEvolCompaniesMLS(company, identities_db, period, startdate, enddate)
         # sent.senders <- completePeriod(sent.senders, nperiod, conf): Nice unixtime!!!
         sent.senders <- completePeriodIds(sent.senders, conf$granularity, conf)
         createJSON(sent.senders, paste(destdir,"/",company,"-mls-evolutionary.json", sep=''))
@@ -130,8 +133,23 @@ if (conf$reports == 'companies'){
         top_senders = companyTopSenders (company, identities_db, startdate, enddate)
         createJSON(top_senders, paste(destdir,"/",company,"-mls-top-senders.json", sep=''))
 
-        data = mlsStaticCompanies(company, identities_db, startdate, enddate)
+        data = GetStaticCompaniesMLS(company, identities_db, startdate, enddate)
         createJSON(data, paste(destdir,"/",company,"-mls-static.json", sep=''))
+    }
+}
+
+if ('people' %in% reports){
+    people = GetListPeopleMLS(startdate, enddate)
+    createJSON(people, paste(destdir,"/mls-people.json",sep=''))
+       
+    for (upeople_id in people$id){
+        evol = GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        createJSON(evol, paste(destdir,"/people-",upeople_id,"-mls-evolutionary.json", sep=''))
+
+        static <- GetStaticPeopleMLS(upeople_id, startdate, enddate)
+        createJSON(static, paste(destdir,"/people-",upeople_id,"-mls-static.json", sep=''))
     }
 }
 
@@ -141,10 +159,12 @@ quantiles_spec = c(.99,.95,.5,.25)
 
 ## Replied messages: time ticket was submitted, first replied
 replied <- new ("MLSTimes")
+# print(replied)
 
 ## Yearly quantiles of time to attention (minutes)
 events.toattend <- new ("TimedEvents",
                         replied$submitted_on, replied$toattend %/% 60)
+# print(events.toattend)
 quantiles <- QuantilizeYears (events.toattend, quantiles_spec)
 JSON(quantiles, paste(c(destdir,'/mls-quantiles-year-time_to_attention_min.json'), collapse=''))
 

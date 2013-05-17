@@ -82,6 +82,9 @@ enddate <- conf$enddate
 # database with unique identities
 identities_db <- conf$identities_db
 
+# multireport
+reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
+
 # destination directory
 destdir <- conf$destination
 
@@ -96,15 +99,15 @@ evol <- merge (open, closed, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
 
-if (conf$reports == 'companies') {
+if ('companies' %in% reports) {
     info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_companies, all = TRUE)
 }
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_countries, all = TRUE)
 }
-if (conf$reports == 'repositories') {
+if ('repositories' %in% reports) {
     data = GetEvolReposITS(period, startdate, enddate)
     evol = merge(evol, data, all = TRUE)
 }
@@ -117,11 +120,11 @@ createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
 all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
 
-if (conf$reports == 'companies') {
+if ('companies' %in% reports) {
     info_com = GetStaticCompaniesITS (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     info_com = GetStaticCountriesITS (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
@@ -151,7 +154,7 @@ createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
 # createJSON (people_list, paste(c(destdir,"/its-people.json"), collapse=''))
 
 # Repositories
-if (conf$reports == 'repositories') {	
+if ('repositories' %in% reports) {	
 	repos  <- GetReposNameITS()
 	repos <- repos$name
 	createJSON(repos, paste(c(destdir,"/its-repos.json"), collapse=''))
@@ -178,7 +181,7 @@ if (conf$reports == 'repositories') {
 }
 
 # COMPANIES
-if (conf$reports == 'companies') {
+if ('companies' %in% reports) {
 
     # companies <- its_companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate, identities_db)
     companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, c("-Bot", "-Individual", "-Unknown"))
@@ -210,7 +213,7 @@ if (conf$reports == 'companies') {
 }
 
 # COUNTRIES
-if (conf$reports == 'countries') {
+if ('countries' %in% reports) {
     countries  <- GetCountriesNamesITS(conf$identities_db,conf$startdate, conf$enddate)
 	countries <- countries$name
 	createJSON(countries, paste(c(destdir,"/its-countries.json"), collapse=''))
@@ -229,37 +232,55 @@ if (conf$reports == 'countries') {
         createJSON (data, paste(c(destdir,"/",country,"-its-static.json",sep=''), collapse=''))
     }    
 }
+
+# People
+if ('people' %in% reports) {
+    people  <- GetPeopleListITS(conf$startdate, conf$enddate)
+	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
     
-
-## Quantiles
-if (0) {
-## Which quantiles we're interested in
-quantiles_spec = c(.99,.95,.5,.25)
-
-## Closed tickets: time ticket was open, first closed, time-to-first-close
-closed <- new ("ITSTicketsTimes")
-
-## Yearly quantiles of time to fix (minutes)
-events.tofix <- new ("TimedEvents",
-                     closed$open, closed$tofix %/% 60)
-quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
-
-## Monthly quantiles of time to fix (hours)
-events.tofix.hours <- new ("TimedEvents",
-                           closed$open, closed$tofix %/% 3600)
-quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
-JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
-
-## Changed tickets: time ticket was attended, last move
-changed <- new ("ITSTicketsChangesTimes")
-## Yearly quantiles of time to attention (minutes)
-events.toatt <- new ("TimedEvents",
-                     changed$open, changed$toattention %/% 60)
-quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
+    for (upeople_id in people$id) {
+        evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        createJSON (evol, paste(c(destdir,"/people-",upeople_id,"-its-evolutionary.json",sep=''), collapse=''))
+        
+        data <- GetPeopleStaticITS(upeople_id, conf$startdate, conf$enddate)
+        createJSON (data, paste(c(destdir,"/people-",upeople_id,"-its-static.json",sep=''), collapse=''))
+    }    
 }
-
+    
+# Time to Close: Other backends not yet supported
+if (conf$backend == 'bugzilla' || 
+    conf$backend == 'allura' || 
+    conf$backend == 'jira' ||
+    conf$backend == 'launchpad') { 
+    ## Quantiles
+    ## Which quantiles we're interested in
+    quantiles_spec = c(.99,.95,.5,.25)
+    
+    ## Closed tickets: time ticket was open, first closed, time-to-first-close
+    closed <- new ("ITSTicketsTimes")
+    
+    ## Yearly quantiles of time to fix (minutes)
+    events.tofix <- new ("TimedEvents",
+                         closed$open, closed$tofix %/% 60)
+    quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+    JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
+    
+    ## Monthly quantiles of time to fix (hours)
+    events.tofix.hours <- new ("TimedEvents",
+                               closed$open, closed$tofix %/% 3600)
+    quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
+    JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
+    
+    ## Changed tickets: time ticket was attended, last move
+    changed <- new ("ITSTicketsChangesTimes")
+    ## Yearly quantiles of time to attention (minutes)
+    events.toatt <- new ("TimedEvents",
+                         changed$open, changed$toattention %/% 60)
+    quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+    JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
+}
 
 # Demographics
 d <- new ("Demographics","its",6)

@@ -924,6 +924,27 @@ GetSQLPeriod <- function(period, date, fields, tables, filters, start, end) {
 }
 
 
+library(zoo) 
+
+RollMean<-function(serie,s,l)
+{ 
+    #serie;data where you want to calculate rollmeans.
+    #s<l; Periods of time.
+    #function; draws rollmeans for two different periods of time. 
+    ms<-rollapply(serie,s,mean)
+    ml<-rollapply(serie,l,mean)
+    w<-rep(0,l-1)
+    v<-rep(0,s-1)
+    mms<-c(v,ms)
+    mml<-c(w,ml)
+    scale<-c(min(mms):max(mms))
+    #plot(mml, type="l", col="blue") 
+    #lines(mms, type="l", col="red")
+    means<-data.frame(mms,mml)
+    return(means)
+}
+
+
 source('R/SCM.R')
 source('R/MLS.R')
 source('R/ITS.R')
