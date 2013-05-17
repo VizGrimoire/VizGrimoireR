@@ -73,7 +73,8 @@ if ('repositories' %in% reports) {
     repos <- reposNames(rfield, startdate, enddate)
     createJSON (repos, "data/json/mls-lists.json")
     repos <- repos$mailing_list
-    createJSON(repos, "data/json/mls-repos.json")	    
+    repos_file_names = gsub("/","_",repos)
+    createJSON(repos_file_names, "data/json/mls-repos.json")	    
     
     print (repos)
     
