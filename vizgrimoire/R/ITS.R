@@ -138,7 +138,7 @@ GetFiltersReposITS <- function () {
 }
 
 GetEvolReposITS <- function(period, startdate, enddate) {        
-    fields = 'COUNT(DISTINCT(trackers.url)) AS repos'
+    fields = 'COUNT(DISTINCT(trackers.url)) AS repositories'
     tables= GetTablesReposITS()
     filters = GetFiltersReposITS()
 
