@@ -58,7 +58,7 @@ query.closed = c (
          GROUP BY issue_id) ch
       WHERE issues.id = ch.issue_id
       ORDER BY submitted_on",
-    "launchpad" = "SELECT issue_id as id,
+  "launchpad.old" = "SELECT issue_id as id,
                           issue,
                           submitted_on AS open,
                           closed,
@@ -68,10 +68,30 @@ query.closed = c (
                                 MIN(changed_on) AS closed,
                                 MAX(changed_on) AS closedlast
                         FROM changes
-                        WHERE new_value IN (new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')
+                        WHERE new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix'
                         GROUP BY issue_id) ch
                    WHERE issues.id = ch.issue_id
-                   ORDER BY submitted_on"
+                   ORDER BY submitted_on",
+  "launchpad" = "SELECT 
+    issue_id as id,
+    issue,
+    submitted_on AS open,
+    closed,
+    closedlast
+FROM
+    issues,
+    (SELECT 
+        issue_id,
+            MIN(changed_on) AS closed,
+            MAX(changed_on) AS closedlast
+    FROM
+        changes
+    WHERE
+        new_value = 'Fix Released' or new_value = 'Invalid' or new_value = 'Expired' or new_value = 'Wont''t Fix'
+    GROUP BY issue_id) ch
+WHERE
+    issues.id = ch.issue_id AND submitted_on < closed
+ORDER BY submitted_on"
   )
 
 setClass(Class="ITSTicketsTimes",
@@ -84,7 +104,6 @@ setMethod(f="initialize",
           signature="ITSTicketsTimes",
           definition=function(.Object){
             cat("~~~ ITSTicketsTimes: initializator ~~~ \n")
-            print (conf)
             q <- new ("Query", sql = query.closed[FindoutRepoKind()])
             as(.Object,"data.frame") <- run (q)
             .Object$open <- strptime(.Object$open,
