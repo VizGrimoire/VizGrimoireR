@@ -39,6 +39,7 @@ bicho = metricsgrimoire + "Bicho"
 mlstats = metricsgrimoire + "MailingListStats"
 
 tools = ["CVSAnalY", "RepositoryHandler", "Bicho", "MailingListStats"]
+bintools =  ["CVSAnalY", "Bicho", "MailingListStats"]
 
 # Parse command line options
 parser = argparse.ArgumentParser(description="""
@@ -51,8 +52,6 @@ parser.add_argument("dir",
                     help="Directory to install (will be created if doesn't exist)")
 args = parser.parse_args()
 
-print args.dir
-
 # Create and move to the installation directory
 if not os.path.exists(args.dir):
     os.makedirs(args.dir)
@@ -63,3 +62,31 @@ for tool in tools:
       call(["git", "clone", metricsgrimoire + tool])
    else:
       call(["git", "--git-dir=" + tool + "/.git", "pull"])
+
+print
+print "Everything should now be installed under " + args.dir
+print
+
+paths = ""
+for tool in bintools:
+   paths = paths + args.dir + "/" + tool + ":"
+pythonpaths = ""
+for tool in tools:
+   pythonpaths = pythonpaths + args.dir + "/" + tool + ":"
+print """Run the lines below ">>>" in your shell before running the
+tools, or create a file with then and source it, or add them to
+your .bashrc or equivalent.
+
+After that, you can check if everything is ready by running:
+"""
+
+for tool in bintools:
+   print tool + " --version"
+
+env = """>>>
+export PATH={paths}$PATH
+export PYTHONPATH={pythonpaths}$PYTHONPATH
+"""
+
+print env.format (paths=paths, pythonpaths=pythonpaths)
+
