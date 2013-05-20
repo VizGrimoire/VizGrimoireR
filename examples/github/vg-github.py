@@ -54,6 +54,10 @@ parser.add_argument("--dir",
 parser.add_argument("--removedb",
                     help="Remove all databases, if present, before creating them",
                     action="store_true")
+parser.add_argument("--ghuser",
+                    help="GitHub user name")
+parser.add_argument("--ghpasswd",
+                    help="GitHub password")
 
 args = parser.parse_args()
 
@@ -65,69 +69,48 @@ if args.dir:
 else:
     dir = "/tmp"
 
-cvsanalyOpts = ["cvsanaly2"]
-bichoOpts = []
-mlsOpts = []
-
-if args.user:
-    cvsanalyOpts.extend (["--db-user", args.user])
-if args.passwd:
-    cvsanalyOpts.extend (["--db-password", args.passwd])
-cvsanalyOpts.extend (["--db-database", dbPrefix + "_cvsanaly"
-])
-gitdir = args.project.split('/', 1)[1]
-cvsanalyOpts.append (dir + '/' + gitdir)
-print cvsanalyOpts
-
-
+# Open database connection and get a cursor
 con = MySQLdb.connect(host='localhost', user=args.user, passwd=args.passwd) 
 cursor = con.cursor()
 
-cvsanalyDB = dbPrefix + "_cvsanaly"
-if args.removedb:
-    cursor.execute('DROP DATABASE ' + cvsanalyDB)
-cursor.execute('CREATE DATABASE ' + cvsanalyDB)
+# Configuration for tools
+cvsanalyConf = {"bin": "cvsanaly2",
+                "opts": [],
+                "dbuser": "--db-user",
+                "dbpasswd": "--db-password",
+                "db": "--db-database"}
+bichoConf = {"bin": "bicho",
+             "opts": ["-d", "1", "-b", "github"],
+             "dbuser": "--db-user-out",
+             "dbpasswd": "--db-password-out",
+             "db": "--db-database-out"}
 
-call(["git", "clone", "https://github.com/" + args.project + ".git"])
-call(cvsanalyOpts)
-exit()
+conf = {"cvsanaly": cvsanalyConf,
+        "bicho":    bichoConf}
 
-
-# Create and move to the installation directory
-if not os.path.exists(args.dir):
-    os.makedirs(args.dir)
-os.chdir(args.dir)
-
-for tool in tools:
-   if not os.path.exists(tool):
-      call(["git", "clone", metricsgrimoire + tool])
-   else:
-      call(["git", "--git-dir=" + tool + "/.git", "pull"])
-
-print
-print "Everything should now be installed under " + args.dir
-print
-
-paths = ""
-for tool in bintools:
-   paths = paths + args.dir + "/" + tool + ":"
-pythonpaths = ""
-for tool in tools:
-   pythonpaths = pythonpaths + args.dir + "/" + tool + ":"
-print """Run the lines below ">>>" in your shell before running the
-tools, or create a file with then and source it, or add them to
-your .bashrc or equivalent.
-
-After that, you can check if everything is ready by running:
-"""
-
-for tool in bintools:
-   print tool + " --version"
-
-env = """>>>
-export PATH={paths}$PATH
-export PYTHONPATH={pythonpaths}$PYTHONPATH
-"""
-
-print env.format (paths=paths, pythonpaths=pythonpaths)
-
+# Now, actually run tools
+for tool in ["cvsanaly", "bicho"]:
+    # Create (and maybe remove) the database
+    dbname = dbPrefix + "_" + tool
+    if args.removedb:
+        cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
+    cursor.execute('CREATE DATABASE ' + dbname)
+    # Prepare options to run the tool
+    print conf[tool]
+    opts = [conf[tool]["bin"]]
+    opts.extend (conf[tool]["opts"])
+    if args.user:
+        opts.extend ([conf[tool]["dbuser"], args.user])
+    if args.passwd:
+        opts.extend ([conf[tool]["dbpasswd"], args.passwd])
+    opts.extend ([conf[tool]["db"], dbname])
+    # Specific code for cvsanaly
+    if tool == "cvsanaly":
+        call(["git", "clone", "https://github.com/" + args.project + ".git"])
+        gitdir = args.project.split('/', 1)[1]
+        opts.append (dir + '/' + gitdir)
+    if tool == "bicho":
+        opts.extend ("--url", "http://github.com/" + args.project)
+    print opts
+    # Run the tool
+    call(opts)
