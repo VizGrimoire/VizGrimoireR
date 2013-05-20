@@ -63,7 +63,7 @@ args = parser.parse_args()
 
 print args.project
 
-dbPrefix = args.project.replace('/', '_')
+dbPrefix = args.project.replace('/', '_').lower()
 if args.dir:
     dir = args.dir
 else:
@@ -94,7 +94,8 @@ for tool in ["cvsanaly", "bicho"]:
     dbname = dbPrefix + "_" + tool
     if args.removedb:
         cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
-    cursor.execute('CREATE DATABASE ' + dbname)
+    cursor.execute('CREATE DATABASE ' + dbname +
+                   ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
     # Prepare options to run the tool
     print conf[tool]
     opts = [conf[tool]["bin"]]
@@ -110,7 +111,10 @@ for tool in ["cvsanaly", "bicho"]:
         gitdir = args.project.split('/', 1)[1]
         opts.append (dir + '/' + gitdir)
     if tool == "bicho":
-        opts.extend ("--url", "http://github.com/" + args.project)
+        opts.extend (["--url",
+                     "https://api.github.com/repos/" + args.project + "/issues",
+                      "--backend-user", args.ghuser,
+                      "--backend-password", args.ghpasswd])
     print opts
     # Run the tool
     call(opts)
