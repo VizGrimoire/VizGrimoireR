@@ -50,7 +50,7 @@ class Identities:
 
     def find (self, identity):
         """Returns the unique id for an identity, or 0 if not found"""
-
+	print identity
         identity = identity.lower()
         if identity in self.stored:
             return (self.stored[identity])
@@ -79,7 +79,7 @@ class Identities:
 
     def insert (self, identity, uid):
         """Inserts the unique id for an identity"""
-
+	print identity
         identity = identity.lower()
         self.stored[identity] = uid
 
@@ -310,6 +310,7 @@ dupIds = {}
 
 # Now, check all identities in persons
 for person in people:
+    print person
     (id, name, email) = person
     # In Linux kernel, there are several "???", "", etc. names
     # Let's substitute them for something meaningful (the id)
@@ -325,9 +326,11 @@ for person in people:
     # Is name, lowercased and dotted, in emails?
     #uidNameEmailDotted = identitiesEmails.findDotted (name)
     # Is email in emails?
-    if email == "":
+    if email == "" or email==None :
+	email = ""
         uidEmail = 0
     else:
+	print email
         uidEmail = identitiesEmails.find (email)
     if uidEmail == 0:
         identitiesEmails.insert (email, id)
