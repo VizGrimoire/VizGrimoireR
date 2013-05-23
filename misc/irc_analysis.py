@@ -24,7 +24,7 @@
 # Author: Alvaro del Castillo <acs@bitergia.com>
 
 from optparse import OptionParser
-import os,sys
+import os, sys
 import MySQLdb
 
 
@@ -42,11 +42,11 @@ def parse_file(file):
         # [12:39:15] <wm-bot>  Infobot disabled
         aux = l.split(" ")
         time = aux[0]
-        time = time[1:len(time)-1]
-        nick=(aux[1].split("\t"))[0]
-        nick=nick[1:len(nick)-1]
-        msg=' '.join(aux[2:len(aux)])
-        date_nick_message.append([time,nick,msg])
+        time = time[1:len(time) - 1]
+        nick = (aux[1].split("\t"))[0]
+        nick = nick[1:len(nick) - 1]
+        msg = ' '.join(aux[2:len(aux)])
+        date_nick_message.append([time, nick, msg])
     return date_nick_message
 
 
@@ -114,30 +114,27 @@ def insert_message(cursor, date, nick, message):
     message = escape_string (message)
     nick = escape_string (nick)
     q = "insert into irclog (date,nick,message) values (";
-    q += "'"+ date +"','"+nick+"','"+message+"')"
+    q += "'" + date + "','" + nick + "','" + message + "')"
     cursor.execute(q)
     
 def create_tables(cursor, con):
-#   query = "DROP TABLE IF EXISTS countries"
-#   cursor.execute(query)
-#   query = "DROP TABLE IF EXISTS upeople_countries"
-#   cursor.execute(query)
+    query = "DROP TABLE IF EXISTS irclog"
+    cursor.execute(query)
 
-   query = "CREATE TABLE IF NOT EXISTS irclog (" + \
+    query = "CREATE TABLE IF NOT EXISTS irclog (" + \
            "id int(11) NOT NULL AUTO_INCREMENT," + \
            "nick VARCHAR(255) NOT NULL," + \
            "date DATETIME NOT NULL," + \
            "message TEXT," + \
            "PRIMARY KEY (id)" + \
            ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
-   print(query)
-   cursor.execute(query)
+    cursor.execute(query)
 
-   query = "CREATE INDEX ircnick ON irclog (nick);"
-   cursor.execute(query)
+    query = "CREATE INDEX ircnick ON irclog (nick);"
+    cursor.execute(query)
    
-   con.commit()
-   return
+    con.commit()
+    return
     
 
 
@@ -158,7 +155,7 @@ if __name__ == '__main__':
         month = logfile[4:6]
         day = logfile[6:8]    
         date = year + "-" + month + "-" + day
-        date_nick_msg  = parse_file(opts.data_dir+"/"+logfile)
+        date_nick_msg = parse_file(opts.data_dir + "/" + logfile)
 
         for i in date_nick_msg:
             insert_message (cursor, date + " " + i[0], i[1], i[2])                
