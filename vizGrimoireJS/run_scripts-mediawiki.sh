@@ -12,12 +12,14 @@ START=2009-10-14
 END=$4
 LOGS=mediawiki.log
 DIR=$5
+REPORTS="repositories,countries,companies,people"
 
 echo "Analisys from $START to $END"
 echo "LOGS in $LOGS"
 #MLS
 echo "In MLS Analysis ..."
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -s $START -e $END -o $DIR -g months < mls-analysis.R >> $LOGS 2>&1
+# LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS-d $2 -u root -i $1 -s $START -e $END -o $DIR -g months < mls-analysis.R >> $LOGS 2>&1
 
 #SCM
 echo "In SCM Analysis ..."
@@ -25,5 +27,5 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -s $STAR
 
 #ITS
 echo "In ITS Analysis ..."
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -s $START -e $END -o $DIR -g months -t allura < its-analysis.R >> $LOGS 2>&1
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -s $START -e $END -o $DIR -g months -t bugzilla < its-analysis.R >> $LOGS 2>&1
 
