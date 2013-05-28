@@ -10,7 +10,7 @@
 START=2010-05-27
 END=$4
 PROJECT=openstack
-DIR=$5 #not used so far
+DIR=$5
 LOGS=$6
 
 
@@ -28,6 +28,7 @@ LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r reposito
 LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks -t launchpad < its-analysis.R
 rm data/whole_project/*
 mv data/json/* data/whole_project/
+cp data/whole_project/* $DIR
 
 #GRIZZLY
 rm data/json/*
