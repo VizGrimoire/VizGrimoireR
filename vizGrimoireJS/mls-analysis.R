@@ -71,10 +71,10 @@ createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
 if ('repositories' %in% reports) {
     repos <- reposNames(rfield, startdate, enddate)
-    createJSON (repos, "data/json/mls-lists.json")
+    createJSON (repos, paste(destdir,"/mls-lists.json", sep=''))
     repos <- repos$mailing_list
     repos_file_names = gsub("/","_",repos)
-    createJSON(repos_file_names, "data/json/mls-repos.json")	    
+    createJSON(repos_file_names, paste(destdir,"/mls-repos.json", sep=''))
     
     print (repos)
     
