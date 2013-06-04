@@ -78,11 +78,15 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     filters = GetFiltersOwnUniqueIdsMLS()
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
-    
-    print(q)
-    
     query <- new ("Query", sql = q)
-    sent.senders.repos.threads <- run(query)    
+    sent.senders.repos.threads <- run(query)
+    
+    fields = "COUNT(*) as responses"
+    filters = paste(filters, " AND m.is_response_of IS NOT NULL")
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    responses<- run(query)
         
     if ("countries" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
@@ -104,6 +108,7 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     }  
       
     mls <- sent.senders.repos.threads
+    mls <- merge (mls, responses, all = TRUE)
     if ("countries" %in% reports) mls <- merge (mls, countries, all = TRUE)
     if ("companies" %in% reports) mls <- merge (mls, companies, all = TRUE)
     return (mls)
@@ -124,11 +129,19 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     sent.senders.first.last.repos <- run(query)
     
+    fields = "COUNT(*) as responses"
+    filters = paste(filters, " AND m.is_response_of IS NOT NULL")
+    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    responses <- run(query)
+        
     # Specific SQL queries for special metrics
     q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
     query <- new ("Query", sql = q)
     repo_info <- run(query)
     
+    # TODO: pending start and end date!
     q <- paste("SELECT AVG(thread_size) AS thread_size_avg FROM 
                 (SELECT COUNT(*) as thread_size, is_response_of FROM messages 
                  WHERE is_response_of is not NULL GROUP BY is_response_of) dt")
@@ -172,6 +185,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     }      
 	
 	agg_data = merge(sent.senders.first.last.repos, repo_info)
+    agg_data = merge(agg_data, responses)
     agg_data = merge(agg_data, thread_size)
     agg_data = merge(agg_data, thread_persons)
     agg_data = merge(agg_data, messages_no_response)
