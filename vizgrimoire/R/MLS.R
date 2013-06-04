@@ -72,14 +72,17 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     
     fields = paste('COUNT(m.message_ID) AS sent, 
                     COUNT(DISTINCT(pup.upeople_id)) as senders,
-                    COUNT(DISTINCT(',rfield,')) AS repositories')
+                    COUNT(DISTINCT(',rfield,')) AS repositories,
+                    COUNT(DISTINCT(m.is_response_of)) AS threads')
     tables = GetTablesOwnUniqueIdsMLS() 
     filters = GetFiltersOwnUniqueIdsMLS()
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
     
+    print(q)
+    
     query <- new ("Query", sql = q)
-    sent.senders.repos <- run(query)
+    sent.senders.repos.threads <- run(query)    
         
     if ("countries" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
@@ -100,7 +103,7 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
         companies <- run(query)
     }  
       
-    mls <- sent.senders.repos
+    mls <- sent.senders.repos.threads
     if ("countries" %in% reports) mls <- merge (mls, countries, all = TRUE)
     if ("companies" %in% reports) mls <- merge (mls, companies, all = TRUE)
     return (mls)
@@ -112,7 +115,8 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
               DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
               COUNT(DISTINCT(pup.upeople_id)) as senders,
-              COUNT(DISTINCT(',rfield,')) AS repositories"
+              COUNT(DISTINCT(',rfield,')) AS repositories,
+              COUNT(DISTINCT(m.is_response_of)) AS threads"
     tables = GetTablesOwnUniqueIdsMLS()
 	filters = GetFiltersOwnUniqueIdsMLS()    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
