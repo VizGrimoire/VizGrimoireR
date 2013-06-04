@@ -133,7 +133,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
                 (SELECT COUNT(*) as thread_size, is_response_of FROM messages 
                  WHERE is_response_of is not NULL GROUP BY is_response_of) dt")
     query <- new ("Query", sql = q)
-    thread_size_info <- run(query)
+    thread_size <- run(query)
     
     q <- paste("SELECT AVG(persons) AS thread_persons_avg FROM
                 (SELECT COUNT(DISTINCT(email_address)) AS persons  
@@ -142,7 +142,15 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
                  AND m.is_response_of IS NOT NULL  
                  GROUP BY m.is_response_of) dt")
     query <- new ("Query", sql = q)
-    thread_persons_info <- run(query)
+    thread_persons <- run(query)
+    
+    q <- paste("SELECT COUNT(message_ID) as messages_no_response 
+                FROM messages WHERE message_ID NOT IN 
+                (SELECT DISTINCT(is_response_of) FROM messages 
+                 WHERE is_response_of IS NOT NULL)")
+    query <- new ("Query", sql = q)
+    messages_no_response <- run(query)
+
  
     if ("countries"  %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
@@ -164,8 +172,9 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     }      
 	
 	agg_data = merge(sent.senders.first.last.repos, repo_info)
-    agg_data = merge(agg_data, thread_size_info)
-    agg_data = merge(agg_data, thread_persons_info)
+    agg_data = merge(agg_data, thread_size)
+    agg_data = merge(agg_data, thread_persons)
+    agg_data = merge(agg_data, messages_no_response)
     if ("countries"  %in% reports) agg_data = merge(agg_data, countries)
     if ("companies"  %in% reports) agg_data = merge(agg_data, companies)
 	return (agg_data)
