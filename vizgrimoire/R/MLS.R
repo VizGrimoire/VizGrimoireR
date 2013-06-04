@@ -128,6 +128,12 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     repo_info <- run(query)
     
+    q <- paste("SELECT AVG(thread_size) AS thread_size_avg FROM 
+                (SELECT COUNT(*) as thread_size, is_response_of FROM messages 
+                 WHERE is_response_of is not NULL GROUP BY is_response_of) dt")
+    query <- new ("Query", sql = q)
+    thread_size_info <- run(query)
+
     if ("countries"  %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
         tables = GetTablesCountries(identities_db)   
@@ -148,6 +154,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     }      
 	
 	agg_data = merge(sent.senders.first.last.repos, repo_info)
+    agg_data = merge(agg_data, thread_size_info)
     if ("countries"  %in% reports) agg_data = merge(agg_data, countries)
     if ("companies"  %in% reports) agg_data = merge(agg_data, companies)
 	return (agg_data)
