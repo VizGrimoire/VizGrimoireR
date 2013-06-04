@@ -124,6 +124,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     sent.senders.first.last.repos <- run(query)
     
+    # Specific SQL queries for special metrics
     q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
     query <- new ("Query", sql = q)
     repo_info <- run(query)
@@ -133,7 +134,16 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
                  WHERE is_response_of is not NULL GROUP BY is_response_of) dt")
     query <- new ("Query", sql = q)
     thread_size_info <- run(query)
-
+    
+    q <- paste("SELECT AVG(persons) AS thread_persons_avg FROM
+                (SELECT COUNT(DISTINCT(email_address)) AS persons  
+                 FROM messages m, messages_people mp  
+                 WHERE m.message_ID = mp.message_ID  
+                 AND m.is_response_of IS NOT NULL  
+                 GROUP BY m.is_response_of) dt")
+    query <- new ("Query", sql = q)
+    thread_persons_info <- run(query)
+ 
     if ("countries"  %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
         tables = GetTablesCountries(identities_db)   
@@ -155,6 +165,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
 	
 	agg_data = merge(sent.senders.first.last.repos, repo_info)
     agg_data = merge(agg_data, thread_size_info)
+    agg_data = merge(agg_data, thread_persons_info)
     if ("countries"  %in% reports) agg_data = merge(agg_data, countries)
     if ("companies"  %in% reports) agg_data = merge(agg_data, companies)
 	return (agg_data)
