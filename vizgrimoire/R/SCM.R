@@ -291,6 +291,7 @@ EvolLines <- function(period, startdate, enddate, identities_db=NA, repository=N
             startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
+    data$negative_removed_lines <- -data$removed_lines
     return (data)
 }
 

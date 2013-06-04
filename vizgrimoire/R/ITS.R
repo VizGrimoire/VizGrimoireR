@@ -565,6 +565,51 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
     return (data)
 }
 
+GetTopClosersByAssignee <- function(days = 0, startdate, enddate, identities_db, filter = c("")) {
+
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
+    }
+
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+    }
+    q <- paste("SELECT up.id as id, 
+                       up.identifier as closers, 
+                       count(distinct(ill.issue_id)) as closed 
+                FROM people_upeople pup, 
+                     ", identities_db, ".upeople_companies upc, 
+                     ", identities_db, ".upeople up, 
+                     ", identities_db, ".companies com,
+                     issues_log_launchpad ill 
+                WHERE ill.assigned_to = pup.people_id and 
+                      pup.upeople_id = up.id and 
+                      up.id = upc.upeople_id and 
+                      upc.company_id = com.id and
+                      ", affiliations, "
+                      ill.date >= upc.init and 
+                      ill.date < upc.end and 
+                      ill.change_id  in ( 
+                                     select id 
+                                     from changes 
+                                     where new_value='Fix Committed' and 
+                                           changed_on>=", startdate, " and 
+                                           changed_on<", enddate, " ", date_limit,") 
+                GROUP BY up.identifier 
+                ORDER BY closed desc limit 10;", sep="")
+
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+
 # COUNTRIES
 
 GetCountriesNamesITS <- function (identities_db,startdate, enddate, filter=c()) {
