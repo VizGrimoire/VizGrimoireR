@@ -142,25 +142,29 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     repo_info <- run(query)
     
     # TODO: pending start and end date!
-    q <- paste("SELECT AVG(thread_size) AS thread_size_avg FROM 
+    q <- paste('SELECT AVG(thread_size) AS thread_size_avg FROM 
                 (SELECT COUNT(*) as thread_size, is_response_of FROM messages 
-                 WHERE is_response_of is not NULL GROUP BY is_response_of) dt")
+                 WHERE is_response_of is not NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,'
+                 GROUP BY is_response_of) dt')
     query <- new ("Query", sql = q)
     thread_size <- run(query)
     
-    q <- paste("SELECT AVG(persons) AS thread_persons_avg FROM
-                (SELECT COUNT(DISTINCT(email_address)) AS persons  
-                 FROM messages m, messages_people mp  
-                 WHERE m.message_ID = mp.message_ID  
-                 AND m.is_response_of IS NOT NULL  
-                 GROUP BY m.is_response_of) dt")
+    q <- paste('SELECT AVG(persons) AS thread_persons_avg FROM
+                (SELECT COUNT(DISTINCT(email_address)) AS persons
+                 FROM messages m, messages_people mp
+                 WHERE m.message_ID = mp.message_ID
+                 AND m.is_response_of IS NOT NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,'
+                 GROUP BY m.is_response_of) dt')
     query <- new ("Query", sql = q)
     thread_persons <- run(query)
     
-    q <- paste("SELECT COUNT(message_ID) as messages_no_response 
+    q <- paste('SELECT COUNT(message_ID) as messages_no_response 
                 FROM messages WHERE message_ID NOT IN 
                 (SELECT DISTINCT(is_response_of) FROM messages 
-                 WHERE is_response_of IS NOT NULL)")
+                 WHERE is_response_of IS NOT NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,')')
     query <- new ("Query", sql = q)
     messages_no_response <- run(query)
 
