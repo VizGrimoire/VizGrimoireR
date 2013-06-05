@@ -7,7 +7,7 @@
 
 # ./run_scripts-mediawiki.sh acs_cvsanaly_mediawiki_1571 acs_mlstats_mediawiki_1466 acs_bicho_mediawiki_1466 2013-06-01 /tmp
 
-START=2009-10-14
+START=2002-01-01
 #END=2013-03-01
 END=$4
 LOGS=mediawiki.log
