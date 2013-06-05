@@ -19,7 +19,7 @@
 ##
 ## SCR.R
 ##
-## Queries for SCM data analysis
+## Queries for source code review data analysis
 ##
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
