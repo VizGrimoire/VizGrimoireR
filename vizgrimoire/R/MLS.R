@@ -141,7 +141,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     repo_info <- run(query)
     
-    # TODO: pending start and end date!
+    # TODO: Build subqueries with GetSQLGlobal
     q <- paste('SELECT AVG(thread_size) AS thread_size_avg FROM 
                 (SELECT COUNT(*) as thread_size, is_response_of FROM messages 
                  WHERE is_response_of is not NULL
@@ -165,6 +165,17 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
                 (SELECT DISTINCT(is_response_of) FROM messages 
                  WHERE is_response_of IS NOT NULL
                  AND first_date>=',startdate,'AND first_date<',enddate,')')
+ 
+    q <- paste('SELECT (total-responses) as messages_no_response 
+                FROM 
+                (SELECT COUNT(DISTINCT(message_ID)) AS responses 
+                 FROM messages WHERE is_response_of IS NOT NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,') dt 
+                JOIN 
+                (SELECT COUNT(DISTINCT(message_ID)) AS total 
+                 FROM messages
+                 WHERE first_date>=',startdate,'AND first_date<',enddate,') dt1')
+ 
     query <- new ("Query", sql = q)
     messages_no_response <- run(query)
 
