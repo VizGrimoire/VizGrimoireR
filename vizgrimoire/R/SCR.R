@@ -126,93 +126,31 @@ GetSQLReportWhere <- function(repository, company, country, role){
 #Functions about the status of the review
 #########
 
-EvolSubmittedReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    q <- paste("select year(submitted_on), 
-                month(submitted_on),
-                count(*)
-                from issues
-                group by year(submitted_on),
-                      month(submitted_on)"
-                , sep="")
+
+EvolReviews <- function(period, startdate, enddate, type){
+
+    fields = paste(" count(distinct(i.issue)) as ", type)
+    print(fields)
+    tables = "issues i"
+    print(tables)
+    filters <- ifelse(type == "submitted", "",
+              ifelse(type == "opened", " i.status = 'NEW' or i.status = 'WORKINPROGRESS' ",
+              ifelse(type == "new", " i.status = 'NEW' ",
+              ifelse(type == "inprogress", " i.status = 'WORKINGPROGRESS' ",
+              ifelse(type == "closed", " i.status = 'MERGED' or i.status = 'ABANDONED' ",
+              ifelse(type == "merged", " i.status = 'MERGED' ",
+              ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
+              NA)))))))
+    print(filters)
+    q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
+                      startdate, enddate)    
+
+    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-EvolOpenedReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    q <- paste("select year(submitted_on), 
-                month(submitted_on),
-                count(*)
-                from issues
-                where status = 'NEW' or
-                      status = 'WORKINPROGRESS'
-                group by year(submitted_on),
-                      month(submitted_on)"
-                , sep="")
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-EvolNewReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    q <- paste("select year(submitted_on), 
-                month(submitted_on),
-                count(*)
-                from issues
-                where status = 'NEW'
-                group by year(submitted_on),
-                      month(submitted_on)"
-                , sep="")
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-EvolInProgressReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    q <- paste("select year(submitted_on), 
-                month(submitted_on),
-                count(*)
-                from issues
-                where status = 'WORKINPROGRESS'
-                group by year(submitted_on),
-                      month(submitted_on)"
-                , sep="")
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-EvolClosedReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    q <- paste("select year(submitted_on), 
-                month(submitted_on),
-                count(*)
-                from issues
-                where status = 'MERGED' or
-                      status = 'ABANDONED'
-                group by year(submitted_on),
-                      month(submitted_on)", sep="")
-}
-
-
-EvolMergedReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    q <- paste("select year(submitted_on), 
-                month(submitted_on),
-                count(*)
-                from issues
-                where status = 'MERGED'
-                group by year(submitted_on),
-                      month(submitted_on)", sep="")
-}
-
-EvolAbandonedReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    q <- paste("select year(submitted_on), 
-                       month(submitted_on),
-                       count(*)
-                from issues
-                where status = 'ABANDONED'
-                group by year(submitted_on),
-                      month(submitted_on)", sep="")
-}
 
 #######
 #Static functions
