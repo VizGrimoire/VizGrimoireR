@@ -130,8 +130,8 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     sent.senders.first.last.repos <- run(query)
     
     fields = "COUNT(*) as responses"
-    filters = paste(filters, " AND m.is_response_of IS NOT NULL")
-    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+    q <- GetSQLGlobal('first_date', fields, tables, filters_response, 
             startdate, enddate)
     query <- new ("Query", sql = q)
     responses <- run(query)
@@ -140,42 +140,38 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
     query <- new ("Query", sql = q)
     repo_info <- run(query)
-    
-    # TODO: Build subqueries with GetSQLGlobal
+        
+    fields = "COUNT(*) as thread_size"
+    filters_thread = paste(filters,"AND is_response_of is not NULL")
+    filters_thread = paste(filters_thread,"GROUP BY is_response_of")
+    q <- GetSQLGlobal('first_date', fields, tables, filters_thread, 
+            startdate, enddate)
     q <- paste('SELECT AVG(thread_size) AS thread_size_avg FROM 
-                (SELECT COUNT(*) as thread_size, is_response_of FROM messages 
-                 WHERE is_response_of is not NULL
-                 AND first_date>=',startdate,'AND first_date<',enddate,'
-                 GROUP BY is_response_of) dt')
+                (',q,') dt')
     query <- new ("Query", sql = q)
     thread_size <- run(query)
-    
-    q <- paste('SELECT AVG(persons) AS thread_persons_avg FROM
-                (SELECT COUNT(DISTINCT(email_address)) AS persons
-                 FROM messages m, messages_people mp
-                 WHERE m.message_ID = mp.message_ID
-                 AND m.is_response_of IS NOT NULL
-                 AND first_date>=',startdate,'AND first_date<',enddate,'
-                 GROUP BY m.is_response_of) dt')
+
+    fields = "COUNT(DISTINCT(email_address)) AS persons"
+    q <- GetSQLGlobal('first_date', fields, tables, filters_thread, 
+            startdate, enddate)
+    q <- paste('SELECT AVG(persons) AS thread_persons_avg FROM 
+                (',q,') dt')
     query <- new ("Query", sql = q)
     thread_persons <- run(query)
+
+    fields = "COUNT(DISTINCT(m.message_ID)) AS total"
+    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS responses"
+    filters_response = paste(filters,"AND is_response_of IS NOT NULL")
+
+    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+            startdate, enddate)
     
-    q <- paste('SELECT COUNT(message_ID) as messages_no_response 
-                FROM messages WHERE message_ID NOT IN 
-                (SELECT DISTINCT(is_response_of) FROM messages 
-                 WHERE is_response_of IS NOT NULL
-                 AND first_date>=',startdate,'AND first_date<',enddate,')')
- 
-    q <- paste('SELECT (total-responses) as messages_no_response 
-                FROM 
-                (SELECT COUNT(DISTINCT(message_ID)) AS responses 
-                 FROM messages WHERE is_response_of IS NOT NULL
-                 AND first_date>=',startdate,'AND first_date<',enddate,') dt 
-                JOIN 
-                (SELECT COUNT(DISTINCT(message_ID)) AS total 
-                 FROM messages
-                 WHERE first_date>=',startdate,'AND first_date<',enddate,') dt1')
- 
+    qr <- GetSQLGlobal('first_date', fieldsr, tables, filters_response, 
+            startdate, enddate)
+    
+    q <- paste('SELECT (total-responses) as sent_no_response 
+                FROM (',qr,') dt JOIN (',q,') dt1') 
+     
     query <- new ("Query", sql = q)
     messages_no_response <- run(query)
 
