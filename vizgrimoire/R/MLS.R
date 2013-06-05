@@ -78,11 +78,15 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     filters = GetFiltersOwnUniqueIdsMLS()
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
             startdate, enddate)
-    
-    print(q)
-    
     query <- new ("Query", sql = q)
-    sent.senders.repos.threads <- run(query)    
+    sent.senders.repos.threads <- run(query)
+    
+    fields = "COUNT(*) as responses"
+    filters = paste(filters, " AND m.is_response_of IS NOT NULL")
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    responses<- run(query)
         
     if ("countries" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
@@ -104,6 +108,7 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     }  
       
     mls <- sent.senders.repos.threads
+    mls <- merge (mls, responses, all = TRUE)
     if ("countries" %in% reports) mls <- merge (mls, countries, all = TRUE)
     if ("companies" %in% reports) mls <- merge (mls, companies, all = TRUE)
     return (mls)
@@ -124,30 +129,53 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     sent.senders.first.last.repos <- run(query)
     
+    fields = "COUNT(*) as responses"
+    filters = paste(filters, " AND m.is_response_of IS NOT NULL")
+    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    responses <- run(query)
+        
     # Specific SQL queries for special metrics
     q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
     query <- new ("Query", sql = q)
     repo_info <- run(query)
     
-    q <- paste("SELECT AVG(thread_size) AS thread_size_avg FROM 
+    # TODO: Build subqueries with GetSQLGlobal
+    q <- paste('SELECT AVG(thread_size) AS thread_size_avg FROM 
                 (SELECT COUNT(*) as thread_size, is_response_of FROM messages 
-                 WHERE is_response_of is not NULL GROUP BY is_response_of) dt")
+                 WHERE is_response_of is not NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,'
+                 GROUP BY is_response_of) dt')
     query <- new ("Query", sql = q)
     thread_size <- run(query)
     
-    q <- paste("SELECT AVG(persons) AS thread_persons_avg FROM
-                (SELECT COUNT(DISTINCT(email_address)) AS persons  
-                 FROM messages m, messages_people mp  
-                 WHERE m.message_ID = mp.message_ID  
-                 AND m.is_response_of IS NOT NULL  
-                 GROUP BY m.is_response_of) dt")
+    q <- paste('SELECT AVG(persons) AS thread_persons_avg FROM
+                (SELECT COUNT(DISTINCT(email_address)) AS persons
+                 FROM messages m, messages_people mp
+                 WHERE m.message_ID = mp.message_ID
+                 AND m.is_response_of IS NOT NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,'
+                 GROUP BY m.is_response_of) dt')
     query <- new ("Query", sql = q)
     thread_persons <- run(query)
     
-    q <- paste("SELECT COUNT(message_ID) as messages_no_response 
+    q <- paste('SELECT COUNT(message_ID) as messages_no_response 
                 FROM messages WHERE message_ID NOT IN 
                 (SELECT DISTINCT(is_response_of) FROM messages 
-                 WHERE is_response_of IS NOT NULL)")
+                 WHERE is_response_of IS NOT NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,')')
+ 
+    q <- paste('SELECT (total-responses) as messages_no_response 
+                FROM 
+                (SELECT COUNT(DISTINCT(message_ID)) AS responses 
+                 FROM messages WHERE is_response_of IS NOT NULL
+                 AND first_date>=',startdate,'AND first_date<',enddate,') dt 
+                JOIN 
+                (SELECT COUNT(DISTINCT(message_ID)) AS total 
+                 FROM messages
+                 WHERE first_date>=',startdate,'AND first_date<',enddate,') dt1')
+ 
     query <- new ("Query", sql = q)
     messages_no_response <- run(query)
 
@@ -172,6 +200,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     }      
 	
 	agg_data = merge(sent.senders.first.last.repos, repo_info)
+    agg_data = merge(agg_data, responses)
     agg_data = merge(agg_data, thread_size)
     agg_data = merge(agg_data, thread_persons)
     agg_data = merge(agg_data, messages_no_response)
