@@ -119,10 +119,6 @@ GetSQLReportWhere <- function(repository, company, country, role){
 }
 
 #########
-#Functions to obtain info per type of basic piece of data
-#########
-
-#########
 #Functions about the status of the review
 #########
 
@@ -130,9 +126,7 @@ GetSQLReportWhere <- function(repository, company, country, role){
 EvolReviews <- function(period, startdate, enddate, type){
 
     fields = paste(" count(distinct(i.issue)) as ", type)
-    print(fields)
     tables = "issues i"
-    print(tables)
     filters <- ifelse(type == "submitted", "",
               ifelse(type == "opened", " i.status = 'NEW' or i.status = 'WORKINPROGRESS' ",
               ifelse(type == "new", " i.status = 'NEW' ",
@@ -141,11 +135,44 @@ EvolReviews <- function(period, startdate, enddate, type){
               ifelse(type == "merged", " i.status = 'MERGED' ",
               ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
               NA)))))))
-    print(filters)
     q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
                       startdate, enddate)    
 
-    print (q)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+EvolReviewers <- function(period, startdate, enddate){
+    # TODO: so far without unique identities
+
+    fields = paste(" count(distinct(changed_by)) as reviewers ")
+    tables = " changes c "
+    filters <- ""
+
+    q <- GetSQLPeriod(period, " c.changed_on ", fields, tables, filters,
+                      startdate, enddate)
+    data <- run(query)
+    return (data)
+}
+
+EvolEvaluations <- function(period, startdate, enddate, type) {
+    # verified - VRIF
+    # approved - APRV
+    # code review - CRVW
+    # submitted - SUBM
+
+    fields = paste (" count(distinct(c.id)) as ", type)
+    tables = " changes c "
+    filters <- ifelse( type == 'verified', " c.field = 'VRIF' ",
+               ifelse( type == 'approved', " c.field = 'APRV' ", 
+               ifelse( type == 'code review', " c.field = 'CRVW' ", 
+               ifelse( type == 'submitted', " c.field = 'SUBM' ",
+               NA))))
+    q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+                      startdate, enddate)
+
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -158,33 +185,43 @@ EvolReviews <- function(period, startdate, enddate, type){
 
 Waiting4Review <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
 
-     q <- paste("", sep="")
+     q <- paste("select count(*) 
+                 from changes c, 
+                      (select c.issue_id as issue_id, 
+                              c.old_value as old_value, 
+                              max(c.id) as id 
+                       from changes c, 
+                            issues i 
+                       where c.issue_id = i.id and 
+                             i.status='NEW' 
+                       group by c.issue_id, c.old_value) t1 
+                 where t1.id = c.id and 
+                       (c.field='CRVW' or c.field='VRIF') and
+                       (c.new_value=1 or c.new_value=2);", sep="")
+     query <- new("Query", sql = q)
+     data <- run(query)
+     return (data)
 }
 
 
 Waiting4Submitter <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
 
-     q <- paste("", sep="")
+     q <- paste("select count(*) 
+                 from changes c, 
+                      (select c.issue_id as issue_id, 
+                              c.old_value as old_value, 
+                              max(c.id) as id 
+                       from changes c, 
+                            issues i 
+                       where c.issue_id = i.id and 
+                             i.status='NEW' 
+                       group by c.issue_id, c.old_value) t1 
+                 where t1.id = c.id and 
+                       (c.field='CRVW' or c.field='VRIF') and
+                       (c.new_value=-1 or c.new_value=-2);", sep="")
+     query <- new("Query", sql = q)
+     data <- run(query)
+     return (data)
 }
-
-
-EvolReviewers <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-     #To be done
-}
-
-EvolRemainingReviews <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-     #To be done
-}
-
-EvolWaitingForUpdates <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-     #To be done
-}
-
-#EvolAvgReviewTime <- function
-
-
-
-
-
 
 
