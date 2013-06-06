@@ -73,6 +73,30 @@ GetEvolOpened<- function (period, startdate, enddate) {
     return (data)	
 }
 
+
+GetEvolBMIIndex <- function(closed_condition, period, startdate, enddate){
+    #Metric based on chapter 4.3.1
+    #Metrics and Models in Software Quality Engineering by Stephen H. Kan
+
+    #This will fail if dataframes have different lenght (to be fixe)
+
+    closed = GetEvolClosed(closed_condition, period, startdate, enddate)
+    opened = GetEvolOpened(period, startdate, enddate)
+
+    evol_bmi = (closed$closed / opened$opened) * 100
+
+    closed$closers <- NULL
+    opened$openers <- NULL
+
+    data = merge(closed, opened, ALL=TRUE)
+    data = data.frame(data, evol_bmi)
+    return (data)
+}
+
+
+
+
+
 GetEvolReposITS <- function(period, startdate, enddate) {
     fields = 'COUNT(DISTINCT(tracker_id)) AS repositories'
     tables = 'issues'
@@ -342,6 +366,24 @@ GetRepoEvolOpened <- function(repo, period, startdate, enddate){
     data <- run(query)
     return (data)
 }
+
+GetRepoEvolBMIIndex <- function(repo, closed_condition, period, startdate, enddate){
+    #This will fail if dataframes have different lenght (to be fixe)
+
+
+    closed = GetRepoEvolClosed(repo, closed_condition, period, startdate, enddate)
+    opened = GetRepoEvolOpened(repo, period, startdate, enddate)
+
+    evol_bmi = (closed$closed / opened$opened) * 100
+    
+    closed$closers <- NULL
+    opened$openers <- NULL
+
+    data = merge(closed, opened, ALL=TRUE)
+    data = data.frame(data, evol_bmi)
+    return (data)
+}
+
 
 GetStaticRepoITS <- function (repo, startdate, enddate) {
     fields = "COUNT(submitted_by) AS opened, 
