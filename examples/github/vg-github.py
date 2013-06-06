@@ -27,6 +27,11 @@
 # Assumes MetricsGrimoire tools are already installed.
 # If you don't know how to install them, look at
 # misc/metricsgrimoire-setup.py
+#
+# Example of how to run, for repository VizGrimoire/VizGrimoireR
+# vg-github.py --user jgb --passwd XXX --dir /tmp/pp --removedb
+#  --ghuser ghuser --ghpasswd XXX --vgdir ~/src/vizGrimoire
+#  VizGrimoire/VizGrimoireR
 
 import argparse
 import MySQLdb
@@ -97,7 +102,9 @@ rConf = {"libdir": dir + "/rlibs",
          "unifypeople": args.vgdir + \
              "/VizGrimoireR/misc/unifypeople.py",
          "its2id": args.vgdir + \
-             "/VizGrimoireR/misc/its2identities.py"}
+             "/VizGrimoireR/misc/its2identities.py",
+         "domains": args.vgdir + \
+             "/VizGrimoireR/misc/domains_analysis.py"}
 
 conf = {"cvsanaly": cvsanalyConf,
         "bicho":    bichoConf}
@@ -162,10 +169,15 @@ call ([rConf["its2id"],
        "--db-database-ids=" + dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd])
 
+# Run affiliation stuff
+call ([rConf["domains"], "-d", dbPrefix + "_" + "cvsanaly",
+       "-u", args.user, "-p", args.passwd])
+
 # Run the SCM (git) analysis script (ensure installed vizgrimoirer package
 # is in R lib path)
 os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
 call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd,
-       "-i", dbPrefix + "_" + "cvsanaly", "-g", "weeks"])
+       "-i", dbPrefix + "_" + "cvsanaly", "-g", "weeks",
+       "--destination", dir])
 
