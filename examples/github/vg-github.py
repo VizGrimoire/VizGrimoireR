@@ -36,6 +36,7 @@
 import argparse
 import MySQLdb
 import os
+import shutil
 from subprocess import call
 
 # Parse command line options
@@ -95,7 +96,7 @@ bichoConf = {"bin": "bicho",
              "dbpasswd": "--db-password-out",
              "db": "--db-database-out"}
 
-rConf = {"libdir": dir + "/rlibs",
+rConf = {"libdir": dir + "/rlib",
          "vgrpkg": args.vgdir + "/VizGrimoireR/vizgrimoire",
          "scm-analysis": args.vgdir + \
              "/VizGrimoireR/examples/github/scm-analysis-github.R",
@@ -157,6 +158,13 @@ if not args.nomg:
 
 # Install the appropriate vizgrimorer R package in a specific location
 # to be used later (just in case it is not installed in standard R librdirs)
+try:
+    os.makedirs(rConf["libdir"])
+except OSError as e:
+    if e.errno == errno.EEXIST and os.path.isdir(path):
+        pass
+    else: 
+        raise
 env = os.environ.copy()
 env ["R_LIBS"] = rConf["libdir"]
 call (["R", "CMD", "INSTALL", rConf["vgrpkg"]], env=env)
@@ -178,6 +186,24 @@ call ([rConf["domains"], "-d", dbPrefix + "_" + "cvsanaly",
 os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
 call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd,
-       "-i", dbPrefix + "_" + "cvsanaly", "-g", "weeks",
+       "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
        "--destination", dir])
 
+# Now, let's produce an HTML dashboard for the JSON files produced in the
+# previous step
+vgjsFiles = ["vizgrimoire.min.js",
+             "src/jquery-1.7.1.min.js",
+             "bootstrap/js/bootstrap.min.js",
+             "vizgrimoire.css",
+             "browser/custom.css",
+             "bootstrap/css/bootstrap.min.css",
+             "bootstrap/css/bootstrap-responsive.min.css",
+             "browser/navbar.html",
+             "browser/footer.html",
+             "browser/refcard.html",
+             "browser/project-card.html"]
+for file in vgjsFiles:
+    shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
+
+# Note: missing files:
+# index.htmo, config.json
