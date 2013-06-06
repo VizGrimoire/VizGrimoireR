@@ -131,6 +131,8 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     }  
       
     mls <- sent.senders.repos.threads
+    mls <- merge (mls, senders_init, all = TRUE)
+    mls <- merge (mls, senders_response, all = TRUE)
     mls <- merge (mls, responses, all = TRUE)
     mls <- merge (mls, init, all = TRUE)
     if ("countries" %in% reports) mls <- merge (mls, countries, all = TRUE)
