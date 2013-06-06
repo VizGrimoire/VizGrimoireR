@@ -87,6 +87,14 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
             startdate, enddate)
     query <- new ("Query", sql = q)
     responses<- run(query)
+    
+    fields = "COUNT(*) as sent_init"
+    filters = paste(filters, " AND m.is_response_of IS NULL")
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    init<- run(query)
+    
         
     if ("countries" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
@@ -109,6 +117,7 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
       
     mls <- sent.senders.repos.threads
     mls <- merge (mls, responses, all = TRUE)
+    mls <- merge (mls, init, all = TRUE)
     if ("countries" %in% reports) mls <- merge (mls, countries, all = TRUE)
     if ("companies" %in% reports) mls <- merge (mls, companies, all = TRUE)
     return (mls)
@@ -135,8 +144,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
             startdate, enddate)
     query <- new ("Query", sql = q)
     responses <- run(query)
-        
-    # Specific SQL queries for special metrics
+
     q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
     query <- new ("Query", sql = q)
     repo_info <- run(query)
@@ -159,18 +167,19 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     thread_persons <- run(query)
 
-    fields = "COUNT(DISTINCT(m.message_ID)) AS total"
-    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS responses"
+    fieldsi = "COUNT(DISTINCT(m.message_ID)) AS sent_init"
+    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS unique_responses"
     filters_response = paste(filters,"AND is_response_of IS NOT NULL")
+    filters_init = paste(filters,"AND is_response_of IS NULL")
 
-    q <- GetSQLGlobal('first_date', fields, tables, filters, 
+    qi <- GetSQLGlobal('first_date', fieldsi, tables, filters_init, 
             startdate, enddate)
     
     qr <- GetSQLGlobal('first_date', fieldsr, tables, filters_response, 
             startdate, enddate)
     
-    q <- paste('SELECT (total-responses) as sent_no_response 
-                FROM (',qr,') dt JOIN (',q,') dt1') 
+    q <- paste('SELECT sent_init, (sent_init-unique_responses) AS sent_no_response 
+                FROM (',qr,') dt JOIN (',qi,') dt1') 
      
     query <- new ("Query", sql = q)
     messages_no_response <- run(query)
