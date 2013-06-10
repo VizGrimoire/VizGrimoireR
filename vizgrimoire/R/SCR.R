@@ -75,45 +75,42 @@ GetSQLCountriesWhere <- function(country, role){
 #Generic functions to obtain FROM and WHERE clauses per type of report
 ##########
 
-GetSQLReportFrom <- function(identities_db, repository, company, country){
+GetSQLReportFrom <- function(identities_db, type = list(NA, NA)){
     #generic function to generate 'from' clauses
+    #"type" is a list of two values: type of analysis and value of 
+    #such analysis
+
+    analysis = type[1]
+    value = [2]
 
     from = ""
 
-    if (! is.na(repository)){
-        #evolution of commits in a given repository
-        from <- paste(from, GetSQLRepositoriesFrom())
-    }
-    else if (! is.na(company)){
-        #evolution of commits in a given company
-        from <- paste(from, GetSQLCompaniesFrom(identities_db))
-    }
-    else if (! is.na(country)){
-        #evolution of commits in a given country
-        from <- paste(from, GetSQLCountriesFrom(identities_db))
-    }
- 
+    if (! is.na(analysis)){
+        from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesFrom()),
+                ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(identities_db)),
+                ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(identities_db)),
+                NA)))
+
     return (from)
 }
 
 
-GetSQLReportWhere <- function(repository, company, country, role){
+GetSQLReportWhere <- function(type = list(NA, NA), role){
     #generic function to generate 'where' clauses
 
-    where = ""
+    #"type" is a list of two values: type of analysis and value of 
+    #such analysis
 
-    if (! is.na(repository)){
-        #evolution of commits in a given repository
-        where <- paste(where, GetSQLRepositoriesWhere(repository))
-    }
-    else if (! is.na(company)){
-        #evolution of commits in a given company
-        where <- paste(where, GetSQLCompaniesWhere(company, role))
-    }
-    else if (! is.na(country)){
-        #evolution of commits in a given country
-        where <- paste(where, GetSQLCountriesWhere(country, role))
-    }
+    analysis = type[1]
+    value = type[2]
+
+    from = ""
+
+    if (! is.na(analysis)){
+        from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesWhere(value)),
+                ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(value, role)),
+                ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(value, role)),
+                NA)))
 
     return (where)
 }
