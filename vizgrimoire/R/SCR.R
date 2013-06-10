@@ -30,13 +30,13 @@
 ##########
 GetSQLRepositoriesFrom <- function(){
     #tables necessaries for repositories
-    return (" , repositories r")
+    return (" , trackers t")
 }
 
 GetSQLRepositoriesWhere <- function(repository){
     #fields necessaries to match info among tables
-    return (paste(" and r.name =", repository, " 
-                   and r.id = s.repository_id", sep=""))
+    return (paste(" and t.url =", repository, " 
+                   and t.id = i.tracker_id", sep=""))
 }
 
 GetSQLCompaniesFrom <- function(identities_db){
@@ -46,12 +46,12 @@ GetSQLCompaniesFrom <- function(identities_db){
                   ",identities_db,".companies c", sep=""))
 }
 
-GetSQLCompaniesWhere <- function(company, role){
+GetSQLCompaniesWhere <- function(company){
     #fields necessaries to match info among tables
-    return (paste("and s.",role,"_id = pup.people_id
+    return (paste("and i.submitted_by = pup.people_id
                   and pup.upeople_id = upc.upeople_id
-                  and s.date >= upc.init
-                  and s.date < upc.end
+                  and i.submitted_on >= upc.init
+                  and i.submitted_on < upc.end
                   and upc.company_id = c.id
                   and c.name =", company, sep=""))
 }
@@ -60,12 +60,12 @@ GetSQLCountriesFrom <- function(identities_db){
     #tables necessaries for companies
     return (paste(" , ",identities_db,".people_upeople pup,
                   ",identities_db,".upeople_countries upc,
-                  ",identities_db,".countries c", sep=""))
+                  ",identities_db,".countries c ", sep=""))
 }
 
-GetSQLCountriesWhere <- function(country, role){
+GetSQLCountriesWhere <- function(country){
     #fields necessaries to match info among tables
-    return (paste("and s.",role,"_id = pup.people_id
+    return (paste("and i.submitted_by = pup.people_id
                   and pup.upeople_id = upc.upeople_id
                   and upc.country_id = c.id
                   and c.name =", country, sep=""))
@@ -75,13 +75,13 @@ GetSQLCountriesWhere <- function(country, role){
 #Generic functions to obtain FROM and WHERE clauses per type of report
 ##########
 
-GetSQLReportFrom <- function(identities_db, type = list(NA, NA)){
+GetSQLReportFrom <- function(identities_db, type_analysis){
     #generic function to generate 'from' clauses
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
 
-    analysis = type[1]
-    value = [2]
+    analysis = type_analysis[1]
+    value = type_analysis[2]
 
     from = ""
 
@@ -90,58 +90,83 @@ GetSQLReportFrom <- function(identities_db, type = list(NA, NA)){
                 ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(identities_db)),
                 ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(identities_db)),
                 NA)))
-
+    }
     return (from)
 }
 
 
-GetSQLReportWhere <- function(type = list(NA, NA), role){
+GetSQLReportWhere <- function(type_analysis){
     #generic function to generate 'where' clauses
 
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
 
-    analysis = type[1]
-    value = type[2]
-
-    from = ""
+    analysis = type_analysis[1]
+    value = type_analysis[2]
+    where = ""
 
     if (! is.na(analysis)){
-        from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesWhere(value)),
-                ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(value, role)),
-                ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(value, role)),
+        where <- ifelse (analysis == 'repository', paste(where, GetSQLRepositoriesWhere(value)),
+                ifelse (analysis == 'company', paste(where, GetSQLCompaniesWhere(value)),
+                ifelse (analysis == 'country', paste(where, GetSQLCountriesWhere(value)),
                 NA)))
-
+    }
     return (where)
 }
 
 #########
-#Functions about the status of the review
+# General functions
 #########
 
+GetReposSRCName <- function (startdate, enddate){
 
-EvolReviews <- function(period, startdate, enddate, type){
-
-    fields = paste(" count(distinct(i.issue)) as ", type)
-    tables = "issues i"
-    filters <- ifelse(type == "submitted", "",
-              ifelse(type == "opened", " i.status = 'NEW' or i.status = 'WORKINPROGRESS' ",
-              ifelse(type == "new", " i.status = 'NEW' ",
-              ifelse(type == "inprogress", " i.status = 'WORKINGPROGRESS' ",
-              ifelse(type == "closed", " i.status = 'MERGED' or i.status = 'ABANDONED' ",
-              ifelse(type == "merged", " i.status = 'MERGED' ",
-              ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
-              NA)))))))
-    q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
-                      startdate, enddate)    
-
+    q = paste("select t.url as name, 
+                count(distinct(i.id)) as issues
+         from  issues i,
+               trackers t
+         where i.tracker_id = t.id and
+               i.submitted_on >=",  startdate, " and
+               i.submitted_on < ", enddate, "
+         group by t.url
+         order by issues desc;", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 
-EvolReviewers <- function(period, startdate, enddate){
+#########
+#Functions about the status of the review
+#########
+
+
+EvolReviews <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+
+    #Building the query
+    fields = paste(" count(distinct(i.issue)) as ", type)
+    tables = paste("issues i", GetSQLReportFrom(NA, type_analysis))
+    filters <- ifelse(type == "submitted", "",
+              ifelse(type == "opened", " (i.status = 'NEW' or i.status = 'WORKINPROGRESS') ",
+              ifelse(type == "new", " i.status = 'NEW' ",
+              ifelse(type == "inprogress", " i.status = 'WORKINGPROGRESS' ",
+              ifelse(type == "closed", " (i.status = 'MERGED' or i.status = 'ABANDONED') ",
+              ifelse(type == "merged", " i.status = 'MERGED' ",
+              ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
+              NA)))))))
+    filters = paste(filters, GetSQLReportWhere(type_analysis), sep="")
+    print(filters)
+    #Adding dates filters
+    q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
+                      startdate, enddate)    
+
+    #Running the query
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+EvolReviewers <- function(period, startdate, enddate, type_analysis=list(NA, NA)){
     # TODO: so far without unique identities
 
     fields = paste(" count(distinct(changed_by)) as reviewers ")
@@ -154,22 +179,28 @@ EvolReviewers <- function(period, startdate, enddate){
     return (data)
 }
 
-EvolEvaluations <- function(period, startdate, enddate, type) {
+EvolEvaluations <- function(period, startdate, enddate, type, type_analysis=list(NA, NA)) {
     # verified - VRIF
     # approved - APRV
     # code review - CRVW
     # submitted - SUBM
 
+    #Building the query
     fields = paste (" count(distinct(c.id)) as ", type)
-    tables = " changes c "
+    tables = paste(" changes c, issues i ", GetSQLReportFrom(NA, type_analysis))
     filters <- ifelse( type == 'verified', " c.field = 'VRIF' ",
                ifelse( type == 'approved', " c.field = 'APRV' ", 
-               ifelse( type == 'code review', " c.field = 'CRVW' ", 
+               ifelse( type == 'codereview', " c.field = 'CRVW' ", 
                ifelse( type == 'submitted', " c.field = 'SUBM' ",
                NA))))
+    filters = paste(filters, " and i.id = c.issue_id ")
+    filters = paste(filters, GetSQLReportWhere(type_analysis))
+
+    #Adding dates filters
     q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
                       startdate, enddate)
 
+    #Running query
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -180,10 +211,11 @@ EvolEvaluations <- function(period, startdate, enddate, type) {
 #Static functions
 #######
 
-Waiting4Review <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+Waiting4Review <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
 
-     q <- paste("select count(*) 
-                 from changes c, 
+     fields = " count(distinct(c.id)) as WaitingForReviewer "
+     tables = " changes c, 
+                issues i,
                       (select c.issue_id as issue_id, 
                               c.old_value as old_value, 
                               max(c.id) as id 
@@ -191,20 +223,27 @@ Waiting4Review <- function(period, startdate, enddate, identities_db=NA, reposit
                             issues i 
                        where c.issue_id = i.id and 
                              i.status='NEW' 
-                       group by c.issue_id, c.old_value) t1 
-                 where t1.id = c.id and 
-                       (c.field='CRVW' or c.field='VRIF') and
-                       (c.new_value=1 or c.new_value=2);", sep="")
+                       group by c.issue_id, c.old_value) t1 "
+     tables = paste(tables, GetSQLReportFrom(identities_db, type_analysis))
+     filters =  " i.id = c.issue_id
+                  and t1.id = c.id   
+                  and (c.field='CRVW' or c.field='VRIF')
+                  and (c.new_value=1 or c.new_value=2) "
+     filters = paste(filters, GetSQLReportWhere(type_analysis))
+
+     q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+                       startdate, enddate)
      query <- new("Query", sql = q)
      data <- run(query)
      return (data)
 }
 
 
-Waiting4Submitter <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+Waiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
 
-     q <- paste("select count(*) 
-                 from changes c, 
+     fields = "count(distinct(c.id)) as WaitingForSubmitter "
+     tables = "  changes c, 
+                 issues i,
                       (select c.issue_id as issue_id, 
                               c.old_value as old_value, 
                               max(c.id) as id 
@@ -212,10 +251,16 @@ Waiting4Submitter <- function(period, startdate, enddate, identities_db=NA, repo
                             issues i 
                        where c.issue_id = i.id and 
                              i.status='NEW' 
-                       group by c.issue_id, c.old_value) t1 
-                 where t1.id = c.id and 
-                       (c.field='CRVW' or c.field='VRIF') and
-                       (c.new_value=-1 or c.new_value=-2);", sep="")
+                       group by c.issue_id, c.old_value) t1 "
+     tables = paste(tables, GetSQLReportFrom(identities_db, type_analysis))
+     filters = " i.id = c.issue_id
+                 and t1.id = c.id  
+                 and (c.field='CRVW' or c.field='VRIF') 
+                 and (c.new_value=-1 or c.new_value=-2) "
+     filters = paste(filters, GetSQLReportWhere(type_analysis))
+
+     q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+                       startdate, enddate)
      query <- new("Query", sql = q)
      data <- run(query)
      return (data)

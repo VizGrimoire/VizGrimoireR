@@ -52,19 +52,72 @@ if (conf$granularity == 'years') {
 
 # destination directory
 destdir <- conf$destination
+#type of analysis
+reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 
 reviews_type <- list("submitted", "opened", "new", "inprogress", "closed", "merged", "abandoned")
 
+evaluations_type <- list("verified", "approved", "codereview", "submitted")
 #########
 #EVOLUTIONARY DATA
 #########
 
-data = c()
+print ("ANALYSIS PER TYPE OF REVIEW")
 for (analysis in reviews_type)
 {   
     evol_data = EvolReviews(period, conf$startdate, conf$enddate, analysis) 
-    data = merge(data, evol_data, all=TRUE)
-    print(data)
+    print(analysis)
+    print(evol_data)
 }
+
+print ("ANALYSIS PER TYPE OF EVALUATION AT PATCH LEVEL")
+for (analysis in evaluations_type)
+{
+    evol_data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis)
+    print (analysis)
+    print (evol_data)
+}
+
+print ("STATIC METRICS")
+data = Waiting4Review(period, conf$startdate, conf$enddate)
+print(data)
+data = Waiting4Submitter(period, conf$startdate, conf$enddate)
 print(data)
 
+
+########
+#ANALYSIS PER REPOSITORY
+########
+
+print("ANALYSIS PER REPOSITORY")
+print(reports)
+print('repositories' %in% reports)
+if ('repositories' %in% reports) {
+    repos  <- GetReposSRCName(conf$startdate, conf$enddate)
+    repos <- repos$name
+    #createJSON(repos, paste(destdir,"data/json/scr-repos.json", sep=''))
+
+    for (repo in repos) {
+        repo_name = paste("'", repo, "'", sep='')
+        repo_aux = paste("", repo, "", sep='')
+        print (repo_name)
+
+        for (analysis in reviews_type)
+        {
+            evol_data = EvolReviews(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
+            print(evol_data)
+        }
+
+        for (analysis in evaluations_type)
+        {
+            evol_data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
+            print (analysis)
+            print (evol_data)
+        }
+
+        data = Waiting4Review(period, conf$startdate, conf$enddate, conf$identities_db,  list("repository", repo_name))
+        print(data)
+    
+        data = Waiting4Submitter(period, conf$startdate, conf$enddate, conf$identities_db,  list("repository", repo_name))
+    }
+}
