@@ -63,26 +63,55 @@ evaluations_type <- list("verified", "approved", "codereview", "submitted")
 #########
 
 print ("ANALYSIS PER TYPE OF REVIEW")
+first = TRUE
+evol_data = data.frame()
 for (analysis in reviews_type)
 {   
-    evol_data = EvolReviews(period, conf$startdate, conf$enddate, analysis) 
-    print(analysis)
-    print(evol_data)
+    data = EvolReviews(period, conf$startdate, conf$enddate, analysis) 
+    data <- completePeriodIds(data, conf$granularity, conf)
+    data <- data[order(data$id),]
+    data[is.na(data)] <- 0
+    if (first) {
+        evol_data = data
+        first = FALSE
+    }else{
+        evol_data = merge(evol_data, data, all = TRUE)
+    }
 }
+print(evol_data)
+createJSON(evol_data, paste(destdir,"/scr-reviews-evolutionary.json", sep=''))
 
+evol_data = data.frame()
+first = TRUE
 print ("ANALYSIS PER TYPE OF EVALUATION AT PATCH LEVEL")
 for (analysis in evaluations_type)
 {
-    evol_data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis)
-    print (analysis)
-    print (evol_data)
+    data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis)
+    data <- completePeriodIds(data, conf$granularity, conf)
+    data <- data[order(data$id),]
+    data[is.na(data)] <- 0
+    if (first){
+        evol_data = data
+        first = FALSE
+    } else {
+        evol_data = merge(evol_data, data, all=TRUE)
+    }
 }
+createJSON(evol_data, paste(destdir,"/scr-patches-evolutionary.json", sep=''))
 
 print ("STATIC METRICS")
-data = Waiting4Review(period, conf$startdate, conf$enddate)
-print(data)
+data1 = Waiting4Review(period, conf$startdate, conf$enddate)
+data1 <- completePeriodIds(data1, conf$granularity, conf)
+data1 <- data1[order(data1$id),]
+data1[is.na(data1)] <- 0
+
 data = Waiting4Submitter(period, conf$startdate, conf$enddate)
-print(data)
+data <- completePeriodIds(data, conf$granularity, conf)
+data <- data[order(data$id),]
+data[is.na(data)] <- 0
+evol_data = merge(data, data1, all=TRUE)
+
+createJSON(evol_data, paste(destdir,"/scr-waiting-evolutionary.json", sep=''))
 
 
 ########
@@ -102,22 +131,52 @@ if ('repositories' %in% reports) {
         repo_aux = paste("", repo, "", sep='')
         print (repo_name)
 
+        first = TRUE
+        evol_data = data.frame()
         for (analysis in reviews_type)
         {
-            evol_data = EvolReviews(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
-            print(evol_data)
-        }
+            data = EvolReviews(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
+            data <- completePeriodIds(data, conf$granularity, conf)
+            data <- data[order(data$id),]
+            data[is.na(data)] <- 0
+            if (first) {
+                evol_data = data
+                first = FALSE
+            }else{
+               evol_data = merge(evol_data, data, all = TRUE)
+            }
+    
 
+        }
+        createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-reviews-evolutionary.json", sep=''))
+
+        first = TRUE
+        evol_data = data.frame()
         for (analysis in evaluations_type)
         {
-            evol_data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
-            print (analysis)
-            print (evol_data)
+            data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
+            data <- completePeriodIds(data, conf$granularity, conf)
+            data <- data[order(data$id),]
+            data[is.na(data)] <- 0
+            if (first) {
+                evol_data = data
+                first = FALSE
+            }else{
+               evol_data = merge(evol_data, data, all = TRUE)
+            }    
         }
+        createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-patches-evolutionary.json", sep=''))
 
         data = Waiting4Review(period, conf$startdate, conf$enddate, conf$identities_db,  list("repository", repo_name))
-        print(data)
+        data1 <- completePeriodIds(data1, conf$granularity, conf)
+        data1 <- data1[order(data1$id),]
+        data1[is.na(data1)] <- 0
     
         data = Waiting4Submitter(period, conf$startdate, conf$enddate, conf$identities_db,  list("repository", repo_name))
+        data <- completePeriodIds(data, conf$granularity, conf)
+        data <- data[order(data$id),]
+        data[is.na(data)] <- 0
+        evol_data = merge(data, data1, all=TRUE)
+        createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-waiting-evolutionary.json", sep=''))
     }
 }
