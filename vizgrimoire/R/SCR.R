@@ -161,7 +161,7 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
         q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
                       startdate, enddate)
     }else{
-        q <- q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
+        q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
     }
 
     #Retrieving results
@@ -252,7 +252,7 @@ GetEvaluations <- function(period, startdate, enddate, type, type_analysis, evol
         q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
                           startdate, enddate)
     }else{
-        q <- GetSQLGlobal(period, " c.changed_on", fields, tables, filters,
+        q <- GetSQLGlobal(" c.changed_on", fields, tables, filters,
                       startdate, enddate)
     }
 
@@ -321,7 +321,7 @@ GetWaiting4Reviewer <- function(period, startdate, enddate, identities_db, type_
          q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
                            startdate, enddate)
      }else{
-         q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
+         q <- GetSQLGlobal(" c.changed_on ", fields, tables, filters,
                            startdate, enddate)
      }
 
@@ -364,7 +364,7 @@ GetWaiting4Submitter <- function(period, startdate, enddate, identities_db, type
          q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
                            startdate, enddate)
      }else{
-         q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
+         q <- GetSQLGlobal(" c.changed_on ", fields, tables, filters,
                            startdate, enddate)
      }
 
@@ -373,11 +373,11 @@ GetWaiting4Submitter <- function(period, startdate, enddate, identities_db, type
      return (data)
 }
 
-EvolWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA), evolutionary){
+EvolWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
     return (GetWaiting4Submitter(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-StaticWaiting4Reviewer <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA), evolutionary){
+StaticWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
     return (GetWaiting4Reviewer(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
@@ -396,7 +396,7 @@ GetReviewers <- function(period, startdate, enddate, identities_db, type_analysi
         q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
                           startdate, enddate)
     }else{
-        q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
+        q <- GetSQLGlobal(" c.changed_on ", fields, tables, filters,
                           startdate, enddate)
     }
 
@@ -406,10 +406,10 @@ GetReviewers <- function(period, startdate, enddate, identities_db, type_analysi
 }
 
 EvolReviewers <- function (period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
-    return (GetReviewers(period, startdate, enddate, type_analysis, TRUE))
+    return (GetReviewers(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticReviewers <- function (period, startdate, enddate, identities_db = NA, type_analysis = list(NA, NA)){
-    return (GetReviewers(period, startdate, enddate, type_analysis, FALSE))
+    return (GetReviewers(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
