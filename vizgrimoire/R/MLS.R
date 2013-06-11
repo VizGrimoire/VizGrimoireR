@@ -91,7 +91,7 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters_response, 
             startdate, enddate)
     query <- new ("Query", sql = q)
-    responses.senders_responses<- run(query)
+    responses.senders_response<- run(query)
     
     # Init messages
     fields = "COUNT(*) as sent_init, COUNT(DISTINCT(pup.upeople_id)) as senders_init"
@@ -169,7 +169,8 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     thread_size <- run(query)
     
     fieldsi = "COUNT(DISTINCT(m.message_ID)) AS sent_init"
-    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS unique_responses"
+    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS sent_responses,  
+               COUNT(DISTINCT(m.is_response_of)) AS unique_responses"
     
     qi <- GetSQLGlobal('first_date', fieldsi, tables, filters_init, 
             startdate, enddate)
@@ -177,13 +178,13 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     qr <- GetSQLGlobal('first_date', fieldsr, tables, filters_response, 
             startdate, enddate)
     
-    q <- paste('SELECT sent_init, (sent_init-unique_responses) AS sent_no_response 
+    q <- paste('SELECT sent_init, sent_responses, 
+                (sent_init-unique_responses) AS sent_no_response 
                 FROM (',qr,') dt JOIN (',qi,') dt1')
     query <- new ("Query", sql = q)
     messages_no_response <- run(query)
 
     # Persons queries
-    # fields = "COUNT(DISTINCT(email_address)) AS persons"
     fields = "COUNT(DISTINCT(pup.upeople_id)) as persons"
     q <- GetSQLGlobal('first_date', fields, tables, filters_thread, 
             startdate, enddate)
@@ -191,14 +192,12 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     thread_persons <- run(query)
     
-    # fields = "COUNT(DISTINCT(email_address)) AS senders_response"
     fields = "COUNT(DISTINCT(pup.upeople_id)) as senders_response"
     q <- GetSQLGlobal('first_date', fields, tables, filters_response, 
             startdate, enddate)
     query <- new ("Query", sql = q)
     senders_response <- run(query)
     
-    # fields = "COUNT(DISTINCT(email_address)) AS senders_init"
     fields = "COUNT(DISTINCT(pup.upeople_id)) as senders_init"
     q <- GetSQLGlobal('first_date', fields, tables, filters_init, 
             startdate, enddate)
