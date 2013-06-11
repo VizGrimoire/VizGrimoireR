@@ -378,7 +378,7 @@ EvolWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA, 
 }
 
 StaticWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
-    return (GetWaiting4Reviewer(period, startdate, enddate, identities_db, type_analysis, FALSE))
+    return (GetWaiting4Submitter(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
