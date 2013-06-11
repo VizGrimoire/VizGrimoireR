@@ -139,8 +139,8 @@ GetReposSRCName <- function (startdate, enddate){
 #Functions about the status of the review
 #########
 
-
-EvolReviews <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+# REVIEWS
+GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutionary){
 
     #Building the query
     fields = paste(" count(distinct(i.issue)) as ", type)
@@ -155,31 +155,82 @@ EvolReviews <- function(period, startdate, enddate, type, type_analysis = list(N
               NA)))))))
     filters = paste(filters, GetSQLReportWhere(type_analysis), sep="")
     print(filters)
-    #Adding dates filters
-    q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
-                      startdate, enddate)    
 
-    #Running the query
+    #Adding dates filters (and evolutionary or static analysis)
+    if (evolutionary){
+        q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
+                      startdate, enddate)
+    }else{
+        q <- q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
+    }
+
+    #Retrieving results
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
+# EVOLUTIONARY META FUNCTIONS BASED ON REVIEWS
 
-EvolReviewers <- function(period, startdate, enddate, type_analysis=list(NA, NA)){
-    # TODO: so far without unique identities
-
-    fields = paste(" count(distinct(changed_by)) as reviewers ")
-    tables = " changes c "
-    filters <- ""
-
-    q <- GetSQLPeriod(period, " c.changed_on ", fields, tables, filters,
-                      startdate, enddate)
-    data <- run(query)
-    return (data)
+EvolReviewsSubmitted <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, TRUE))
 }
 
-EvolEvaluations <- function(period, startdate, enddate, type, type_analysis=list(NA, NA)) {
+EvolReviewsOpened <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "opened", type_analysis, TRUE))
+}
+
+EvolReviewsNew<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "new", type_analysis, TRUE))
+}
+
+EvolReviewsInProgress<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, TRUE))
+}
+
+EvolReviewsClosed<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "closed", type_analysis, TRUE))
+}
+
+EvolReviewsMerged<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "merged", type_analysis, TRUE))
+}
+EvolReviewsAbandoned<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, TRUE))
+}
+
+# STATIC META FUNCTIONS BASED ON REVIEWS
+
+StaticReviewsSubmitted <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, FALSE))
+}
+
+StaticReviewsOpened <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "opened", type_analysis, FALSE))
+}
+
+StaticReviewsNew<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "new", type_analysis, FALSE))
+}
+
+StaticReviewsInProgress<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, FALSE))
+}
+
+StaticReviewsClosed<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "closed", type_analysis, FALSE))
+}
+
+StaticReviewsMerged<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "merged", type_analysis, FALSE))
+}
+
+StaticReviewsAbandoned<- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, FALSE))
+}
+
+#WORK ON PATCHES: ANY REVIEW MAY HAVE MORE THAN ONE PATCH
+GetEvaluations <- function(period, startdate, enddate, type, type_analysis, evolutionary){
     # verified - VRIF
     # approved - APRV
     # code review - CRVW
@@ -189,16 +240,21 @@ EvolEvaluations <- function(period, startdate, enddate, type, type_analysis=list
     fields = paste (" count(distinct(c.id)) as ", type)
     tables = paste(" changes c, issues i ", GetSQLReportFrom(NA, type_analysis))
     filters <- ifelse( type == 'verified', " c.field = 'VRIF' ",
-               ifelse( type == 'approved', " c.field = 'APRV' ", 
-               ifelse( type == 'codereview', " c.field = 'CRVW' ", 
-               ifelse( type == 'submitted', " c.field = 'SUBM' ",
+               ifelse( type == 'approved', " c.field = 'APRV' ",
+               ifelse( type == 'codereview', " c.field = 'CRVW' ",
+               ifelse( type == 'sent', " c.field = 'SUBM' ",
                NA))))
     filters = paste(filters, " and i.id = c.issue_id ")
     filters = paste(filters, GetSQLReportWhere(type_analysis))
 
     #Adding dates filters
-    q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+    if (evolutionary){
+        q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+                          startdate, enddate)
+    }else{
+        q <- GetSQLGlobal(period, " c.changed_on", fields, tables, filters,
                       startdate, enddate)
+    }
 
     #Running query
     query <- new("Query", sql = q)
@@ -206,8 +262,42 @@ EvolEvaluations <- function(period, startdate, enddate, type, type_analysis=list
     return (data)
 }
 
+# EVOLUTIONARY METRICS
+EvolPatchesVerified <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "verified", type_analysis, TRUE))
+}
 
-Waiting4Review <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+EvolPatchesApproved <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "approved", type_analysis, TRUE))
+}
+
+EvolPatchesCodeReview <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "codereview", type_analysis, TRUE))
+}
+
+EvolPatchesSent <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "sent", type_analysis, TRUE))
+}
+
+#STATIC METRICS
+StaticPatchesVerified  <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "verified", type_analysis, FALSE))
+}
+
+StaticPatchesApproved <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "approved", type_analysis, FALSE))
+}
+
+StaticPatchesCodeReview <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "codereview", type_analysis, FALSE))
+}
+
+StaticPatchesSent <- function(period, startdate, enddate, type, type_analysis = list(NA, NA)){
+    return (GetEvaluations (period, startdate, enddate, "sent", type_analysis, FALSE))
+}
+
+#PATCHES WAITING FOR REVIEW FROM REVIEWER
+GetWaiting4Reviewer <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
 
      fields = " count(distinct(c.id)) as WaitingForReviewer "
      tables = " changes c, 
@@ -227,15 +317,30 @@ Waiting4Review <- function(period, startdate, enddate, identities_db=NA, type_an
                   and (c.new_value=1 or c.new_value=2) "
      filters = paste(filters, GetSQLReportWhere(type_analysis))
 
-     q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
-                       startdate, enddate)
+     if (evolutionary){
+         q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+                           startdate, enddate)
+     }else{
+         q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
+                           startdate, enddate)
+     }
+
      query <- new("Query", sql = q)
      data <- run(query)
      return (data)
 }
 
+EvolWaiting4Reviewer <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA), evolutionary){
+    return (GetWaiting4Reviewer(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
 
-Waiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+StaticWaiting4Reviewer <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA), evolutionary){
+    return (GetWaiting4Reviewer(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+
+GetWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis){
 
      fields = "count(distinct(c.id)) as WaitingForSubmitter "
      tables = "  changes c, 
@@ -254,78 +359,56 @@ Waiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type
                  and (c.field='CRVW' or c.field='VRIF') 
                  and (c.new_value=-1 or c.new_value=-2) "
      filters = paste(filters, GetSQLReportWhere(type_analysis))
+     if (evolutionary){
+         q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+                           startdate, enddate)
+     }else{
+         q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
+                           startdate, enddate)
+     }
 
-     q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
-                       startdate, enddate)
      query <- new("Query", sql = q)
      data <- run(query)
      return (data)
 }
 
-
-#######
-#Static functions
-#######
-
-StaticNumReviews <- function(period, startdate, enddate, identities_db=NA, type, type_analysis=list(NA, NA){
-    fields = paste(" count(distinct(i.issue)) as ", type)
-    tables = paste("issues i", GetSQLReportFrom(NA, type_analysis))
-    filters <- ifelse(type == "submitted", "",
-              ifelse(type == "opened", " (i.status = 'NEW' or i.status = 'WORKINPROGRESS') ",
-              ifelse(type == "new", " i.status = 'NEW' ",
-              ifelse(type == "inprogress", " i.status = 'WORKINGPROGRESS' ",
-              ifelse(type == "closed", " (i.status = 'MERGED' or i.status = 'ABANDONED') ",
-              ifelse(type == "merged", " i.status = 'MERGED' ",
-              ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
-              NA)))))))
-    filters = paste(filters, GetSQLReportWhere(type_analysis), sep="") 
-
-    q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+EvolWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA), evolutionary){
+    return (GetWaiting4Submitter(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-StaticNumEvaluations <- function(period, startdate, enddate, identities_db=NA, type_analysis=list
-(NA, NA){
-
-    # verified - VRIF
-    # approved - APRV
-    # code review - CRVW
-    # submitted - SUBM
-
-    #Building the query
-    fields = paste (" count(distinct(c.id)) as ", type)
-    tables = paste(" changes c, issues i ", GetSQLReportFrom(NA, type_analysis))
-    filters <- ifelse( type == 'verified', " c.field = 'VRIF' ",
-               ifelse( type == 'approved', " c.field = 'APRV' ", 
-               ifelse( type == 'codereview', " c.field = 'CRVW' ", 
-               ifelse( type == 'submitted', " c.field = 'SUBM' ",
-               NA))))
-    filters = paste(filters, " and i.id = c.issue_id ")
-    filters = paste(filters, GetSQLReportWhere(type_analysis))
-
-    #Adding dates filters
-    q <- GetSQLGlobal(period, " c.changed_on", fields, tables, filters,
-                      startdate, enddate)
-
-    #Running query
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+StaticWaiting4Reviewer <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA), evolutionary){
+    return (GetWaiting4Reviewer(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
-StaticNumReviewers <- function(period, startdate, enddate, identities_db=NA, type_analysis=list
-(NA, NA){
+#REVIEWERS
+
+
+GetReviewers <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # TODO: so far without unique identities
 
     fields = paste(" count(distinct(changed_by)) as reviewers ")
     tables = " changes c "
     filters <- ""
 
-    q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
-                      startdate, enddate)
+    if (evolutionary){
+        q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
+                          startdate, enddate)
+    }else{
+        q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
+                          startdate, enddate)
+    }
+
+    query <- new("Query", sql = q)
     data <- run(query)
     return (data)
+}
+
+EvolReviewers <- function (period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return (GetReviewers(period, startdate, enddate, type_analysis, TRUE))
+}
+
+StaticReviewers <- function (period, startdate, enddate, identities_db = NA, type_analysis = list(NA, NA)){
+    return (GetReviewers(period, startdate, enddate, type_analysis, FALSE))
 }
 
