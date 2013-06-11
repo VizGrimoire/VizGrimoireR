@@ -65,6 +65,14 @@ GetFiltersCompanies <- function() {
                   m.first_date < upc.end'))
 }
 
+GetFiltersInit <- function() {
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters_init = paste(filters, " AND m.is_response_of IS NULL")
+}
+GetFiltersResponse <- function() {
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+}
 
 #
 ## GLOBAL
@@ -83,8 +91,8 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     query <- new ("Query", sql = q)
     sent.senders.repos.threads <- run(query)
     
-    filters_init = paste(filters, " AND m.is_response_of IS NULL")
-    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+    filters_init = GetFiltersInit()
+    filters_response = GetFiltersResponse()
 
     # Responses
     fields = "COUNT(*) as sent_response, COUNT(DISTINCT(pup.upeople_id)) as senders_response"
@@ -142,9 +150,9 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
             startdate, enddate)    
     query <- new ("Query", sql = q)
     sent.senders.first.last.repos <- run(query)
-    
-    filters_init = paste(filters, " AND m.is_response_of IS NULL")
-    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+ 
+    filters_init = GetFiltersInit()
+    filters_response = GetFiltersResponse()
         
     # Repositories
     q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
@@ -278,8 +286,32 @@ GetEvolReposMLS <- function (rfield, repo, period, startdate, enddate) {
             startdate, enddate)
     query <- new ("Query", sql = q)
     sent.senders <- run(query)
-        
-    return(sent.senders)	
+    
+    filters_init = paste(GetFiltersInit(),' AND
+                    ',rfield,'=\'',repo,'\'',sep='')
+    filters_response = paste(GetFiltersResponse(),' AND
+                    ',rfield,'=\'',repo,'\'',sep='')
+    
+    # Responses
+    fields = "COUNT(*) as sent_response, COUNT(DISTINCT(pup.upeople_id)) as senders_response"
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters_response, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    responses.senders_response<- run(query)
+    
+    # Init messages
+    fields = "COUNT(*) as sent_init, COUNT(DISTINCT(pup.upeople_id)) as senders_init"
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters_init, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    init.senders_init<- run(query)
+    
+    mls <- sent.senders
+    if (length(responses.senders_response) > 0) {
+        mls <- merge (sent.senders, responses.senders_response, all = TRUE)
+    }
+    mls <- merge (mls, init.senders_init, all = TRUE)    
+    return(mls)	
 }
 
 GetStaticReposMLS <- function (rfield, repo, startdate, enddate) {
