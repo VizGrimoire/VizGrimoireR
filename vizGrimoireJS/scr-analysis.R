@@ -57,50 +57,50 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 
 reviews_type <- list("submitted", "opened", "new", "inprogress", "closed", "merged", "abandoned")
 
-evaluations_type <- list("verified", "approved", "codereview", "submitted")
+evaluations_type <- list("verified", "approved", "codereview", "sent")
 #########
 #EVOLUTIONARY DATA
 #########
 
 print ("ANALYSIS PER TYPE OF REVIEW")
 reviews.evol = NA
-for (analysis in reviews_type)
-{   
-    data = EvolReviews(period, conf$startdate, conf$enddate, analysis) 
-    data <- completePeriodIds(data, conf$granularity, conf)
-    if (analysis == reviews_type[[1]]) reviews.evol = data
-    else reviews.evol = merge(reviews.evol, data, all = TRUE)
-}
-# createJSON(reviews.evol, paste(destdir,"/scr-reviews-evolutionary.json", sep=''))
-
-print ("ANALYSIS PER TYPE OF EVALUATION AT PATCH LEVEL")
-evaluations.evol = NA
-for (analysis in evaluations_type)
-{
-    data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis)
-    data <- completePeriodIds(data, conf$granularity, conf)
-    if (analysis == evaluations_type[[1]]) evaluations.evol = data
-    else evaluations.evol = merge(evaluations.evol, data, all = TRUE)
-}
-# createJSON(evaluations.evol, paste(destdir,"/scr-patches-evolutionary.json", sep=''))
-# We have submitted in both data frames with different values
-evol <- merge(reviews.evol, evaluations.evol, by.x = "unixtime", by.y = "unixtime",all = TRUE)
-
-
-print ("WAITING PER REVIEW")
-waiting.review.evol = Waiting4Review(period, conf$startdate, conf$enddate)
-waiting.review.evol <- completePeriodIds(waiting.review.evol, conf$granularity, conf)
-
-waiting.submitter.evol = Waiting4Submitter(period, conf$startdate, conf$enddate)
-waiting.submitter.evol <- completePeriodIds(waiting.submitter.evol, conf$granularity, conf)
-
-waiting.evol <- merge(waiting.review.evol, waiting.submitter.evol, all=TRUE)
-#createJSON(waiting.evol, paste(destdir,"/scr-waiting-evolutionary.json", sep=''))
-
-evol <- merge(evol, waiting.evol, all = TRUE)
-
+#Reviews info
+data = EvolReviewsSubmitted(period, conf$startdate, conf$enddate)
+reviews.evol <- completePeriodIds(data, conf$granularity, conf)
+data = EvolReviewsOpened(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsNew(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsInProgress(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsClosed(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsMerged(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsAbandoned(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+print(reviews.evol)
+#Patches info
+data = EvolPatchesVerified(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolPatchesApproved(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolPatchesCodeReview(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolPatchesSent(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+print(reviews.evol)
+#Waiting for actions info
+data = EvolWaiting4Reviewer(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolWaiting4Submitter(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+print(reviews.evol)
+#Reviewers info
+data = EvolReviewers(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+print(reviews.evol)
 createJSON(evol, paste(destdir,"/scr-evolutionary.json", sep=''))
-
 
 ########
 #ANALYSIS PER REPOSITORY
