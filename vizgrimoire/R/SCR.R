@@ -207,10 +207,6 @@ EvolEvaluations <- function(period, startdate, enddate, type, type_analysis=list
 }
 
 
-#######
-#Static functions
-#######
-
 Waiting4Review <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
 
      fields = " count(distinct(c.id)) as WaitingForReviewer "
@@ -266,4 +262,70 @@ Waiting4Submitter <- function(period, startdate, enddate, identities_db=NA, type
      return (data)
 }
 
+
+#######
+#Static functions
+#######
+
+StaticNumReviews <- function(period, startdate, enddate, identities_db=NA, type, type_analysis=list(NA, NA){
+    fields = paste(" count(distinct(i.issue)) as ", type)
+    tables = paste("issues i", GetSQLReportFrom(NA, type_analysis))
+    filters <- ifelse(type == "submitted", "",
+              ifelse(type == "opened", " (i.status = 'NEW' or i.status = 'WORKINPROGRESS') ",
+              ifelse(type == "new", " i.status = 'NEW' ",
+              ifelse(type == "inprogress", " i.status = 'WORKINGPROGRESS' ",
+              ifelse(type == "closed", " (i.status = 'MERGED' or i.status = 'ABANDONED') ",
+              ifelse(type == "merged", " i.status = 'MERGED' ",
+              ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
+              NA)))))))
+    filters = paste(filters, GetSQLReportWhere(type_analysis), sep="") 
+
+    q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+StaticNumEvaluations <- function(period, startdate, enddate, identities_db=NA, type_analysis=list
+(NA, NA){
+
+    # verified - VRIF
+    # approved - APRV
+    # code review - CRVW
+    # submitted - SUBM
+
+    #Building the query
+    fields = paste (" count(distinct(c.id)) as ", type)
+    tables = paste(" changes c, issues i ", GetSQLReportFrom(NA, type_analysis))
+    filters <- ifelse( type == 'verified', " c.field = 'VRIF' ",
+               ifelse( type == 'approved', " c.field = 'APRV' ", 
+               ifelse( type == 'codereview', " c.field = 'CRVW' ", 
+               ifelse( type == 'submitted', " c.field = 'SUBM' ",
+               NA))))
+    filters = paste(filters, " and i.id = c.issue_id ")
+    filters = paste(filters, GetSQLReportWhere(type_analysis))
+
+    #Adding dates filters
+    q <- GetSQLGlobal(period, " c.changed_on", fields, tables, filters,
+                      startdate, enddate)
+
+    #Running query
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+StaticNumReviewers <- function(period, startdate, enddate, identities_db=NA, type_analysis=list
+(NA, NA){
+
+    fields = paste(" count(distinct(changed_by)) as reviewers ")
+    tables = " changes c "
+    filters <- ""
+
+    q <- GetSQLGlobal(period, " c.changed_on ", fields, tables, filters,
+                      startdate, enddate)
+    data <- run(query)
+    return (data)
+}
 
