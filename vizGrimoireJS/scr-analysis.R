@@ -63,55 +63,43 @@ evaluations_type <- list("verified", "approved", "codereview", "submitted")
 #########
 
 print ("ANALYSIS PER TYPE OF REVIEW")
-first = TRUE
-evol_data = data.frame()
+reviews.evol = NA
 for (analysis in reviews_type)
 {   
     data = EvolReviews(period, conf$startdate, conf$enddate, analysis) 
     data <- completePeriodIds(data, conf$granularity, conf)
-    data <- data[order(data$id),]
-    data[is.na(data)] <- 0
-    if (first) {
-        evol_data = data
-        first = FALSE
-    }else{
-        evol_data = merge(evol_data, data, all = TRUE)
-    }
+    if (analysis == reviews_type[[1]]) reviews.evol = data
+    else reviews.evol = merge(reviews.evol, data, all = TRUE)
 }
-print(evol_data)
-createJSON(evol_data, paste(destdir,"/scr-reviews-evolutionary.json", sep=''))
+# createJSON(reviews.evol, paste(destdir,"/scr-reviews-evolutionary.json", sep=''))
 
-evol_data = data.frame()
-first = TRUE
 print ("ANALYSIS PER TYPE OF EVALUATION AT PATCH LEVEL")
+evaluations.evol = NA
 for (analysis in evaluations_type)
 {
     data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis)
     data <- completePeriodIds(data, conf$granularity, conf)
-    data <- data[order(data$id),]
-    data[is.na(data)] <- 0
-    if (first){
-        evol_data = data
-        first = FALSE
-    } else {
-        evol_data = merge(evol_data, data, all=TRUE)
-    }
+    if (analysis == evaluations_type[[1]]) evaluations.evol = data
+    else evaluations.evol = merge(evaluations.evol, data, all = TRUE)
 }
-createJSON(evol_data, paste(destdir,"/scr-patches-evolutionary.json", sep=''))
+# createJSON(evaluations.evol, paste(destdir,"/scr-patches-evolutionary.json", sep=''))
+# We have submitted in both data frames with different values
+evol <- merge(reviews.evol, evaluations.evol, by.x = "unixtime", by.y = "unixtime",all = TRUE)
 
-print ("STATIC METRICS")
-data1 = Waiting4Review(period, conf$startdate, conf$enddate)
-data1 <- completePeriodIds(data1, conf$granularity, conf)
-data1 <- data1[order(data1$id),]
-data1[is.na(data1)] <- 0
 
-data = Waiting4Submitter(period, conf$startdate, conf$enddate)
-data <- completePeriodIds(data, conf$granularity, conf)
-data <- data[order(data$id),]
-data[is.na(data)] <- 0
-evol_data = merge(data, data1, all=TRUE)
+print ("WAITING PER REVIEW")
+waiting.review.evol = Waiting4Review(period, conf$startdate, conf$enddate)
+waiting.review.evol <- completePeriodIds(waiting.review.evol, conf$granularity, conf)
 
-createJSON(evol_data, paste(destdir,"/scr-waiting-evolutionary.json", sep=''))
+waiting.submitter.evol = Waiting4Submitter(period, conf$startdate, conf$enddate)
+waiting.submitter.evol <- completePeriodIds(waiting.submitter.evol, conf$granularity, conf)
+
+waiting.evol <- merge(waiting.review.evol, waiting.submitter.evol, all=TRUE)
+#createJSON(waiting.evol, paste(destdir,"/scr-waiting-evolutionary.json", sep=''))
+
+evol <- merge(evol, waiting.evol, all = TRUE)
+
+createJSON(evol, paste(destdir,"/scr-evolutionary.json", sep=''))
 
 
 ########

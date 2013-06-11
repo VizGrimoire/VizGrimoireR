@@ -9,3 +9,4 @@
 
 rm data/json/*
 R --vanilla --args -d $3 -u root -i $1 -s 2011-07-25 -e 2013-04-05 -g weeks < scr-analysis.R
+# R --vanilla --args -d $3 -u root -i $1 -s 2013-03-01 -e 2013-04-01 -g weeks < scr-analysis.R
