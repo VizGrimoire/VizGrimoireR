@@ -17,8 +17,8 @@
 ## This file is a part of the vizGrimoire.R package
 ## http://vizgrimoire.bitergia.org/
 ##
-## Analyze and extract metrics data gathered by CVSAnalY tool
-## http://metricsgrimoire.github.com/CVSAnalY
+## Analyze and extract metrics data gathered by Bicho tool
+## http://metricsgrimoire.github.com/Bicho
 ##
 ## Authors:
 ##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
