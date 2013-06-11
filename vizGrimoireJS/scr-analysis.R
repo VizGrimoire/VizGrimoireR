@@ -33,6 +33,8 @@
 library("vizgrimoire")
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
+
+
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
@@ -60,7 +62,7 @@ reviews_type <- list("submitted", "opened", "new", "inprogress", "closed", "merg
 evaluations_type <- list("verified", "approved", "codereview", "sent")
 #########
 #EVOLUTIONARY DATA
-#########
+########
 
 print ("ANALYSIS PER TYPE OF REVIEW")
 reviews.evol = NA
@@ -100,7 +102,40 @@ print(reviews.evol)
 data = EvolReviewers(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 print(reviews.evol)
-createJSON(evol, paste(destdir,"/scr-evolutionary.json", sep=''))
+createJSON(reviews.evol, paste(destdir,"/scr-evolutionary.json", sep=''))
+
+
+#########
+#STATIC DATA
+#########
+
+reviews.static = NA
+#Reviews info
+reviews.static = StaticReviewsSubmitted(period, conf$startdate, conf$enddate)
+reviews.static = merge(reviews.static, StaticReviewsOpened(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticReviewsNew(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticReviewsInProgress(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticReviewsClosed(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticReviewsMerged(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate))
+print(reviews.static)
+#Patches info
+reviews.static = merge(reviews.static, StaticPatchesVerified(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticPatchesApproved(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticPatchesCodeReview(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticPatchesSent(period, conf$startdate, conf$enddate))
+print(reviews.static)
+#Waiting for actions info
+reviews.static = merge(reviews.static, StaticWaiting4Reviewer(period, conf$startdate, conf$enddate))
+reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$startdate, conf$enddate))
+print(reviews.static)
+#Reviewers info
+reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
+print(reviews.static)
+createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
+
+
+
 
 ########
 #ANALYSIS PER REPOSITORY
