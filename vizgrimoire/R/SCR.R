@@ -413,3 +413,26 @@ StaticReviewers <- function (period, startdate, enddate, identities_db = NA, typ
     return (GetReviewers(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+
+GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA)){
+
+    q <- "select t1.issue_id as issue_id, t1.old_value as patch_id, timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened 
+          from (
+                select c.issue_id as issue_id, 
+                       c.old_value as old_value, 
+                       min(c.changed_on) as min_time, 
+                       max(c.changed_on) as max_time 
+                from changes c, 
+                     issues i 
+                where c.issue_id = i.id and 
+                      i.status='NEW'  
+                group by c.issue_id, 
+                         c.old_value) t1 
+          order by timeOpened desc
+          limit 20;"
+
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+}
