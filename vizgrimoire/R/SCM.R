@@ -184,72 +184,186 @@ GetSQLReportWhere <- function(repository, company, country, role){
 #########
 #Functions to obtain info per type of basic piece of data
 #########
-EvolCommits <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    fields ='count(s.id) AS commits'
-    tables = paste("scmlog s", GetSQLReportFrom(identities_db, repository, company, country))
-    filters = GetSQLReportWhere(repository, company, country, "author")
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+
+GetCommits <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+
+    fields = " count(distinct(s.id)) as commits "
+    tables = paste(" scmlog s ", GetSQLReportWhere(identities_db, type_analysis))
+    filters = GetSQLReportWhere(type_analysis, "author")
+    
+    if (evolutionary) {
+         q <- GetSQLPeriod(period," s.date ", fields, tables, filters, 
             startdate, enddate)
+    } else {
+         GetSQLGlobal(" s.date ", fields, tables, filters,
+                           startdate, enddate)
+    }
+
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
+EvolCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return(GetCommits(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
 
-EvolAuthors <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    fields <- 'count(distinct(pup.upeople_id)) AS authors '
-    tables <- "scmlog s "
-    filters = GetSQLReportWhere(repository, company, country, "author")
+StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return(GetCommits(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
 
-    #specific parts of the query depending on the report needed
-    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
 
-    if (is.na(repository) &&  is.na(company) && is.na(country)){
+#EvolCommits <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+#    fields ='count(s.id) AS commits'
+#    tables = paste("scmlog s", GetSQLReportFrom(identities_db, repository, company, country))
+#    filters = GetSQLReportWhere(repository, company, country, "author")
+#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+#            startdate, enddate)
+#    query <- new("Query", sql = q)
+#    data <- run(query)
+#    return (data)
+#}
+
+GetAuthors <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    fields <- " count(distinct(pup.upeople_id)) AS authors "
+    tables <- " scmlog s "
+    filters = GetSQLReportWhere(type_analysis, "author")
+
+    if (is.na(type_analysis[1])) {
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
         filters <- paste(filters, " and s.author_id = pup.people_id", sep="")
     }
-    
-    if (! is.na(repository)){
+
+    if (type_analysis[1] == "repository"){
         #Adding people_upeople table
         tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
         filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
     }
-    
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters, 
             startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                           startdate, enddate)
+    }
+
     query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+     data <- run(query)
+     return (data)
 }
 
-EvolCommitters <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+EvolAuthors <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA){
+    return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA){
+    return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+
+#EvolAuthors <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+#    fields <- 'count(distinct(pup.upeople_id)) AS authors '
+#    tables <- "scmlog s "
+#    filters = GetSQLReportWhere(repository, company, country, "author")
+
+    #specific parts of the query depending on the report needed
+#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+
+#    if (is.na(repository) &&  is.na(company) && is.na(country)){
+        #Specific case for the basic option where people_upeople table is needed
+        #and not taken into account in the initial part of the query
+#        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+#        filters <- paste(filters, " and s.author_id = pup.people_id", sep="")
+#    }
+    
+#    if (! is.na(repository)){
+        #Adding people_upeople table
+#        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+#        filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
+#    }
+    
+#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+#            startdate, enddate)
+#    query <- new("Query", sql = q)
+#    data <- run(query)
+#    return (data)
+#}
+
+GetCommitters <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary) {
     fields <- 'count(distinct(pup.upeople_id)) AS committers '
     tables <- "scmlog s "
     filters = GetSQLReportWhere(repository, company, country, "committer")
-    
+
     #specific parts of the query depending on the report needed
     tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
 
-    if (is.na(repository) &&  is.na(company) && is.na(country)){
+    if (is.na(type_analysis[1]) ){
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         tables <- paste(tables, " ,  ",identities_db,".people_upeople pup ", sep="")
         filters <- paste(filters, " and s.committer_id = pup.people_id", sep="")
     }
-    if (! is.na(repository)){
+    if (type_analysis[1] == "repository"){
         #Adding people_upeople table
         tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
         filters <- paste(filters, " and s.committer_id = pup.people_id ", sep="")
     }
 
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+                          startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                          startdate, enddate)
+    }
+
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters,
             startdate, enddate)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
+
+EvolCommitters <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return(GetCommitters(period, startdate, enddate, identities_db, type_analyisis, TRUE))
+}
+
+StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return(GetCommitters(period, startdate, enddate, identities_db, type_analyisis, FALSE))
+}
+
+
+
+#EvolCommitters <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+#    fields <- 'count(distinct(pup.upeople_id)) AS committers '
+#    tables <- "scmlog s "
+#    filters = GetSQLReportWhere(repository, company, country, "committer")
+    
+    #specific parts of the query depending on the report needed
+#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+
+#    if (is.na(repository) &&  is.na(company) && is.na(country)){
+        #Specific case for the basic option where people_upeople table is needed
+        #and not taken into account in the initial part of the query
+#        tables <- paste(tables, " ,  ",identities_db,".people_upeople pup ", sep="")
+#        filters <- paste(filters, " and s.committer_id = pup.people_id", sep="")
+#    }
+#    if (! is.na(repository)){
+        #Adding people_upeople table
+#        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+#        filters <- paste(filters, " and s.committer_id = pup.people_id ", sep="")
+#    }
+
+#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+#            startdate, enddate)
+#    query <- new("Query", sql = q)
+#    data <- run(query)
+#    return (data)
+#}
 
 
 EvolFiles <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
