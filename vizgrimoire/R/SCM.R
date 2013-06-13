@@ -365,29 +365,65 @@ StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, ty
 #    return (data)
 #}
 
+GetFiles <- function (period, startdate, enddate, identities_db, type_analysis, evolutionary) {
+    fields <- " count(distinct(a.file_id)) as files "
+    tables <- " scmlog s, actions a "
+    filters = " a.commit_id = s.id "
 
-EvolFiles <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    #Evolution of files
-    
-    fields <- 'count(distinct(a.file_id)) as files  '
-    tables <- "scmlog s, actions a "
-    filters = "a.commit_id = s.id "
-    
     #specific parts of the query depending on the report needed
     tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
     filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
-    
+
     #executing the query
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-            startdate, enddate)
+
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+                          startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                          startdate, enddate)
+    }
+
+
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
+EvolFiles <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return (GetFiles(period, startdate, enddate, identities_db, type_analysis, TRUE)
+}
 
-EvolLines <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+StaticNumFiles <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return (GetFiles(period, startdate, enddate, identities_db, type_analysis, FALSE)
+}
+
+
+
+
+#EvolFiles <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+#    #Evolution of files
+    
+#    fields <- 'count(distinct(a.file_id)) as files  '
+#    tables <- "scmlog s, actions a "
+#    filters = "a.commit_id = s.id "
+    
+#    #specific parts of the query depending on the report needed
+#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+#    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
+#    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
+    
+#    #executing the query
+#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+#            startdate, enddate)
+#    query <- new("Query", sql = q)
+#    data <- run(query)
+#    return (data)
+#}
+
+
+GetLines <- function (period, startdate, enddate, identities_db, type_analysis, evolutionary){
     #Evolution of files
 
     # basic parts of the query
@@ -399,16 +435,77 @@ EvolLines <- function(period, startdate, enddate, identities_db=NA, repository=N
     tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
     filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
-    
+
     #executing the query
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-            startdate, enddate)
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+                          startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                          startdate, enddate)
+    }
+
+
     query <- new("Query", sql = q)
     data <- run(query)
     data$negative_removed_lines <- -data$removed_lines
     return (data)
 }
 
+EvolLines <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+    return (GetLines(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+StaticNumLines <- function (period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    return (GetLines(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+
+#EvolLines <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
+#    #Evolution of files
+
+#    # basic parts of the query
+#    fields <- "sum(cl.added) as added_lines, sum(cl.removed) as removed_lines"
+#    tables <- "scmlog s, commits_lines cl "
+#    filters <- "cl.commit_id = s.id "
+
+    # specific parts of the query depending on the report needed
+#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
+#    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
+    
+    #executing the query
+#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
+#            startdate, enddate)
+#    query <- new("Query", sql = q)
+#    data <- run(query)
+#    data$negative_removed_lines <- -data$removed_lines
+#    return (data)
+#}
+
+
+GetBranches <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    #Evolution of branches
+
+    # basic parts of the query
+    fields <- "count(distinct(a.branch_id)) as branches "
+    tables <- " scmlog s, actions a "
+    filters <- " a.commit_id = s.id "
+
+    # specific parts of the query depending on the report needed
+    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
+    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
+
+    #executing the query
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters,
+            startdate, enddate)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+}
 
 EvolBranches <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
     #Evolution of files
