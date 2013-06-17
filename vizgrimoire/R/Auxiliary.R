@@ -872,7 +872,8 @@ GetSQLGlobal <- function(date, fields, tables, filters, start, end) {
     sql = paste(sql,'FROM', tables)
     sql = paste(sql,'WHERE',date,'>=',start,'AND',date,'<',end)
     if (filters != "") {
-        sql = paste(sql,' AND ',filters)
+        if (regexpr("^[ ]*and", tolower(filters)) > 0 ) sql = paste(sql, filters)
+        else sql = paste(sql,' AND ',filters)
     }
     return(sql)    
 }
