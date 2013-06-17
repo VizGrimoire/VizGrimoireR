@@ -213,15 +213,17 @@ if ('countries' %in% reports) {
         print (country)
         country_name = paste("'", country, "'", sep='')
         
-        evol_data <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, country=country_name)        
+        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("country", country_name))
+        # evol_data <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, country=country_name)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
-        evol_data <- evol_data[order(evol_data$id), ]
-        evol_data[is.na(evol_data)] <- 0
+        # evol_data <- evol_data[order(evol_data$id), ]
+        # evol_data[is.na(evol_data)] <- 0
         
         createJSON (evol_data, paste(destdir, "/",country,"-scm-evolutionary.json",sep=''))
         
-        data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
-        createJSON (data, paste(destdir, "/",country,"-scm-static.json",sep=''))        
+        # data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
+        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("country", country_name))
+        createJSON (static_data, paste(destdir, "/",country,"-scm-static.json",sep=''))
     }
 }
 
