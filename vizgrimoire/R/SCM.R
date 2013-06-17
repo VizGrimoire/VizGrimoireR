@@ -56,35 +56,20 @@ GetSCMEvolutionaryData <- function(period, startdate, enddate, i_db=NA, type_ana
 GetSCMStaticData <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
 
     # 1- Retrieving information
-    print("1")
     static_commits <- StaticNumCommits(period, startdate, enddate, i_db, type_analysis)
-    print("2")
     static_authors <- StaticNumAuthors(period, startdate, enddate, i_db, type_analysis)
-    print("3")
     static_committers <- StaticNumCommitters(period, startdate, enddate, i_db, type_analysis)
-    print("4")
     static_files <- StaticNumFiles(period, conf$startdate, enddate, i_db, type_analysis)
-    print("5")
     static_branches <- StaticNumBranches(period, startdate, enddate, i_db, type_analysis)
-    print("6")
     static_repositories <- StaticNumRepositories(period, startdate, enddate, i_db, type_analysis)
-    print("7")
     static_actions <- StaticNumActions(period, startdate, enddate, i_db, type_analysis)
-    print("8")
     static_lines <- StaticNumLines(period, conf$startdate, enddate, i_db, type_analysis)
-    print("9")
     avg_commits_period <- StaticAvgCommitsPeriod(period, startdate, enddate, i_db, type_analysis)
-    print("10")
     avg_files_period <- StaticAvgFilesPeriod(period, startdate, enddate, i_db, type_analysis)
-    print("11")
     avg_commits_author <- StaticAvgCommitsAuthor(period, startdate, enddate, i_db, type_analysis)
-    print("12")
     avg_authors_period <- StaticAvgAuthorPeriod(period, startdate, conf$enddate, i_db, type_analysis)
-    print("13")
     avg_committer_period <- StaticAvgCommitterPeriod(period, startdate, enddate, i_db, type_analysis)
-    print("14")
     avg_files_author <- StaticAvgFilesAuthor(period, startdate, enddate, i_db, type_analysis)
-    print("15")
 
     # 2- Merging information
     static_data = merge(static_commits, static_committers)
@@ -252,7 +237,6 @@ GetAuthors <- function(period, startdate, enddate, identities_db, type_analysis,
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    print(q)
     query <- new("Query", sql = q)
      data <- run(query)
      return (data)
@@ -295,10 +279,7 @@ GetCommitters <- function(period, startdate, enddate, identities_db, type_analys
     } else {
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                           startdate, enddate)
-        print(q)
     }
-    print("testing")
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -486,7 +467,6 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print (q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -615,7 +595,6 @@ StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA,
 
     #executing the query
     q <- paste(select, from, where, rest)
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)    
@@ -801,7 +780,6 @@ EvolCompanies <- function(period, startdate, enddate){
                s.date < upc.end"
     q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
                            startdate, enddate)
-    print(q)       
     query <- new("Query", sql = q)
 	companies<- run(query)
 	return(companies)
