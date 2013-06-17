@@ -945,6 +945,25 @@ RollMean<-function(serie,s,l)
     return(means)
 }
 
+DiffRoll<-function(serie,s,l)
+{
+#serie=data s=time_period l=time_period s<l  
+#This function gives the difference between short and long rollmean.
+k<-l-s
+ms<-rollapply(serie,s,mean)
+ml<-rollapply(serie,l,mean)
+short<-ms[-c(1:k)]
+metric<-short-ml
+central<-rep(0,length(metric))
+#plot(metric, type="l", xlab="weeks", ylab="Short mean-Long mean", main="Rollmean signals")
+#lines(central, type="l")
+end<-data.frame(metric,central)
+return(end)
+}
+
+
+
+
 
 source('R/SCM.R')
 source('R/MLS.R')
