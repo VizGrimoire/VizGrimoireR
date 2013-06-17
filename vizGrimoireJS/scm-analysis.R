@@ -141,7 +141,7 @@ if ('companies' %in% reports) {
         #Evolutionary data per company
         ######	
         # 1- Retrieving and merging info  
-        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, NA, company_name, NA)
+        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("company", company_name))
         		
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
         evol_data <- evol_data[order(evol_data$id), ]
@@ -153,7 +153,7 @@ if ('companies' %in% reports) {
         ########
         #Static data per company
         ########
-        static_data <- GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, NA, company_name, NA)
+        static_data <- GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("company", company_name))
 
         createJSON(static_data, paste(destdir,"/",company_aux,"-scm-static.json", sep=''))
 	
@@ -183,7 +183,7 @@ if ('repositories' %in% reports) {
         ###########
         #1- Retrieving data
   
-        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, repo_name, NA, NA)
+        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("repository", repo_name))
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
         evol_data <- evol_data[order(evol_data$id), ]
         evol_data[is.na(evol_data)] <- 0
@@ -195,7 +195,7 @@ if ('repositories' %in% reports) {
         #STATIC DATA
         ##########
         # 1- Retrieving information
-        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, repo_name, NA, NA)
+        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("repository", repo_name))
 
         #3- Creating JSON
         #static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
