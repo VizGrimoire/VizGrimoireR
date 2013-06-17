@@ -28,25 +28,25 @@
 ##########
 # Specific FROM and WHERE clauses per type of report
 ##########
-GetSQLRepositoriesFrom <- function(){
+GetSQLRepositoriesFromSCR <- function(){
     #tables necessaries for repositories
     return (" , trackers t")
 }
 
-GetSQLRepositoriesWhere <- function(repository){
+GetSQLRepositoriesWhereSCR <- function(repository){
     #fields necessaries to match info among tables
     return (paste(" and t.url =", repository, " 
                    and t.id = i.tracker_id", sep=""))
 }
 
-GetSQLCompaniesFrom <- function(identities_db){
+GetSQLCompaniesFromSCR <- function(identities_db){
     #tables necessaries for companies
     return (paste(" , ",identities_db,".people_upeople pup,
                   ",identities_db,".upeople_companies upc,
                   ",identities_db,".companies c", sep=""))
 }
 
-GetSQLCompaniesWhere <- function(company){
+GetSQLCompaniesWhereSCR <- function(company){
     #fields necessaries to match info among tables
     return (paste("and i.submitted_by = pup.people_id
                   and pup.upeople_id = upc.upeople_id
@@ -56,14 +56,14 @@ GetSQLCompaniesWhere <- function(company){
                   and c.name =", company, sep=""))
 }
 
-GetSQLCountriesFrom <- function(identities_db){
+GetSQLCountriesFromSCR <- function(identities_db){
     #tables necessaries for companies
     return (paste(" , ",identities_db,".people_upeople pup,
                   ",identities_db,".upeople_countries upc,
                   ",identities_db,".countries c ", sep=""))
 }
 
-GetSQLCountriesWhere <- function(country){
+GetSQLCountriesWhereSCR <- function(country){
     #fields necessaries to match info among tables
     return (paste("and i.submitted_by = pup.people_id
                   and pup.upeople_id = upc.upeople_id
@@ -75,7 +75,7 @@ GetSQLCountriesWhere <- function(country){
 #Generic functions to obtain FROM and WHERE clauses per type of report
 ##########
 
-GetSQLReportFrom <- function(identities_db, type_analysis){
+GetSQLReportFromSCR <- function(identities_db, type_analysis){
     #generic function to generate 'from' clauses
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
@@ -86,16 +86,16 @@ GetSQLReportFrom <- function(identities_db, type_analysis){
     from = ""
 
     if (! is.na(analysis)){
-        from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesFrom()),
-                ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(identities_db)),
-                ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(identities_db)),
+        from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesFromSCR()),
+                ifelse (analysis == 'company', paste(from, GetSQLCompaniesFromSCR(identities_db)),
+                ifelse (analysis == 'country', paste(from, GetSQLCountriesFromSCR(identities_db)),
                 NA)))
     }
     return (from)
 }
 
 
-GetSQLReportWhere <- function(type_analysis){
+GetSQLReportWhereSCR <- function(type_analysis){
     #generic function to generate 'where' clauses
 
     #"type" is a list of two values: type of analysis and value of 
@@ -106,9 +106,9 @@ GetSQLReportWhere <- function(type_analysis){
     where = ""
 
     if (! is.na(analysis)){
-        where <- ifelse (analysis == 'repository', paste(where, GetSQLRepositoriesWhere(value)),
-                ifelse (analysis == 'company', paste(where, GetSQLCompaniesWhere(value)),
-                ifelse (analysis == 'country', paste(where, GetSQLCountriesWhere(value)),
+        where <- ifelse (analysis == 'repository', paste(where, GetSQLRepositoriesWhereSCR(value)),
+                ifelse (analysis == 'company', paste(where, GetSQLCompaniesWhereSCR(value)),
+                ifelse (analysis == 'country', paste(where, GetSQLCountriesWhereSCR(value)),
                 NA)))
     }
     return (where)
@@ -122,7 +122,7 @@ GetReposSRCName <- function (startdate, enddate){
 
     q = paste("select t.url as name, 
                 count(distinct(i.id)) as issues
-         from  issues i,
+         FromSCR  issues i,
                trackers t
          where i.tracker_id = t.id and
                i.submitted_on >=",  startdate, " and
@@ -144,7 +144,7 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
 
     #Building the query
     fields = paste(" count(distinct(i.issue)) as ", type)
-    tables = paste("issues i", GetSQLReportFrom(NA, type_analysis))
+    tables = paste("issues i", GetSQLReportFromSCR(NA, type_analysis))
     filters <- ifelse(type == "submitted", "",
               ifelse(type == "opened", " (i.status = 'NEW' or i.status = 'WORKINPROGRESS') ",
               ifelse(type == "new", " i.status = 'NEW' ",
@@ -153,7 +153,7 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
               ifelse(type == "merged", " i.status = 'MERGED' ",
               ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
               NA)))))))
-    filters = paste(filters, GetSQLReportWhere(type_analysis), sep="")
+    filters = paste(filters, GetSQLReportWhereSCR(type_analysis), sep="")
     print(filters)
 
     #Adding dates filters (and evolutionary or static analysis)
@@ -238,14 +238,14 @@ GetEvaluations <- function(period, startdate, enddate, type, type_analysis, evol
 
     #Building the query
     fields = paste (" count(distinct(c.id)) as ", type)
-    tables = paste(" changes c, issues i ", GetSQLReportFrom(NA, type_analysis))
+    tables = paste(" changes c, issues i ", GetSQLReportFromSCR(NA, type_analysis))
     filters <- ifelse( type == 'verified', " c.field = 'VRIF' ",
                ifelse( type == 'approved', " c.field = 'APRV' ",
                ifelse( type == 'codereview', " c.field = 'CRVW' ",
                ifelse( type == 'sent', " c.field = 'SUBM' ",
                NA))))
     filters = paste(filters, " and i.id = c.issue_id ")
-    filters = paste(filters, GetSQLReportWhere(type_analysis))
+    filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
 
     #Adding dates filters
     if (evolutionary){
@@ -310,12 +310,12 @@ GetWaiting4Reviewer <- function(period, startdate, enddate, identities_db, type_
                        where c.issue_id = i.id and 
                              i.status='NEW' 
                        group by c.issue_id, c.old_value) t1 "
-     tables = paste(tables, GetSQLReportFrom(identities_db, type_analysis))
+     tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters =  " i.id = c.issue_id
                   and t1.id = c.id   
                   and (c.field='CRVW' or c.field='VRIF')
                   and (c.new_value=1 or c.new_value=2) "
-     filters = paste(filters, GetSQLReportWhere(type_analysis))
+     filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
 
      if (evolutionary){
          q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
@@ -353,12 +353,12 @@ GetWaiting4Submitter <- function(period, startdate, enddate, identities_db, type
                        where c.issue_id = i.id and 
                              i.status='NEW' 
                        group by c.issue_id, c.old_value) t1 "
-     tables = paste(tables, GetSQLReportFrom(identities_db, type_analysis))
+     tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters = " i.id = c.issue_id
                  and t1.id = c.id  
                  and (c.field='CRVW' or c.field='VRIF') 
                  and (c.new_value=-1 or c.new_value=-2) "
-     filters = paste(filters, GetSQLReportWhere(type_analysis))
+     filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
 
      if (evolutionary){
          q <- GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
@@ -416,7 +416,9 @@ StaticReviewers <- function (period, startdate, enddate, identities_db = NA, typ
 
 GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA)){
 
-    q <- "select t1.issue_id as issue_id, t1.old_value as patch_id, timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened 
+    q <- "select i.issue as review,
+                 t1.old_value as patch, 
+                 timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened 
           from (
                 select c.issue_id as issue_id, 
                        c.old_value as old_value, 
@@ -427,9 +429,31 @@ GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA))
                 where c.issue_id = i.id and 
                       i.status='NEW'  
                 group by c.issue_id, 
-                         c.old_value) t1 
+                         c.old_value) t1,
+               issues i
+          where t1.issue_id = i.id
           order by timeOpened desc
           limit 20;"
+    fields = paste(" i.issue as review, ", 
+                   " t1.old_value as patch, ",
+                   " timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened, ")
+    tables = " issues i,
+               (select c.issue_id as issue_id, 
+                       c.old_value as old_value, 
+                       min(c.changed_on) as min_time, 
+                       max(c.changed_on) as max_time 
+                from changes c, 
+                     issues i 
+                where c.issue_id = i.id and 
+                      i.status='NEW'  
+                group by c.issue_id, 
+                         c.old_value) t1 "
+    tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
+    filters = " t1.issue_id = i.id "
+    filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
+
+    q <- GetSQLGlobal(" i.submitted_on ", fields, tables, filters,
+                           startdate, enddate)
 
     query <- new("Query", sql = q)
     data <- run(query)
