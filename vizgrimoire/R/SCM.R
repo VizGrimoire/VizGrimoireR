@@ -138,46 +138,42 @@ GetSQLCountriesWhere <- function(country, role){
 #Generic functions to obtain FROM and WHERE clauses per type of report
 ##########
 
-GetSQLReportFrom <- function(identities_db, repository, company, country){
+GetSQLReportFrom <- function(identities_db, type_analysis){
     #generic function to generate 'from' clauses
+    #"type" is a list of two values: type of analysis and value of 
+    #such analysis
+
+    analysis = type_analysis[1]
+    value = type_analysis[2]
 
     from = ""
 
-    if (! is.na(repository)){
-        #evolution of commits in a given repository
-        from <- paste(from, GetSQLRepositoriesFrom())
+    if (! is.na(analysis)){
+        from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesFrom()),
+                ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(identities_db)),
+                ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(identities_db)),
+                NA)))
     }
-    else if (! is.na(company)){
-        #evolution of commits in a given company
-        from <- paste(from, GetSQLCompaniesFrom(identities_db))
-    }
-    else if (! is.na(country)){
-        #evolution of commits in a given country
-        from <- paste(from, GetSQLCountriesFrom(identities_db))
-    }
- 
     return (from)
 }
 
 
-GetSQLReportWhere <- function(repository, company, country, role){
+GetSQLReportWhere <- function(type_analysis){
     #generic function to generate 'where' clauses
 
+    #"type" is a list of two values: type of analysis and value of 
+    #such analysis
+
+    analysis = type_analysis[1]
+    value = type_analysis[2]
     where = ""
 
-    if (! is.na(repository)){
-        #evolution of commits in a given repository
-        where <- paste(where, GetSQLRepositoriesWhere(repository))
+    if (! is.na(analysis)){
+        where <- ifelse (analysis == 'repository', paste(where, GetSQLRepositoriesWhere(value)),
+                ifelse (analysis == 'company', paste(where, GetSQLCompaniesWhere(value)),
+                ifelse (analysis == 'country', paste(where, GetSQLCountriesWhere(value)),
+                NA)))
     }
-    else if (! is.na(company)){
-        #evolution of commits in a given company
-        where <- paste(where, GetSQLCompaniesWhere(company, role))
-    }
-    else if (! is.na(country)){
-        #evolution of commits in a given country
-        where <- paste(where, GetSQLCountriesWhere(country, role))
-    }
-
     return (where)
 }
 
@@ -208,21 +204,10 @@ EvolCommits <- function(period, startdate, enddate, identities_db=NA, type_analy
     return(GetCommits(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
-    return(GetCommits(period, startdate, enddate, identities_db, type_analysis, FALSE))
-}
-
-
-#EvolCommits <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-#    fields ='count(s.id) AS commits'
-#    tables = paste("scmlog s", GetSQLReportFrom(identities_db, repository, company, country))
-#    filters = GetSQLReportWhere(repository, company, country, "author")
-#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-#            startdate, enddate)
-#    query <- new("Query", sql = q)
-#    data <- run(query)
-#    return (data)
+#StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+#    return(GetCommits(period, startdate, enddate, identities_db, type_analysis, FALSE))
 #}
+
 
 GetAuthors <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     fields <- " count(distinct(pup.upeople_id)) AS authors "
@@ -265,33 +250,6 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_
 
 
 
-#EvolAuthors <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-#    fields <- 'count(distinct(pup.upeople_id)) AS authors '
-#    tables <- "scmlog s "
-#    filters = GetSQLReportWhere(repository, company, country, "author")
-
-    #specific parts of the query depending on the report needed
-#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
-
-#    if (is.na(repository) &&  is.na(company) && is.na(country)){
-        #Specific case for the basic option where people_upeople table is needed
-        #and not taken into account in the initial part of the query
-#        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
-#        filters <- paste(filters, " and s.author_id = pup.people_id", sep="")
-#    }
-    
-#    if (! is.na(repository)){
-        #Adding people_upeople table
-#        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
-#        filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
-#    }
-    
-#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-#            startdate, enddate)
-#    query <- new("Query", sql = q)
-#    data <- run(query)
-#    return (data)
-#}
 
 GetCommitters <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary) {
     fields <- 'count(distinct(pup.upeople_id)) AS committers '
@@ -338,32 +296,6 @@ StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, ty
 
 
 
-#EvolCommitters <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-#    fields <- 'count(distinct(pup.upeople_id)) AS committers '
-#    tables <- "scmlog s "
-#    filters = GetSQLReportWhere(repository, company, country, "committer")
-    
-    #specific parts of the query depending on the report needed
-#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
-
-#    if (is.na(repository) &&  is.na(company) && is.na(country)){
-        #Specific case for the basic option where people_upeople table is needed
-        #and not taken into account in the initial part of the query
-#        tables <- paste(tables, " ,  ",identities_db,".people_upeople pup ", sep="")
-#        filters <- paste(filters, " and s.committer_id = pup.people_id", sep="")
-#    }
-#    if (! is.na(repository)){
-        #Adding people_upeople table
-#        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
-#        filters <- paste(filters, " and s.committer_id = pup.people_id ", sep="")
-#    }
-
-#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-#            startdate, enddate)
-#    query <- new("Query", sql = q)
-#    data <- run(query)
-#    return (data)
-#}
 
 GetFiles <- function (period, startdate, enddate, identities_db, type_analysis, evolutionary) {
     fields <- " count(distinct(a.file_id)) as files "
@@ -371,9 +303,9 @@ GetFiles <- function (period, startdate, enddate, identities_db, type_analysis, 
     filters = " a.commit_id = s.id "
 
     #specific parts of the query depending on the report needed
-    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
+    filters <- paste(filters, GetSQLReportWhere(repository, type_analysis, "author"))
 
     #executing the query
 
@@ -402,26 +334,6 @@ StaticNumFiles <- function(period, startdate, enddate, identities_db=NA, type_an
 
 
 
-#EvolFiles <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-#    #Evolution of files
-    
-#    fields <- 'count(distinct(a.file_id)) as files  '
-#    tables <- "scmlog s, actions a "
-#    filters = "a.commit_id = s.id "
-    
-#    #specific parts of the query depending on the report needed
-#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
-#    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-#    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
-    
-#    #executing the query
-#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-#            startdate, enddate)
-#    query <- new("Query", sql = q)
-#    data <- run(query)
-#    return (data)
-#}
-
 
 GetLines <- function (period, startdate, enddate, identities_db, type_analysis, evolutionary){
     #Evolution of files
@@ -432,9 +344,9 @@ GetLines <- function (period, startdate, enddate, identities_db, type_analysis, 
     filters <- "cl.commit_id = s.id "
 
     # specific parts of the query depending on the report needed
-    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
+    filters <- paste(filters, GetSQLReportWhere(repository, type_analysis, "author"))
 
     #executing the query
     if (evolutionary) {
@@ -462,28 +374,6 @@ StaticNumLines <- function (period, startdate, enddate, identities_db=NA, type_a
 
 
 
-#EvolLines <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-#    #Evolution of files
-
-#    # basic parts of the query
-#    fields <- "sum(cl.added) as added_lines, sum(cl.removed) as removed_lines"
-#    tables <- "scmlog s, commits_lines cl "
-#    filters <- "cl.commit_id = s.id "
-
-    # specific parts of the query depending on the report needed
-#    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-#    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
-    
-    #executing the query
-#    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-#            startdate, enddate)
-#    query <- new("Query", sql = q)
-#    data <- run(query)
-#    data$negative_removed_lines <- -data$removed_lines
-#    return (data)
-#}
-
 
 GetBranches <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     #Evolution of branches
@@ -494,59 +384,68 @@ GetBranches <- function(period, startdate, enddate, identities_db, type_analysis
     filters <- " a.commit_id = s.id "
 
     # specific parts of the query depending on the report needed
-    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
+    filters <- paste(filters, GetSQLReportWhere(repository, type_analysis, "author"))
 
     #executing the query
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters,
-            startdate, enddate)
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+                          startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                          startdate, enddate)
+    }
+
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 
 }
 
-EvolBranches <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    #Evolution of files
-
-    # basic parts of the query
-    fields <- "count(distinct(a.branch_id)) as branches "
-    tables <- " scmlog s, actions a "
-    filters <- " a.commit_id = s.id "
-
-    # specific parts of the query depending on the report needed
-    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    filters <- paste(filters, GetSQLReportWhere(repository, company, country, "author"))
-    
-    #executing the query
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-            startdate, enddate)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+EvolBranches <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return (GetBranches(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-EvolRepositories <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA){
-    #Evolution of commits
+StaticNumBranches <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return (GetBranches(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
 
+
+
+GetRepositories <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # basic parts of the query
     fields <- "count(distinct(s.repository_id)) AS repositories "
     tables <- "scmlog s "
 
     # specific parts of the query depending on the report needed
-    tables <- paste(tables, GetSQLReportFrom(identities_db, repository, company, country))
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    filters <- GetSQLReportWhere(repository, company, country, "author")
+    filters <- GetSQLReportWhere(repository, type_analysis, "author")
     
     #executing the query
-    q <- GetSQLPeriod(period,'s.date', fields, tables, filters, 
-            startdate, enddate)
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+                          startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                          startdate, enddate)
+    }
+
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
+
+EvolRepositories <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    return (GetRepositories(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+StaticNumRepositories <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    return (GetRepositories(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
 
 #############
 #Static numbers
@@ -563,9 +462,9 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, repos
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
 
     #executing the query
     q <- paste(select, from, where, rest)
@@ -576,146 +475,9 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, repos
 
 }
 
-StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
-   
-    select <- "select count(distinct(pup.upeople_id)) AS authors "
-    from <- " FROM scmlog s "
-    where <- paste(" where s.date >=", startdate, " and
-                     s.date < ", enddate, sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
-
-    if (is.na(repository) &&  is.na(company) && is.na(country)){
-        #Specific case for the basic option where people_upeople table is needed
-        #and not taken into account in the initial part of the query
-        from <- paste(from, ",  people_upeople pup", sep="")
-        where <- paste(where, " and s.author_id = pup.people_id", sep="")
-    }
-
-    if (! is.na(repository)){
-        #Adding people_upeople table
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
-    }
-    
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-
-}
-
-StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
-  
-    select <- "select count(distinct(pup.upeople_id)) AS committers "
-    from <- " FROM scmlog s "
-    where <- paste(" where  s.date >=", startdate, " and
-                     s.date < ", enddate, sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "committer"))
-
-    if (is.na(repository) &&  is.na(company) && is.na(country)){
-        #Specific case for the basic option where people_upeople table is needed
-        #and not taken into account in the initial part of the query
-        from <- paste(from, ",  people_upeople pup", sep="")
-        where <- paste(where, " and s.committer_id = pup.people_id", sep="")
-    }
-
-    if (! is.na(repository)){
-        #Adding people_upeople table
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.committer_id = pup.people_id ", sep="")
-    }
 
 
-    #executing the query
-    q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-
-}
-
-StaticNumFiles <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
-   
-    select <- "SELECT count(distinct(file_id)) as files "
-    from <- " FROM scmlog s, 
-                   actions a "
-    where <- paste(" where s.date >=", startdate, " and
-                           s.date < ", enddate, " and
-                           a.commit_id = s.id ", sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-
-}
-
-
-StaticNumBranches <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
-   
-    select <- "SELECT count(distinct(a.branch_id)) as branches "
-    from <- " FROM scmlog s,
-                   actions a "
-    where <- paste(" where s.date >=", startdate, " and
-                           s.date < ", enddate, " and
-                           a.commit_id = s.id ", sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-
-}
-
-
-StaticNumRepositories <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
-
-    select <- "SELECT count(distinct(s.repository_id)) as repositories "
-    from <- " FROM scmlog s "
-    where <- paste(" where s.date >=", startdate, " and
-                           s.date < ", enddate, sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-
-}
-
-StaticNumActions <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticNumActions <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
 
     select <- "SELECT count(distinct(a.id)) as actions "
     from <- " FROM scmlog s,
@@ -726,9 +488,9 @@ StaticNumActions <- function(period, startdate, enddate, identities_db=NA, repos
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
 
     #executing the query
     q <- paste(select, from, where, rest)
@@ -738,7 +500,7 @@ StaticNumActions <- function(period, startdate, enddate, identities_db=NA, repos
 
 }
 
-StaticNumLines <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticNumLines <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
 
     select <- "select sum(cl.added) as added_lines,
                sum(cl.removed) as removed_lines "
@@ -750,9 +512,9 @@ StaticNumLines <- function(period, startdate, enddate, identities_db=NA, reposit
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
 
     #executing the query
     q <- paste(select, from, where, rest)
@@ -762,7 +524,7 @@ StaticNumLines <- function(period, startdate, enddate, identities_db=NA, reposit
 
 }
 
-StaticAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
 
     select <- paste("select count(distinct(s.id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_commits_",period, sep="")
     from <- " FROM scmlog s "
@@ -771,9 +533,9 @@ StaticAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA,
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
 
     #executing the query
     q <- paste(select, from, where, rest)
@@ -783,7 +545,7 @@ StaticAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA,
 
 }
 	
-StaticAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
 
     select <- paste("select count(distinct(a.file_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_files_",period, sep="")
     from <- " FROM scmlog s,
@@ -794,9 +556,9 @@ StaticAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, r
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
 
     #executing the query
     q <- paste(select, from, where, rest)
@@ -806,7 +568,7 @@ StaticAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, r
 
 }
 	
-StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
 
     select <- "select count(distinct(s.id))/count(distinct(pup.upeople_id)) as avg_commits_author "
     from <- " FROM scmlog s "
@@ -815,18 +577,18 @@ StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA,
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
 
-    if (is.na(repository) &&  is.na(company) && is.na(country)){
+    if (is.na(type_analysis[1])){
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         from <- paste(from, ",  people_upeople pup", sep="")
         where <- paste(where, " and s.author_id = pup.people_id", sep="")
     }
 
-    if (! is.na(repository)){
+    if (type_analysis == "(repository"{
         #Adding people_upeople table
         from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
         where <- paste(where, " and s.author_id = pup.people_id ", sep="")
@@ -841,7 +603,7 @@ StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA,
     return (data)    
 }
 
-StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
 
     select <- paste("select count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="")
     from <- " FROM scmlog s "
@@ -876,7 +638,7 @@ StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, 
     return (data)    
 }
 
-StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
 
     select <- paste("select count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="")
     from <- " FROM scmlog s "
@@ -885,18 +647,18 @@ StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=N
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
     #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "committer"))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "committer"))
 
-    if (is.na(repository) &&  is.na(company) && is.na(country)){
+    if (is.na(type_analysis[1])){
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         from <- paste(from, ",  people_upeople pup", sep="")
         where <- paste(where, " and s.committer_id = pup.people_id", sep="")
     }
 
-    if (! is.na(repository)){
+    if (type_analysis[1] == "repository"){
         #Adding people_upeople table
         from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
         where <- paste(where, " and s.committer_id = pup.people_id ", sep="")
@@ -912,7 +674,7 @@ StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=N
 }
 
 	
-StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, repository=NA, company=NA, country=NA) {
+StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
 
     select <- "select count(distinct(a.file_id))/count(distinct(pup.upeople_id)) as avg_files_author "
     from <- " FROM scmlog s,
@@ -923,16 +685,16 @@ StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, r
     rest <- ""
 
     # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, repository, company, country))
-    where <- paste(where, GetSQLReportWhere(repository, company, country, "author"))
+    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
+    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
 
-    if (is.na(repository) &&  is.na(company) && is.na(country)){
+    if (is.na(type_analysis[1])) {
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         from <- paste(from, ",  people_upeople pup", sep="")
         where <- paste(where, " and s.committer_id = pup.people_id", sep="")
     }
-    if (! is.na(repository)){
+    if (type_analysis[1] == "repository"){
         #Adding people_upeople table
         from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
         where <- paste(where, " and s.author_id = pup.people_id ", sep="")
