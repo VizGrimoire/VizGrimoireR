@@ -1213,50 +1213,6 @@ scm_countries_names <- function(identities_db, startdate, enddate) {
 	return (data)    
 }
 
-scm_countries_evol <- function(identities_db, country, period, startdate, enddate) {
-    
-    rol = "author" #committer
-    print ("WARNING: scm_countries_evol is a deprecated function, use instead EvolCommits")
-    q <- paste("SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                count(s.id) AS commits,
-                COUNT(DISTINCT(s.",rol,"_id)) as ", rol,"s
-                FROM scmlog s, 
-                     people_upeople pup,
-                     ",identities_db,".countries c,
-                     ",identities_db,".upeople_countries upc
-                WHERE pup.people_id = s.",rol,"_id AND
-                      pup.upeople_id  = upc.upeople_id and
-                      upc.country_id = c.id and
-                      s.date >=", startdate, " and
-                      s.date < ", enddate, " and
-                      c.name = '", country, "'
-                GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-    query <- new("Query", sql = q)
-    data <- run(query)	
-    return (data)
-}
-
-scm_countries_static <- function(identities_db, country, startdate, enddate) {
-    rol = "author" #committer
-    
-    q <- paste("SELECT count(s.id) AS commits,
-                       COUNT(DISTINCT(s.",rol,"_id)) as ", rol,"s,
-                       DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date,
-                       DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date
-                FROM scmlog s, 
-                     people_upeople pup,
-                     ",identities_db,".countries c,
-                     ",identities_db,".upeople_countries upc
-                WHERE pup.people_id = s.",rol,"_id AND
-                      pup.upeople_id  = upc.upeople_id and
-                      upc.country_id = c.id and
-                      s.date >=", startdate, " and
-                      s.date < ", enddate, " and
-                      c.name = '", country, "'", sep="")
-    query <- new("Query", sql = q)
-    data <- run(query)	
-    return (data)
-}
 
 
 # Companies / Countries support
