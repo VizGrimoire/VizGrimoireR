@@ -962,6 +962,73 @@ return(end)
 }
 
 
+ExpoAv<-function(serie,s,l)
+#This function gives a type of moving average that is similar to a simple moving average, except that more weight is given to the latest data.
+#serie= data to apply function 
+#s= short period of time to apply moving average
+#l= long period of time to apply moving average
+{ alphas=2/(1+s)
+ 
+  alphal=2/(1+l)
+  
+  short<-rollapply(serie,s,mean)
+  long<-rollapply(serie,l,mean)
+  
+   getEMA2<-function(x,alpha){
+    v<-vector()
+    for (i in 1:length(x)){
+      if (i==1){
+        v[i]<-x[i]
+               }
+      else{
+        v[i]<-alpha*x[i]+(1-alpha)*v[i-1]
+          }
+    }
+    
+  return(v)
+}
+  
+  AS<-getEMA2(short,alphas)
+  AL<-getEMA2(long,alphal)
+
+  #plot(serie, type="l", col="black", lty=2,ylab="Commits", xlab="weeks", main="EMA")
+  #lines(AL,type="l",col="blue")
+  #lines(AS,type="l", col="red")
+  #legend("topleft",col=c("red","blue","black"),lty=c(1,1,2) ,legend=c("Short","Long","commits"))
+  w<-rep(0,l-1)
+  v<-rep(0,s-1)
+  shortA<-c(v,short)
+  longA<-c(w,long)
+  ex_means<-data.frame(shortA,longA)
+  return(ex_means)
+}
+
+
+
+Histogram<-function(field,title)
+{#This function gives distributions 
+n_cl = floor(sqrt(length(field)))
+
+p_cor<-seq(min(field),max(field),length=n_cl+1)
+
+hist(field,breaks=p_cor,col="steelblue4",freq=FALSE, main=paste("Histogram of",title))
+}
+
+
+remove_outliers <- function(x) 
+#This function omits outliers
+#x=vector 
+    {
+    qnt <- quantile(x, probs=c(.25, .75))
+    H <- 1.5 * IQR(x)
+    y <- x
+    y[x < (qnt[1] - H)] <- NA
+    y[x > (qnt[2] + H)] <- NA
+    return(y)
+  }
+
+
+
 
 
 
