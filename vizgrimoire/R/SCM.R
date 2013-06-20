@@ -473,29 +473,36 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
 
 }
 
+GetActions <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+
+    fields = " count(distinct(a.id)) as actions "
+    tables = " scmlog s, actions a "
+    filters = " a.commit_id = s.id "
+
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
+    filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"))
+
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+                          startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                          startdate, enddate)
+    }
 
 
-StaticNumActions <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
-
-    select <- "SELECT count(distinct(a.id)) as actions "
-    from <- " FROM scmlog s,
-                   actions a "
-    where <- paste(" where s.date >=", startdate, " and
-                           s.date < ", enddate, " and
-                           a.commit_id = s.id ", sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
-
-    #executing the query
-    q <- paste(select, from, where, rest)
     query <- new("Query", sql = q)
     data <- run(query)
-    return (data)    
+    return (data)
+}
 
+    
+EvolActions <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    return(GetActions(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+StaticNumActions <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+    return(GetActions(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 StaticNumLines <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
