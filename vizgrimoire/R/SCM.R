@@ -191,7 +191,7 @@ GetCommits <- function(period, startdate, enddate, identities_db, type_analysis,
          q <- GetSQLPeriod(period," s.date ", fields, tables, filters, 
             startdate, enddate)
     } else {
-         GetSQLGlobal(" s.date ", fields, tables, filters,
+         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
 
