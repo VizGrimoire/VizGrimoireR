@@ -37,6 +37,7 @@ import argparse
 import MySQLdb
 import os
 import shutil
+import errno
 from subprocess import call
 
 # Parse command line options
@@ -161,7 +162,7 @@ if not args.nomg:
 try:
     os.makedirs(rConf["libdir"])
 except OSError as e:
-    if e.errno == errno.EEXIST and os.path.isdir(path):
+    if e.errno == errno.EEXIST and os.path.isdir(rConf["libdir"]):
         pass
     else: 
         raise
@@ -192,7 +193,7 @@ call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
 # Now, let's produce an HTML dashboard for the JSON files produced in the
 # previous step
 vgjsFiles = ["vizgrimoire.min.js",
-             "src/jquery-1.7.1.min.js",
+             "lib/jquery-1.7.1.min.js",
              "bootstrap/js/bootstrap.min.js",
              "vizgrimoire.css",
              "browser/custom.css",
