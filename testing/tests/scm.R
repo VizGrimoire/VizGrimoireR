@@ -17,7 +17,7 @@
 ## This file is a part of the vizGrimoire R package
 ##  (an R library for the MetricsGrimoire and vizGrimoire systems)
 ##
-## 1.R
+## scm.R
 ##
 ##
 ## Authors:
