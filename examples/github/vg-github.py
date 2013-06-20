@@ -32,6 +32,12 @@
 # vg-github.py --user jgb --passwd XXX --dir /tmp/pp --removedb
 #  --ghuser ghuser --ghpasswd XXX --vgdir ~/src/vizGrimoire
 #  VizGrimoire/VizGrimoireR
+#
+# Another example, now without running MetricsGrimoire (assumes MetricsGrimoire
+#  tools were already run, and the databases are ready)
+# vg-github.py --user jgb --passwd XXX --dir /tmp/pp --nomg 
+#  --ghuser jgbarah --ghpasswd XXX --vgdir ~/src/vizGrimoire
+#  VizGrimoire/VizGrimoireR
 
 import argparse
 import MySQLdb
@@ -203,8 +209,10 @@ vgjsFiles = ["vizgrimoire.min.js",
              "browser/footer.html",
              "browser/refcard.html",
              "browser/project-card.html"]
+vgrFiles = ["examples/github/index.html",
+            "examples/github/config.json"]
+
 for file in vgjsFiles:
     shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
-
-# Note: missing files:
-# index.htmo, config.json
+for file in vgrFiles:
+    shutil.copy(args.vgdir + "/VizGrimoireR/" + file, dir)
