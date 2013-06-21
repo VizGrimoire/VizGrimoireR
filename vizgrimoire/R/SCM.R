@@ -136,8 +136,23 @@ GetSQLCountriesWhere <- function(country, role){
 
 
 ############
-#Generic function to check evolutionary or static info plus 
+#Generic functions to check evolutionary or static info and for the execution of the final query
 ###########
+
+BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, filters, evolutionary){
+
+    q = ""
+
+    if (evolutionary) {
+         q <- GetSQLPeriod(period, date_field, fields, tables, filters,
+            startdate, enddate)
+    } else {
+         q <- GetSQLGlobal(date_field, fields, tables, filters,
+                           startdate, enddate)
+    }
+
+    return(q)
+}
 
 ExecuteQuery <- function(q){
     query <- new("Query", sql = q)
@@ -198,13 +213,7 @@ GetCommits <- function(period, startdate, enddate, identities_db, type_analysis,
     tables = paste(" scmlog s ", GetSQLReportFrom(identities_db, type_analysis))
     filters = GetSQLReportWhere(type_analysis, "author")
     
-    if (evolutionary) {
-         q <- GetSQLPeriod(period," s.date ", fields, tables, filters, 
-            startdate, enddate)
-    } else {
-         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                           startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -239,13 +248,7 @@ GetAuthors <- function(period, startdate, enddate, identities_db, type_analysis,
         filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
     }
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters, 
-            startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                           startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -281,13 +284,7 @@ GetCommitters <- function(period, startdate, enddate, identities_db, type_analys
         filters <- paste(filters, " and s.committer_id = pup.people_id ", sep="")
     }
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -315,13 +312,7 @@ GetFiles <- function (period, startdate, enddate, identities_db, type_analysis, 
 
     #executing the query
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -352,13 +343,7 @@ GetLines <- function (period, startdate, enddate, identities_db, type_analysis, 
     filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"))
 
     #executing the query
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     data <- ExecuteQuery(q)
     data$negative_removed_lines <- -data$removed_lines
@@ -390,13 +375,8 @@ GetBranches <- function(period, startdate, enddate, identities_db, type_analysis
     filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"))
 
     #executing the query
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
+
     return(ExecuteQuery(q))
 }
 
@@ -421,13 +401,7 @@ GetRepositories <- function(period, startdate, enddate, identities_db, type_anal
     filters <- GetSQLReportWhere(type_analysis, "author")
     
     #executing the query
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -476,13 +450,7 @@ GetActions <- function(period, startdate, enddate, identities_db, type_analysis,
     tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"))
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -526,13 +494,7 @@ GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_
     tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"), sep="")
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -556,13 +518,7 @@ GetAvgFilesPeriod <- function(period, startdate, enddate, identities_db, type_an
     tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"), sep="")
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-                          startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                          startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -601,13 +557,7 @@ GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_
         filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
     }
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-            startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                           startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -645,13 +595,7 @@ GetAvgAuthorPeriod <- function(period, startdate, enddate, identities_db, type_a
         filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
     }
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-            startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                           startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -689,13 +633,7 @@ GetAvgCommitterPeriod <- function(period, startdate, enddate, identities_db, typ
         filters <- paste(filters, " and s.committer_id = pup.people_id ", sep="")
     }
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-            startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                           startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     return(ExecuteQuery(q))
 }
@@ -734,13 +672,8 @@ GetAvgFilesAuthor <- function(period, startdate, enddate, identities_db, type_an
         filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
     }
 
-    if (evolutionary) {
-        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
-            startdate, enddate)
-    } else {
-        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
-                           startdate, enddate)
-    }
+    q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
+
 
     return(ExecuteQuery(q))
 }
