@@ -40,6 +40,7 @@ conf <- ConfFromOptParse()
 SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 
+
 test.suite <- defineTestSuite("SCM",
                               dirs = file.path("tests"),
                               testFileRegexp = 'scm.R')

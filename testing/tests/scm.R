@@ -101,6 +101,6 @@ test.StaticAvgCommitterPeriod <- function()
 
 test.StaticAvgFilesAuthor <- function()
 {
-    expect_that(25.6711, equals(as.numeric(StaticAvgFilesAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    expect_that(24.9554, equals(as.numeric(StaticAvgFilesAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
