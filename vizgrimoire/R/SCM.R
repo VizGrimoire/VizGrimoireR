@@ -640,110 +640,146 @@ StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA,
 }
 
 
-StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+GetAvgAuthorPeriod <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
 
-    select <- paste("select count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="")
-    from <- " FROM scmlog s "
-    where <- paste(" where s.date >=", startdate, " and
-                           s.date < ", enddate, sep="")
-    rest <- ""
+    fields = paste(" count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="") 
+    tables = " scmlog s "
+    filters = ""
 
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
+    filters = GetSQLReportWhere(type_analysis, "author")
 
-    if (is.na(type_analysis[1])){
-        #Specific case for the basic option where people_upeople table is needed
-        #and not taken into account in the initial part of the query
-        from <- paste(from, ",  people_upeople pup", sep="")
-        where <- paste(where, " and s.author_id = pup.people_id", sep="")
-    }
-
-    if (type_analysis[1] == "repository"){
-        #Adding people_upeople table
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
-    }
-
-
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-}
-
-StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
-
-    select <- paste("select count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="")
-    from <- " FROM scmlog s "
-    where <- paste(" where s.date >=", startdate, " and
-                           s.date < ", enddate, sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
-    #TODO: left "author" as generic option coming from parameters (this should be specified by command line)
-    where <- paste(where, GetSQLReportWhere(type_analysis, "committer"))
-
-    if (is.na(type_analysis[1])){
-        #Specific case for the basic option where people_upeople table is needed
-        #and not taken into account in the initial part of the query
-        from <- paste(from, ",  people_upeople pup", sep="")
-        where <- paste(where, " and s.committer_id = pup.people_id", sep="")
-    }
-
-    if (type_analysis[1] == "repository"){
-        #Adding people_upeople table
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.committer_id = pup.people_id ", sep="")
-    }
-
-
-
-    #executing the query
-    q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-}
-
-	
-StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
-
-    select <- "select count(distinct(a.file_id))/count(distinct(pup.upeople_id)) as avg_files_author "
-    from <- " FROM scmlog s,
-                   actions a "
-    where <- paste(" where s.date >=", startdate, " and
-                           s.date < ", enddate, " and
-                           s.id = a.commit_id ", sep="")
-    rest <- ""
-
-    # specific parts of the query depending on the report needed
-    from <- paste(from, GetSQLReportFrom(identities_db, type_analysis))
-    where <- paste(where, GetSQLReportWhere(type_analysis, "author"))
+    #specific parts of the query depending on the report needed
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
 
     if (is.na(type_analysis[1])) {
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
-        from <- paste(from, ",  people_upeople pup", sep="")
-        where <- paste(where, " and s.committer_id = pup.people_id", sep="")
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " and s.author_id = pup.people_id", sep="")
     }
+
     if (type_analysis[1] == "repository"){
         #Adding people_upeople table
-        from <- paste(from, ",  ",identities_db,".people_upeople pup", sep="")
-        where <- paste(where, " and s.author_id = pup.people_id ", sep="")
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
     }
 
-    #executing the query
-    q <- paste(select, from, where, rest)
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+            startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                           startdate, enddate)
+    }
     query <- new("Query", sql = q)
     data <- run(query)
-    return (data)    
+    return (data)
 
 }
+
+EvolAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    return (GetAvgAuthorPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    return (GetAvgAuthorPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+GetAvgCommitterPeriod <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+
+    fields = paste(" count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="")
+    tables = " scmlog s "
+    filters = ""
+
+    filters = GetSQLReportWhere(type_analysis, "committer")
+
+    #specific parts of the query depending on the report needed
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
+
+    if (is.na(type_analysis[1])) {
+        #Specific case for the basic option where people_upeople table is needed
+        #and not taken into account in the initial part of the query
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " and s.committer_id = pup.people_id", sep="")
+    }
+
+    if (type_analysis[1] == "repository"){
+        #Adding people_upeople table
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " and s.committer_id = pup.people_id ", sep="")
+    }
+
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+            startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                           startdate, enddate)
+    }
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+EvolAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    return (GetAvgCommitterPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    return (GetAvgCommitterPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+GetAvgFilesAuthor <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    
+    fields = " count(distinct(a.file_id))/count(distinct(pup.upeople_id)) as avg_files_author "
+    tables = " scmlog s, actions a "
+    filters = " s.id = a.commit_id "
+
+    filters = paste(filters, GetSQLReportWhere(type_analysis, "author"))
+
+    #specific parts of the query depending on the report needed
+    tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
+
+    if (is.na(type_analysis[1])) {
+        #Specific case for the basic option where people_upeople table is needed
+        #and not taken into account in the initial part of the query
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " and s.author_id = pup.people_id", sep="")
+    }
+
+    if (type_analysis[1] == "repository"){
+        #Adding people_upeople table
+        tables <- paste(tables, ",  ",identities_db,".people_upeople pup", sep="")
+        filters <- paste(filters, " and s.author_id = pup.people_id ", sep="")
+    }
+
+    if (evolutionary) {
+        q <- GetSQLPeriod(period, " s.date ", fields, tables, filters,
+            startdate, enddate)
+    } else {
+        q <- GetSQLGlobal(" s.date ", fields, tables, filters,
+                           startdate, enddate)
+    }
+    print(q)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+
+}
+
+EvolAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+    return(GetAvgFilesAuthor(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+
+StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+    return(GetAvgFilesAuthor(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
 
 StaticURL <- function() {
     q <- paste("select uri as url,type from repositories limit 1")
