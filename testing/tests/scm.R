@@ -32,12 +32,61 @@ test.prints <- function()
 
 }
 
-test.commits <- function()
+#Evolutionary functions
+test.EvolCommits <- function()
 {
     expect_that(54, equals(nrow(EvolCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
+test.EvolAuthors <- function()
+{
+    expect_that(54, equals(nrow(EvolAuthors('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
 
+test.EvolCommitters <- function()
+{
+    expect_that(54, equals(nrow(EvolCommitters('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+
+test.EvolFiles <- function()
+{
+    expect_that(54, equals(nrow(EvolFiles('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolLines <- function()
+{
+    expect_that(54, equals(nrow(EvolLines('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolBranches <- function()
+{
+    expect_that(54, equals(nrow(EvolBranches('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolRepositories <- function()
+{
+    expect_that(54, equals(nrow(EvolRepositories('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolActions <- function()
+{
+    expect_that(54, equals(nrow(EvolActions('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolAvgCommitsAuthor <- function()
+{
+    expect_that(54, equals(nrow(EvolAvgCommitsAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+test.EvolAvgFilesAuthor <- function()
+{
+    expect_that(54, equals(nrow(EvolAvgFilesAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+
+
+#Aggregated functions
 test.StaticNumCommits <- function()
 {
     expect_that(18710, equals(as.numeric(StaticNumCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))[1])))
