@@ -134,6 +134,17 @@ GetSQLCountriesWhere <- function(country, role){
                   and c.name =", country, sep=""))
 }
 
+
+############
+#Generic function to check evolutionary or static info plus 
+###########
+
+ExecuteQuery <- function(q){
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
 ##########
 #Generic functions to obtain FROM and WHERE clauses per type of report
 ##########
@@ -195,9 +206,7 @@ GetCommits <- function(period, startdate, enddate, identities_db, type_analysis,
                            startdate, enddate)
     }
 
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+    return(ExecuteQuery(q))
 }
 
 EvolCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
@@ -237,9 +246,8 @@ GetAuthors <- function(period, startdate, enddate, identities_db, type_analysis,
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    query <- new("Query", sql = q)
-     data <- run(query)
-     return (data)
+
+    return(ExecuteQuery(q))
 }
 
 EvolAuthors <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
@@ -280,9 +288,8 @@ GetCommitters <- function(period, startdate, enddate, identities_db, type_analys
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                           startdate, enddate)
     }
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+
+    return(ExecuteQuery(q))
 }
 
 EvolCommitters <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
@@ -316,10 +323,7 @@ GetFiles <- function (period, startdate, enddate, identities_db, type_analysis, 
                           startdate, enddate)
     }
 
-
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+    return(ExecuteQuery(q))
 }
 
 EvolFiles <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
@@ -356,9 +360,7 @@ GetLines <- function (period, startdate, enddate, identities_db, type_analysis, 
                           startdate, enddate)
     }
 
-
-    query <- new("Query", sql = q)
-    data <- run(query)
+    data <- ExecuteQuery(q)
     data$negative_removed_lines <- -data$removed_lines
     return (data)
 }
@@ -395,11 +397,7 @@ GetBranches <- function(period, startdate, enddate, identities_db, type_analysis
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                           startdate, enddate)
     }
-
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-
+    return(ExecuteQuery(q))
 }
 
 EvolBranches <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
@@ -431,9 +429,7 @@ GetRepositories <- function(period, startdate, enddate, identities_db, type_anal
                           startdate, enddate)
     }
 
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+    return(ExecuteQuery(q))
 }
 
 EvolRepositories <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
@@ -467,10 +463,8 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
 
     #executing the query
     q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
 
+    return(ExecuteQuery(q))
 }
 
 GetActions <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
@@ -490,10 +484,7 @@ GetActions <- function(period, startdate, enddate, identities_db, type_analysis,
                           startdate, enddate)
     }
 
-
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
+    return(ExecuteQuery(q))
 }
 
     
@@ -523,10 +514,7 @@ StaticNumLines <- function(period, startdate, enddate, identities_db=NA, type_an
 
     #executing the query
     q <- paste(select, from, where, rest)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)    
-
+    return(ExecuteQuery(q))
 }
 
 GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
@@ -545,11 +533,8 @@ GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                           startdate, enddate)
     }
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
 
-
+    return(ExecuteQuery(q))
 }
 
 #EvolAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
@@ -578,12 +563,8 @@ GetAvgFilesPeriod <- function(period, startdate, enddate, identities_db, type_an
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                           startdate, enddate)
     }
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
 
-
-
+    return(ExecuteQuery(q))
 }
 
 #EvolAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
@@ -627,10 +608,8 @@ GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
 
+    return(ExecuteQuery(q))
 }
 
 EvolAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
@@ -673,10 +652,8 @@ GetAvgAuthorPeriod <- function(period, startdate, enddate, identities_db, type_a
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
 
+    return(ExecuteQuery(q))
 }
 
 #EvolAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
@@ -719,11 +696,9 @@ GetAvgCommitterPeriod <- function(period, startdate, enddate, identities_db, typ
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
 
+    return(ExecuteQuery(q))
+}
 
 #EvolAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
 #WARNING: this function should return same info as EvolCommitters, do not use this
@@ -766,11 +741,8 @@ GetAvgFilesAuthor <- function(period, startdate, enddate, identities_db, type_an
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
 
-
+    return(ExecuteQuery(q))
 }
 
 EvolAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
