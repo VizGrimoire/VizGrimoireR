@@ -719,7 +719,6 @@ GetAvgCommitterPeriod <- function(period, startdate, enddate, identities_db, typ
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -767,7 +766,6 @@ GetAvgFilesAuthor <- function(period, startdate, enddate, identities_db, type_an
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
