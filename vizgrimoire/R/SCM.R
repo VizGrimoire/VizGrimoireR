@@ -552,9 +552,10 @@ GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_
 
 }
 
-EvolAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
-    return (GetAvgCommitsPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
-}
+#EvolAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+#WARNING: This function should provide same information as EvolCommits, do not use this.
+#    return (GetAvgCommitsPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
+#}
 
 StaticAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
     return (GetAvgCommitsPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
@@ -585,9 +586,10 @@ GetAvgFilesPeriod <- function(period, startdate, enddate, identities_db, type_an
 
 }
 
-EvolAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
-    return (GetAvgFilesPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
-}
+#EvolAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+#WARNING: this function should return same info as EvolFiles, do not use this
+#    return (GetAvgFilesPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
+#}
 
 StaticAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
     return (GetAvgFilesPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
@@ -677,9 +679,10 @@ GetAvgAuthorPeriod <- function(period, startdate, enddate, identities_db, type_a
 
 }
 
-EvolAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
-    return (GetAvgAuthorPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
-}
+#EvolAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+#WARNING: this function should return same information as EvolAuthors, do not use this
+#    return (GetAvgAuthorPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
+#}
 
 StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
     return (GetAvgAuthorPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
@@ -716,15 +719,17 @@ GetAvgCommitterPeriod <- function(period, startdate, enddate, identities_db, typ
         q <- GetSQLGlobal(" s.date ", fields, tables, filters,
                            startdate, enddate)
     }
+    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 
-EvolAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
-    return (GetAvgCommitterPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
-}
+#EvolAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+#WARNING: this function should return same info as EvolCommitters, do not use this
+#    return (GetAvgCommitterPeriod(period, startdate, enddate, identities_db, type_analysis, TRUE))
+#}
 
 StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
     return (GetAvgCommitterPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
