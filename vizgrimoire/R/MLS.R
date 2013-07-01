@@ -65,8 +65,18 @@ GetFiltersCompanies <- function() {
                   m.first_date < upc.end'))
 }
 
+GetFiltersInit <- function() {
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters_init = paste(filters, " AND m.is_response_of IS NULL")
+}
+GetFiltersResponse <- function() {
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+}
 
-# GLOBAL
+#
+## GLOBAL
+#
 
 GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, reports=c('')) {    
     
@@ -81,37 +91,23 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     query <- new ("Query", sql = q)
     sent.senders.repos.threads <- run(query)
     
-    filters_init = paste(filters, " AND m.is_response_of IS NULL")
-    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+    filters_init = GetFiltersInit()
+    filters_response = GetFiltersResponse()
 
-    # Messages
-    fields = "COUNT(*) as sent_response"
+    # Responses
+    fields = "COUNT(*) as sent_response, COUNT(DISTINCT(pup.upeople_id)) as senders_response"
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters_response, 
             startdate, enddate)
     query <- new ("Query", sql = q)
-    responses<- run(query)
+    responses.senders_response<- run(query)
     
-    fields = "COUNT(*) as sent_init"
+    # Init messages
+    fields = "COUNT(*) as sent_init, COUNT(DISTINCT(pup.upeople_id)) as senders_init"
     q <- GetSQLPeriod(period,'first_date', fields, tables, filters_init, 
             startdate, enddate)
     query <- new ("Query", sql = q)
-    init<- run(query)
+    init.senders_init<- run(query)
     
-    # Persons    
-    # fields = "COUNT(DISTINCT(email_address)) AS senders_response"
-    fields = "COUNT(DISTINCT(pup.upeople_id)) as senders_response"
-    q <- GetSQLPeriod(period, 'first_date', fields, tables, filters_response, 
-            startdate, enddate)
-    query <- new ("Query", sql = q)
-    senders_response <- run(query)
-
-    # fields = "COUNT(DISTINCT(email_address)) AS senders_init"
-    fields = "COUNT(DISTINCT(pup.upeople_id)) as senders_init"
-    q <- GetSQLPeriod(period, 'first_date', fields, tables, filters_init,
-            startdate, enddate)
-    query <- new ("Query", sql = q)
-    senders_init <- run(query)
-
     # Reports
     if ("countries" %in% reports) {
         fields = 'COUNT(DISTINCT(c.id)) AS countries' 
@@ -133,21 +129,18 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
     }  
       
     mls <- sent.senders.repos.threads
-    mls <- merge (mls, senders_init, all = TRUE)
-    mls <- merge (mls, senders_response, all = TRUE)
-    mls <- merge (mls, responses, all = TRUE)
-    mls <- merge (mls, init, all = TRUE)
+    mls <- merge (mls, responses.senders_response, all = TRUE)
+    mls <- merge (mls, init.senders_init, all = TRUE)
     if ("countries" %in% reports) mls <- merge (mls, countries, all = TRUE)
     if ("companies" %in% reports) mls <- merge (mls, companies, all = TRUE)
     return (mls)
 }
 
-GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
-    
+GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {    
     # Global queries
-    fields = "COUNT(*) as sent,
-              DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
+    fields = "DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
+              COUNT(*) as sent,
               COUNT(DISTINCT(pup.upeople_id)) as senders,
               COUNT(DISTINCT(',rfield,')) AS repositories,
               COUNT(DISTINCT(m.is_response_of)) AS threads"
@@ -157,16 +150,14 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
             startdate, enddate)    
     query <- new ("Query", sql = q)
     sent.senders.first.last.repos <- run(query)
-    
-    filters_init = paste(filters, " AND m.is_response_of IS NULL")
-    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+ 
+    filters_init = GetFiltersInit()
+    filters_response = GetFiltersResponse()
         
     # Repositories
     q <- paste("SELECT mailing_list_url AS url FROM mailing_lists limit 1")
     query <- new ("Query", sql = q)
     repo_info <- run(query)
-    
-        
     
     # Messages and threads
     fields = "COUNT(*) as sent_response"
@@ -186,7 +177,8 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     thread_size <- run(query)
     
     fieldsi = "COUNT(DISTINCT(m.message_ID)) AS sent_init"
-    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS unique_responses"
+    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS sent_responses,  
+               COUNT(DISTINCT(m.is_response_of)) AS unique_responses"
     
     qi <- GetSQLGlobal('first_date', fieldsi, tables, filters_init, 
             startdate, enddate)
@@ -194,13 +186,13 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     qr <- GetSQLGlobal('first_date', fieldsr, tables, filters_response, 
             startdate, enddate)
     
-    q <- paste('SELECT sent_init, (sent_init-unique_responses) AS sent_no_response 
+    q <- paste('SELECT sent_init, sent_responses, 
+                (sent_init-unique_responses) AS sent_no_response 
                 FROM (',qr,') dt JOIN (',qi,') dt1')
     query <- new ("Query", sql = q)
-    messages_no_response <- run(query)
+    sent_init.sent_responses.sent_no_response <- run(query)
 
     # Persons queries
-    # fields = "COUNT(DISTINCT(email_address)) AS persons"
     fields = "COUNT(DISTINCT(pup.upeople_id)) as persons"
     q <- GetSQLGlobal('first_date', fields, tables, filters_thread, 
             startdate, enddate)
@@ -208,14 +200,12 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
     query <- new ("Query", sql = q)
     thread_persons <- run(query)
     
-    # fields = "COUNT(DISTINCT(email_address)) AS senders_response"
     fields = "COUNT(DISTINCT(pup.upeople_id)) as senders_response"
     q <- GetSQLGlobal('first_date', fields, tables, filters_response, 
             startdate, enddate)
     query <- new ("Query", sql = q)
     senders_response <- run(query)
     
-    # fields = "COUNT(DISTINCT(email_address)) AS senders_init"
     fields = "COUNT(DISTINCT(pup.upeople_id)) as senders_init"
     q <- GetSQLGlobal('first_date', fields, tables, filters_init, 
             startdate, enddate)
@@ -243,7 +233,7 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
 	
 	agg_data = merge(sent.senders.first.last.repos, repo_info)
     agg_data = merge(agg_data, responses)
-    agg_data = merge(agg_data, messages_no_response)
+    agg_data = merge(agg_data, sent_init.sent_responses.sent_no_response)
     agg_data = merge(agg_data, thread_size)
     agg_data = merge(agg_data, thread_persons)
     agg_data = merge(agg_data, senders_init)
@@ -296,24 +286,70 @@ GetEvolReposMLS <- function (rfield, repo, period, startdate, enddate) {
             startdate, enddate)
     query <- new ("Query", sql = q)
     sent.senders <- run(query)
-        
-    return(sent.senders)	
+    
+    filters_init = paste(GetFiltersInit(),' AND
+                    ',rfield,'=\'',repo,'\'',sep='')
+    filters_response = paste(GetFiltersResponse(),' AND
+                    ',rfield,'=\'',repo,'\'',sep='')
+    
+    # Responses
+    fields = "COUNT(*) as sent_response, COUNT(DISTINCT(pup.upeople_id)) as senders_response"
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters_response, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    responses.senders_response<- run(query)
+    
+    # Init messages
+    fields = "COUNT(*) as sent_init, COUNT(DISTINCT(pup.upeople_id)) as senders_init"
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters_init, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    init.senders_init<- run(query)
+    
+    mls <- sent.senders
+    if (length(responses.senders_response) > 0) {
+        mls <- merge (sent.senders, responses.senders_response, all = TRUE)
+    }
+    mls <- merge (mls, init.senders_init, all = TRUE)    
+    return(mls)	
 }
 
 GetStaticReposMLS <- function (rfield, repo, startdate, enddate) {
-    fields = "COUNT(m.message_ID) as sent,
-              DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
+    fields = "DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
+              COUNT(m.message_ID) as sent,
               COUNT(DISTINCT(pup.upeople_id)) as senders"
     tables = GetTablesOwnUniqueIdsMLS()
 	filters = paste(GetFiltersOwnUniqueIdsMLS(),' AND
-                    ',rfield,'=\'',repo,'\'',sep='')    
+                    ',rfield,'=\'',repo,'\'',sep='')
+    filters_init = paste(GetFiltersInit(),' AND
+                    ',rfield,'=\'',repo,'\'',sep='')
+    filters_response = paste(GetFiltersResponse(),' AND
+                    ',rfield,'=\'',repo,'\'',sep='')
+    
+    # Basic metrics
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
             startdate, enddate)
-
     query <- new ("Query", sql = q)
-    data <- run(query)    
-    return(data)
+    sent.senders <- run(query)
+    
+    # Init and responses
+    fieldsi = "COUNT(DISTINCT(m.message_ID)) AS sent_init"
+    fieldsr = "COUNT(DISTINCT(m.message_ID)) AS sent_responses,  
+            COUNT(DISTINCT(m.is_response_of)) AS unique_responses"    
+    qi <- GetSQLGlobal('first_date', fieldsi, tables, filters_init, 
+            startdate, enddate)    
+    qr <- GetSQLGlobal('first_date', fieldsr, tables, filters_response, 
+            startdate, enddate)    
+    q <- paste('SELECT sent_init, sent_responses, 
+                (sent_init-unique_responses) AS sent_no_response 
+                FROM (',qr,') dt JOIN (',qi,') dt1')
+    query <- new ("Query", sql = q)
+    sent_init.sent_responses.sent_no_response <- run(query)
+    
+    mls <- merge(sent.senders, sent_init.sent_responses.sent_no_response)
+    
+    return(mls)
 }
 
 repoTopSenders <- function(repo, identities_db, startdate, enddate){

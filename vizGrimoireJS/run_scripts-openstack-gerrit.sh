@@ -3,19 +3,10 @@
 #$2 = MLS database
 #$3 = ITS database
 
-# Example: ./run_scripts-openstack-gerrit.sh dic_cvsanaly_openstack_1289_2013_04_04 dic_mlstats_openstack_1290_2013_04_04 acs_gerrit_launchpad_1411
+# Example: ./run_scripts-openstack-gerrit.sh acs_gerrit_launchpad_1411 acs_gerrit_launchpad_1411 acs_gerrit_launchpad_1411
 
-#WHOLE DATA
+# R --vanilla --args -d acs_gerrit_launchpad_1411 -u root -i acs_gerrit_launchpad_1411  -s 2011-07-25 -e 2013-04-05 -g weeks < scr-analysis.R
+
 rm data/json/*
-mkdir -p data/whole_project
-#ITS
-R --vanilla --args -d $3 -u root -i $1 -s 2010-05-27 -e 2013-04-04 -g weeks < its-analysis-gerrit.R
-rm data/whole_project/*
-mv data/json/* data/whole_project/
-exit
-#SCM
-R --vanilla --args -d $1 -u root -i $1 -s 2010-05-27 -e 2013-04-04 -g weeks < scm-analysis.R
-#MLS
-R --vanilla --args -d $2 -u root -i $1 -s 2010-05-27 -e 2013-04-04 -g weeks < mls-analysis.R
-rm data/whole_project/*
-mv data/json/* data/whole_project/
+R --vanilla --args -d $3 -u root -i $1 -s 2011-07-25 -e 2013-04-05 -g weeks < scr-analysis.R
+# R --vanilla --args -d $3 -u root -i $1 -s 2013-03-01 -e 2013-04-01 -g weeks < scr-analysis.R
