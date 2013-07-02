@@ -129,15 +129,22 @@ if ('countries' %in% reports) {
 }
 
 latest_activity7 = GetLastActivityITS(7, closed_condition)
+latest_activity14 = GetLastActivityITS(14, closed_condition)
 latest_activity30 = GetLastActivityITS(30, closed_condition)
+latest_activity60 = GetLastActivityITS(60, closed_condition)
 latest_activity90 = GetLastActivityITS(90, closed_condition)
+latest_activity180 = GetLastActivityITS(180, closed_condition)
 latest_activity365 = GetLastActivityITS(365, closed_condition)
+latest_activity730 = GetLastActivityITS(730, closed_condition)
 all_static_info = merge(all_static_info, latest_activity7)
+all_static_info = merge(all_static_info, latest_activity14)
 all_static_info = merge(all_static_info, latest_activity30)
+all_static_info = merge(all_static_info, latest_activity60)
 all_static_info = merge(all_static_info, latest_activity90)
+all_static_info = merge(all_static_info, latest_activity180)
 all_static_info = merge(all_static_info, latest_activity365)
+all_static_info = merge(all_static_info, latest_activity730)
 createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
-
 
 # Top closers
 top_closers_data <- list()
