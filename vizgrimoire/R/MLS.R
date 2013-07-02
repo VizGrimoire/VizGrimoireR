@@ -532,10 +532,12 @@ companyTopSenders <- function(company_name, identities_db, startdate, enddate){
 
 # TODO: It is the same than SCM because unique identites
 GetListPeopleMLS <- function(startdate, enddate) {
-    fields = "DISTINCT(pup.upeople_id) as id"
+    fields = "DISTINCT(pup.upeople_id) as id, count(m.message_ID) total"
     tables = GetTablesOwnUniqueIdsMLS()
     filters = GetFiltersOwnUniqueIdsMLS()
-    q = GetSQLGlobal('first_date',fields,tables, filters, startdate, enddate)        
+    filters = paste(filters,"GROUP BY id ORDER BY total desc")
+    q = GetSQLGlobal('first_date',fields,tables, filters, startdate, enddate)
+    print(q)
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)        
