@@ -28,8 +28,6 @@
 
 
 
-
-
 library(optparse)
 library(DBI)
 library(RMySQL)
@@ -63,6 +61,8 @@ ConfFromOptParse <- function () {
   }	
   return(options)	
 }
+#---
+
 
 
 conf <- ConfFromOptParse()
@@ -95,15 +95,14 @@ colnames(table_row)<-c("rows","names")
 
 
 
-
+#This function classified core and optional tables with number of rows.
 Control<-function()
 {
- #This function classifies core and optional tables with number of rows.
  i<-0
  cores<-NULL
  ops<-NULL
  errs<-NULL
- print("TABLES ANALYSIS:")
+ cat("\n TABLES ANALYSIS:\n ")
   for(i in 1:nrow(table_row))
   {
     if (is.element(table_row$names[i], core)){
@@ -235,6 +234,86 @@ cat("\n PART 2: TABLES COMPARISON ; DIF BETWEEN ROWS \n")
  print("   2.5 From UPEOPLE upeople_id to UPEOPLE_COMPANIES upeople_id") 
  compare5<-Compare("upeople","upeople_companies","id","upeople_id")
 
+######NUMERICAL ANALYSIS 
+
+cat("\n NUMERICAL ANALYSIS \n") 
+
+cat("\n PART 1: STATIC DATA SUMMARY \n")
+   print("1.1. BY PEOPLE") 
+  
+query<-paste("select people_upeople.people_id as id_people, 
+scmlog.id as total_commits,  
+commits_lines.added as total_added, 
+commits_lines.removed as total_removed,
+companies.name as company
+from commits_lines, 
+companies, scmlog, people, people_upeople, upeople, upeople_companies
+where commits_lines.commit_id=scmlog.id 
+and scmlog.author_id=people.id 
+and people.id=people_upeople.people_id
+and people_upeople.upeople_id=upeople.id
+and upeople.id=upeople_companies.upeople_id and upeople_companies.company_id=companies.id 
+group by people_upeople.people_id")
+
+rs<-dbSendQuery(con, query)
+S<-fetch(rs,n=-1)
+print("SHOW HEAD DATA")
+print(head(S))
+   
+print("SHOW SUMMARY")
+print(summary(S[2:4]))
+
+print(" Nº PEOPLE IN COMPANIES") 
+print(table(S$company))
+
+cat("\n PART 2: LAST WEEK SUMMARY  \n")
+
+cat("\n 2.1 COMMITS & LINES\n")
+query <- paste("select 
+  count(distinct(commits_lines.commit_id)) as commits, 
+  sum(commits_lines.added) as added, 
+  sum(commits_lines.removed) as removed,
+  year(date) as year,
+  month(date) as month,
+  day(date)  as days
+  from commits_lines, scmlog 
+  where commits_lines.commit_id=scmlog.id
+  group by year(date), month(date), day(date)")
+
+  rs <- dbSendQuery(con, query)
+  lines<-fetch(rs,n=-1)  
+  last<-lines[(nrow(lines)-6):nrow(lines),]
+
+ print("SHOW HEAD DATA")
+ print(last)
+ 
+ print("SHOW SUMMARY")
+ print(summary(last[1:3]))
+
+cat("\n 2.2. FILES TOUCHED\n")
+query <- paste("select 
+ count(distinct(actions.file_id))  
+ as total_files,
+ year(date)
+ as year, 
+ month(date) 
+ as month, 
+ day(date)
+ as day
+ from scmlog, actions
+ where actions.commit_id=scmlog.id
+ group by year(date), month(date), day(date)")
+ rs <- dbSendQuery(con, query)
+ actions<-fetch(rs,n=-1)
+ last<-actions[(nrow(actions)-6):nrow(actions),]
+ 
+ print("SHOW HEAD DATA")
+ print(last)
+ 
+ print("SHOW SUMMARY")
+ print(summary(last[1]))
+
+
 }
 
 
@@ -277,10 +356,58 @@ cat("\n PART 2: TABLES COMPARISON ; DIF BETWEEN ROWS \n")
    print("   2.1 From PEOPLE to PEOPLE_UPEOPLE") 
    compare1<-Compare("people","people_upeople","email_address","people_id")
 
+
+######NUMERICAL ANALYSIS 
+
+  cat("\n NUMERICAL ANALYSIS \n") 
+
+cat("\n PART 1: STATIC DATA SUMMARY \n")
+print("   1.1. BY PEOPLE")
+
+query<-paste("select count(distinct(messages_people.email_address)) as total_messages,
+people_upeople.upeople_id as people_id
+from messages_people, people_upeople
+where messages_people.email_address=people_upeople.people_id
+group by people_upeople.upeople_id") 
+rs<-dbSendQuery(con, query)
+MESS<-fetch(rs,n=-1)
+
+print("SHOW HEAD DATA")
+print(head(MESS))
+
+print("SHOW SUMMARY")
+print(summary(MESS[1]))
+
+cat("\n PART 2: LAST WEEK SUMMARY \n ")
+
+print(" 2.1: MESSAGES") 
+
+query<-paste("select count(distinct(message_ID)) as messages_id,
+year(first_date) as year,
+month(first_date) as month,
+day(first_date) as day
+from messages
+group by year(first_date), month(first_date), day(first_date)")
+
+rs<-dbSendQuery(con, query)
+TimeMess<-fetch(rs,n=-1)
+
+last<-TimeMess[(nrow(TimeMess)-6):nrow(TimeMess),]
+
+ print("SHOW HEAD DATA")
+ print(last)
+ 
+ print("SHOW SUMMARY")
+ print(summary(last[1]))
+
+
+
+
+
 }
 
 
-if(conf$dbtype=="its")#SPECIAL VALIDATOR FOR ITS
+if(conf$dbtype=="its")#HERE START SPECIAL VALIDATOR FOR ITS
 
 {
 
@@ -318,6 +445,80 @@ cat("\n PART 1: ERRORS IN TABLES \n")
 
    print("   2.1 From PEOPLE to PEOPLE_UPEOPLE") 
    compare1<-Compare("people","people_upeople","id","people_id")
+
+######NUMERICAL ANALYSIS 
+
+  cat("\n NUMERICAL ANALYSIS \n") 
+
+cat("\n PART 1: STATIC DATA SUMMARY \n")
+print("   1.1. BY PEOPLE")
+
+query<-paste("select people_upeople.people_id as people_id,
+count(distinct(issues.id)) as total_submitted
+from issues, people_upeople
+where people_upeople.people_id=issues.submitted_by 
+group by people_upeople.people_id")
+rs<-dbSendQuery(con, query)
+SUBM<-fetch(rs,n=-1)
+
+query<-paste("select people_upeople.people_id as people_id,
+count(distinct(issues.id)) as total_assigned
+from issues, people_upeople
+where people_upeople.people_id=issues.assigned_to
+group by people_upeople.people_id")
+rs<-dbSendQuery(con, query)
+ASSIG<-fetch(rs,n=-1)
+ASSIG$people_id<-row.names(ASSIG)
+X<-merge(ASSIG,SUBM,by="people_id")
+
+query<-paste("select people_upeople.people_id as people_id,
+count(distinct(comments.issue_id)) as total_comments
+from people_upeople, comments
+where people_upeople.people_id=comments.submitted_by
+group by people_upeople.people_id")
+rs<-dbSendQuery(con, query)
+COMM<-fetch(rs,n=-1)
+COMM$people_id<-row.names(COMM)
+
+query<-paste("select people_upeople.people_id as people_id, 
+count(distinct(changes.issue_id)) as total_changes
+from people_upeople, changes
+where people_upeople.people_id=changes.changed_by
+group by people_upeople.people_id")
+rs<-dbSendQuery(con, query)
+CHAN<-fetch(rs,n=-1)
+CHAN$people_id<-row.names(CHAN)
+
+Y<-merge(COMM,CHAN,by="people_id")
+
+M<-merge(X,Y,by="people_id")
+
+print("SHOW HEAD DATA")
+print(head(M))
+
+print("SHOW SUMMARY")
+print(summary(M[2:5]))
+
+
+
+cat("\n PART 2: LAST WEEK SUMMARY \n ")
+
+print(" 2.1 ISSUES") 
+query<-paste("select year(submitted_on) as year, 
+month(submitted_on) as month,
+day(submitted_on) as day,
+count(distinct(issues.issue)) as total_issue 
+from issues
+group by year(submitted_on), month(submitted_on), day(submitted_on)")
+rs<-dbSendQuery(con, query)
+tempo_issue<-fetch(rs,n=-1)
+last<-tempo_issue[(nrow(tempo_issue)-6):nrow(tempo_issue),]
+
+ print("SHOW DATA")
+ print(last)
+ 
+ print("SHOW SUMMARY")
+ print(summary(last[4]))
 
 
 }

@@ -90,7 +90,6 @@ destdir <- conf$destination
 
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
-
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
 open <- GetEvolOpened(period, startdate, enddate)
@@ -130,15 +129,22 @@ if ('countries' %in% reports) {
 }
 
 latest_activity7 = GetLastActivityITS(7, closed_condition)
+latest_activity14 = GetLastActivityITS(14, closed_condition)
 latest_activity30 = GetLastActivityITS(30, closed_condition)
+latest_activity60 = GetLastActivityITS(60, closed_condition)
 latest_activity90 = GetLastActivityITS(90, closed_condition)
+latest_activity180 = GetLastActivityITS(180, closed_condition)
 latest_activity365 = GetLastActivityITS(365, closed_condition)
+latest_activity730 = GetLastActivityITS(730, closed_condition)
 all_static_info = merge(all_static_info, latest_activity7)
+all_static_info = merge(all_static_info, latest_activity14)
 all_static_info = merge(all_static_info, latest_activity30)
+all_static_info = merge(all_static_info, latest_activity60)
 all_static_info = merge(all_static_info, latest_activity90)
+all_static_info = merge(all_static_info, latest_activity180)
 all_static_info = merge(all_static_info, latest_activity365)
+all_static_info = merge(all_static_info, latest_activity730)
 createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
-
 
 # Top closers
 top_closers_data <- list()
@@ -236,9 +242,11 @@ if ('countries' %in% reports) {
 # People
 if ('people' %in% reports) {
     people  <- GetPeopleListITS(conf$startdate, conf$enddate)
+    people <- people$pid[1:30]
 	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
+    stop()
     
-    for (upeople_id in people$id) {
+    for (upeople_id in people) {
         evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0

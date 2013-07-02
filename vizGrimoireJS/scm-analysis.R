@@ -239,9 +239,10 @@ if ('countries' %in% reports) {
 if ('people' %in% reports) {
     print ('Starting people analysis')
     people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
+    people <- people$pid[1:30]
     createJSON(people, paste(destdir,"/scm-people.json", sep=''))
 	
-    for (upeople_id in people$id) {
+    for (upeople_id in people) {
         evol_data <- GetEvolPeopleSCM(upeople_id, period, 
                 conf$startdate, conf$enddate)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
