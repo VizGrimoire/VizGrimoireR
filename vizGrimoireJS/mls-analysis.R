@@ -141,9 +141,10 @@ if ('companies' %in% reports){
 
 if ('people' %in% reports){
     people = GetListPeopleMLS(startdate, enddate)
+    people = people$id[1:30]
     createJSON(people, paste(destdir,"/mls-people.json",sep=''))
        
-    for (upeople_id in people$id){
+    for (upeople_id in people){
         evol = GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
