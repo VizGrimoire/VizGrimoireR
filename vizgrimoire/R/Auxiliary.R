@@ -1028,6 +1028,29 @@ remove_outliers <- function(x)
   }
 
 
+BBollinger<-function(serie,s,confi)
+#This functions gives Bands of Bollinger of a moving average.
+#serie= data (We assume Normal distribution)
+#s=period of time to apply moving average 
+#confi=[0,1] level of confidence.
+	{alpha<-(1-confi)/2
+  
+ 	 rollmean<-rollapply(serie,s,mean)
+  
+ 	 bbsup<-rollmean+abs(qnorm(alpha))*rollapply(serie,s,sd)
+  
+ 	 bbinf<-rollmean-abs(qnorm(alpha))*rollapply(serie,s,sd)
+  
+#plot(c(0:max(bbsup)), col="white" , xlim=c(0,length(serie)) , ylab="commits", xlab="weeks", main="Bollinger Bands") 
+#lines(bbsup,type="l",col="red")
+#lines(rollmean,type="l",col="green")
+#lines(bbinf,type="l",col="red")
+#lines(serie, type="l", col="black", lty=2)
+#legend("topleft",col=c("red","green","black"),lty=c(1,1,2),legend=c("Bollinger Bands","Rollmean","Commits"), bty="n", cex=0.8)
+ 	 end<-data.frame(rollmean,bbsup,bbinf)
+	return(end)
+	}
+
 
 
 
