@@ -90,7 +90,6 @@ destdir <- conf$destination
 
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
-
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
 open <- GetEvolOpened(period, startdate, enddate)
@@ -236,9 +235,11 @@ if ('countries' %in% reports) {
 # People
 if ('people' %in% reports) {
     people  <- GetPeopleListITS(conf$startdate, conf$enddate)
+    people <- people$pid[1:30]
 	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
+    stop()
     
-    for (upeople_id in people$id) {
+    for (upeople_id in people) {
         evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0

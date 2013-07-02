@@ -723,10 +723,11 @@ GetCountriesStaticITS <- function(identities_db, country, startdate, enddate) {
 
 # TODO: It is the same than SCM because unique identites
 GetPeopleListITS <- function(startdate, enddate) {
-    fields = "DISTINCT(pup.upeople_id) as id"
+    fields = "DISTINCT(pup.upeople_id) as pid, count(c.id) as total"
     tables = GetTablesOwnUniqueIdsITS()
     filters = GetFiltersOwnUniqueIdsITS()
-    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)        
+    filters = paste(filters,"GROUP BY pid ORDER BY total desc")
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)        
