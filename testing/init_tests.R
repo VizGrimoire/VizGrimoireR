@@ -32,37 +32,27 @@ library('testthat')
 library('vizgrimoire')
 
 
-#R --vanilla --args -d fake -u root  -i lcanas_cvsanaly_openstack_1376 < init_tests.R
+#R --vanilla --args -d fake -u root  -i scm_testing < init_tests.R
 
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 conf <- ConfFromOptParse()
-SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
+
+SetDBChannel (database = "scm_testing", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
-
-
 test.suite <- defineTestSuite("SCM",
                               dirs = file.path("tests"),
                               testFileRegexp = 'scm.R')
-
-
-
 test.result <- runTestSuite(test.suite)
-
 printTextProtocol(test.result)
 
 
 
-SetDBChannel (database = "acs_gerrit_launchpad_1411", user = conf$dbuser, password = conf$dbpassword)
-
+SetDBChannel (database = "gerrit_testing", user = conf$dbuser, password = conf$dbpassword)
 test.suite <- defineTestSuite("SCR",
                               dirs = file.path("tests"),
                               testFileRegexp = 'scr.R')
-
-
-
 test.result <- runTestSuite(test.suite)
-
 printTextProtocol(test.result)
 
 
