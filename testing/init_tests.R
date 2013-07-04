@@ -35,13 +35,10 @@ library('zoo')
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 conf <- ConfFromOptParse()
-<<<<<<< HEAD
 
 SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 
-=======
->>>>>>> 9831bf1cf6538acf7956155aee94305f410ae094
 
 SetDBChannel (database = "scm_testing", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
