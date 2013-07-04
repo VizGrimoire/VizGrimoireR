@@ -25,18 +25,17 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 
 
-
-
 library('RUnit')
 library('testthat')
 library('vizgrimoire')
-
+library('zoo')
 
 #R --vanilla --args -d fake -u root  -i lcanas_cvsanaly_openstack_1376 < init_tests.R
 
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 conf <- ConfFromOptParse()
+
 SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 
@@ -64,5 +63,20 @@ test.suite <- defineTestSuite("SCR",
 test.result <- runTestSuite(test.suite)
 
 printTextProtocol(test.result)
+
+
+
+SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
+idb = conf$identities_db
+
+
+test.suite <- defineTestSuite("StatTest",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'StatTest.R$')
+
+test.result <- runTestSuite(test.suite)
+
+printTextProtocol(test.result)
+
 
 
