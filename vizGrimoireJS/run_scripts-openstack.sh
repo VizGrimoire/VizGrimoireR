@@ -21,11 +21,11 @@ LOGS=$6
 rm data/json/*
 mkdir -p data/whole_project
 #SCM
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks < scm-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks < scm-analysis.R
 #MLS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks < mls-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks < mls-analysis.R
 #ITS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks -t launchpad < its-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks -t launchpad < its-analysis.R
 rm data/whole_project/*
 mv data/json/* data/whole_project/
 cp data/whole_project/* $DIR
@@ -34,11 +34,11 @@ cp data/whole_project/* $DIR
 rm data/json/*
 mkdir -p data/grizzly
 #SCM
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2012-09-27 -e 2013-04-04 -g weeks < scm-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2012-09-27 -e 2013-04-04 -g weeks < scm-analysis.R
 #MLS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2012-09-27 -e 2013-04-04 -g weeks < mls-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2012-09-27 -e 2013-04-04 -g weeks < mls-analysis.R
 #ITS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2012-09-27 -e 2013-04-04 -g weeks -t launchpad < its-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2012-09-27 -e 2013-04-04 -g weeks -t launchpad < its-analysis.R
 rm data/grizzly/*
 mv data/json/* data/grizzly/
 
@@ -46,11 +46,11 @@ mv data/json/* data/grizzly/
 rm data/json/*
 mkdir -p data/folsom
 #SCM
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2012-04-04 -e 2012-09-27 -g weeks < scm-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2012-04-04 -e 2012-09-27 -g weeks < scm-analysis.R
 #MLS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2012-04-04 -e 2012-09-27 -g weeks < mls-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2012-04-04 -e 2012-09-27 -g weeks < mls-analysis.R
 #ITS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2012-04-04 -e 2012-09-27 -g weeks -t launchpad < its-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2012-04-04 -e 2012-09-27 -g weeks -t launchpad < its-analysis.R
 rm data/folsom/*
 mv data/json/* data/folsom/
 
@@ -58,11 +58,11 @@ mv data/json/* data/folsom/
 rm data/json/*
 mkdir -p data/essex
 #SCM
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2011-11-22 -e 2012-04-04 -g weeks < scm-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2011-11-22 -e 2012-04-04 -g weeks < scm-analysis.R
 #MLS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2011-11-22 -e 2012-04-04 -g weeks < mls-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2011-11-22 -e 2012-04-04 -g weeks < mls-analysis.R
 #ITS
-LANG= R_LIBS=../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2011-11-22 -e 2012-04-04 -g weeks -t launchpad < its-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2011-11-22 -e 2012-04-04 -g weeks -t launchpad < its-analysis.R
 rm data/essex/*
 mv data/json/* data/essex/
 
