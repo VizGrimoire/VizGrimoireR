@@ -1,3 +1,4 @@
+#! /usr/bin/Rscript --vanilla
 ## Copyright (C) 2012, 2013 Bitergia
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -20,24 +21,47 @@
 ## Analyze and extract metrics data gathered by CVSAnalY tool
 ## http://metricsgrimoire.github.com/CVSAnalY
 ##
+## This script analyzed data from a GitHub git repository
+##
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 ##
-##
 ## Usage:
-##  R --vanilla --args -d dbname < scm-analysis.R
+##  R --vanilla --args -d dbname -u user -i uids_dbname [-r repositories,companies] -s start -e end -g [days,weeks,months,years] < scm-analysis.R
 ## or
 ##  R CMD BATCH scm-analysis.R
 ##
+## Example:
+##  LANG=en_US R_LIBS=rlib:$R_LIBS R --vanilla --args -d proydb -u root -i uiddb -r repositories,companies -s 2007-01-01 -e 2012-12-31 -g weeks < scm-analysis.R
 
 library("vizgrimoire")
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
+##
+## Returns the first and last dates in SCM repository
+##
+## Returns a vector with two strings: firstdate and lastdate
+##
+SCMDatesPeriod <- function () {
+  q <- new ("Query",
+            sql = "SELECT DATE(MIN(date)) as startdate,
+                     DATE(MAX(date)) as enddate FROM scmlog")
+  dates <- run(q)
+  return (dates[1,])
+}
+
+
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
+period <- SCMDatesPeriod()
+conf$startdate <- paste('"', as.character(period["startdate"]), '"', sep="")
+conf$enddate <- paste('"', as.character(period["enddate"]), '"', sep="")
+conf$str_startdate <- as.character(period["startdate"])
+conf$str_enddate <- as.character(period["enddate"])
+print(conf)
 if (conf$granularity == 'years') { 
     period = 'year'
     nperiod = 365
@@ -51,6 +75,7 @@ if (conf$granularity == 'years') {
     period = 'day'
     nperiod = 1
 } else {stop(paste("Incorrect period:",conf$granularity))}
+
 
 # destination directory
 destdir <- conf$destination
@@ -89,13 +114,9 @@ createJSON (evol_data, paste(destdir,"/scm-evolutionary.json", sep=''))
 static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db)
 static_url <- StaticURL()
 latest_activity7 = last_activity(7)
-latest_activity14 = last_activity(14)
 latest_activity30 = last_activity(30)
-latest_activity60 = last_activity(60)
 latest_activity90 = last_activity(90)
-latest_activity180 = last_activity(180)
 latest_activity365 = last_activity(365)
-latest_activity730 = last_activity(730)
 
 #Data for specific analysis
 if ('companies' %in% reports){
@@ -109,13 +130,9 @@ if ('countries' %in% reports){
 # 2- Merging information
 static_data = merge(static_data, static_url)
 static_data = merge(static_data, latest_activity7)
-static_data = merge(static_data, latest_activity14)
 static_data = merge(static_data, latest_activity30)
-static_data = merge(static_data, latest_activity60)
 static_data = merge(static_data, latest_activity90)
-static_data = merge(static_data, latest_activity180)
 static_data = merge(static_data, latest_activity365)
-static_data = merge(static_data, latest_activity730)
 
 
 # 3- Creating file with static data
@@ -126,9 +143,9 @@ createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 
 top_authors_data <- top_authors(conf$startdate, conf$enddate)
 top_authors_data <- list()
-top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "" )
-top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "")
-top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "")
+top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
+top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
+top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
 createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 
 # Top files
@@ -149,7 +166,7 @@ if ('companies' %in% reports) {
         #Evolutionary data per company
         ######	
         # 1- Retrieving and merging info  
-        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("company", company_name))
+        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, NA, company_name, NA)
         		
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
         evol_data <- evol_data[order(evol_data$id), ]
@@ -161,7 +178,7 @@ if ('companies' %in% reports) {
         ########
         #Static data per company
         ########
-        static_data <- GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("company", company_name))
+        static_data <- GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, NA, company_name, NA)
 
         createJSON(static_data, paste(destdir,"/",company_aux,"-scm-static.json", sep=''))
 	
@@ -191,7 +208,7 @@ if ('repositories' %in% reports) {
         ###########
         #1- Retrieving data
   
-        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("repository", repo_name))
+        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, repo_name, NA, NA)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
         evol_data <- evol_data[order(evol_data$id), ]
         evol_data[is.na(evol_data)] <- 0
@@ -203,7 +220,7 @@ if ('repositories' %in% reports) {
         #STATIC DATA
         ##########
         # 1- Retrieving information
-        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("repository", repo_name))
+        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, repo_name, NA, NA)
 
         #3- Creating JSON
         #static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)
@@ -221,27 +238,24 @@ if ('countries' %in% reports) {
         print (country)
         country_name = paste("'", country, "'", sep='')
         
-        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("country", country_name))
-        # evol_data <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, country=country_name)
+        evol_data <- EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, country=country_name)        
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
-        # evol_data <- evol_data[order(evol_data$id), ]
-        # evol_data[is.na(evol_data)] <- 0
+        evol_data <- evol_data[order(evol_data$id), ]
+        evol_data[is.na(evol_data)] <- 0
         
         createJSON (evol_data, paste(destdir, "/",country,"-scm-evolutionary.json",sep=''))
         
-        # data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
-        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("country", country_name))
-        createJSON (static_data, paste(destdir, "/",country,"-scm-static.json",sep=''))
+        data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
+        createJSON (data, paste(destdir, "/",country,"-scm-static.json",sep=''))        
     }
 }
 
 if ('people' %in% reports) {
     print ('Starting people analysis')
     people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
-    people <- people$pid[1:30]
     createJSON(people, paste(destdir,"/scm-people.json", sep=''))
 	
-    for (upeople_id in people) {
+    for (upeople_id in people$id) {
         evol_data <- GetEvolPeopleSCM(upeople_id, period, 
                 conf$startdate, conf$enddate)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
@@ -290,12 +304,21 @@ if ('companies-countries' %in% reports){
 }
 
 # Demographics
+d <- new ("Demographics","scm",6)
+people <- Aging(d)
+people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
+people$age[people$age < 0 ] <- 0
+aux <- data.frame(people["id"], people["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, paste(c(destdir, "/scm-demographics-aging.json"), collapse=''))
 
-#demos <- new ("Demographics","scm", 6)
-#demos$age <- as.Date(conf$str_enddate) - as.Date(demos$firstdate)
-#demos$age[demos$age < 0 ] <- 0
-#aux <- data.frame(demos["id"], demos["age"])
-#new <- list()
-#new[['date']] <- conf$str_enddate
-#new[['persons']] <- aux
-#createJSON (new, paste(destdir,"/scm-demographics-aging.json", sep=''))
+newcomers <- Birth(d)
+newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
+newcomers$age[newcomers$age < 0 ] <- 0
+aux <- data.frame(newcomers["id"], newcomers["age"])
+new <- list()
+new[['date']] <- conf$str_enddate
+new[['persons']] <- aux
+createJSON (new, paste(c(destdir, "/scm-demographics-birth.json"), collapse=''))

@@ -73,6 +73,30 @@ GetEvolOpened<- function (period, startdate, enddate) {
     return (data)	
 }
 
+
+GetEvolBMIIndex <- function(closed_condition, period, startdate, enddate){
+    #Metric based on chapter 4.3.1
+    #Metrics and Models in Software Quality Engineering by Stephen H. Kan
+
+    #This will fail if dataframes have different lenght (to be fixe)
+
+    closed = GetEvolClosed(closed_condition, period, startdate, enddate)
+    opened = GetEvolOpened(period, startdate, enddate)
+
+    evol_bmi = (closed$closed / opened$opened) * 100
+
+    closed$closers <- NULL
+    opened$openers <- NULL
+
+    data = merge(closed, opened, ALL=TRUE)
+    data = data.frame(data, evol_bmi)
+    return (data)
+}
+
+
+
+
+
 GetEvolReposITS <- function(period, startdate, enddate) {
     fields = 'COUNT(DISTINCT(tracker_id)) AS repositories'
     tables = 'issues'
@@ -390,6 +414,24 @@ GetRepoEvolOpened <- function(repo, period, startdate, enddate){
     return (data)
 }
 
+GetRepoEvolBMIIndex <- function(repo, closed_condition, period, startdate, enddate){
+    #This will fail if dataframes have different lenght (to be fixe)
+
+
+    closed = GetRepoEvolClosed(repo, closed_condition, period, startdate, enddate)
+    opened = GetRepoEvolOpened(repo, period, startdate, enddate)
+
+    evol_bmi = (closed$closed / opened$opened) * 100
+    
+    closed$closers <- NULL
+    opened$openers <- NULL
+
+    data = merge(closed, opened, ALL=TRUE)
+    data = data.frame(data, evol_bmi)
+    return (data)
+}
+
+
 GetStaticRepoITS <- function (repo, startdate, enddate) {
     fields = "COUNT(submitted_by) AS opened, 
               COUNT(DISTINCT(pup.upeople_id)) AS openers"
@@ -612,6 +654,51 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
     return (data)
 }
 
+GetTopClosersByAssignee <- function(days = 0, startdate, enddate, identities_db, filter = c("")) {
+
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
+    }
+
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+    }
+    q <- paste("SELECT up.id as id, 
+                       up.identifier as closers, 
+                       count(distinct(ill.issue_id)) as closed 
+                FROM people_upeople pup, 
+                     ", identities_db, ".upeople_companies upc, 
+                     ", identities_db, ".upeople up, 
+                     ", identities_db, ".companies com,
+                     issues_log_launchpad ill 
+                WHERE ill.assigned_to = pup.people_id and 
+                      pup.upeople_id = up.id and 
+                      up.id = upc.upeople_id and 
+                      upc.company_id = com.id and
+                      ", affiliations, "
+                      ill.date >= upc.init and 
+                      ill.date < upc.end and 
+                      ill.change_id  in ( 
+                                     select id 
+                                     from changes 
+                                     where new_value='Fix Committed' and 
+                                           changed_on>=", startdate, " and 
+                                           changed_on<", enddate, " ", date_limit,") 
+                GROUP BY up.identifier 
+                ORDER BY closed desc limit 10;", sep="")
+
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+
 # COUNTRIES
 
 GetCountriesNamesITS <- function (identities_db,startdate, enddate, filter=c()) {
@@ -683,10 +770,11 @@ GetCountriesStaticITS <- function(identities_db, country, startdate, enddate) {
 
 # TODO: It is the same than SCM because unique identites
 GetPeopleListITS <- function(startdate, enddate) {
-    fields = "DISTINCT(pup.upeople_id) as id"
+    fields = "DISTINCT(pup.upeople_id) as pid, count(c.id) as total"
     tables = GetTablesOwnUniqueIdsITS()
     filters = GetFiltersOwnUniqueIdsITS()
-    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)        
+    filters = paste(filters,"GROUP BY pid ORDER BY total desc")
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)        

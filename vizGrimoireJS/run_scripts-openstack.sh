@@ -10,7 +10,7 @@
 START=2010-05-27
 END=$4
 PROJECT=openstack
-DIR=$5
+DIR=$5 #not used so far
 LOGS=$6
 
 

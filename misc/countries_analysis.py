@@ -21,8 +21,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
-# Author: Luis Cañas-Díaz <lcanas@bitergia.com>
 # Author: Alvaro del Castillo <acs@bitergia.com>
+# based on work by: Luis Cañas-Díaz <lcanas@bitergia.com>
 
 from optparse import OptionParser
 import MySQLdb

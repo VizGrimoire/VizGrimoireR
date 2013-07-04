@@ -59,22 +59,30 @@ createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
 static_data <- GetStaticMLS(rfield, startdate, enddate, reports)
 latest_activity7 <- lastActivity(7)
+latest_activity14 <- lastActivity(14)
 latest_activity30 <- lastActivity(30)
+latest_activity60 <- lastActivity(60)
 latest_activity90 <- lastActivity(90)
+latest_activity180 <- lastActivity(180)
 latest_activity365 <- lastActivity(365)
+latest_activity730 <- lastActivity(730)
 static_data = merge(static_data, latest_activity7)
+static_data = merge(static_data, latest_activity14)
 static_data = merge(static_data, latest_activity30)
+static_data = merge(static_data, latest_activity60)
 static_data = merge(static_data, latest_activity90)
+static_data = merge(static_data, latest_activity180)
 static_data = merge(static_data, latest_activity365)
+static_data = merge(static_data, latest_activity730)
 createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
 
 if ('repositories' %in% reports) {
     repos <- reposNames(rfield, startdate, enddate)
-    createJSON (repos, "data/json/mls-lists.json")
+    createJSON (repos, paste(destdir,"/mls-lists.json", sep=''))
     repos <- repos$mailing_list
     repos_file_names = gsub("/","_",repos)
-    createJSON(repos_file_names, "data/json/mls-repos.json")	    
+    createJSON(repos_file_names, paste(destdir,"/mls-repos.json", sep=''))
     
     print (repos)
     
@@ -141,9 +149,10 @@ if ('companies' %in% reports){
 
 if ('people' %in% reports){
     people = GetListPeopleMLS(startdate, enddate)
+    people = people$id[1:30]
     createJSON(people, paste(destdir,"/mls-people.json",sep=''))
        
-    for (upeople_id in people$id){
+    for (upeople_id in people){
         evol = GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
