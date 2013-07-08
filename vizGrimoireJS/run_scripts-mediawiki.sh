@@ -13,7 +13,7 @@ END=$4
 LOGS=mediawiki.log
 DIR=$5
 # REPORTS="repositories,countries,companies,people"
-REPORTS="repositories"
+REPORTS="repositories,people"
 
 echo "Analisys from $START to $END"
 echo "LOGS in $LOGS"
