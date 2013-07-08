@@ -30,13 +30,13 @@ library('testthat')
 library('vizgrimoire')
 library('zoo')
 
-#R --vanilla --args -d fake -u root  -i scm_testing < init_tests.R
+#R --vanilla --args -d fake -u root  -i jenkins_scm_vizr_1783 < init_tests.R
 
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 conf <- ConfFromOptParse()
 
-SetDBChannel (database = "jenkins_scr_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 
 
