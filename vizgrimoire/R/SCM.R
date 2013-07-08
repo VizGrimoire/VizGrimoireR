@@ -832,6 +832,7 @@ last_activity <- function(days) {
 top_people <- function(days, startdate, enddate, role, filters="") {
 
     affiliations = ""
+    limit = 30 
     for (aff in filters){
         affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
     }
@@ -861,7 +862,7 @@ top_people <- function(days, startdate, enddate, role, filters="") {
                  upc.company_id = c.id
                GROUP BY u.identifier
                ORDER BY commits desc
-               LIMIT 10;", sep="")
+               LIMIT ",limit,";", sep="")
     
     query <- new("Query", sql = q)
     data <- run(query)

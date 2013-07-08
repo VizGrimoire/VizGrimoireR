@@ -582,6 +582,7 @@ GetStaticPeopleMLS <- function(developer_id, startdate, enddate) {
 #
 top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
 
+    limit = 30
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " c.name<>'", aff ,"' and ", sep="")
@@ -607,7 +608,7 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
                   date_limit, "
                 GROUP BY up.identifier
                 ORDER BY sent desc
-                LIMIT 10;", sep="")    
+                LIMIT ",limit, ";", sep="")    
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

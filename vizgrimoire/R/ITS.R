@@ -283,6 +283,7 @@ GetStaticCountriesITS  <- function(startdate, enddate, identities_db) {
 ## TODO: use last activity subquery
 GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
     
+    limit = 30
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
@@ -310,7 +311,7 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                       closed_condition, " ", date_limit, "
                 GROUP BY up.identifier
                 ORDER BY closed desc
-                LIMIT 10;", sep="")
+                LIMIT ",limit,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
