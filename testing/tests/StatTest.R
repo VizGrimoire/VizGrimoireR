@@ -38,6 +38,6 @@ expect_that(rep(0,7), equals(tExpoAv$longA[1:7]))
 test.remove_outliers<-function()
 {
 Evol<-EvolCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))
-expect_that(18517, equals(sum(na.omit((remove_outliers(Evol$commits))))))
+expect_that(20479, equals(sum(na.omit((remove_outliers(Evol$commits))))))
 }
 

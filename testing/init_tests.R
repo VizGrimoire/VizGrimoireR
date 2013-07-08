@@ -61,7 +61,6 @@ if (getErrors(test.result)[1]>0){q(status=1)}
 SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 
-
 test.suite <- defineTestSuite("StatTest",
                               dirs = file.path("tests"),
                               testFileRegexp = 'StatTest.R$')
