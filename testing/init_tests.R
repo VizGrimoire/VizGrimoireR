@@ -1,3 +1,5 @@
+#!/usr/bin/Rscript
+
 ## Copyright (C) 2012, 2013 Bitergia
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -43,7 +45,8 @@ test.suite <- defineTestSuite("SCM",
                               dirs = file.path("tests"),
                               testFileRegexp = 'scm.R$')
 test.result <- runTestSuite(test.suite)
-printTextProtocol(test.result)
+#printTextProtocol(test.result)
+print(getErrors(test.result)[1])
 
 
 
@@ -52,7 +55,8 @@ test.suite <- defineTestSuite("SCR",
                               dirs = file.path("tests"),
                               testFileRegexp = 'scr.R$')
 test.result <- runTestSuite(test.suite)
-printTextProtocol(test.result)
+#printTextProtocol(test.result)
+print(getErrors(test.result)[1])
 
 
 
@@ -65,8 +69,9 @@ test.suite <- defineTestSuite("StatTest",
                               testFileRegexp = 'StatTest.R$')
 
 test.result <- runTestSuite(test.suite)
+print(getErrors(test.result)[1])
 
-printTextProtocol(test.result)
+#printTextProtocol(test.result)
 
 
 
