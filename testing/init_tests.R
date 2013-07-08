@@ -36,7 +36,7 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 
 conf <- ConfFromOptParse()
 
-SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
+SetDBChannel (database = "jenkins_scr_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 
 
@@ -44,22 +44,22 @@ SetDBChannel (database = "scm_testing", user = conf$dbuser, password = conf$dbpa
 idb = conf$identities_db
 test.suite <- defineTestSuite("SCM",
                               dirs = file.path("tests"),
-                              testFileRegexp = 'scm.R')
+                              testFileRegexp = 'scm.R$')
 test.result <- runTestSuite(test.suite)
 printTextProtocol(test.result)
 
 
 
-SetDBChannel (database = "gerrit_testing", user = conf$dbuser, password = conf$dbpassword)
+SetDBChannel (database = "jenkins_scr_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 test.suite <- defineTestSuite("SCR",
                               dirs = file.path("tests"),
-                              testFileRegexp = 'scr.R')
+                              testFileRegexp = 'scr.R$')
 test.result <- runTestSuite(test.suite)
 printTextProtocol(test.result)
 
 
 
-SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
+SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 
 
