@@ -37,7 +37,7 @@ library('zoo')
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 conf <- ConfFromOptParse()
 idb = conf$identities_db
-
+error = FALSE
 
 SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
@@ -45,8 +45,7 @@ test.suite <- defineTestSuite("SCM",
                               dirs = file.path("tests"),
                               testFileRegexp = 'scm.R$')
 test.result <- runTestSuite(test.suite)
-#printTextProtocol(test.result)
-print(getErrors(test.result)[1])
+if (getErrors(test.result)[1]>0) {q(status=1)}
 
 
 
@@ -55,8 +54,7 @@ test.suite <- defineTestSuite("SCR",
                               dirs = file.path("tests"),
                               testFileRegexp = 'scr.R$')
 test.result <- runTestSuite(test.suite)
-#printTextProtocol(test.result)
-print(getErrors(test.result)[1])
+if (getErrors(test.result)[1]>0){q(status=1)}
 
 
 
@@ -69,8 +67,7 @@ test.suite <- defineTestSuite("StatTest",
                               testFileRegexp = 'StatTest.R$')
 
 test.result <- runTestSuite(test.suite)
-print(getErrors(test.result)[1])
-
+if (getErrors(test.result)[1]>0){q(status=1)}
 #printTextProtocol(test.result)
 
 
