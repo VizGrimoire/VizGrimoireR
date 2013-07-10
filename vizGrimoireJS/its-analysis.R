@@ -250,7 +250,6 @@ if ('people' %in% reports) {
     people  <- GetPeopleListITS(conf$startdate, conf$enddate)
     people <- people$pid[1:30]
 	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
-    stop()
     
     for (upeople_id in people) {
         evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
