@@ -30,6 +30,7 @@
 import MySQLdb
 import sys
 import re
+from optparse import OptionGroup, OptionParser
 
 def create_tables(db, connector):
    query = "DROP TABLE IF EXISTS companies"
@@ -58,18 +59,18 @@ def create_tables(db, connector):
    db.commit()
    return
 
-def connect(database):
-   # user = 'xxx'
-   # password = 'xxx'
-   # host = 'xxx'
+def connect(cfg):
+   user = cfg.db_user
+   password = cfg.db_password
+   host = cfg.db_hostname
+   db = cfg.db_database
 
    try:
-      # db =  MySQLdb.connect(host,user,password,database)
-      db = MySQLdb.connect(user = "root",
-                            db = "acs_cvsanaly_allura_1049")
+      db = MySQLdb.connect(user = user, passwd = password, db = db)      
       return db, db.cursor()
    except:
       print("Database connection error")
+      raise
 
 
 def execute_query(connector, query):
@@ -80,13 +81,38 @@ def execute_query(connector, query):
       return result1
    else:
       return []
+  
+def getOptions():     
+    parser = OptionParser(usage='Usage: %prog [options]', 
+                          description='Companies detection using email domains',
+                          version='0.1')
+    
+    parser.add_option('-d', '--db-database', dest='db_database',
+                     help='Output database name', default=None)
+    parser.add_option('-u','--db-user', dest='db_user',
+                     help='Database user name', default='root')
+    parser.add_option('-p', '--db-password', dest='db_password',
+                     help='Database user password', default='')
+    parser.add_option('--db-hostname', dest='db_hostname',
+                     help='Name of the host where database server is running',
+                     default='localhost')
+    parser.add_option('--db-port', dest='db_port',
+                     help='Port of the host where database server is running',
+                     default='3306')
+    
+    (ops, args) = parser.parse_args()
+    
+    return ops
+
 
 def main(db):
 
    companies = ["unknown"]
    pe_com = {}
-
-   db, connector = connect(db)
+   
+   cfg = getOptions()
+   
+   db, connector = connect(cfg)
 
    create_tables(db, connector)
 
@@ -106,7 +132,7 @@ def main(db):
          company = str(m.groups()[1].split('.')[0])
          if company not in companies:
             companies.append(company)
-         pe_com[author_id] = (companies.index(company) + 1) #+1 in orddr to avoid the insertion of 0 in the database
+         pe_com[author_id] = (companies.index(company) + 1) #+1 in order to avoid the insertion of 0 in the database
       else:
          pe_com[author_id] = 1
    
@@ -126,8 +152,4 @@ def main(db):
               "VALUES('" + company + "');"
       connector.execute(query)
       
-
-
 if __name__ == "__main__":main(sys.argv[1])
-
-

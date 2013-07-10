@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 # Authors :
-#       Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
+#   Jesus M. Gonzalez-Barahona <jgb@gsyc.es>
 #	Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
 
 #
@@ -37,6 +37,7 @@
 #
 
 import MySQLdb
+from optparse import OptionGroup, OptionParser
 
 class Identities:
     """Keeps track of identities assigned to unique ids.
@@ -108,13 +109,181 @@ def strPerson (person):
 
     return (person['name'] + " / " + person['email'])
 
+def getOptions():     
+    parser = OptionParser(usage='Usage: %prog [options]', 
+                          description='Unify identities',
+                          version='0.1')
+    
+    parser.add_option('-d', '--db-database', dest='db_database',
+                     help='Output database name', default=None)
+    parser.add_option('-u','--db-user', dest='db_user',
+                     help='Database user name', default='root')
+    parser.add_option('-p', '--db-password', dest='db_password',
+                     help='Database user password', default='')
+    parser.add_option('--db-hostname', dest='db_hostname',
+                     help='Name of the host where database server is running',
+                     default='localhost')
+    parser.add_option('--db-port', dest='db_port',
+                     help='Port of the host where database server is running',
+                     default='3306')
+    parser.add_option('-i', '--incremental', dest='incremental',
+                      help='yes/no incremental analysis', default='yes')
+    
+    (ops, args) = parser.parse_args()
+    
+    return ops
+    
+
+def generate_upeople(personsById):
+    upeople = []
+    for id in sorted(personsById):
+        if id in dupIds:
+            uid = dupIds[id]
+        else:
+            uid = id
+        upeople.append((id, uid))
+
+    return upeople
+
+
+def create_schema(cursor, db, upeople):
+
+    print "Now creating people_upeople table (this may take a while)..."
+    cursor.execute("DROP TABLE IF EXISTS people_upeople")
+    cursor.execute("""CREATE TABLE people_upeople (
+                               people_id int(11) NOT NULL,
+                               upeople_id int(11) NOT NULL,
+                               PRIMARY KEY (people_id)
+                  ) ENGINE=MyISAM DEFAULT CHARSET=utf8""")
+    cursor.execute("ALTER TABLE people_upeople DISABLE KEYS")
+    db.commit()
+
+    cursor.executemany("""INSERT INTO people_upeople (people_id, upeople_id)
+       VALUES (%s, %s)""", upeople)
+    cursor.execute("ALTER TABLE people_upeople ENABLE KEYS")
+    db.commit()
+
+    # Creating table upeople with a list of unique ids.
+    cursor.execute("DROP TABLE IF EXISTS upeople")
+    cursor.execute("""CREATE TABLE upeople(id int(11) NOT NULL,
+                                       identifier varchar(128),
+                                       PRIMARY KEY (id))
+                      ENGINE=MyISAM DEFAULT CHARSET=utf8""")
+    db.commit()
+    cursor.execute("""INSERT INTO upeople(id) 
+                  SELECT DISTINCT(upeople_id) from people_upeople""")
+
+    # Creating identities table
+    cursor.execute("DROP TABLE IF EXISTS identities")
+    cursor.execute("""CREATE TABLE identities (id int(11) NOT NULL AUTO_INCREMENT, 
+                                           upeople_id int(11) NOT NULL,
+                                           identity VARCHAR(256) NOT NULL,
+                                           type VARCHAR(24),
+                                           PRIMARY KEY(id))
+                      ENGINE=MyISAM DEFAULT CHARSET=utf8""")
+    db.commit()
+    cursor.execute("""INSERT INTO identities(upeople_id, identity)
+                             SELECT distinct u.id, 
+                                    p.name 
+                             FROM people p, 
+                                  people_upeople pup, 
+                                  upeople u 
+                             WHERE p.id=pup.people_id and 
+                                   pup.upeople_id=u.id 
+                             ORDER by u.id""")
+    cursor.execute("""UPDATE identities set type='name'
+                      WHERE type is null""")
+    db.commit()
+    cursor.execute("""INSERT INTO identities(upeople_id, identity)
+                             SELECT distinct u.id, 
+                                    p.email 
+                             FROM people p, 
+                                  people_upeople pup, 
+                                  upeople u 
+                             WHERE p.id=pup.people_id and 
+                                   pup.upeople_id=u.id 
+                             ORDER by u.id""")
+    cursor.execute("""UPDATE identities set type='email'
+                      WHERE type is null""")
+    db.commit()
+
+    #Finally, updating field identifier in upeople table taking a random name
+    cursor.execute("""UPDATE upeople u, 
+                              identities i 
+                      SET u.identifier=i.identity 
+                      WHERE u.id = i.upeople_id and
+                            i.type='name'""")
+    db.commit() 
+
+def execute_query(connector, query):
+    results = int (connector.execute(query))
+    cont = 0
+    if results > 0:
+        result1 = connector.fetchall()
+        return result1
+    else:
+        return []
+
+
+def update_schema(cursor, db, upeople):
+  
+    query = """select distinct p.id, p.name, p.email 
+               from people p 
+               where p.id not in 
+                     (select distinct people_id 
+                      from people_upeople);"""
+
+    results = execute_query(cursor, query)
+    print results
+    for result in results:
+        print result
+        # check if the algorithm was able to detect duplicated identities
+        # with this set of developers. This is done, checking if the people_id
+        # is different from the upeople_id in the tuple upeople
+        for person in upeople:
+            if int(result[0]) == int(person[0]):
+                #This is one of the new comers to the community
+                if int(person[0]) <> int(person[1]):
+                    # a new identity for a developer was found by the algorithm
+                    query = "insert into people_upeople(people_id, upeople_id) " +\
+                            " values(" + str(person[0]) + ", " + str(person[1]) + ")"
+                    execute_query(cursor, query)
+                    #To be fixed: this action will probably introduce repeated emails or names
+                    #at some point
+                    query = "INSERT INTO identities(upeople_id, identity, type) " +\
+                            " values(" + str(person[1]) + ", '" + result[1] + "', 'name')"
+                    execute_query(cursor, query)
+                    query = "INSERT INTO identities(upeople_id, identity, type) " +\
+                            " values(" + str(person[1]) + ", '" + result[2] + "', 'email')"
+                else:
+                    query = "select max(id) from upeople"
+                    values = execute_query(cursor, query)
+                    max_id = int(values[0][0]) + 1
+                    # a new developer has been found by the algorithm
+                    query = "insert into people_upeople(people_id, upeople_id) " +\
+                            " values(" + str(person[0]) + ", " + str(max_id) + ")"
+                    execute_query(cursor, query)
+                    query = "insert into upeople(id, identifier) " +\
+                            " values(" + str(max_id) + ", '" + str(result[1]) + "')"
+                    execute_query(cursor, query)
+                    query = "INSERT INTO identities(upeople_id, identity, type) " +\
+                            " values(" + str(max_id) + ", '" + result[1] + "', 'name')"
+                    execute_query(cursor, query)
+                    query = "INSERT INTO identities(upeople_id, identity, type) " +\
+                            " values(" + str(max_id) + ", '" + result[2] + "', 'email')"
+                    execute_query(cursor, query)
+                    
+                    
 # Open database connection and get all data in people table
 # into people list.
-# Uncomment these lines and specify options for the database access
-# db = MySQLdb.connect(host = "xxx",
-#                      user = "xxx",
-#                      port = 3308,
-#                      db = "xxx")
+
+cfg = getOptions()
+
+incremental = True
+if cfg.incremental == 'no':
+    incremental = False
+
+db = MySQLdb.connect(user = cfg.db_user, passwd = cfg.db_password,  db = cfg.db_database)
 
 cursor = db.cursor()
 query = """SELECT *
@@ -190,80 +359,13 @@ print str(len(dupIds)) + " duplicate ids found."
 # Each row is a people identifier, and a unique identifier
 # Several people identifiers could have the same unique identifier
 
-print "Now creating people_upeople table (this may take a while)..."
-cursor.execute("DROP TABLE IF EXISTS people_upeople")
-cursor.execute("""CREATE TABLE people_upeople (
-                               people_id int(11) NOT NULL,
-                               upeople_id int(11) NOT NULL,
-                               PRIMARY KEY (people_id)
-                  ) ENGINE=MyISAM DEFAULT CHARSET=utf8""")
-cursor.execute("ALTER TABLE people_upeople DISABLE KEYS")
-db.commit()
+upeople = generate_upeople(personsById)
+if not incremental:
+    create_schema(cursor, db, upeople)
+else:
+    update_schema(cursor, db, upeople)
 
-upeople = []
-for id in sorted(personsById):
-    if id in dupIds:
-        uid = dupIds[id]
-    else:
-        uid = id
-    upeople.append((id, uid))
 
-cursor.executemany("""INSERT INTO people_upeople (people_id, upeople_id)
-   VALUES (%s, %s)""", upeople)
-cursor.execute("ALTER TABLE people_upeople ENABLE KEYS")
-db.commit()
-
-# Creating table upeople with a list of unique ids.
-cursor.execute("DROP TABLE IF EXISTS upeople")
-cursor.execute("""CREATE TABLE upeople(id int(11) NOT NULL,
-                                       identifier varchar(128),
-                                       PRIMARY KEY (id))
-                  ENGINE=MyISAM DEFAULT CHARSET=utf8""")
-db.commit()
-cursor.execute("""INSERT INTO upeople(id) 
-                  SELECT DISTINCT(upeople_id) from people_upeople""")
-
-# Creating identities table
-cursor.execute("DROP TABLE IF EXISTS identities")
-cursor.execute("""CREATE TABLE identities (id int(11) NOT NULL AUTO_INCREMENT, 
-                                           upeople_id int(11) NOT NULL,
-                                           identity VARCHAR(256) NOT NULL,
-                                           type VARCHAR(24),
-                                           PRIMARY KEY(id))
-                  ENGINE=MyISAM DEFAULT CHARSET=utf8""")
-db.commit()
-cursor.execute("""INSERT INTO identities(upeople_id, identity)
-                         SELECT distinct u.id, 
-                                         p.name 
-                         FROM people p, 
-                              people_upeople pup, 
-                              upeople u 
-                         WHERE p.id=pup.people_id and 
-                               pup.upeople_id=u.id 
-                         ORDER by u.id""")
-cursor.execute("""UPDATE identities set type='name'
-                  WHERE type is null""")
-db.commit()
-cursor.execute("""INSERT INTO identities(upeople_id, identity)
-                         SELECT distinct u.id, 
-                                         p.email 
-                         FROM people p, 
-                              people_upeople pup, 
-                              upeople u 
-                         WHERE p.id=pup.people_id and 
-                               pup.upeople_id=u.id 
-                         ORDER by u.id""")
-cursor.execute("""UPDATE identities set type='email'
-                  WHERE type is null""")
-db.commit()
-
-#Finally, updating field identifier in upeople table taking a random name
-cursor.execute("""UPDATE upeople u, 
-                         identities i 
-                  SET u.identifier=i.identity 
-                  WHERE u.id = i.upeople_id and
-                        i.type='name'""")
-db.commit() 
 
 db.close()
 print "Done."

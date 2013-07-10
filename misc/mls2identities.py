@@ -19,6 +19,7 @@
 #
 # Authors :
 #       Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
+#       Alvaro del Castillo <acs@bitergia.com>
 
 #
 # mls2identities.py
@@ -34,17 +35,44 @@
 import MySQLdb
 import sys
 import re
+from optparse import OptionGroup, OptionParser
 
-def connect(database):
-   user = 'xxx'
-   password = 'xxx'
-   host = 'xxx'
+from optparse import OptionGroup, OptionParser
+
+def getOptions():     
+    parser = OptionParser(usage='Usage: %prog [options]', 
+                          description='Companies detection using email domains',
+                          version='0.1')    
+    parser.add_option('--db-database-mls', dest='db_database_mls',
+                     help='MLS database name', default=None)
+    parser.add_option('--db-database-ids', dest='db_database_ids',
+                     help='Identities database name', default=None)
+    parser.add_option('-u','--db-user', dest='db_user',
+                     help='Database user name', default='root')
+    parser.add_option('-p', '--db-password', dest='db_password',
+                     help='Database user password', default='')
+    parser.add_option('--db-hostname', dest='db_hostname',
+                     help='Name of the host where database server is running',
+                     default='localhost')
+    parser.add_option('--db-port', dest='db_port',
+                     help='Port of the host where database server is running',
+                     default='3306')
+    
+    (ops, args) = parser.parse_args()
+    
+    return ops
+
+def connect(db, cfg):
+   user = cfg.db_user
+   password = cfg.db_password
+   host = cfg.db_hostname
+
    try:
-      db =  MySQLdb.connect(host,user,password,database)
+      db = MySQLdb.connect(user = user, passwd = password, db = db)      
       return db, db.cursor()
    except:
       print("Database connection error")
-
+      raise
 
 def execute_query(connector, query):
    results = int (connector.execute(query))
@@ -69,18 +97,22 @@ def create_tables(db, connector):
 
 
 
-def main(db_mls, db_identities):
-   # db_mls: MLStats database
-   # db_identities: Identities database
+def main():
+   cfg = getOptions()
 
-   db_mlstats, connector_mls = connect(db_mls)
-   db_ids, connector_ids = connect(db_identities)
+   db_mlstats, connector_mls = connect(cfg.db_database_mls, cfg)
+   db_ids, connector_ids = connect(cfg.db_database_ids, cfg)
 
    create_tables(db_mlstats, connector_mls)
 
    query = "select name, email_address from people"
    results = execute_query(connector_mls, query)
+   total = len(results)
+   done = 0
+   print ("Total identities to analyze: " + str(total))
    for result in results:
+      done += 1
+      if (done % 100 == 0): print (str(done)+" ("+str(total-done)+" pend)")
       name = result[0]
       name = name.replace("'", "\\'") #avoiding ' errors in MySQL
       email = result[1]
@@ -95,13 +127,19 @@ def main(db_mls, db_identities):
          execute_query(connector_mls, query)
       else:
          #Insert in people_upeople, identities and upeople (new identitiy)
+         uidentifier = ""
+         if email:
+            uidentifier = email
+         elif name:
+            uidentifier = name
  
          # Max (upeople_)id from upeople table
          query = "select max(id) from upeople;"
          results = execute_query(connector_ids, query)
          upeople_id = int(results[0][0]) + 1
          
-         query = "insert into upeople(id) values("+ str(upeople_id) +");"
+         # query = "insert into upeople(id) values("+ str(upeople_id) +");"
+         query = "insert into upeople(id, identifier) values(" + str(upeople_id) + ",'"+uidentifier+"');"
          execute_query(connector_ids, query)
          
          query = "insert into identities(upeople_id, identity, type)" +\
@@ -114,7 +152,7 @@ def main(db_mls, db_identities):
 
          query = "insert into people_upeople(people_id, upeople_id) " +\
                  "values('"+email+"', "+str(upeople_id)+");"
-         print query
+         # print query
          execute_query(connector_mls, query)
 
    db_ids.commit()
@@ -122,6 +160,6 @@ def main(db_mls, db_identities):
 
 
 
-if __name__ == "__main__":main(sys.argv[1], sys.argv[2])
+if __name__ == "__main__":main()
 
 

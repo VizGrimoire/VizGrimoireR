@@ -27,20 +27,24 @@
 
 ## Query for getting first and last date in scmlog for all authors in scmlog
 ##
-query.scm <- "SELECT 
-    author_id as id, people.name as name, people.email as email,
-    count(scmlog.id) as actions,
-    MIN(scmlog.date) as firstdatestr, MAX(scmlog.date) as lastdatestr
-FROM
-    scmlog, people
-WHERE
-    scmlog.author_id = people.id
-GROUP by author_id"
+query.scm <- "SELECT author_id as id,
+                     people.name as name,
+                     people.email as email,
+                     count(scmlog.id) as actions,
+                     MIN(scmlog.date) as firstdatestr,
+                     MAX(scmlog.date) as lastdatestr
+              FROM
+                     scmlog, people
+              WHERE
+                     scmlog.author_id = people.id
+             GROUP by author_id"
 
 ## Query for getting first and last date in scmlog for all authors in scmlog,
 ## when upeople table (unique identities) is available
 ##
-query.scm.unique = "SELECT 
+
+
+query.scm.unique <- "SELECT 
     upeople.uid as id,
     people.name as name,
     people.email as email,
@@ -48,44 +52,166 @@ query.scm.unique = "SELECT
     MIN(scmlog.date) as firstdatestr,
     MAX(scmlog.date) as lastdatestr
 FROM
-    scmlog,
-    people,
-    upeople
-where
+    scmlog, people, upeople
+WHERE
     scmlog.author_id = upeople.id AND
     people.id = upeople.id
-group by upeople.uid"
+GROUP BY upeople.uid"
+
+# Query for getting first and last date from MLS database
+query.mls <- "SELECT people.email_address as id,
+                     people.name as name,
+                     people.email_address as email,
+                     MIN(first_date) as firstdatestr,
+                     MAX(first_date) as lastdatestr
+              FROM messages, messages_people, people
+              WHERE messages.message_ID = messages_people.message_id
+                    AND people.email_address = messages_people.email_address
+              GROUP BY people.email_address"
+
+## Query to get first and last date from ITS changes
+query.its <- "SELECT changes.changed_by as id,
+                     people.name as name,
+                     people.email as email,
+                     COUNT(changes.id) as actions,
+                     MIN(changes.changed_on) as firstdatestr,
+                     MAX(changes.changed_on) as lastdatestr
+              FROM changes, people
+              WHERE changes.changed_by = people.id
+              GROUP BY changes.changed_by"
+
+
+build.query <- function (query, months) {
+    q <- paste("SELECT * FROM ( ",query,")mytable
+                WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",months," month)")
+    return(q)
+}
 
 setClass(Class="Demographics",
          contains="data.frame",
          )
-## Initialize by running the query that gets dates for population,
-## and by initializing the data frames with specialized data
-##
+
+## Initialize by storing the options that will be used later
 setMethod(f="initialize",
           signature="Demographics",
-          definition=function(.Object, unique = FALSE, query = NULL){
-            cat("~~~ Demographics: initializator ~~~ \n")
-            if (!is.null(query)) {
-              ## We have a query, forget about unique
-              q <- new ("Query", sql = query)
-            } else if (unique) {
-              q <- new ("Query", sql = query.scm.unique)
-            } else {
-              q <- new ("Query", sql = query.scm)
+          definition=function(.Object, type, months, unique = FALSE, query = NULL){
+              cat("~~~ Demographics: initializator ~~~ \n")
+              # do I need the as(...) ?
+              ## .Object@type <- type
+              ## .Object@months <- months
+              ## .Object@unique <- unique
+              attr(.Object, 'type') <- type
+              attr(.Object, 'months') <- months
+              attr(.Object, 'unique') <- unique
+              return(.Object)
+          })
+
+##
+setGeneric (
+  name= "Aging",
+  def=function(.Object){standardGeneric("Aging")}
+  )
+
+##
+setMethod(f="Aging",
+          signature="Demographics",
+          definition=function(.Object){
+            cat("~~~ Demographics - Aging ~~~ \n")
+            
+            if (attr(.Object, 'type') == 'scm'){
+                cat("~~~ SCM query\n")
+                if (attr(.Object, 'unique')) {
+                    q <- new ("Query", sql = build.query(query.scm.unique,attr(.Object, 'months')))
+                } else {
+                    q <- new ("Query", sql = build.query(query.scm,attr(.Object, 'months')))
+                }
+            } else if (attr(.Object, 'type') == 'mls'){
+                cat("~~~ MLS query\n")
+                q <- new("Query", sql = build.query(query.mls,attr(.Object, 'months')))
+            } else if (attr(.Object, 'type') == 'its'){
+                cat("~~~ ITS query\n")
+                q <- new("Query", sql = build.query(query.its,attr(.Object, 'months')))
             }
-            as(.Object,"data.frame") <- run (q)
-            .Object$firstdate <- strptime(.Object$firstdatestr,
-                                          format="%Y-%m-%d %H:%M:%S")
-            .Object$lastdate <- strptime(.Object$lastdatestr,
-                                         format="%Y-%m-%d %H:%M:%S")
-            .Object$stay <- round (as.numeric(
-                                     difftime(.Object$lastdate,
-                                              .Object$firstdate,
-                                              units="days")))            
-            return(.Object)
+            
+            res <- run (q)
+            res$firstdate <- strptime(res$firstdatestr,
+                                      format="%Y-%m-%d %H:%M:%S")
+            res$lastdate <- strptime(res$firstdatestr,
+                                     format="%Y-%m-%d %H:%M:%S")
+            return(res)
           }
           )
+
+##
+setGeneric (
+  name= "Birth",
+  def=function(.Object){standardGeneric("Birth")}
+  )
+
+##
+setMethod(f="Birth",
+          signature="Demographics",
+          definition=function(.Object){
+            cat("~~~ Demographics - Birth ~~~ \n")
+            
+            if (attr(.Object, 'type') == 'scm'){
+                cat("~~~ SCM query\n")
+                if (attr(.Object, 'unique')) {
+                    q <- new ("Query", sql = query.scm.unique)
+                } else {
+                    q <- new ("Query", sql = query.scm)
+                }
+            } else if (attr(.Object, 'type') == 'mls'){
+                cat("~~~ MLS query\n")
+                q <- new("Query", sql = query.mls)
+            } else if (attr(.Object, 'type') == 'its'){
+                cat("~~~ ITS query\n")
+                q <- new("Query", sql = query.its)
+            }
+            
+            res <- run (q)
+            res$firstdate <- strptime(res$firstdatestr,
+                                      format="%Y-%m-%d %H:%M:%S")
+            res$lastdate <- strptime(res$firstdatestr,
+                                     format="%Y-%m-%d %H:%M:%S")
+            return(res)
+          }
+          )
+
+
+## ##
+## setMethod(f="initialize",
+##           signature="Demographics",
+##           definition=function(.Object, type, months, unique = FALSE, query = NULL){
+##             cat("~~~ Demographics: initializator ~~~ \n")
+            
+##             if (type == 'scm'){
+##                 cat("~~~ SCM query\n")
+##                 if (unique) {
+##                     q <- new ("Query", sql = build.query(query.scm.unique,months))
+##                 } else {
+##                     q <- new ("Query", sql = build.query(query.scm,months))
+##                 }
+##             } else if (type == 'mls'){
+##                 cat("~~~ MLS query\n")
+##                 q <- new("Query", sql = build.query(query.mls,months))
+##             } else if (type == 'its'){
+##                 cat("~~~ ITS query\n")
+##                 q <- new("Query", sql = build.query(query.its,months))
+##             }
+            
+##             as(.Object,"data.frame") <- run (q)
+##             .Object$firstdate <- strptime(.Object$firstdatestr,
+##                                           format="%Y-%m-%d %H:%M:%S")
+##             .Object$lastdate <- strptime(.Object$lastdatestr,
+##                                          format="%Y-%m-%d %H:%M:%S")
+##             .Object$stay <- round (as.numeric(
+##                                      difftime(.Object$lastdate,
+##                                               .Object$firstdate,
+##                                               units="days")))            
+##             return(.Object)
+##           }
+##           )
 
 ##
 ## Create a JSON file out of an object of this class

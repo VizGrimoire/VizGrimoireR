@@ -27,10 +27,17 @@
 # Assumes MetricsGrimoire tools are already installed.
 # If you don't know how to install them, look at
 # misc/metricsgrimoire-setup.py
+#
+# Example of how to run, for repository VizGrimoire/VizGrimoireR
+# vg-github.py --user jgb --passwd XXX --dir /tmp/pp --removedb
+#  --ghuser ghuser --ghpasswd XXX --vgdir ~/src/vizGrimoire
+#  VizGrimoire/VizGrimoireR
 
 import argparse
 import MySQLdb
 import os
+import shutil
+import errno
 from subprocess import call
 
 # Parse command line options
@@ -54,10 +61,15 @@ parser.add_argument("--dir",
 parser.add_argument("--removedb",
                     help="Remove all databases, if present, before creating them",
                     action="store_true")
+parser.add_argument("--nomg",
+                    help="Don't run MetricsGrimoire tools",
+                    action="store_true")
 parser.add_argument("--ghuser",
                     help="GitHub user name")
 parser.add_argument("--ghpasswd",
                     help="GitHub password")
+parser.add_argument("--vgdir",
+                    help="Directory with vigGrimoireR and vizGrimoireJS directories")
 
 args = parser.parse_args()
 
@@ -85,11 +97,28 @@ bichoConf = {"bin": "bicho",
              "dbpasswd": "--db-password-out",
              "db": "--db-database-out"}
 
+rConf = {"libdir": dir + "/rlib",
+         "vgrpkg": args.vgdir + "/VizGrimoireR/vizgrimoire",
+         "scm-analysis": args.vgdir + \
+             "/VizGrimoireR/examples/github/scm-analysis-github.R",
+         "unifypeople": args.vgdir + \
+             "/VizGrimoireR/misc/unifypeople.py",
+         "its2id": args.vgdir + \
+             "/VizGrimoireR/misc/its2identities.py",
+         "domains": args.vgdir + \
+             "/VizGrimoireR/misc/domains_analysis.py"}
+
 conf = {"cvsanaly": cvsanalyConf,
         "bicho":    bichoConf}
 
-# Now, actually run tools
-for tool in ["cvsanaly", "bicho"]:
+def RunMGTool (tool):
+    """Run MetricsGrimoire tool
+
+    tool: cvsanaly | bicho
+    Uses information in global dictionary conf for deciding
+    about options for the tool.
+    """
+
     # Create (and maybe remove) the database
     dbname = dbPrefix + "_" + tool
     if args.removedb:
@@ -107,8 +136,10 @@ for tool in ["cvsanaly", "bicho"]:
     opts.extend ([conf[tool]["db"], dbname])
     # Specific code for cvsanaly
     if tool == "cvsanaly":
-        call(["git", "clone", "https://github.com/" + args.project + ".git"])
         gitdir = args.project.split('/', 1)[1]
+        call(["git", "clone", "https://github.com/" + args.project + ".git",
+              dir + '/' + gitdir])
+        opts.append ("--extensions=" + "CommitsLOC")
         opts.append (dir + '/' + gitdir)
     if tool == "bicho":
         opts.extend (["--url",
@@ -118,3 +149,62 @@ for tool in ["cvsanaly", "bicho"]:
     print opts
     # Run the tool
     call(opts)
+    
+# Now, actually run MetricsGrimoire tools
+if not args.nomg:
+    for tool in ["cvsanaly", "bicho"]:
+        RunMGTool (tool)
+
+# Let's go on, now with vizGrimoire
+
+# Install the appropriate vizgrimorer R package in a specific location
+# to be used later (just in case it is not installed in standard R librdirs)
+try:
+    os.makedirs(rConf["libdir"])
+except OSError as e:
+    if e.errno == errno.EEXIST and os.path.isdir(rConf["libdir"]):
+        pass
+    else: 
+        raise
+env = os.environ.copy()
+env ["R_LIBS"] = rConf["libdir"]
+call (["R", "CMD", "INSTALL", rConf["vgrpkg"]], env=env)
+
+# Run unique identities stuff
+call ([rConf["unifypeople"], "-d", dbPrefix + "_" + "cvsanaly",
+       "-u", args.user, "-p", args.passwd, "-i", "no"])
+call ([rConf["its2id"],
+       "--db-database-its=" + dbPrefix + "_" + "bicho",
+       "--db-database-ids=" + dbPrefix + "_" + "cvsanaly",
+       "-u", args.user, "-p", args.passwd])
+
+# Run affiliation stuff
+call ([rConf["domains"], "-d", dbPrefix + "_" + "cvsanaly",
+       "-u", args.user, "-p", args.passwd])
+
+# Run the SCM (git) analysis script (ensure installed vizgrimoirer package
+# is in R lib path)
+os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
+call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
+       "-u", args.user, "-p", args.passwd,
+       "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
+       "--destination", dir])
+
+# Now, let's produce an HTML dashboard for the JSON files produced in the
+# previous step
+vgjsFiles = ["vizgrimoire.min.js",
+             "lib/jquery-1.7.1.min.js",
+             "bootstrap/js/bootstrap.min.js",
+             "vizgrimoire.css",
+             "browser/custom.css",
+             "bootstrap/css/bootstrap.min.css",
+             "bootstrap/css/bootstrap-responsive.min.css",
+             "browser/navbar.html",
+             "browser/footer.html",
+             "browser/refcard.html",
+             "browser/project-card.html"]
+for file in vgjsFiles:
+    shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
+
+# Note: missing files:
+# index.htmo, config.json
