@@ -24,6 +24,82 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 
 
+#Evolutionary info tests
+
+test.EvolReviewsSubmitted <- function()
+{
+    expect_that(54, equals(nrow(EvolReviewsSubmitted('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolReviewsOpened <- function()
+{
+    expect_that(4, equals(nrow(EvolReviewsOpened('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolReviewsNew <- function()
+{
+    expect_that(2, equals(nrow(EvolReviewsNew('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolReviewsInProgress <- function()
+{
+    expect_that(0, equals(nrow(EvolReviewsInProgress('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolReviewsClosed <- function()
+{
+    expect_that(54, equals(nrow(EvolReviewsClosed('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolReviewsMerged <- function()
+{
+    expect_that(54, equals(nrow(EvolReviewsMerged('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolReviewsAbandoned <- function()
+{
+    expect_that(53, equals(nrow(EvolReviewsAbandoned('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolPatchesApproved <- function()
+{
+    expect_that(54, equals(nrow(EvolPatchesApproved('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolPatchesVerified <- function()
+{
+    expect_that(54, equals(nrow(EvolPatchesVerified('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolPatchesCodeReview <- function()
+{
+    expect_that(54, equals(nrow(EvolPatchesCodeReview('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolPatchesSent <- function()
+{
+    expect_that(53, equals(nrow(EvolPatchesSent('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolWaiting4Reviewer <- function()
+{
+    expect_that(2, equals(nrow(EvolWaiting4Reviewer('week', "'2012-01-01'", "'2013-01-01'", idb, list(NA, NA)))))
+}
+
+test.EvolWaiting4Submitter <- function()
+{
+    expect_that(1, equals(nrow(EvolWaiting4Submitter('week', "'2012-01-01'", "'2013-01-01'", idb,  list(NA, NA)))))
+}
+
+test.EvolReviewers <- function()
+{
+    expect_that(54, equals(nrow(EvolReviewers('week', "'2012-01-01'", "'2013-01-01'", idb,  list(NA, NA)))))
+}
+
+
+
+
+#Aggregated info tests
 
 
 test.StaticReviewsSubmitted <- function()
@@ -46,7 +122,7 @@ test.StaticReviewsInProgress <- function()
     expect_that(0, equals(as.numeric(StaticReviewsInProgress('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA))[1])))
 }
 
-test.StaticStaticReviewsClosed <- function()
+test.StaticReviewsClosed <- function()
 {
     expect_that(16062, equals(as.numeric(StaticReviewsClosed('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA))[1])))
 }

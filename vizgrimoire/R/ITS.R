@@ -723,10 +723,11 @@ GetCountriesStaticITS <- function(identities_db, country, startdate, enddate) {
 
 # TODO: It is the same than SCM because unique identites
 GetPeopleListITS <- function(startdate, enddate) {
-    fields = "DISTINCT(pup.upeople_id) as id"
+    fields = "DISTINCT(pup.upeople_id) as pid, count(c.id) as total"
     tables = GetTablesOwnUniqueIdsITS()
     filters = GetFiltersOwnUniqueIdsITS()
-    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)        
+    filters = paste(filters,"GROUP BY pid ORDER BY total desc")
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)        
@@ -820,4 +821,103 @@ evol_closed_gerrit <- function (period, startdate, enddate) {
     data <- run(query)
     return (data)
 }
+
+
+MarkovChain<-function()
+{
+    q<-paste("select distinct(new_value) as value
+              from changes 
+              where field like '%status%'")
+ 
+    query <- new ("Query", sql = q)
+    status <- run(query)  
+
+    T<-status[order(status$value),]
+    T1<-gsub("'", "", T)
+
+    new_value<-function(old)
+    {        
+        q<-paste("select old_value, new_value, count(*) as issue
+                  from changes 
+                  where field like '%status%'
+                  and old_value like '%", old , "%' 
+                  group by old_value, new_value;", sep="")
+             
+        query <- new ("Query", sql = q)
+        table <- run(query)
+        f<-table$issue/sum(table$issue)
+        x<-cbind(table,f)
+        x1<-gsub("'", "",x$new_value)
+        x[,2]<-x1
+
+        i<-0
+	all<-0
+	end<-NULL
+  
+     	for( i in 1:length(T1)){  
+
+    	     if(is.element(T1[i],x$new_value)){
+                        i<-i+1 }
+
+   	     else{  
+            		c<-data.frame(old_value=0,new_value=T1[i],issue=0,f=0)
+            		x<-rbind(x,c)
+            		i<-i+1}
+
+   		}
+
+
+        good<-x[order(x$new_value),]
+
+        return(good)
+
+     }
+
+  j<-0
+  all<-c()
+
+  for( j in 1:length(T1))
+  	{  v<-new_value(T1[j])
+    	   good<-v[order(v$new_value),]
+     	   g<-good$f
+           all<-c(all,g)
+           j<-j+1
+         }
+
+  MARKOV<-matrix(all,ncol=12,nrow=12,byrow=TRUE)
+  colnames(MARKOV)<-v$new_value
+  rownames(MARKOV)<-v$new_value
+
+  return(MARKOV)
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

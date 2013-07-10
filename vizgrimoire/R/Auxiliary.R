@@ -432,6 +432,8 @@ completeZeroPeriodIdsMonths <- function (data, start, end) {
 
 # Week of the year as decimal number (01–53) as defined in ISO 8601
 completeZeroPeriodIdsWeeks <- function (data, start, end) {
+    # if start is last day of week and end firs day of week
+    # 1.1 week diff is a 3 weeks period. Adjusted later.
     last = ceiling (difftime(end, start,units="weeks"))
     
     samples <- list('id'=c(0:(last-1)))     
@@ -441,9 +443,18 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
         samples$unixtime[i] = toString(as.numeric(new_date))
         samples$date[i]=format(new_date, "%b %Y")
         samples$week[i]=format(format(new_date, "%G%V"))
+        max.week=as.numeric(samples$week[i])
         new_date = as.POSIXlt(as.Date(new_date)+7)
     }
-    
+ 
+    # Add a last week to cover all input data if needed
+    if (max.week<data$week[length(data$week)]) {
+        samples$id[last+1] = last+1
+        samples$unixtime[last+1] = toString(as.numeric(new_date))
+        samples$date[last+1]=format(new_date, "%b %Y")
+        samples$week[last+1]=format(format(new_date, "%G%V"))
+    }
+
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0              
     return(completedata)    
@@ -1027,6 +1038,29 @@ remove_outliers <- function(x)
     return(y)
   }
 
+
+BBollinger<-function(serie,s,confi)
+#This functions gives Bands of Bollinger of a moving average.
+#serie= data (We assume Normal distribution)
+#s=period of time to apply moving average 
+#confi=[0,1] level of confidence.
+	{alpha<-(1-confi)/2
+  
+ 	 rollmean<-rollapply(serie,s,mean)
+  
+ 	 bbsup<-rollmean+abs(qnorm(alpha))*rollapply(serie,s,sd)
+  
+ 	 bbinf<-rollmean-abs(qnorm(alpha))*rollapply(serie,s,sd)
+  
+#plot(c(0:max(bbsup)), col="white" , xlim=c(0,length(serie)) , ylab="commits", xlab="weeks", main="Bollinger Bands") 
+#lines(bbsup,type="l",col="red")
+#lines(rollmean,type="l",col="green")
+#lines(bbinf,type="l",col="red")
+#lines(serie, type="l", col="black", lty=2)
+#legend("topleft",col=c("red","green","black"),lty=c(1,1,2),legend=c("Bollinger Bands","Rollmean","Commits"), bty="n", cex=0.8)
+ 	 end<-data.frame(rollmean,bbsup,bbinf)
+	return(end)
+	}
 
 
 

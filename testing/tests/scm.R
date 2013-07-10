@@ -32,75 +32,124 @@ test.prints <- function()
 
 }
 
-test.commits <- function()
+#Evolutionary functions
+test.EvolCommits <- function()
 {
     expect_that(54, equals(nrow(EvolCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
+test.EvolAuthors <- function()
+{
+    expect_that(54, equals(nrow(EvolAuthors('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
 
+test.EvolCommitters <- function()
+{
+    expect_that(54, equals(nrow(EvolCommitters('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+
+test.EvolFiles <- function()
+{
+    expect_that(54, equals(nrow(EvolFiles('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolLines <- function()
+{
+    expect_that(54, equals(nrow(EvolLines('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolBranches <- function()
+{
+    expect_that(54, equals(nrow(EvolBranches('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolRepositories <- function()
+{
+    expect_that(54, equals(nrow(EvolRepositories('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolActions <- function()
+{
+    expect_that(54, equals(nrow(EvolActions('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.EvolAvgCommitsAuthor <- function()
+{
+    expect_that(54, equals(nrow(EvolAvgCommitsAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+test.EvolAvgFilesAuthor <- function()
+{
+    expect_that(54, equals(nrow(EvolAvgFilesAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+
+
+#Aggregated functions
 test.StaticNumCommits <- function()
 {
-    expect_that(18710, equals(as.numeric(StaticNumCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))[1])))
+    expect_that(20786, equals(as.numeric(StaticNumCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))[1])))
 }
 
 test.StaticNumAuthors <- function()
 {
-    expect_that(538, equals(as.numeric(StaticNumAuthors('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    expect_that(564, equals(as.numeric(StaticNumAuthors('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 
 test.StaticNumCommitters <- function()
 {
-    expect_that(523, equals(as.numeric(StaticNumCommitters('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    expect_that(536, equals(as.numeric(StaticNumCommitters('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.StaticNumFiles <- function()
 {
-    expect_that(13426, equals(as.numeric(StaticNumFiles('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+    expect_that(14518, equals(as.numeric(StaticNumFiles('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.StaticNumBranches <- function()
 {
-    expect_that(4, equals(as.numeric(StaticNumBranches('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+    expect_that(5, equals(as.numeric(StaticNumBranches('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.StaticNumRepositories <- function()
 {
-    expect_that(34, equals(as.numeric(StaticNumRepositories('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+    expect_that(45, equals(as.numeric(StaticNumRepositories('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.StaticNumActions <- function()
 {
-    expect_that(54421, equals(as.numeric(StaticNumActions('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+    expect_that(59781, equals(as.numeric(StaticNumActions('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.StaticAvgCommitsPeriod <- function()
 {
-    expect_that(359.8077, equals(as.numeric(StaticAvgCommitsPeriod('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+    expect_that(399.7308, equals(as.numeric(StaticAvgCommitsPeriod('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.StaticAvgFilesPeriod <- function()
 {
-    expect_that(258.1923, equals(as.numeric(StaticAvgFilesPeriod('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+    expect_that(279.1923, equals(as.numeric(StaticAvgFilesPeriod('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.StaticAvgCommitsAuthor <- function()
 {
-    expect_that(34.777, equals(as.numeric(StaticAvgCommitsAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    expect_that(36.8546, equals(as.numeric(StaticAvgCommitsAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.StaticAvgAuthorPeriod <- function()
 {
-    expect_that(10.3462, equals(as.numeric(StaticAvgAuthorPeriod('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    expect_that(10.8462, equals(as.numeric(StaticAvgAuthorPeriod('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.StaticAvgCommitterPeriod <- function()
 {
-    expect_that(10.0577, equals(as.numeric(StaticAvgCommitterPeriod('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    expect_that(10.3077, equals(as.numeric(StaticAvgCommitterPeriod('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.StaticAvgFilesAuthor <- function()
 {
-    expect_that(25.6711, equals(as.numeric(StaticAvgFilesAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    expect_that(25.7411, equals(as.numeric(StaticAvgFilesAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 

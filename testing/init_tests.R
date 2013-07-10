@@ -1,3 +1,5 @@
+#!/usr/bin/Rscript
+
 ## Copyright (C) 2012, 2013 Bitergia
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -25,43 +27,47 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 
 
-
-
 library('RUnit')
 library('testthat')
 library('vizgrimoire')
+library('zoo')
 
-
-#R --vanilla --args -d fake -u root  -i lcanas_cvsanaly_openstack_1376 < init_tests.R
+#R --vanilla --args -d fake -u root  -i jenkins_scm_vizr_1783 < init_tests.R
 
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
-
 conf <- ConfFromOptParse()
-SetDBChannel (database = "lcanas_cvsanaly_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
+error = FALSE
 
+SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+idb = conf$identities_db
 test.suite <- defineTestSuite("SCM",
                               dirs = file.path("tests"),
-                              testFileRegexp = 'scm.R')
-
-
-
+                              testFileRegexp = 'scm.R$')
 test.result <- runTestSuite(test.suite)
-
-printTextProtocol(test.result)
-
+if (getErrors(test.result)[1]>0) {q(status=1)}
 
 
-SetDBChannel (database = "acs_gerrit_launchpad_1411", user = conf$dbuser, password = conf$dbpassword)
 
+SetDBChannel (database = "jenkins_scr_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 test.suite <- defineTestSuite("SCR",
                               dirs = file.path("tests"),
-                              testFileRegexp = 'scr.R')
+                              testFileRegexp = 'scr.R$')
+test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0){q(status=1)}
 
 
+
+SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+idb = conf$identities_db
+
+test.suite <- defineTestSuite("StatTest",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'StatTest.R$')
 
 test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0){q(status=1)}
+#printTextProtocol(test.result)
 
-printTextProtocol(test.result)
 
 
