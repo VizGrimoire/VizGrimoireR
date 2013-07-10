@@ -30,12 +30,16 @@
 # issues table queries should be converted as changes table is done
 
 
-GetTablesOwnUniqueIdsITS <- function() {
-    return ('changes c, people_upeople pup')
+GetTablesOwnUniqueIdsITS <- function(table='') {
+    tables = 'changes c, people_upeople pup'
+    if (table == "issues") tables = 'issues i, people_upeople pup'
+    return (tables)
 }
 
-GetFiltersOwnUniqueIdsITS <- function () {
-    return ('pup.people_id = c.changed_by') 
+GetFiltersOwnUniqueIdsITS <- function (table='') {
+    filters = 'pup.people_id = c.changed_by'
+    if (table == "issues") filters = 'pup.people_id = i.submitted_by'
+    return (filters) 
 }
 
 GetEvolMetricsITS <- function (fields, period, startdate, enddate, filters='') {    
@@ -93,10 +97,6 @@ GetEvolBMIIndex <- function(closed_condition, period, startdate, enddate){
     return (data)
 }
 
-
-
-
-
 GetEvolReposITS <- function(period, startdate, enddate) {
     fields = 'COUNT(DISTINCT(tracker_id)) AS repositories'
     tables = 'issues'
@@ -108,24 +108,28 @@ GetEvolReposITS <- function(period, startdate, enddate) {
     return (data)
 }
 
-GetTablesCompaniesITS <- function (i_db) {
-    tables = GetTablesOwnUniqueIdsITS()
+GetTablesCompaniesITS <- function (i_db, table='') {
+    tables = GetTablesOwnUniqueIdsITS(table)
     tables = paste(tables,',',i_db,'.upeople_companies upc',sep='')    
 }
 
-GetTablesCountriesITS <- function (i_db) {
-    tables = GetTablesOwnUniqueIdsITS()
+GetTablesCountriesITS <- function (i_db,table='') {
+    tables = GetTablesOwnUniqueIdsITS(table)
     tables = paste(tables,',',i_db,'.upeople_countries upc',sep='')    
 }
 
-GetFiltersCompaniesITS <- function () {
-    filters = GetFiltersOwnUniqueIdsITS()
-    filters = paste(filters,"AND pup.upeople_id = upc.upeople_id 
-                    AND changed_on >= upc.init AND changed_on < upc.end")
+GetFiltersCompaniesITS <- function (table='') {
+    filters = GetFiltersOwnUniqueIdsITS(table)
+    filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
+    if (table == 'issues') {
+        filters = paste(filters,"AND submitted_on >= upc.init AND submitted_on < upc.end")
+    } else {
+	    filters = paste(filters,"AND changed_on >= upc.init AND changed_on < upc.end")
+	}
 }
 
-GetFiltersCountriesITS <- function () {
-    filters = GetFiltersOwnUniqueIdsITS()
+GetFiltersCountriesITS <- function (table='') {
+    filters = GetFiltersOwnUniqueIdsITS(table)
     filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
 }
 
@@ -151,12 +155,12 @@ GetEvolCountriesITS <- function(period, startdate, enddate, identities_db) {
     return (data)
 }
 
-GetTablesReposITS <- function () {
-    return (paste(GetTablesOwnUniqueIdsITS(),",issues,trackers"))
+GetTablesReposITS <- function (table='') {
+    return (paste(GetTablesOwnUniqueIdsITS(table),",issues,trackers"))
 }
 
-GetFiltersReposITS <- function () {
-    filters = paste(GetFiltersOwnUniqueIdsITS(),
+GetFiltersReposITS <- function (table='') {
+    filters = paste(GetFiltersOwnUniqueIdsITS(table),
             "AND c.issue_id = issues.id AND issues.tracker_id = trackers.id")    
     return(filters)    
 }
@@ -313,6 +317,41 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                 ORDER BY closed desc
                 LIMIT ",limit,";", sep="")
     query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {    
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
+    }
+    
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(submitted_on) from issues limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, submitted_on)<",days)
+    }    
+    
+    q <- paste("SELECT up.id as id, up.identifier as openers,
+                    count(distinct(i.id)) as opened
+                FROM ",GetTablesCompaniesITS(identities_db,'issues'), ", ",
+                    identities_db,".companies com,
+                    ",identities_db,".upeople up
+                WHERE ",GetFiltersCompaniesITS('issues') ," and
+                    ", affiliations, "
+                    upc.company_id = com.id and
+                    pup.upeople_id = up.id and
+                    i.submitted_on >= ", startdate, " and
+                    i.submitted_on < ", enddate,
+                    date_limit, "
+                    GROUP BY up.identifier
+                    ORDER BY opened desc
+                    LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    print(q)
     data <- run(query)
     return (data)
 }
