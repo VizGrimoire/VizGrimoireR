@@ -432,6 +432,8 @@ completeZeroPeriodIdsMonths <- function (data, start, end) {
 
 # Week of the year as decimal number (01–53) as defined in ISO 8601
 completeZeroPeriodIdsWeeks <- function (data, start, end) {
+    # if start is last day of week and end firs day of week
+    # 1.1 week diff is a 3 weeks period. Adjusted later.
     last = ceiling (difftime(end, start,units="weeks"))
     
     samples <- list('id'=c(0:(last-1)))     
@@ -441,9 +443,18 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
         samples$unixtime[i] = toString(as.numeric(new_date))
         samples$date[i]=format(new_date, "%b %Y")
         samples$week[i]=format(format(new_date, "%G%V"))
+        max.week=as.numeric(samples$week[i])
         new_date = as.POSIXlt(as.Date(new_date)+7)
     }
-    
+ 
+    # Add a last week to cover all input data if needed
+    if (max.week<data$week[length(data$week)]) {
+        samples$id[last+1] = last+1
+        samples$unixtime[last+1] = toString(as.numeric(new_date))
+        samples$date[last+1]=format(new_date, "%b %Y")
+        samples$week[last+1]=format(format(new_date, "%G%V"))
+    }
+
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0              
     return(completedata)    
