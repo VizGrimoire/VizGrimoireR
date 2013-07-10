@@ -329,9 +329,9 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
     date_limit = ""
     if (days != 0 ) {
         query <- new("Query",
-                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+                sql = "SELECT @maxdate:=max(submitted_on) from issues limit 1")
         data <- run(query)
-        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, submitted_on)<",days)
     }    
     
     q <- paste("SELECT up.id as id, up.identifier as openers,
@@ -351,9 +351,8 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
                     LIMIT 10;", sep="")
     query <- new ("Query", sql = q)
     print(q)
-    stop()
-    # data <- run(query)
-    # return (data)
+    data <- run(query)
+    return (data)
 }
 
 #
