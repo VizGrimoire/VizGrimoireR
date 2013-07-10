@@ -448,7 +448,8 @@ completeZeroPeriodIdsWeeks <- function (data, start, end) {
     }
  
     # Add a last week to cover all input data if needed
-    if (max.week<data$week[length(data$week)]) {
+    # nrow checks if there are rows (but the dataframe might be initialized)
+    if (nrow(data)>0 && (max.week<data$week[length(data$week)])) {
         samples$id[last+1] = last+1
         samples$unixtime[last+1] = toString(as.numeric(new_date))
         samples$date[last+1]=format(new_date, "%b %Y")
@@ -514,6 +515,7 @@ completeZeroPeriodIds <- function (data, period, startdate, enddate){
 
 completePeriodIds <- function (data, period, conf) {    
     if (length(data) == 0) {
+        #data is initialized, although nrow(data) is still 0
         data <- data.frame(id=numeric(0))
     }
     new_data <- completeZeroPeriodIds(data, period, conf$str_startdate, conf$str_enddate)
