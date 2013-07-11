@@ -63,9 +63,9 @@ def create_tables(db, connector):
    return
 
 def connect(database):
-   user = ''
-   password = ''
-   host = ''
+   user = 'xxx'
+   password = 'xxx'
+   host = 'xxx'
    try:
       db =  MySQLdb.connect(host,user,password,database)
       return db, db.cursor()
