@@ -4,15 +4,15 @@
 #$3 = ITS database
 #$4 = end date
 #$5 = destination
-#$6 = log file
-#$7 = SCR database
+#$6 = log file (not used)
+#$6 = SCR database
 
 
 START=2010-05-27
 END=$4
 PROJECT=openstack
 DIR=$5 #not used so far
-LOGS=$6
+#LOGS=$6 (not used)
 
 
 
@@ -28,10 +28,26 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repos
 #ITS
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s $START -e $END -g weeks -t launchpad < its-analysis.R
 #SCR 
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $7 -u root -i $1  -s $START -e $END -g weeks  < scr-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s $START -e $END -g weeks  < scr-analysis.R
 rm data/whole_project/*
 mv data/json/* data/whole_project/
 cp data/whole_project/* $DIR
+
+#HAVANA
+rm data/json/*
+mkdir -p data/havana
+#SCM
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks < scm-analysis.R
+#MLS
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks < mls-analysis.R
+#ITS
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks -t launchpad < its-analysis.R
+#SCR
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2013-04-04 -e $END -g weeks < scr-analysis.R
+rm data/havana/*
+mv data/json/* data/havana/
+
+
 
 #GRIZZLY
 rm data/json/*
@@ -43,7 +59,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repos
 #ITS
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2012-09-27 -e 2013-04-04 -g weeks -t launchpad < its-analysis.R
 #SCR
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $7 -u root -i $1  -s 2012-09-27 -e 2013-04-04 -g weeks < scr-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2012-09-27 -e 2013-04-04 -g weeks < scr-analysis.R
 rm data/grizzly/*
 mv data/json/* data/grizzly/
 
@@ -57,7 +73,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repos
 #ITS
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2012-04-04 -e 2012-09-27 -g weeks -t launchpad < its-analysis.R
 #SCR
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $7 -u root -i $1  -s 2012-04-04 -e 2013-09-27 -g weeks < scr-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2012-04-04 -e 2013-09-27 -g weeks < scr-analysis.R
 rm data/folsom/*
 mv data/json/* data/folsom/
 
@@ -71,7 +87,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repos
 #ITS
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2011-11-22 -e 2012-04-04 -g weeks -t launchpad < its-analysis.R
 #SCR
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $7 -u root -i $1  -s 2011-11-22 -e 2012-04-04 -g weeks < scr-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2011-11-22 -e 2012-04-04 -g weeks < scr-analysis.R
 rm data/essex/*
 mv data/json/* data/essex/
 
