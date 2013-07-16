@@ -192,6 +192,7 @@ call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
 
 # Now, let's produce an HTML dashboard for the JSON files produced in the
 # previous step
+# Files from vizGrimoireJS to copy:
 vgjsFiles = ["vizgrimoire.min.js",
              "lib/jquery-1.7.1.min.js",
              "bootstrap/js/bootstrap.min.js",
@@ -203,8 +204,13 @@ vgjsFiles = ["vizgrimoire.min.js",
              "browser/footer.html",
              "browser/refcard.html",
              "browser/project-card.html"]
+# Files specific to this GitHub example:
+ghBrowserfiles = ["index.html", "config.json"]
+
 for file in vgjsFiles:
     shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
+for file in ghBrowserfiles:
+    shutil.copy(args.vgdir + "/VizGrimoireR/examples/github/" + file, dir)
 
 # Note: missing files:
 # index.htmo, config.json
