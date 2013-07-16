@@ -21,6 +21,17 @@
 ## This script installs the R dependencies needed by the vizgrimoire R
 ## libraries, downloading them from CRAN repositories.
 
+## Some of those libraries are downloaded from CRAN as C source that
+## has to be compiled. For some of the, some specific system libraries
+## and development files have to be previously installed:
+##  * MySQL client development files. Debian/Ubuntu pkg: libmysqlclient-dev
+##      for RMySQL
+##  * X11 client-side development files. Debian/Ubuntu pkg: libx11-dev
+##      for rgl
+##  * OpenGL development files. Debian/Ubuntu pkgs: mesa-common-dev,
+##                                                  libglu1-mesa-dev
+##      for rgl
+
 ## Next should be changed to your closest CRAN mirror
 repos=c("http://cran.us.r-project.org")
 
