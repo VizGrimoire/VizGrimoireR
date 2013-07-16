@@ -155,22 +155,28 @@ def main():
    for result in results:
       people_id = int(result[0])
       name = result[1]
-      if name is None:
-        name = ''
-      else:
-        name = name.replace("'", "\\'")  # avoiding ' errors in MySQL
-      results_ids = search_identity(connector_ids, name)
-      if len(results_ids) > 0:
-        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
-        continue
       email = result[2]
-      results_ids = search_identity(connector_ids, email)
-      if len(results_ids) > 0:
+      user_id = result[3]
+      if name is None or name == 'None': name = ''
+      else: name = name.replace("'", "\\'")  # avoiding ' errors in MySQL
+      if email is None or email == 'None': email = ''
+      else: email = email.replace("'", "\\'")  # avoiding ' errors in MySQL
+      if user_id is None or user_id == 'None': user_id = ''
+      else: user_id = user_id.replace("'", "\\'")  # avoiding ' errors in MySQL
+        
+      results_ids = search_identity(connector_ids, name)
+      if name != '' and len(results_ids) > 0:
+        print "Reusing identity by name " + name
         reuse_identity(connector_its, people_id, int(results_ids[0][0]))
         continue
-      user_id = result[3]
+      results_ids = search_identity(connector_ids, email)
+      if email != '' and len(results_ids) > 0:
+        print "Reusing identity by email " + email
+        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+        continue
       results_ids = search_identity(connector_ids, user_id)
-      if len(results_ids) > 0:
+      if user_id != '' and len(results_ids) > 0:
+        print "Reusing identity by user_id " + user_id
         reuse_identity(connector_its, people_id, int(results_ids[0][0]))
         continue
       insert_identity(connector_ids, connector_its, 
