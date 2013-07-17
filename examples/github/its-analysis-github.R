@@ -81,7 +81,7 @@ if (conf$granularity == 'years') {
     nperiod = 1
 } else {stop(paste("Incorrect period:",conf$granularity))}
 
-
+conf$backend <- 'github'
 # Closed condition for github
 closed_condition <- "field='closed'"
 
