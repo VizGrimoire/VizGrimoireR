@@ -65,7 +65,7 @@ def get_domains(file_path):
    companies = []
    for domain_company in domains_companies[1:]:
       domains.append(domain_company.split(' ')[0])
-      companies.append(domain_company.rsplit(' ', 1)[1])
+      companies.append(domain_company.split(' ', 1)[1])
 
    return domains, companies
 
@@ -153,6 +153,8 @@ def main(database, domain_map):
 
    connector = connect(database)
    domains, companies = get_domains(domain_map)
+   print domains
+   print companies
 
    for domain in domains:
       print "Current domain: " + domain
