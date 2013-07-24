@@ -430,6 +430,83 @@ completeZeroPeriodIdsMonths <- function (data, start, end) {
     return(completedata)    
 }
 
+#######################
+# Code to count weeks as done by 
+# MySQL using the function yearweek
+#######################
+library("ISOweek")
+#Example of diff: number of weeks between 2010-05-27 and 2013-07-23 = 166. 
+
+getISOWEEKYear <- function(date){
+  #expected a date like '2013-12-01'
+  isoweekdate <- date2ISOweek(date)
+  year_week <- strsplit(isoweekdate, '-')
+  year <- year_week[[1]][1]
+  return (year)
+}
+
+getISOWEEKWeek <- function(date){
+  #expected a date like '2013-12-01'
+  isoweekdate <- date2ISOweek(date)
+  year_week <- strsplit(isoweekdate, '-')
+  week <- year_week[[1]][2]
+  week <- strsplit(week, 'W')[[1]][2]
+  return(week)
+  
+}
+
+getMaxWeekYear <- function(year){
+  #this will provide the maximum number of weeks for a given
+  #year
+  iso_year = year + 1
+  final_date = ""
+  day = 31
+  while (iso_year > year){
+    final_date = paste(year, "-12-", day, sep="")
+    iso_year <- getISOWEEKYear(final_date)
+    day = day - 1
+  }
+  
+  max_week = getISOWEEKWeek(final_date)
+  
+  return (max_week)
+}
+
+diffISOWeekTime <- function(initdate, enddate){
+  #diffweeks for 2013-07-23 and 2010-05-27
+  #using typical difftime, there are 164 weeks, 
+  #but there should be 166 if this is compared to the
+  #yearweek function in mysql group.
+  
+  inityear = as.numeric(getISOWEEKYear(initdate))
+  initweek = as.numeric(getISOWEEKWeek(initdate))
+  endyear = as.numeric(getISOWEEKYear(enddate))
+  endweek = as.numeric(getISOWEEKWeek(enddate))
+  
+  diffweeks = 0
+  if (inityear == endyear){
+    diffweeks = endweek - initweek + 1
+  } else if (endyear > inityear) {
+    for (i in inityear:endyear){
+      if (i == inityear){
+        #init of the loop
+        diffweeks = diffweeks + as.numeric(getMaxWeekYear(i)) - initweek + 1
+      } else if (i == endyear){
+        # end of the loop
+        diffweeks = diffweeks + endweek
+      } else {
+        # any year between inityear and endyear
+        diffweeks = diffweeks + as.numeric(getMaxWeekYear(i))
+      }
+    }  
+  } else {
+    print ("Error, enddate < initdate")
+  }
+
+  return (diffweeks)  
+}
+
+
 # Week of the year as decimal number (01–53) as defined in ISO 8601
 completeZeroPeriodIdsWeeks <- function (data, start, end) {
     # if start is last day of week and end firs day of week
