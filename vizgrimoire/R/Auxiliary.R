@@ -506,6 +506,42 @@ diffISOWeekTime <- function(initdate, enddate){
   return (diffweeks)  
 }
 
+completeZeroPeriodIdsWeeks2 <- function(data, start, end) {
+
+  # number of total weeks
+  totalWeeks = diffISOWeekTime(start, end)
+    
+  inityear = as.numeric(getISOWEEKYear(start))
+  initweek = as.numeric(getISOWEEKWeek(start))
+  endyear = as.numeric(getISOWEEKYear(end))
+  endweek = as.numeric(getISOWEEKWeek(end))
+
+  samples <- list('id' = c(1:totalWeeks))
+  cont = 1
+  for (i in inityear:endyear){
+    for (j in 1:getMaxWeekYear(i)){
+      if ((i == inityear && j >= initweek) || (i == endyear && j <= endweek) || (i > inityear && i< endyear)){
+        year = as.character(i)
+        extra = ""
+        if (j<10) extra = "0"
+        week = paste(extra, as.character(j), sep="")
+        isoweekdate = paste(year, "-W", week, "-1", sep="")
+        normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
+
+        samples$unixtime[cont] = toString(as.numeric(normal_date))
+        samples$date[cont] = format(normal_date, "%b %Y")
+        samples$week[cont] = paste(year, week, sep="")
+        cont = cont + 1
+    }  
+  }
+
+  print(samples)
+  completedata <- merge(data, samples, all=TRUE)
+  completedata[is.na(completedata)] <- 0
+  return(completedata)
+}
+
+
 
 # Week of the year as decimal number (01–53) as defined in ISO 8601
 completeZeroPeriodIdsWeeks <- function (data, start, end) {
