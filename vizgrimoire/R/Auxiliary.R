@@ -434,7 +434,7 @@ completeZeroPeriodIdsMonths <- function (data, start, end) {
 # Code to count weeks as done by 
 # MySQL using the function yearweek
 #######################
-library("ISOweek")
+library(ISOweek)
 #Example of diff: number of weeks between 2010-05-27 and 2013-07-23 = 166. 
 
 getISOWEEKYear <- function(date){
@@ -506,9 +506,17 @@ diffISOWeekTime <- function(initdate, enddate){
   return (diffweeks)  
 }
 
-completeZeroPeriodIdsWeeks <- function(data, start, end) {
 
-  # number of total weeks
+
+completeZeroPeriodIdsWeeks <- function(data, start, end) {
+  # this function fills with 0's those weeks with no data between
+  # start and end for data. An initial sample is filled with all
+  # information necessary and later merged with data.
+
+  # number of total weeks (those are natural weeks starting on Monday)
+  # This should behave in the same way as the yearweek function in MYSQL does
+  # With this approach, periods of 9 days may imply up to three weeks 
+  # (Sunday plus full week plus Monday).
   totalWeeks = diffISOWeekTime(start, end)
     
   inityear = as.numeric(getISOWEEKYear(start))
@@ -519,23 +527,43 @@ completeZeroPeriodIdsWeeks <- function(data, start, end) {
   samples <- list('id' = c(1:totalWeeks))
   cont = 1
   for (i in inityear:endyear){
+    #
     for (j in 1:getMaxWeekYear(i)){
-      if ((i == inityear && j >= initweek) || (i == endyear && j <= endweek) || (i > inityear && i< endyear)){
-        year = as.character(i)
-        extra = ""
-        if (j<10) extra = "0"
-        week = paste(extra, as.character(j), sep="")
-        isoweekdate = paste(year, "-W", week, "-1", sep="")
-        normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
+      if (inityear == endyear) {
+        if ((j >= initweek) && (j <= endweek)){
+          year = as.character(i)
+          extra = ""
+          if (j<10) extra = "0"
+          week = paste(extra, as.character(j), sep="")
+          isoweekdate = paste(year, "-W", week, "-1", sep="")
+          normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
 
-        samples$unixtime[cont] = toString(as.numeric(normal_date))
-        samples$date[cont] = format(normal_date, "%b %Y")
-        samples$week[cont] = paste(year, week, sep="")
-        cont = cont + 1
+          samples$unixtime[cont] = toString(as.numeric(normal_date))
+          samples$date[cont] = format(normal_date, "%b %Y")
+          samples$week[cont] = paste(year, week, sep="")
+          cont = cont + 1
+        }
+
+      } else { 
+        if ((i == inityear && j >= initweek) || (i == endyear && j <= endweek) || (i > inityear && i< endyear)){
+          # same code as above, to be refactored...
+          year = as.character(i)
+          extra = ""
+          if (j<10) extra = "0"
+          week = paste(extra, as.character(j), sep="")
+          isoweekdate = paste(year, "-W", week, "-1", sep="")
+          normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
+
+          samples$unixtime[cont] = toString(as.numeric(normal_date))
+          samples$date[cont] = format(normal_date, "%b %Y")
+          samples$week[cont] = paste(year, week, sep="")
+          cont = cont + 1
+        }
       }
     }  
   }
 
+  print(data)
   print(samples)
   completedata <- merge(data, samples, all=TRUE)
   completedata[is.na(completedata)] <- 0
