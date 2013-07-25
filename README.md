@@ -1,24 +1,15 @@
-vizGrimoireR
-============
+# vizGrimoireR
 
 R package vizgrimoire, to make life easier to those using Metrics Grimoire tools, and maybe vizGrimoireJS.
 
-Installation from source
-------------------------
+Some more documentation can be found in the [vizGrimoireR wiki](https://github.com/VizGrimoire/VizGrimoireR/wiki).
 
-From the parent directory of vizgrimoire:
+Dependencies and installation from source
+-----------------------------------------
 
-% R CMD INSTALL vizgrimoire
+See the vizGrimoireR wiki for up to date [information about dependencies and how to install](https://github.com/VizGrimoire/VizGrimoireR/wiki#installation-of-vizgrimoire-r-library) the vizgrimoire R library from sources.
 
-Or locally:
 
-% R CMD INSTALL -l <local_dir> vizgrimoire
-% R_LIBS=<local_dir>:$R_LIBS R --vanilla ....
-
-Or, to produce a tarball, from the vizgrimoire directory:
-
-% R CMD build # To build the package tarball
-% R CMD check # To check the package tarball
 
 General issues
 --------------
