@@ -532,6 +532,7 @@ completeZeroPeriodIdsWeeks2 <- function(data, start, end) {
         samples$date[cont] = format(normal_date, "%b %Y")
         samples$week[cont] = paste(year, week, sep="")
         cont = cont + 1
+      }
     }  
   }
 
