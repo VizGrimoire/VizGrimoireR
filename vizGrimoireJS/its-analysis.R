@@ -28,7 +28,7 @@
 ##
 
 library("vizgrimoire")
-
+library("ISOweek")
 ## Analyze args, and produce config params from them
 ## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
 ##                            user = "root", password = NULL,
