@@ -506,7 +506,7 @@ diffISOWeekTime <- function(initdate, enddate){
   return (diffweeks)  
 }
 
-completeZeroPeriodIdsWeeks2 <- function(data, start, end) {
+completeZeroPeriodIdsWeeks <- function(data, start, end) {
 
   # number of total weeks
   totalWeeks = diffISOWeekTime(start, end)
@@ -541,38 +541,6 @@ completeZeroPeriodIdsWeeks2 <- function(data, start, end) {
   return(completedata)
 }
 
-
-
-# Week of the year as decimal number (01–53) as defined in ISO 8601
-completeZeroPeriodIdsWeeks <- function (data, start, end) {
-    # if start is last day of week and end firs day of week
-    # 1.1 week diff is a 3 weeks period. Adjusted later.
-    last = ceiling (difftime(end, start,units="weeks"))
-    
-    samples <- list('id'=c(0:(last-1)))     
-    # Monday not Sunday
-    new_date = as.POSIXlt(as.Date(start)-start$wday+1)
-    for (i in 1:last) {                
-        samples$unixtime[i] = toString(as.numeric(new_date))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$week[i]=format(format(new_date, "%G%V"))
-        max.week=as.numeric(samples$week[i])
-        new_date = as.POSIXlt(as.Date(new_date)+7)
-    }
- 
-    # Add a last week to cover all input data if needed
-    # nrow checks if there are rows (but the dataframe might be initialized)
-    if (nrow(data)>0 && (max.week<data$week[length(data$week)])) {
-        samples$id[last+1] = last+1
-        samples$unixtime[last+1] = toString(as.numeric(new_date))
-        samples$date[last+1]=format(new_date, "%b %Y")
-        samples$week[last+1]=format(format(new_date, "%G%V"))
-    }
-
-    completedata <- merge (data, samples, all=TRUE)
-    completedata[is.na(completedata)] <- 0              
-    return(completedata)    
-}
 
 # Work in seconds as a future investment
 completeZeroPeriodIdsDays <- function (data, start, end) {        
