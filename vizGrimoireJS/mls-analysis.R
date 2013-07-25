@@ -60,21 +60,11 @@ createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
 static_data <- GetStaticMLS(rfield, startdate, enddate, reports)
 latest_activity7 <- lastActivity(7)
-latest_activity14 <- lastActivity(14)
 latest_activity30 <- lastActivity(30)
-latest_activity60 <- lastActivity(60)
 latest_activity90 <- lastActivity(90)
-latest_activity180 <- lastActivity(180)
-latest_activity365 <- lastActivity(365)
-latest_activity730 <- lastActivity(730)
 static_data = merge(static_data, latest_activity7)
-static_data = merge(static_data, latest_activity14)
 static_data = merge(static_data, latest_activity30)
-static_data = merge(static_data, latest_activity60)
 static_data = merge(static_data, latest_activity90)
-static_data = merge(static_data, latest_activity180)
-static_data = merge(static_data, latest_activity365)
-static_data = merge(static_data, latest_activity730)
 createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
 
@@ -110,25 +100,6 @@ if ('repositories' %in% reports) {
     }
 }
 
-if ('countries' %in% reports) {
-    countries <- countriesNames(identities_db, startdate, enddate) 
-    createJSON (countries, paste(destdir, "/mls-countries.json",sep=''))
-    
-    for (country in countries) {
-        if (is.na(country)) next
-        print (country)
-        data <- GetEvolCountriesMLS(country, identities_db, period, startdate, enddate)
-        data <- completePeriodIds(data, conf$granularity, conf)        
-        createJSON (data, paste(destdir,"/",country,"-mls-evolutionary.json",sep=''))
-        
-        top_senders = countryTopSenders (country, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir,"/",country,"-mls-top-senders.json", sep=''))        
-        
-        data <- GetStaticCountriesMLS(country, identities_db, startdate, enddate)
-        createJSON (data, paste(destdir,"/",country,"-mls-static.json",sep=''))
-    }
-}
-
 if ('companies' %in% reports){    
     companies = companiesNames(identities_db, startdate, enddate)
     createJSON(companies, paste(destdir,"/mls-companies.json",sep=''))
@@ -148,65 +119,6 @@ if ('companies' %in% reports){
     }
 }
 
-if ('people' %in% reports){
-    people = GetListPeopleMLS(startdate, enddate)
-    people = people$id[1:30]
-    createJSON(people, paste(destdir,"/mls-people.json",sep=''))
-       
-    for (upeople_id in people){
-        evol = GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
-        evol <- completePeriodIds(evol, conf$granularity, conf)
-        evol[is.na(evol)] <- 0
-        createJSON(evol, paste(destdir,"/people-",upeople_id,"-mls-evolutionary.json", sep=''))
-
-        static <- GetStaticPeopleMLS(upeople_id, startdate, enddate)
-        createJSON(static, paste(destdir,"/people-",upeople_id,"-mls-static.json", sep=''))
-    }
-}
-
-## Quantiles
-## Which quantiles we're interested in
-quantiles_spec = c(.99,.95,.5,.25)
-
-## Replied messages: time ticket was submitted, first replied
-replied <- new ("MLSTimes")
-# print(replied)
-
-## Yearly quantiles of time to attention (minutes)
-events.toattend <- new ("TimedEvents",
-                        replied$submitted_on, replied$toattend %/% 60)
-# print(events.toattend)
-quantiles <- QuantilizeYears (events.toattend, quantiles_spec)
-JSON(quantiles, paste(c(destdir,'/mls-quantiles-year-time_to_attention_min.json'), collapse=''))
-
-## Monthly quantiles of time to attention (hours)
-events.toattend.hours <- new ("TimedEvents",
-                              replied$submitted_on, replied$toattend %/% 3600)
-quantiles.month <- QuantilizeMonths (events.toattend.hours, quantiles_spec)
-JSON(quantiles.month, paste(c(destdir,'/mls-quantiles-month-time_to_attention_hour.json'), collapse=''))
-
-
-
-# Demographics
-d <- new ("Demographics","mls",6)
-people <- Aging(d)
-people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
-people$age[people$age < 0 ] <- 0
-aux <- data.frame(people["id"], people["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/mls-demographics-aging.json"), collapse=''))
-
-newcomers <- Birth(d)
-newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
-newcomers$age[newcomers$age < 0 ] <- 0
-aux <- data.frame(newcomers["id"], newcomers["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
-
 # Tops
 top_senders_data <- list()
 top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identities_db,c("-Bot"))
@@ -215,8 +127,3 @@ top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$e
 
 createJSON (top_senders_data, paste(destdir,"/mls-top.json",sep=''))
 
-# People list
-# query <- new ("Query", 
-# 		sql = "select email_address as id, email_address, name, username from people")
-# people <- run(query)
-# createJSON (people, "data/json/mls-people.json")
