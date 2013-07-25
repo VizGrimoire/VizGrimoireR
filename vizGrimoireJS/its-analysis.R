@@ -135,7 +135,7 @@ top_closers_data[['closers.last year']]<-GetTopClosersByAssignee(365, conf$start
 top_closers_data[['closers.last month']]<-GetTopClosersByAssignee(31, conf$startdate, conf$enddate,identities_db, c("-Bot"))
 
 
-createJSON (top_closers, paste(c(destdir,"/its-top.json"), collapse=''))
+createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # People List for working in unique identites
 # people_list <- its_people()
