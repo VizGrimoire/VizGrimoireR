@@ -14,7 +14,7 @@ PROJECT=openstack
 DIR=$5 #not used so far
 #LOGS=$6 (not used)
 
-
+CURRENT_DIR=`pwd`
 
 # Example: ./run_scripts-openstack.sh dic_cvsanaly_openstack_1289_2013_04_04 dic_mlstats_openstack_1290_2013_04_04 lcanas_bicho_openstack_1291_2013_04_04
 
@@ -32,21 +32,11 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s $STA
 rm data/whole_project/*
 mv data/json/* data/whole_project/
 cp data/whole_project/* $DIR
-
-#HAVANA
-rm data/json/*
-mkdir -p data/havana
-#SCM
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks < scm-analysis.R
-#MLS
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks < mls-analysis.R
-#ITS
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks -t launchpad < its-analysis.R
-#SCR
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2013-04-04 -e $END -g weeks < scr-analysis.R
-rm data/havana/*
-mv data/json/* data/havana/
-
+cp data/whole_project/* $DIR/../../../releases/data/whole_project/
+cd $DIR/../../../releases/data/havana/
+git add ./*
+git commit -m "Owl bot"
+cd $CURRENT_DIR
 
 
 #HAVANA
@@ -62,7 +52,11 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2013-04-04 -e $END -g weeks < scr-analysis.R
 rm data/havana/*
 mv data/json/* data/havana/
-
+cp data/havana/* $DIR/../../../releases/data/havana/
+cd $DIR/../../../releases/data/havana/
+git add ./*
+git commit -m "Owl bot"
+cd $CURRENT_DIR
 
 
 #GRIZZLY
@@ -78,6 +72,11 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2012-09-27 -e 2013-04-04 -g weeks < scr-analysis.R
 rm data/grizzly/*
 mv data/json/* data/grizzly/
+cp data/grizzly/* $DIR/../../../releases/data/grizzly/
+cd $DIR/../../../releases/data/havana/
+git add ./*
+git commit -m "Owl bot"
+cd $CURRENT_DIR
 
 #FOLSOM
 rm data/json/*
@@ -92,6 +91,11 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2012-04-04 -e 2013-09-27 -g weeks < scr-analysis.R
 rm data/folsom/*
 mv data/json/* data/folsom/
+cp data/folsom/* $DIR/../../../releases/data/folsom/
+cd $DIR/../../../releases/data/havana/
+git add ./*
+git commit -m "Owl bot"
+cd $CURRENT_DIR
 
 #ESSEX
 rm data/json/*
@@ -106,4 +110,9 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2011-11-22 -e 2012-04-04 -g weeks < scr-analysis.R
 rm data/essex/*
 mv data/json/* data/essex/
+cp data/essex/* $DIR/../../../releases/data/essex/
+cd $DIR/../../../releases/data/havana/
+git add ./*
+git commit -m "Owl bot"
+cd $CURRENT_DIR
 
