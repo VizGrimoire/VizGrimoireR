@@ -20,10 +20,10 @@ ITSdb=acs_bicho_allura_1049
 REPORTS="repositories,countries,companies,people"
 
 #MLS
-R --vanilla --args -d $MLSdb -u root -i $SCMdb -r $REPORTS -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R
+R --vanilla --args -d $MLSdb -u root -i $SCMdb -s 2009-10-14 -e 2013-01-07 -g months < mls-analysis.R
 #SCM
-R --vanilla --args -d $SCMdb -u root -i $SCMdb -r $REPORTS -s 2009-10-14 -e 2013-01-07 -g months < scm-analysis.R
+R --vanilla --args -d $SCMdb -u root -i $SCMdb -s 2009-10-14 -e 2013-01-07 -g months < scm-analysis.R
 #ITS
-R --vanilla --args -d $ITSdb -u root -i $SCMdb -r $REPORTS -s 2009-10-14 -e 2013-01-07 -g months -t allura < its-analysis.R
+R --vanilla --args -d $ITSdb -u root -i $SCMdb -s 2009-10-14 -e 2013-01-07 -g months -t allura < its-analysis.R
 
 mv data/json/* data/$PROJECT/
