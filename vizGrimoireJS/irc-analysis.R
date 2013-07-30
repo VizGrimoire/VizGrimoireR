@@ -51,18 +51,27 @@ destdir <- conf$destination
 # multireport
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 
+#######
+# TOPS
+#######
+
+top_senders <- list()
+top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate)
+top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate)
+top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate)
+createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))
+
 #############
 # STATIC DATA
 #############
 
-static_data = GetIRCStaticData(period, conf$startdate, conf$enddate, conf$identities_db)
+static_data = GetStaticDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
 createJSON (static_data, paste(destdir,"/irc-static.json", sep=''))
 
 ###################
 # EVOLUTIONARY DATA
 ###################
 
-evol_data = GetIRCEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db)
+evol_data = GetEvolutionaryDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
-

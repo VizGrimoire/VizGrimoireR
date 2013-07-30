@@ -25,7 +25,7 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 
 
-GetIRCStaticData <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
+GetStaticDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
     
     # 1- Retrieving information
     sent <- StaticNumSentIRC(period, startdate, enddate, i_db, type_analysis)
@@ -37,7 +37,7 @@ GetIRCStaticData <- function(period, startdate, enddate, i_db=NA, type_analysis=
     return (static_data)    
 }
 
-GetIRCEvolutionaryData <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
+GetEvolutionaryDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
     
     # 1- Retrieving information
     sent <- EvolSentIRC(period, startdate, enddate, i_db, type_analysis)
@@ -69,7 +69,7 @@ StaticNumSendersIRC <- function(period, startdate, enddate, identities_db=NA, ty
     return(ExecuteQuery(q))
 }
 
-GetSent <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
+GetSentIRC <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
     fields = " count(distinct(message)) as sent "
     tables = paste(" irclog ", GetSQLReportFrom(identities_db, type_analysis))
     filters = GetSQLReportWhere(type_analysis, "author")    
@@ -78,10 +78,10 @@ GetSent <- function(period, startdate, enddate, identities_db, type_analysis, ev
 }
 
 EvolSentIRC <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
-    return(GetSent(period, startdate, enddate, identities_db, type_analysis, TRUE))
+    return(GetSentIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-GetSenders <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
+GetSendersIRC <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
     fields = " count(distinct(nick)) as senders "
     tables = paste(" irclog ", GetSQLReportFrom(identities_db, type_analysis))
     filters = GetSQLReportWhere(type_analysis, "author")    
@@ -90,5 +90,27 @@ GetSenders <- function(period, startdate, enddate, identities_db, type_analysis,
 }
 
 EvolSendersIRC <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
-    return(GetSenders(period, startdate, enddate, identities_db, type_analysis, TRUE))
+    return(GetSendersIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+GetTopSendersIRC <- function(days = 0, startdate, enddate) {
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(date) from irclog limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, date)<",days)
+    }
+    q <- paste("SELECT nick as senders,
+                    count(id) as sent
+              	FROM irclog
+                WHERE
+                    date >= ", startdate, " and
+                    date  < ", enddate, " ", date_limit, "
+                    GROUP BY senders
+                    ORDER BY sent desc
+                    LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
