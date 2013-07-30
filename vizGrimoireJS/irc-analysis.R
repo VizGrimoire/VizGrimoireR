@@ -63,7 +63,6 @@ createJSON (static_data, paste(destdir,"/irc-static.json", sep=''))
 ###################
 
 evol_data = GetIRCEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db)
-print(conf)
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
 
