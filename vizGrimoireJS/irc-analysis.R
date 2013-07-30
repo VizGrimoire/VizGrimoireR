@@ -24,38 +24,32 @@
 ##  R --vanilla --args -d dbname < irc-analysis.R
 
 library("vizgrimoire")
+library("ISOweek")
+options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
-## Analyze args, and produce config params from them
-## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
-##                            user = "root", password = NULL,
-##                            host = "127.0.0.1", port = 3308)
-## SetDBChannel (database = conf$database,
-##               user = conf$user, password = conf$password,
-##               host = conf$host, port = conf$port)
-# conf <- ConfFromParameters(dbschema = "kdevelop_bicho", user = "jgb", password = "XXX")
 
-conf <- ConfFromOptParse('irc')
+conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
 
-# period of time
-if (conf$granularity == 'months'){
-   period = 'month'
-   nperiod = 31
-}
-if (conf$granularity == 'weeks'){
-   period = 'week'
-   nperiod = 7
-}
+if (conf$granularity == 'years') { 
+    period = 'year'
+    nperiod = 365
+} else if (conf$granularity == 'months') { 
+    period = 'month'
+    nperiod = 31
+} else if (conf$granularity == 'weeks') { 
+    period = 'week'
+    nperiod = 7
+} else if (conf$granularity == 'days'){ 
+    period = 'day'
+    nperiod = 1
+} else {stop(paste("Incorrect period:",conf$granularity))}
 
 # destination directory
 destdir <- conf$destination
 
 # multireport
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
-
-# dates
-startdate <- conf$startdate
-enddate <- conf$enddate
 
 #############
 # STATIC DATA
@@ -69,10 +63,7 @@ createJSON (static_data, paste(destdir,"/irc-static.json", sep=''))
 ###################
 
 evol_data = GetIRCEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db)
+print(conf)
+evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
-
-
-
-
-
 
