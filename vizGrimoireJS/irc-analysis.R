@@ -51,14 +51,17 @@ destdir <- conf$destination
 # multireport
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 
+# BOTS filtered
+bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot')
+
 #######
 # TOPS
 #######
 
 top_senders <- list()
-top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate)
-top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate)
-top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate)
+top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, bots)
+top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, bots)
+top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, bots)
 createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))
 
 #############

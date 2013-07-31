@@ -93,8 +93,12 @@ EvolSendersIRC <- function(period, startdate, enddate, identities_db=NA, type_an
     return(GetSendersIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-GetTopSendersIRC <- function(days = 0, startdate, enddate) {
+GetTopSendersIRC <- function(days = 0, startdate, enddate, bots) {
     date_limit = ""
+    filter_bots = ''
+    for (bot in bots){
+        filter_bots <- paste(filter_bots, " nick<>'",bot,"' and ",sep="")
+    }
     if (days != 0 ) {
         query <- new("Query",
                 sql = "SELECT @maxdate:=max(date) from irclog limit 1")
@@ -104,7 +108,7 @@ GetTopSendersIRC <- function(days = 0, startdate, enddate) {
     q <- paste("SELECT nick as senders,
                     count(id) as sent
               	FROM irclog
-                WHERE
+                WHERE ", filter_bots, "
                     date >= ", startdate, " and
                     date  < ", enddate, " ", date_limit, "
                     GROUP BY senders
