@@ -52,7 +52,7 @@ destdir <- conf$destination
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 
 # BOTS filtered
-bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot')
+bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 
 #######
 # TOPS
