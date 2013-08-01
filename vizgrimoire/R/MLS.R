@@ -246,9 +246,9 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
 # REPOSITORIES
 reposField <- function() {
     rfield = 'mailing_list'
-    query <- new ("Query", sql = "select distinct(mailing_list) from messages")
+    query <- new ("Query", sql = "select count(distinct(mailing_list)) from messages")
     mailing_lists <- run(query)
-    if (is.na(mailing_lists$mailing_list)) {
+    if (mailing_lists == 0) {
         rfield = "mailing_list_url"
     }
     return (rfield);                
