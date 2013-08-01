@@ -26,6 +26,7 @@
 ##  R --vanilla --args -h for help < < mls-analysis.R
 
 library("vizgrimoire")
+library("ISOweek")
 
 conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)

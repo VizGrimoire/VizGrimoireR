@@ -1,4 +1,5 @@
 #! /usr/bin/Rscript --vanilla
+
 ## Copyright (C) 2012, 2013 Bitergia
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -21,7 +22,7 @@
 ## Analyze and extract metrics data gathered by CVSAnalY tool
 ## http://metricsgrimoire.github.com/CVSAnalY
 ##
-## This script analyzed data from a GitHub git repository
+## This script analyzes data from a GitHub git repository
 ##
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
@@ -29,12 +30,14 @@
 ##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 ##
 ## Usage:
-##  R --vanilla --args -d dbname -u user -i uids_dbname [-r repositories,companies] -s start -e end -g [days,weeks,months,years] < scm-analysis.R
-## or
-##  R CMD BATCH scm-analysis.R
+## scm-analysis-github.R -d dbname -u user -p passwd -i uids_dbname \
+##   [-r repositories,companies] --granularity days|weeks|months|years] \
+##   --destination destdir
 ##
 ## Example:
-##  LANG=en_US R_LIBS=rlib:$R_LIBS R --vanilla --args -d proydb -u root -i uiddb -r repositories,companies -s 2007-01-01 -e 2012-12-31 -g weeks < scm-analysis.R
+##  LANG=en_US R_LIBS=rlib:$R_LIBS scm-analysis-github.R -d proydb \
+##  -u jgb -p XXX -i uiddb -r repositories,companies --granularity weeks \
+##  --destination destdir
 
 library("vizgrimoire")
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
@@ -54,7 +57,8 @@ SCMDatesPeriod <- function () {
 
 
 conf <- ConfFromOptParse()
-SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
+SetDBChannel (database = conf$database,
+	      user = conf$dbuser, password = conf$dbpassword)
 
 period <- SCMDatesPeriod()
 conf$startdate <- paste('"', as.character(period["startdate"]), '"', sep="")

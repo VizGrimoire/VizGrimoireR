@@ -1,3 +1,5 @@
+#! /usr/bin/Rscript --vanilla
+
 ## Copyright (C) 2012, 2013 Bitergia
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -16,32 +18,55 @@
 ##
 ## This file is a part of the vizGrimoire.R package
 ##
+## Analyze and extract metrics data gathered by Bicho tool
+## http://metricsgrimoire.github.com/Bicho
+##
+## This script analyzes data from a GitHub git repository
+##
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##
-##
 ## Usage:
-##  R --vanilla --args -d dbname < its-analysis.R
-## or
-##  R CMD BATCH scm-analysis.R
+## its-analysis-github.R -d dbname -u user -p passwd -i uids_dbname \
+##   [-r repositories,companies] --granularity days|weeks|months|years] \
+##   --destination destdir
 ##
+## Example:
+##  LANG=en_US R_LIBS=rlib:$R_LIBS its-analysis-github.R -d proydb \
+##  -u jgb -p XXX -i uiddb -r repositories,companies --granularity weeks \
+##  --destination destdir
 
 library("vizgrimoire")
-library("ISOweek")
-## Analyze args, and produce config params from them
-## conf <- ConfFromParameters(dbschema = "dic_cvsanaly_linux_git",
-##                            user = "root", password = NULL,
-##                            host = "127.0.0.1", port = 3308)
-## SetDBChannel (database = conf$database,
-##               user = conf$user, password = conf$password,
-##               host = conf$host, port = conf$port)
-# conf <- ConfFromParameters(dbschema = "kdevelop_bicho", user = "jgb", password = "XXX")
+options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
-conf <- ConfFromOptParse('its')
-SetDBChannel (database = conf$database, user = conf$dbuser, password = conf$dbpassword)
+##
+## Returns the first and last dates in ITS repository
+##
+## Returns a vector with two strings: firstdate and lastdate
+##
+ITSDatesPeriod <- function () {
+  q <- new ("Query", sql = "SELECT
+          DATE(MIN(DATE)) as startdate,
+          DATE(MAX(date)) as enddate
+      FROM
+          (SELECT submitted_on AS date FROM issues
+           UNION ALL
+           SELECT changed_on AS date FROM changes) AS dates")
+  dates <- run(q)
+  return (dates[1,])
+}
 
-# period of time
+conf <- ConfFromOptParse()
+SetDBChannel (database = conf$database,
+	      user = conf$dbuser, password = conf$dbpassword)
+
+period <- ITSDatesPeriod()
+conf$startdate <- paste('"', as.character(period["startdate"]), '"', sep="")
+conf$enddate <- paste('"', as.character(period["enddate"]), '"', sep="")
+conf$str_startdate <- as.character(period["startdate"])
+conf$str_enddate <- as.character(period["enddate"])
+print(conf)
 if (conf$granularity == 'years') { 
     period = 'year'
     nperiod = 365
@@ -56,39 +81,23 @@ if (conf$granularity == 'years') {
     nperiod = 1
 } else {stop(paste("Incorrect period:",conf$granularity))}
 
-
-# backends
-if (conf$backend == 'allura'){
-    closed_condition <- "new_value='CLOSED'"
-}
-if (conf$backend == 'bugzilla'){
-    closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
-}
-if (conf$backend == 'github'){
-    closed_condition <- "field='closed'"
-}
-if (conf$backend == 'jira'){
-    closed_condition <- "new_value='CLOSED'"
-}
-if (conf$backend == 'launchpad'){
-    #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
-    closed_condition <- "(new_value='Fix Committed')"
-}
+conf$backend <- 'github'
+# Closed condition for github
+closed_condition <- "field='closed'"
 
 # dates
 startdate <- conf$startdate
 enddate <- conf$enddate
-
 # database with unique identities
 identities_db <- conf$identities_db
-
 # multireport
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
-
 # destination directory
 destdir <- conf$destination
 
-options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
+#########
+#EVOLUTIONARY DATA
+#########
 
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
@@ -248,7 +257,7 @@ if ('countries' %in% reports) {
 # People
 if ('people' %in% reports) {
     people  <- GetPeopleListITS(conf$startdate, conf$enddate)
-    people <- people$pid[1:100]
+    people <- people$pid[1:30]
 	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
     
     for (upeople_id in people) {

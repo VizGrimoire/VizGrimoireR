@@ -1,32 +1,15 @@
-vizGrimoireR
-============
+# vizGrimoireR
 
 R package vizgrimoire, to make life easier to those using Metrics Grimoire tools, and maybe vizGrimoireJS.
 
-Dependencies
-------------
+Some more documentation can be found in the [vizGrimoireR wiki](https://github.com/VizGrimoire/VizGrimoireR/wiki).
 
-Some R packages need to be installed for vizGrimoireR to run. Those packages are available from CRAN. For installing them from there, run the following line from the R prompt:
+Dependencies and installation from source
+-----------------------------------------
 
-install.packages("optparse")
+See the vizGrimoireR wiki for up to date [information about dependencies and how to install](https://github.com/VizGrimoire/VizGrimoireR/wiki#installation-of-vizgrimoire-r-library) the vizgrimoire R library from sources.
 
 
-Installation from source
-------------------------
-
-From the parent directory of vizgrimoire:
-
-% R CMD INSTALL vizgrimoire
-
-Or locally:
-
-% R CMD INSTALL -l <local_dir> vizgrimoire
-% R_LIBS=<local_dir>:$R_LIBS R --vanilla ....
-
-Or, to produce a tarball, from the vizgrimoire directory:
-
-% R CMD build # To build the package tarball
-% R CMD check # To check the package tarball
 
 General issues
 --------------

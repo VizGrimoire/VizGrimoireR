@@ -101,6 +101,8 @@ rConf = {"libdir": dir + "/rlib",
          "vgrpkg": args.vgdir + "/VizGrimoireR/vizgrimoire",
          "scm-analysis": args.vgdir + \
              "/VizGrimoireR/examples/github/scm-analysis-github.R",
+         "its-analysis": args.vgdir + \
+             "/VizGrimoireR/examples/github/its-analysis-github.R",
          "unifypeople": args.vgdir + \
              "/VizGrimoireR/misc/unifypeople.py",
          "its2id": args.vgdir + \
@@ -190,8 +192,17 @@ call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
        "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
        "--destination", dir])
 
+# Run the ITS (tickets) analysis script (ensure installed vizgrimoirer package
+# is in R lib path)
+os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
+call ([rConf["its-analysis"], "-d", dbPrefix + "_" + "bicho",
+       "-u", args.user, "-p", args.passwd,
+       "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
+       "--destination", dir])
+
 # Now, let's produce an HTML dashboard for the JSON files produced in the
 # previous step
+# Files from vizGrimoireJS to copy:
 vgjsFiles = ["vizgrimoire.min.js",
              "lib/jquery-1.7.1.min.js",
              "bootstrap/js/bootstrap.min.js",
@@ -203,8 +214,13 @@ vgjsFiles = ["vizgrimoire.min.js",
              "browser/footer.html",
              "browser/refcard.html",
              "browser/project-card.html"]
+# Files specific to this GitHub example:
+ghBrowserfiles = ["index.html", "config.json"]
+
 for file in vgjsFiles:
     shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
+for file in ghBrowserfiles:
+    shutil.copy(args.vgdir + "/VizGrimoireR/examples/github/" + file, dir)
 
 # Note: missing files:
 # index.htmo, config.json

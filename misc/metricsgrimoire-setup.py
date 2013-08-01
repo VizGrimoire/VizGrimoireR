@@ -74,19 +74,26 @@ pythonpaths = ""
 for tool in tools:
    pythonpaths = pythonpaths + args.dir + "/" + tool + ":"
 print """Run the lines below ">>>" in your shell before running the
-tools, or create a file with then and source it, or add them to
-your .bashrc or equivalent.
-
-After that, you can check if everything is ready by running:
+tools, or add them to your .bashrc or equivalent."""
+print "You also have those lines in file " + args.dir + "/mg-paths.sh"
+print """So you can also just source that file.
+After any of these, you can check if everything is ready by running:
 """
 
 for tool in bintools:
    print tool + " --version"
 
-env = """>>>
-export PATH={paths}$PATH
+# Template for envirionment variables
+envtemp = """export PATH={paths}$PATH
 export PYTHONPATH={pythonpaths}$PYTHONPATH
 """
 
-print env.format (paths=paths, pythonpaths=pythonpaths)
+env = envtemp.format (paths=paths, pythonpaths=pythonpaths)
 
+file = open(args.dir + "/mg-paths.sh", "w")
+file.write(env)
+file.close()
+
+print
+print ">>>"
+print env
