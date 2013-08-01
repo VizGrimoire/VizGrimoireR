@@ -148,10 +148,8 @@ GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {
 	filters = GetFiltersOwnUniqueIdsMLS()    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
             startdate, enddate)    
-    print(q)
     query <- new ("Query", sql = q)
     sent.senders.first.last.repos <- run(query)
-    print (sent.senders.first.last.repos)
  
     filters_init = GetFiltersInit()
     filters_response = GetFiltersResponse()
