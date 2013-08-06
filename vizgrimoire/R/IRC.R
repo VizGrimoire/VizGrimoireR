@@ -24,6 +24,19 @@
 ## Authors:
 ##   Alvaro del Castillo <acs@bitergia.com>
 
+# SQL Metaqueries
+
+GetTablesOwnUniqueIdsIRC <- function() {
+    tables = 'irclog, people_upeople pup'
+    return (tables)
+}
+
+GetFiltersOwnUniqueIdsIRC <- function () {
+    filters = 'pup.people_id = irclog.nick'
+    return (filters) 
+}
+
+# GLOBAL
 
 GetStaticDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
     
@@ -37,7 +50,7 @@ GetStaticDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=
     return (static_data)    
 }
 
-GetEvolutionaryDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
+GetEvolDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
     
     # 1- Retrieving information
     sent <- EvolSentIRC(period, startdate, enddate, i_db, type_analysis)
@@ -114,6 +127,50 @@ GetTopSendersIRC <- function(days = 0, startdate, enddate, bots) {
                     GROUP BY senders
                     ORDER BY sent desc
                     LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+#
+# Repositories (channels)
+#
+
+GetTablesReposIRC <- function () {
+    return (paste(GetTablesOwnUniqueIdsIRC(),",channels c"))
+}
+
+GetFiltersReposIRC <- function () {
+    filters = paste(GetFiltersOwnUniqueIdsIRC(),
+            "AND c.id = irclog.channel_id")    
+    return(filters)    
+}
+
+GetReposNameIRC <- function() {
+    q <- "SELECT name FROM channels"
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data$name)
+}
+
+GetRepoEvolSentSendersIRC <- function(repo, period, startdate, enddate){    
+    fields = 'COUNT(irclog.id) AS sent, 
+              COUNT(DISTINCT(pup.upeople_id)) AS senders'
+    tables= GetTablesReposIRC()
+    filters = paste(GetFiltersReposIRC()," AND c.name='",repo,"'",sep="")    
+    q <- GetSQLPeriod(period,'date', fields, tables, filters, 
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetRepoStaticSentSendersIRC <- function (repo, startdate, enddate) {
+    fields = 'COUNT(irclog.id) AS sent, 
+              COUNT(DISTINCT(pup.upeople_id)) AS senders'    
+    tables = GetTablesReposIRC()
+    filters = paste(GetFiltersReposIRC()," AND c.name='",repo,"'",sep="")
+    q <- GetSQLGlobal('date',fields, tables, filters, startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

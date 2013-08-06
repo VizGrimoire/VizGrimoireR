@@ -54,6 +54,25 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 # BOTS filtered
 bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 
+###################
+# MULTI REPOSITORY
+###################
+if ('repositories' %in% reports) {
+    repos <- GetReposNameIRC()
+    createJSON (repos, paste(destdir,"/irc-repos.json", sep=''))
+    print (repos)
+
+    for (repo in repos) {
+        # Static data
+        data<-GetRepoStaticSentSendersIRC(repo, conf$startdate, conf$enddate)
+        createJSON (data, paste(destdir, "/",repo,"-irc-static.json",sep=''))                
+        # Evol data
+        data<-GetRepoEvolSentSendersIRC(repo, period, conf$startdate, conf$enddate)
+        data <-completePeriodIds(data, conf$granularity, conf)                
+        createJSON (data, paste(destdir,"/",repo,"-irc-evolutionary.json",sep=''))        
+    }
+}
+
 #######
 # TOPS
 #######
@@ -75,6 +94,9 @@ createJSON (static_data, paste(destdir,"/irc-static.json", sep=''))
 # EVOLUTIONARY DATA
 ###################
 
-evol_data = GetEvolutionaryDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
+evol_data = GetEvolDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
+
+
+

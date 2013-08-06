@@ -138,12 +138,12 @@ GetEvolMLS <- function (rfield, period, startdate, enddate, identities_db, repor
 
 GetStaticMLS <- function (rfield, startdate, enddate, reports=c('')) {    
     # Global queries
-    fields = "DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
+    fields = paste("DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
               DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date,
               COUNT(*) as sent,
               COUNT(DISTINCT(pup.upeople_id)) as senders,
-              COUNT(DISTINCT(',rfield,')) AS repositories,
-              COUNT(DISTINCT(m.is_response_of)) AS threads"
+              COUNT(DISTINCT(",rfield,")) AS repositories,
+              COUNT(DISTINCT(m.is_response_of)) AS threads")
     tables = GetTablesOwnUniqueIdsMLS()
 	filters = GetFiltersOwnUniqueIdsMLS()    
     q <- GetSQLGlobal('first_date', fields, tables, filters, 
