@@ -6,6 +6,7 @@
 #$5 = destination
 #$6 = SCR database
 #$7 = IRC database
+#$8 = Bicho backend
 
 # ./run_scripts-mediawiki.sh acs_cvsanaly_mediawiki_1571 acs_mlstats_mediawiki_1466 acs_bicho_mediawiki_1466 2013-06-01 /tmp
 
@@ -16,6 +17,15 @@ LOGS=generic.log
 DIR=$5
 # REPORTS="repositories,countries,companies,people"
 REPORTS="repositories"
+MIN_PARAM=7
+
+if [ $# -lt $MIN_PARAM ]
+then
+    echo "Incorrect number of params:" $# ". Should be $MIN_PARAM min"
+fi
+
+BICHO="bugzilla"
+if [ -n "$9" ]; then BICHO=$9; fi
 
 echo "Analisys from $START to $END"
 echo "LOGS in $LOGS"
@@ -29,7 +39,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $1 -u root -i
 
 #ITS
 echo "In ITS Analysis ..."
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $3 -u root -i $1 -s $START -e $END -o $DIR -g months -t bugzilla < its-analysis.R >> $LOGS 2>&1
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $3 -u root -i $1 -s $START -e $END -o $DIR -g months -t $BICHO < its-analysis.R >> $LOGS 2>&1
 
 # SCR: repositories not working yet
 echo "In SCR Analysis ..."
