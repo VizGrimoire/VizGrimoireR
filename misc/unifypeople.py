@@ -215,14 +215,22 @@ def create_schema(cursor, db, upeople):
                             i.type='name'""")
     db.commit() 
 
-def execute_query(connector, query):
-    results = int (connector.execute(query))
+def execute_query(cursor, query):
+    results = int (cursor.execute(query))
     cont = 0
     if results > 0:
-        result1 = connector.fetchall()
+        result1 = cursor.fetchall()
         return result1
     else:
         return []
+
+def check_tables(cursor):
+    tables_exist = True
+    try:
+        execute_query(cursor, "select count(*) from people_upeople limit 1")      
+    except Exception:
+        tables_exist = False
+    return tables_exist
 
 
 def update_schema(cursor, db, upeople):
@@ -286,6 +294,11 @@ if cfg.incremental == 'no':
 db = MySQLdb.connect(user = cfg.db_user, passwd = cfg.db_password,  db = cfg.db_database)
 
 cursor = db.cursor()
+
+if (check_tables(cursor) == False):
+    print("Tables does not exists. Incremental off")
+    incremental = False
+
 query = """SELECT *
            FROM people, scmlog
            WHERE people.id = scmlog.author_id
