@@ -481,14 +481,14 @@ GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bo
         date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
     }
     
-    q <- paste("SELECT up.id as id, up.identifier as reviewers,
+    q <- paste("SELECT up.id as id, up.identifier as closers,
                        count(distinct(c.id)) as closed
                 FROM people_upeople pup, changes c, ", identities_db,".upeople up
                 WHERE ", filter_bots, "
                     c.changed_by = pup.people_id and
                     pup.upeople_id = up.id and
                     c.changed_on >= ", startdate, " and
-                    c.changed_on < ", enddate, " 
+                    c.changed_on < ", enddate, "
                 GROUP BY up.identifier
                 ORDER BY closed desc
                 LIMIT 10;", sep="")
