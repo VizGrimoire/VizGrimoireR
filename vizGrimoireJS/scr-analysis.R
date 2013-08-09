@@ -61,6 +61,10 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 reviews_type <- list("submitted", "opened", "new", "inprogress", "closed", "merged", "abandoned")
 
 evaluations_type <- list("verified", "approved", "codereview", "sent")
+
+# BOTS filtered
+bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
+
 #########
 #EVOLUTIONARY DATA
 ########
@@ -204,3 +208,19 @@ if ('repositories' %in% reports) {
         createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-waiting-evolutionary.json", sep=''))
     }
 }
+
+# Tops
+
+top_reviewers <- list()
+top_reviewers[['reviewers.']] <- GetTopReviewersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['reviewers.last year']]<- GetTopReviewersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots)
+
+# Top openers
+top_openers <- list()
+top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
+
+createJSON (c(top_reviewers, top_openers), paste(destdir,"/scr-top.json", sep=''))
+
