@@ -212,9 +212,9 @@ if ('repositories' %in% reports) {
 # Tops
 
 top_reviewers <- list()
-top_reviewers[['reviewers.']] <- GetTopReviewersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['reviewers.last year']]<- GetTopReviewersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['closers.']] <- GetTopClosersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['closers.last year']]<- GetTopClosersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['closers.last month']]<- GetTopClosersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots)
 
 # Top openers
 top_openers <- list()
