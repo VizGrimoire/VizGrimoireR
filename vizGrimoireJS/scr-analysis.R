@@ -22,6 +22,7 @@
 ##
 ## Authors:
 ##   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
+##   Alvaro del Castillo <acs@bitergia.com>
 ##
 ##
 ## Usage:
@@ -86,7 +87,7 @@ data = EvolReviewsMerged(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsAbandoned(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-print(reviews.evol)
+# print(reviews.evol)
 #Patches info
 data = EvolPatchesVerified(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -96,17 +97,17 @@ data = EvolPatchesCodeReview(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolPatchesSent(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-print(reviews.evol)
+# print(reviews.evol)
 #Waiting for actions info
 data = EvolWaiting4Reviewer(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolWaiting4Submitter(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-print(reviews.evol)
+# print(reviews.evol)
 #Reviewers info
 data = EvolReviewers(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-print(reviews.evol)
+# print(reviews.evol)
 createJSON(reviews.evol, paste(destdir,"/scr-evolutionary.json", sep=''))
 
 
@@ -123,20 +124,20 @@ reviews.static = merge(reviews.static, StaticReviewsInProgress(period, conf$star
 reviews.static = merge(reviews.static, StaticReviewsClosed(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsMerged(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate))
-print(reviews.static)
+# print(reviews.static)
 #Patches info
 reviews.static = merge(reviews.static, StaticPatchesVerified(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticPatchesApproved(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticPatchesCodeReview(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticPatchesSent(period, conf$startdate, conf$enddate))
-print(reviews.static)
+# print(reviews.static)
 #Waiting for actions info
 reviews.static = merge(reviews.static, StaticWaiting4Reviewer(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$startdate, conf$enddate))
-print(reviews.static)
+# print(reviews.static)
 #Reviewers info
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
-print(reviews.static)
+# print(reviews.static)
 createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
 
 
@@ -147,12 +148,10 @@ createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
 ########
 
 print("ANALYSIS PER REPOSITORY")
-print(reports)
-print('repositories' %in% reports)
 if ('repositories' %in% reports) {
-    repos  <- GetReposSRCName(conf$startdate, conf$enddate)
+    repos  <- GetReposSCRName(conf$startdate, conf$enddate)
     repos <- repos$name
-    #createJSON(repos, paste(destdir,"data/json/scr-repos.json", sep=''))
+    createJSON(repos, paste(destdir,"/scr-repos.json", sep=''))
 
     for (repo in repos) {
         repo_name = paste("'", repo, "'", sep='')
@@ -206,6 +205,35 @@ if ('repositories' %in% reports) {
         data[is.na(data)] <- 0
         evol_data = merge(data, data1, all=TRUE)
         createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-waiting-evolutionary.json", sep=''))
+    }
+}
+
+print("ANALYSIS PER REPOSITORY BASIC")
+if ('repositories-basic' %in% reports) {
+    repos  <- GetReposSCRName(conf$startdate, conf$enddate)
+    repos <- repos$name
+    createJSON(repos, paste(destdir,"/scr-repos.json", sep=''))
+
+    for (repo in repos) {
+        repo_file = gsub("/","_",repo)
+        type_analysis = list('repository', repo)
+        # Evol
+        submitted <- EvolReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis)
+        submitted <- completePeriodIds(submitted, conf$granularity, conf)
+        merged <- EvolReviewsMerged(period, conf$startdate, conf$enddate, type_analysis)
+        merged <- completePeriodIds(merged, conf$granularity, conf)
+        abandoned <- EvolReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis)
+        abandoned <- completePeriodIds(abandoned, conf$granularity, conf)
+        evol = merge(submitted, merged, all = TRUE)
+        evol = merge(evol, abandoned, all = TRUE)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        createJSON(evol, paste(destdir, "/",repo_file,"-scr-evolutionary.json", sep=''))
+
+        # Static
+        static <- StaticReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis)
+        static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis))
+        static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis))
+        createJSON(static, paste(destdir, "/",repo_file,"-scr-static.json", sep=''))
     }
 }
 

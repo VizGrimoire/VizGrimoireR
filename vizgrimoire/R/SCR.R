@@ -36,7 +36,7 @@ GetSQLRepositoriesFromSCR <- function(){
 
 GetSQLRepositoriesWhereSCR <- function(repository){
     #fields necessaries to match info among tables
-    return (paste(" and t.url =", repository, " 
+    return (paste(" and t.url ='", repository, "'
                    and t.id = i.tracker_id", sep=""))
 }
 
@@ -54,7 +54,7 @@ GetSQLCompaniesWhereSCR <- function(company){
                   and i.submitted_on >= upc.init
                   and i.submitted_on < upc.end
                   and upc.company_id = c.id
-                  and c.name =", company, sep=""))
+                  and c.name ='", company,"'", sep=""))
 }
 
 GetSQLCountriesFromSCR <- function(identities_db){
@@ -69,7 +69,7 @@ GetSQLCountriesWhereSCR <- function(country){
     return (paste("and i.submitted_by = pup.people_id
                   and pup.upeople_id = upc.upeople_id
                   and upc.country_id = c.id
-                  and c.name =", country, sep=""))
+                  and c.name ='", country,"'", sep=""))
 }
 
 ##########
@@ -119,17 +119,15 @@ GetSQLReportWhereSCR <- function(type_analysis){
 # General functions
 #########
 
-GetReposSRCName <- function (startdate, enddate){
+GetReposSCRName <- function (startdate, enddate){
 
-    q = paste("select t.url as name, 
-                count(distinct(i.id)) as issues
-         FromSCR  issues i,
-               trackers t
-         where i.tracker_id = t.id and
-               i.submitted_on >=",  startdate, " and
-               i.submitted_on < ", enddate, "
-         group by t.url
-         order by issues desc;", sep="")
+    q = paste("SELECT t.url as name, COUNT(DISTINCT(i.id)) AS issues
+               FROM  issues i, trackers t
+               WHERE i.tracker_id = t.id AND
+                 i.submitted_on >=",  startdate, " AND
+                 i.submitted_on < ", enddate, "
+               GROUP BY t.url
+               ORDER BY issues DESC;", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
