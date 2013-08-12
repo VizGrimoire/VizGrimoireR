@@ -210,7 +210,7 @@ if ('repositories' %in% reports) {
 
 print("ANALYSIS PER REPOSITORY BASIC")
 if ('repositories-basic' %in% reports) {
-    repos  <- GetReposSCRName(conf$startdate, conf$enddate)
+    repos  <- GetReposSCRName(conf$startdate, conf$enddate, 30)
     repos <- repos$name
     repos_file_names = gsub("/","_",repos)
     createJSON(repos_file_names, paste(destdir,"/scr-repos.json", sep=''))

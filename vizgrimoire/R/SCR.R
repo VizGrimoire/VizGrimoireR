@@ -119,7 +119,11 @@ GetSQLReportWhereSCR <- function(type_analysis){
 # General functions
 #########
 
-GetReposSCRName <- function (startdate, enddate){
+GetReposSCRName <- function (startdate, enddate, limit = 0){
+    limit_sql=""
+    if (limit > 0) {
+        limit_sql = paste(" LIMIT ", limit)
+    }
 
     q = paste("SELECT t.url as name, COUNT(DISTINCT(i.id)) AS issues
                FROM  issues i, trackers t
@@ -127,7 +131,7 @@ GetReposSCRName <- function (startdate, enddate){
                  i.submitted_on >=",  startdate, " AND
                  i.submitted_on < ", enddate, "
                GROUP BY t.url
-               ORDER BY issues DESC;", sep="")
+               ORDER BY issues DESC ",limit_sql,";", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
