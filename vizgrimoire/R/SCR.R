@@ -23,6 +23,7 @@
 ##
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
+##   Alvaro del Castillo San Felix <acs@bitergia.com>
 
 
 ##########
@@ -35,7 +36,7 @@ GetSQLRepositoriesFromSCR <- function(){
 
 GetSQLRepositoriesWhereSCR <- function(repository){
     #fields necessaries to match info among tables
-    return (paste(" and t.url =", repository, " 
+    return (paste(" and t.url ='", repository, "'
                    and t.id = i.tracker_id", sep=""))
 }
 
@@ -53,7 +54,7 @@ GetSQLCompaniesWhereSCR <- function(company){
                   and i.submitted_on >= upc.init
                   and i.submitted_on < upc.end
                   and upc.company_id = c.id
-                  and c.name =", company, sep=""))
+                  and c.name ='", company,"'", sep=""))
 }
 
 GetSQLCountriesFromSCR <- function(identities_db){
@@ -68,7 +69,7 @@ GetSQLCountriesWhereSCR <- function(country){
     return (paste("and i.submitted_by = pup.people_id
                   and pup.upeople_id = upc.upeople_id
                   and upc.country_id = c.id
-                  and c.name =", country, sep=""))
+                  and c.name ='", country,"'", sep=""))
 }
 
 ##########
@@ -118,17 +119,15 @@ GetSQLReportWhereSCR <- function(type_analysis){
 # General functions
 #########
 
-GetReposSRCName <- function (startdate, enddate){
+GetReposSCRName <- function (startdate, enddate){
 
-    q = paste("select t.url as name, 
-                count(distinct(i.id)) as issues
-         FromSCR  issues i,
-               trackers t
-         where i.tracker_id = t.id and
-               i.submitted_on >=",  startdate, " and
-               i.submitted_on < ", enddate, "
-         group by t.url
-         order by issues desc;", sep="")
+    q = paste("SELECT t.url as name, COUNT(DISTINCT(i.id)) AS issues
+               FROM  issues i, trackers t
+               WHERE i.tracker_id = t.id AND
+                 i.submitted_on >=",  startdate, " AND
+                 i.submitted_on < ", enddate, "
+               GROUP BY t.url
+               ORDER BY issues DESC;", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -459,4 +458,73 @@ GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA))
     data <- run(query)
     return (data)
 
+}
+
+##
+# Tops
+##
+
+GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+    date_limit = ""
+    filter_bots = ''
+    for (bot in bots){
+        filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
+    }
+
+
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+    }
+    
+    q <- paste("SELECT up.id as id, up.identifier as closers,
+                       count(distinct(c.id)) as closed
+                FROM people_upeople pup, changes c, ", identities_db,".upeople up
+                WHERE ", filter_bots, "
+                    c.changed_by = pup.people_id and
+                    pup.upeople_id = up.id and
+                    c.changed_on >= ", startdate, " and
+                    c.changed_on < ", enddate, "
+                    ",date_limit, "
+                GROUP BY up.identifier
+                ORDER BY closed desc
+                LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    print(q)
+    data <- run(query)
+    return (data)
+}
+
+GetTopOpenersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+    date_limit = ""
+    filter_bots = ''
+    for (bot in bots){
+        filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
+    }    
+    
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(submitted_on) from issues limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, submitted_on)<",days)
+    }    
+        
+    q <- paste("SELECT up.id as id, up.identifier as openers,
+                    count(distinct(i.id)) as opened
+                FROM people_upeople pup, issues i, ", identities_db,".upeople up
+                WHERE ", filter_bots, "
+                    i.submitted_by = pup.people_id and
+                    pup.upeople_id = up.id and
+                    i.submitted_on >= ", startdate, " and
+                    i.submitted_on < ", enddate, "
+                    ",date_limit, "
+                GROUP BY up.identifier
+                ORDER BY opened desc
+                LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    print(q)
+    data <- run(query)
+    return (data)
 }
