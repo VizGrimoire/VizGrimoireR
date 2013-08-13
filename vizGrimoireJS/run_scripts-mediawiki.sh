@@ -29,3 +29,13 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $1 -u root -i
 echo "In ITS Analysis ..."
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $3 -u root -i $1 -s $START -e $END -o $DIR -g months -t bugzilla < its-analysis.R >> $LOGS 2>&1
 
+SCRdb=acs_gerrit_mediawiki_1753
+IRCdb=acs_irc_automatortest_1938
+
+# SCR
+echo "In SCR Analysis ..."
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r repositories-basic,people -d $SCRdb -u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R >> $LOGS 2>&1
+
+# IRC
+echo "In IRC Analysis ..."
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $IRCdb -u root -i $1  -s $START -e $END -o $DIR -g months  < irc-analysis.R >> $LOGS 2>&1
