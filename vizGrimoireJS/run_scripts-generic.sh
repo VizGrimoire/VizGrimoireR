@@ -19,6 +19,8 @@ DIR=$5
 REPORTS="repositories"
 MIN_PARAM=7
 
+mv $LOGS $LOGS.old
+
 if [ $# -lt $MIN_PARAM ]
 then
     echo "Incorrect number of params:" $# ". Should be $MIN_PARAM min"

@@ -78,9 +78,9 @@ if ('repositories' %in% reports) {
 #######
 
 top_senders <- list()
-top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, bots)
-top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, bots)
-top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, bots)
+top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, conf$identities_db, bots)
 createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))
 
 #############

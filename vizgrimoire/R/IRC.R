@@ -106,7 +106,7 @@ EvolSendersIRC <- function(period, startdate, enddate, identities_db=NA, type_an
     return(GetSendersIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-GetTopSendersIRC <- function(days = 0, startdate, enddate, bots) {
+GetTopSendersIRC <- function(days = 0, startdate, enddate, identities_db, bots) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
@@ -118,10 +118,12 @@ GetTopSendersIRC <- function(days = 0, startdate, enddate, bots) {
         data <- run(query)
         date_limit <- paste(" AND DATEDIFF(@maxdate, date)<",days)
     }
-    q <- paste("SELECT nick as senders,
-                    count(id) as sent
-              	FROM irclog
+    q <- paste("SELECT up.id as id, up.identifier as senders,
+                    count(irclog.id) as sent
+                FROM irclog, people_upeople pup, ",identities_db,".upeople up
                 WHERE ", filter_bots, "
+                    irclog.nick = pup.people_id and
+                    pup.upeople_id = up.id and
                     date >= ", startdate, " and
                     date  < ", enddate, " ", date_limit, "
                     GROUP BY senders
