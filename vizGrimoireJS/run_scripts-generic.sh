@@ -53,4 +53,4 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r none -d $6 -u root -i $1 
 
 # IRC
 echo "In IRC Analysis ..."
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $7 -u root -i $1  -s $START -e $END -o $DIR -g months  < irc-analysis.R >> $LOGS 2>&1
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS,people -d $7 -u root -i $1  -s $START -e $END -o $DIR -g months  < irc-analysis.R >> $LOGS 2>&1
