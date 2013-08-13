@@ -55,6 +55,25 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 
 ###################
+# PEOPLE
+###################
+if ('people' %in% reports){
+    people = GetListPeopleIRC(conf$startdate, conf$enddate)
+    people = people$id[1:30]
+    createJSON(people, paste(destdir,"/irc-people.json",sep=''))
+
+    for (upeople_id in people){
+        evol = GetEvolPeopleIRC(upeople_id, period, conf$startdate, conf$enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        createJSON(evol, paste(destdir,"/people-",upeople_id,"-irc-evolutionary.json", sep=''))
+
+        static <- GetStaticPeopleIRC(upeople_id, conf$startdate, conf$enddate)
+        createJSON(static, paste(destdir,"/people-",upeople_id,"-irc-static.json", sep=''))
+    }
+}
+
+###################
 # MULTI REPOSITORY
 ###################
 if ('repositories' %in% reports) {
@@ -78,9 +97,9 @@ if ('repositories' %in% reports) {
 #######
 
 top_senders <- list()
-top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, bots)
-top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, bots)
-top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, bots)
+top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, conf$identities_db, bots)
 createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))
 
 #############

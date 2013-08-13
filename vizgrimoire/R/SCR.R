@@ -496,7 +496,6 @@ GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots
                 ORDER BY closed desc
                 LIMIT 10;", sep="")
     query <- new ("Query", sql = q)
-    print(q)
     data <- run(query)
     return (data)
 }
@@ -528,7 +527,65 @@ GetTopOpenersSCR   <- function(days = 0, startdate, enddate, identities_db, bots
                 ORDER BY opened desc
                 LIMIT 10;", sep="")
     query <- new ("Query", sql = q)
-    print(q)
+    data <- run(query)
+    return (data)
+}
+
+#########
+# PEOPLE: Pretty similar to ITS
+#########
+GetTablesOwnUniqueIdsSCR <- function(table='') {
+    tables = 'changes c, people_upeople pup'
+    if (table == "issues") tables = 'issues i, people_upeople pup'
+    return (tables)
+}
+
+GetFiltersOwnUniqueIdsSCR <- function (table='') {
+    filters = 'pup.people_id = c.changed_by'
+    if (table == "issues") filters = 'pup.people_id = i.submitted_by'
+    return (filters)
+}
+
+GetPeopleListSCR <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id, count(c.id) as total"
+    tables = GetTablesOwnUniqueIdsSCR()
+    filters = GetFiltersOwnUniqueIdsSCR()
+    filters = paste(filters,"GROUP BY id ORDER BY total desc")
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
+    fields = "COUNT(c.id) AS closed"
+    tables = GetTablesOwnUniqueIdsSCR()
+    filters = paste(GetFiltersOwnUniqueIdsSCR(), "AND pup.upeople_id = ", developer_id)
+
+    if (evol) {
+        q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
+                startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(changed_on),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(changed_on),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('changed_on', fields, tables, filters,
+                startdate, enddate)
+    }
+    return (q)
+}
+
+
+GetPeopleEvolSCR <- function(developer_id, period, startdate, enddate) {
+    q <- GetPeopleQuerySCR(developer_id, period, startdate, enddate, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetPeopleStaticSCR <- function(developer_id, startdate, enddate) {
+    q <- GetPeopleQuerySCR(developer_id, period, startdate, enddate, FALSE)
+    query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }

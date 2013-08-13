@@ -106,7 +106,7 @@ EvolSendersIRC <- function(period, startdate, enddate, identities_db=NA, type_an
     return(GetSendersIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-GetTopSendersIRC <- function(days = 0, startdate, enddate, bots) {
+GetTopSendersIRC <- function(days = 0, startdate, enddate, identities_db, bots) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
@@ -118,10 +118,12 @@ GetTopSendersIRC <- function(days = 0, startdate, enddate, bots) {
         data <- run(query)
         date_limit <- paste(" AND DATEDIFF(@maxdate, date)<",days)
     }
-    q <- paste("SELECT nick as senders,
-                    count(id) as sent
-              	FROM irclog
+    q <- paste("SELECT up.id as id, up.identifier as senders,
+                    count(irclog.id) as sent
+                FROM irclog, people_upeople pup, ",identities_db,".upeople up
                 WHERE ", filter_bots, "
+                    irclog.nick = pup.people_id and
+                    pup.upeople_id = up.id and
                     date >= ", startdate, " and
                     date  < ", enddate, " ", date_limit, "
                     GROUP BY senders
@@ -172,6 +174,52 @@ GetRepoStaticSentSendersIRC <- function (repo, startdate, enddate) {
     filters = paste(GetFiltersReposIRC()," AND c.name='",repo,"'",sep="")
     q <- GetSQLGlobal('date',fields, tables, filters, startdate, enddate)
     query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+#########
+# PEOPLE
+#########
+GetListPeopleIRC <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id, count(irclog.id) total"
+    tables = GetTablesOwnUniqueIdsIRC()
+    filters = GetFiltersOwnUniqueIdsIRC()
+    filters = paste(filters,"GROUP BY nick ORDER BY total desc")
+    q = GetSQLGlobal('date',fields,tables, filters, startdate, enddate)
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+GetQueryPeopleIRC <- function(developer_id, period, startdate, enddate, evol) {
+    fields = "COUNT(irclog.id) AS sent"
+    tables = GetTablesOwnUniqueIdsIRC()
+    filters = paste(GetFiltersOwnUniqueIdsIRC(), "AND pup.upeople_id = ", developer_id)
+
+    if (evol) {
+        q = GetSQLPeriod(period,'date', fields, tables, filters,
+                startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(date),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(date),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('date', fields, tables, filters,
+                startdate, enddate)
+    }
+    return (q)
+}
+
+GetEvolPeopleIRC <- function(developer_id, period, startdate, enddate) {
+    q <- GetQueryPeopleIRC(developer_id, period, startdate, enddate, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetStaticPeopleIRC <- function(developer_id, startdate, enddate) {
+    q <- GetQueryPeopleIRC(developer_id, period, startdate, enddate, FALSE)
+    query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
