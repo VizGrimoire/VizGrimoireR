@@ -185,7 +185,7 @@ GetListPeopleIRC <- function(startdate, enddate) {
     fields = "DISTINCT(pup.upeople_id) as id, count(irclog.id) total"
     tables = GetTablesOwnUniqueIdsIRC()
     filters = GetFiltersOwnUniqueIdsIRC()
-    filters = paste(filters,"GROUP BY id ORDER BY total desc")
+    filters = paste(filters,"GROUP BY nick ORDER BY total desc")
     q = GetSQLGlobal('date',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)
 	data <- run(query)
@@ -213,8 +213,8 @@ GetQueryPeopleIRC <- function(developer_id, period, startdate, enddate, evol) {
 GetEvolPeopleIRC <- function(developer_id, period, startdate, enddate) {
     q <- GetQueryPeopleIRC(developer_id, period, startdate, enddate, TRUE)
     query <- new("Query", sql = q)
-    return (data)
     data <- run(query)
+    return (data)
 }
 
 GetStaticPeopleIRC <- function(developer_id, startdate, enddate) {
