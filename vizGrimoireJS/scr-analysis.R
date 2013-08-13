@@ -64,7 +64,7 @@ reviews_type <- list("submitted", "opened", "new", "inprogress", "closed", "merg
 evaluations_type <- list("verified", "approved", "codereview", "sent")
 
 # BOTS filtered
-bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
+bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot')
 
 #########
 #EVOLUTIONARY DATA
@@ -139,9 +139,6 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
 # print(reviews.static)
 createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
-
-
-
 
 ########
 #ANALYSIS PER REPOSITORY
@@ -235,6 +232,29 @@ if ('repositories-basic' %in% reports) {
         static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis))
         static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis))
         createJSON(static, paste(destdir, "/",repo_file,"-scr-static.json", sep=''))
+    }
+}
+
+########
+# PEOPLE
+########
+if ('people' %in% reports) {
+    print("PEOPLE ANALYSIS")
+    people = GetPeopleListSCR(conf$startdate, conf$enddate)
+    people = people$id
+    limit = 30
+    if (length(people)<limit) limit = length(people);
+    people = people[1:limit]
+    createJSON(people, paste(destdir,"/scr-people.json",sep=''))
+
+    for (upeople_id in people){
+        evol = GetPeopleEvolSCR(upeople_id, period, conf$startdate, conf$enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        createJSON(evol, paste(destdir,"/people-",upeople_id,"-scr-evolutionary.json", sep=''))
+
+        static <- GetPeopleStaticSCR(upeople_id, conf$startdate, conf$enddate)
+        createJSON(static, paste(destdir,"/people-",upeople_id,"-scr-static.json", sep=''))
     }
 }
 
