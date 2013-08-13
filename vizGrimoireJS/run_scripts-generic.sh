@@ -6,9 +6,8 @@
 #$5 = destination
 #$6 = SCR database
 #$7 = IRC database
-#$8 = Bicho backend
-
-# ./run_scripts-mediawiki.sh acs_cvsanaly_mediawiki_1571 acs_mlstats_mediawiki_1466 acs_bicho_mediawiki_1466 2013-06-01 /tmp
+#$8 = Log file
+#$9 = Bicho backend
 
 START=2009-10-14
 #END=2013-03-01
@@ -27,7 +26,11 @@ then
 fi
 
 BICHO="bugzilla"
-if [ -n "$9" ]; then BICHO=$9; fi
+if [ -n "${10}" ]; then BICHO=${10}; fi
+
+# Different bicho backend name in Bicho and VizR
+if [ $BICHO == "bg" ]; then BICHO="bugzilla"; fi
+if [ $BICHO == "lp" ]; then BICHO="launchpad"; fi
 
 echo "Analisys from $START to $END"
 echo "LOGS in $LOGS"
@@ -41,6 +44,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $1 -u root -i
 
 #ITS
 echo "In ITS Analysis ..."
+echo "LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $3 -u root -i $1 -s $START -e $END -o $DIR -g months -t $BICHO < its-analysis.R" >> $LOGS 2>&1
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $3 -u root -i $1 -s $START -e $END -o $DIR -g months -t $BICHO < its-analysis.R >> $LOGS 2>&1
 
 # SCR: repositories not working yet
