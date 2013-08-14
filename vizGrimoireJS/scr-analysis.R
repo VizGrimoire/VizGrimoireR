@@ -242,7 +242,7 @@ if ('people' %in% reports) {
     print("PEOPLE ANALYSIS")
     people = GetPeopleListSCR(conf$startdate, conf$enddate)
     people = people$id
-    limit = 30
+    limit = 60
     if (length(people)<limit) limit = length(people);
     people = people[1:limit]
     createJSON(people, paste(destdir,"/scr-people.json",sep=''))
