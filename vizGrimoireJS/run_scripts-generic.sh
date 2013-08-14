@@ -15,7 +15,7 @@ END=$4
 LOGS=generic.log
 DIR=$5
 # REPORTS="repositories,countries,companies,people"
-REPORTS="repositories"
+REPORTS="repositories,companies,people"
 MIN_PARAM=7
 
 mv $LOGS $LOGS.old
@@ -53,4 +53,4 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r repositories-basic,people
 
 # IRC
 echo "In IRC Analysis ..."
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS,people -d $7 -u root -i $1  -s $START -e $END -o $DIR -g months  < irc-analysis.R >> $LOGS 2>&1
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS -d $7 -u root -i $1  -s $START -e $END -o $DIR -g months  < irc-analysis.R >> $LOGS 2>&1
