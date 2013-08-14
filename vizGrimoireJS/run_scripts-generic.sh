@@ -15,7 +15,7 @@ END=$4
 LOGS=generic.log
 DIR=$5
 # REPORTS="repositories,countries,companies,people"
-REPORTS="repositories,companies,people"
+REPORTS="repositories,companies,countries,people"
 MIN_PARAM=7
 
 mv $LOGS $LOGS.old
