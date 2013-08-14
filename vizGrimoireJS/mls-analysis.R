@@ -150,7 +150,10 @@ if ('companies' %in% reports){
 
 if ('people' %in% reports){
     people = GetListPeopleMLS(startdate, enddate)
-    people = people$id[1:30]
+    people = people$id
+    limit = 30
+    if (length(people)<limit) limit = length(people);
+    people = people[1:limit]
     createJSON(people, paste(destdir,"/mls-people.json",sep=''))
        
     for (upeople_id in people){
