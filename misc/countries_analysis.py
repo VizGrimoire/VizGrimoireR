@@ -25,7 +25,7 @@
 # based on work by: Luis Cañas-Díaz <lcanas@bitergia.com>
 
 from optparse import OptionParser
-import MySQLdb
+import MySQLdb, sys
 
 
 def read_file(file):
@@ -66,6 +66,11 @@ def read_options():
                       dest="countries_file",
                       default="email_country.csv",
                       help="File with email, country in format \"email,country\"")
+    parser.add_option("-t", "--test",
+                      action="store",
+                      dest="countries_test",
+                      default=False,
+                      help="Generate automatic testing data")                      
     parser.add_option("-d", "--database",
                       action="store",
                       dest="dbname",
@@ -157,24 +162,43 @@ def create_tables(cursor, con):
            ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
    cursor.execute(query)
 
-   query = "CREATE INDEX upc_up ON upeople_countries (upeople_id);"
-   cursor.execute(query)
-   query = "CREATE INDEX upc_c ON upeople_countries (country_id);"
-   cursor.execute(query)
+   try:
+       query = "CREATE INDEX upc_up ON upeople_countries (upeople_id);"
+       cursor.execute(query)
+       query = "CREATE INDEX upc_c ON upeople_countries (country_id);"
+       cursor.execute(query)
+   except Exception:
+       print "Indexes upc_up and upc_c already created"
 
    con.commit()
    return
+
+def create_test_data(cursor, opts):
+    import random
+    test_countries = ['country1', 'country2', 'country3', 'country4', 'country5']
+    cursor.execute("DELETE FROM countries")
+    cursor.execute("DELETE FROM upeople_countries")
+    cursor.execute("SELECT id FROM upeople")
+    identities = cursor.fetchall()
     
-
-
+    for id in identities:
+        country = test_countries[random.randint(0,len(test_countries)-1)]
+        insert_upeople_country(cursor, id[0], country, opts.debug)    
+    
 if __name__ == '__main__':
     opts = None
     opts = read_options()
-    ids_file = parse_file(opts.countries_file)
     con = open_database(opts.dbuser, opts.dbpassword, opts.dbname)
     
     cursor = con.cursor()
     create_tables(cursor, con)
+
+    if opts.countries_test: # helper code to test without real data
+        print("Creating test data ...")
+        create_test_data(cursor, opts)
+        sys.exit(0)      
+
+    ids_file = parse_file(opts.countries_file)
 
     cont_new = 0
     cont_updated = 0
@@ -185,11 +209,6 @@ if __name__ == '__main__':
         email = email.replace("'", "\\'") #avoiding ' errors in MySQL
         country = i[1].rstrip('\n') #remove last \n
         
-        if False: # helper code to test without real data
-            import random
-            test_countries = ['eeuu', 'spain', 'germany', 'uk', 'india']
-            country = test_countries[random.randint(0,len(test_countries)-1)]
-
         nmatches = cursor.execute("SELECT upeople_id, type, identity \
                                   FROM identities WHERE identity = '%s'"
                                   % (email))
