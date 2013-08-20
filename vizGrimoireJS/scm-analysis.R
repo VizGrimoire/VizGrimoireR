@@ -240,7 +240,10 @@ if ('countries' %in% reports) {
 if ('people' %in% reports) {
     print ('Starting people analysis')
     people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
-    people <- people$pid[1:100]
+    people = people$pid
+    limit = 100
+    if (length(people)<limit) limit = length(people);
+    people = people[1:limit]
     createJSON(people, paste(destdir,"/scm-people.json", sep=''))
 	
     for (upeople_id in people) {
