@@ -59,11 +59,10 @@ destdir <- conf$destination
 #type of analysis
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 
-reviews_type <- list("submitted", "opened", "new", "inprogress", "closed", "merged", "abandoned")
-
-evaluations_type <- list("verified", "approved", "codereview", "sent")
 
 # BOTS filtered
+# WARNING: info specific for the wikimedia case, this should be removed for other communities
+#          or in the case that bots are required to be in the analysis
 bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot')
 
 #########
@@ -144,67 +143,6 @@ createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
 #ANALYSIS PER REPOSITORY
 ########
 
-print("ANALYSIS PER REPOSITORY")
-if ('repositories' %in% reports) {
-    repos  <- GetReposSCRName(conf$startdate, conf$enddate)
-    repos <- repos$name
-    createJSON(repos, paste(destdir,"/scr-repos.json", sep=''))
-
-    for (repo in repos) {
-        repo_name = paste("'", repo, "'", sep='')
-        repo_aux = paste("", repo, "", sep='')
-        print (repo_name)
-
-        first = TRUE
-        evol_data = data.frame()
-        for (analysis in reviews_type)
-        {
-            data = EvolReviews(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
-            data <- completePeriodIds(data, conf$granularity, conf)
-            data <- data[order(data$id),]
-            data[is.na(data)] <- 0
-            if (first) {
-                evol_data = data
-                first = FALSE
-            }else{
-               evol_data = merge(evol_data, data, all = TRUE)
-            }
-    
-
-        }
-        createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-reviews-evolutionary.json", sep=''))
-
-        first = TRUE
-        evol_data = data.frame()
-        for (analysis in evaluations_type)
-        {
-            data = EvolEvaluations(period, conf$startdate, conf$enddate, analysis, list("repository", repo_name))
-            data <- completePeriodIds(data, conf$granularity, conf)
-            data <- data[order(data$id),]
-            data[is.na(data)] <- 0
-            if (first) {
-                evol_data = data
-                first = FALSE
-            }else{
-               evol_data = merge(evol_data, data, all = TRUE)
-            }    
-        }
-        createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-patches-evolutionary.json", sep=''))
-
-        data = Waiting4Review(period, conf$startdate, conf$enddate, conf$identities_db,  list("repository", repo_name))
-        data1 <- completePeriodIds(data1, conf$granularity, conf)
-        data1 <- data1[order(data1$id),]
-        data1[is.na(data1)] <- 0
-    
-        data = Waiting4Submitter(period, conf$startdate, conf$enddate, conf$identities_db,  list("repository", repo_name))
-        data <- completePeriodIds(data, conf$granularity, conf)
-        data <- data[order(data$id),]
-        data[is.na(data)] <- 0
-        evol_data = merge(data, data1, all=TRUE)
-        createJSON(evol_data, paste(destdir, "/",repo_aux,"-scr-waiting-evolutionary.json", sep=''))
-    }
-}
-
 print("ANALYSIS PER REPOSITORY BASIC")
 if ('repositories-basic' %in% reports) {
     repos  <- GetReposSCRName(conf$startdate, conf$enddate, 30)
@@ -212,6 +150,8 @@ if ('repositories-basic' %in% reports) {
     repos_file_names = gsub("/","_",repos)
     createJSON(repos_file_names, paste(destdir,"/scr-repos.json", sep=''))
 
+    # missing information from the rest of type of reviews, patches and
+    # number of patches waiting for reviewer and submitter 
     for (repo in repos) {
         repo_file = gsub("/","_",repo)
         type_analysis = list('repository', repo)
