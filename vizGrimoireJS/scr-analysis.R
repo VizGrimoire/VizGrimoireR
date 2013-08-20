@@ -144,7 +144,7 @@ createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
 ########
 
 print("ANALYSIS PER REPOSITORY BASIC")
-if ('repositories-basic' %in% reports) {
+if ('repositories' %in% reports) {
     repos  <- GetReposSCRName(conf$startdate, conf$enddate, 30)
     repos <- repos$name
     repos_file_names = gsub("/","_",repos)
