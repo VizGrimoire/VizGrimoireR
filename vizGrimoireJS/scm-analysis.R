@@ -95,7 +95,7 @@ latest_activity30 = last_activity(30)
 latest_activity60 = last_activity(60)
 latest_activity90 = last_activity(90)
 latest_activity365 = last_activity(365)
-latest_Activity730 = last_activity(730) 
+latest_activity730 = last_activity(730) 
 
 #Data for specific analysis
 if ('companies' %in% reports){
