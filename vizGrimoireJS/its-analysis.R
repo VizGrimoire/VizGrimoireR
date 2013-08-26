@@ -121,8 +121,12 @@ if ('companies' %in% reports) {
 }
 
 latest_activity7 = GetLastActivityITS(7, closed_condition)
+latest_activity14 = GetLastActivityITS(14, closed_condition)
 latest_activity30 = GetLastActivityITS(30, closed_condition)
+latest_activity60 = GetLastActivityITS(60, closed_condition)
 latest_activity90 = GetLastActivityITS(90, closed_condition)
+latest_activity365 = GetLastActivityITS(365, closed_condition)
+latest_activity730 = GetLastActivityITS(730, closed_condition)
 all_static_info = merge(all_static_info, latest_activity7)
 all_static_info = merge(all_static_info, latest_activity30)
 all_static_info = merge(all_static_info, latest_activity90)
