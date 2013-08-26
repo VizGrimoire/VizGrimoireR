@@ -215,7 +215,7 @@ vgjsFiles = ["vizgrimoire.min.js",
              "browser/refcard.html",
              "browser/project-card.html"]
 # Files specific to this GitHub example:
-ghBrowserfiles = ["index.html", "config.json"]
+ghBrowserfiles = ["index.html", "config.json", "viz_cfg.json", "custom.css"]
 
 for file in vgjsFiles:
     shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
