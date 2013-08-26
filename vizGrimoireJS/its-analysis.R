@@ -128,8 +128,12 @@ latest_activity90 = GetLastActivityITS(90, closed_condition)
 latest_activity365 = GetLastActivityITS(365, closed_condition)
 latest_activity730 = GetLastActivityITS(730, closed_condition)
 all_static_info = merge(all_static_info, latest_activity7)
+all_static_info = merge(all_static_info, latest_activity14)
 all_static_info = merge(all_static_info, latest_activity30)
+all_static_info = merge(all_static_info, latest_activity60)
 all_static_info = merge(all_static_info, latest_activity90)
+all_static_info = merge(all_static_info, latest_activity365)
+all_static_info = merge(all_static_info, latest_activity730)
 createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 # Top closers
