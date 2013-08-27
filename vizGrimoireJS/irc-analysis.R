@@ -59,7 +59,10 @@ bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 ###################
 if ('people' %in% reports){
     people = GetListPeopleIRC(conf$startdate, conf$enddate)
-    people = people$id[1:30]
+    people = people$id
+    limit = 30
+    if (length(people)<limit) limit = length(people);
+    people = people[1:limit]
     createJSON(people, paste(destdir,"/irc-people.json",sep=''))
 
     for (upeople_id in people){
