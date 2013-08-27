@@ -125,3 +125,4 @@ git clone https://gerrit.wikimedia.org/r/p/mediawiki/extensions/WikimediaMessage
 git clone https://gerrit.wikimedia.org/r/p/mediawiki/extensions/WikimediaShopLink.git
 git clone https://gerrit.wikimedia.org/r/p/mediawiki/extensions/ZeroRatedMobileAccess.git
 git clone https://gerrit.wikimedia.org/r/p/mediawiki/php/wikidiff2.git
+git clone https://gerrit.wikimedia.org/r/p/mediawiki/core
