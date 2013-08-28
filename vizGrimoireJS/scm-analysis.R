@@ -180,7 +180,9 @@ if ('companies' %in% reports) {
 if ('repositories' %in% reports) {
     repos  <- repos_name(conf$startdate, conf$enddate)
     repos <- repos$name
-    repos <- repos[1:30]
+    limit = 30
+    if (length(repos)<limit) limit = length(repos);
+    repos <- repos[1:limit]
     createJSON(repos, paste(destdir,"/scm-repos.json", sep=''))
 	
     for (repo in repos) {
