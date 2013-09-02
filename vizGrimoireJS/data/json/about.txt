@@ -1,0 +1,6 @@
+This is an extra folder created due to a runtime error while executing the following command : 
+
+
+R --vanilla --args -d mlstats_zypp -u root -p root -i cvsanaly_zypper -r people,companies,repositories -s 2007-03-20 -e 2013-05-03 -o 
+/home/user/output_folder/ -g months < mls-analysis.R 
+
