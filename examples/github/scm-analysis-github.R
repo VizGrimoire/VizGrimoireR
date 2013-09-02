@@ -40,6 +40,7 @@
 ##  --destination destdir
 
 library("vizgrimoire")
+library(ISOweek)
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 ##
