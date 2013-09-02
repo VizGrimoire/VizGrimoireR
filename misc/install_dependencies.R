@@ -36,6 +36,6 @@
 repos=c("http://cran.us.r-project.org")
 
 pkgs <- c("RMySQL", "rjson", "RColorBrewer", "ggplot2", "rgl",
-     "optparse", "zoo")
+     "optparse", "zoo", "ISOweek")
 
 install.packages(pkgs, repos=repos)
