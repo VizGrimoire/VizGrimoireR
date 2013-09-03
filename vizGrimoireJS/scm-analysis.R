@@ -87,11 +87,7 @@ evol_data$tendency_authors = list('tendency_authors' = 0)
 evol_data$central = list('central' = 0)
 evol_data$tendency_commits[l:length(evol_data$tendency_commits)] = tendency_commits$metric
 evol_data$tendency_authors[l:length(evol_data$tendency_authors)] = tendency_authors$metric
-
 print(evol_data)
-
-stop("testing")
-evol_data = merge(evol_data, tendency_commits, all=TRUE)
 
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 evol_data <- evol_data[order(evol_data$id), ]
