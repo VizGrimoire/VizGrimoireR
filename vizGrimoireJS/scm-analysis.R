@@ -34,6 +34,7 @@
 
 library("vizgrimoire")
 library("ISOweek")
+library("zoo")
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 conf <- ConfFromOptParse()
@@ -74,6 +75,23 @@ if ('countries' %in% reports) {
     countries <- EvolCountries(period, conf$startdate, conf$enddate)
     evol_data = merge(evol_data, countries, all = TRUE)
 }
+
+#Calculating tendencies
+s = 4 #short mean
+l = 20 #long mean
+tendency_commits = DiffRoll(evol_data$commits,4,20)
+tendency_authors = DiffRoll(evol_data$authors, 4, 20)
+print(tendency_commits)
+evol_data$tendency_commits = list('tendency_commits' = 0)
+evol_data$tendency_authors = list('tendency_authors' = 0)
+evol_data$central = list('central' = 0)
+evol_data$tendency_commits[l:length(evol_data$tendency_commits)] = tendency_commits$metric
+evol_data$tendency_authors[l:length(evol_data$tendency_authors)] = tendency_authors$metric
+
+print(evol_data)
+
+stop("testing")
+evol_data = merge(evol_data, tendency_commits, all=TRUE)
 
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 evol_data <- evol_data[order(evol_data$id), ]
