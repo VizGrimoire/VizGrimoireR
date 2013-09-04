@@ -86,11 +86,9 @@ print(length(evol_data$commits))
 #evol_data$tendency_commits = data.frame('tendency_commits'=rep(0, length(evol_data$commits)))
 print(evol_data)
 evol_data$tendency_commits = list('tendency_commits' = 0)
-#evol_data$tendency_authors = list('tendency_authors' = 0)
-#evol_data$central = list('central' = 0)
-#evol_data$tendency_commits = data.frame(tendency_commits=numeric(length(evol_data$commits)))
-#evol_data$tendency_authors = data.frame(tendency_authors=numeric(length(evol_data$commits)))
-#evol_data$central = data.frame(central=numeric(length(evol_data$commits)))
+evol_data$central = list('central'=0)
+evol_data$tendency_authors = list('tendency_authors' = 0)
+
 print(length(evol_data$tendency_commits))
 print(length(evol_data$commits))
 print(is.numeric(evol_data$tendency_commits))
@@ -102,7 +100,11 @@ print(is.list(evol_data$commits))
 
 #evol_data$tendency_commits[l:length(evol_data$tendency_commits)] = tendency_commits$metric
 evol_data$tendency_commits = as.numeric(evol_data$tendency_commits[1])
+evol_data$tendency_authors = as.numeric(evol_data$tendency_authors[1])
+evol_data$central = as.numeric(evol_data$central[1])
+
 evol_data$tendency_commits[l:length(evol_data$tendency_commits)] = tendency_commits$metric
+evol_data$tendency_authors[l:length(evol_data$tendency_authors)] = tendency_authors$metric
 print(evol_data)
 
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
