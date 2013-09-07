@@ -215,7 +215,19 @@ GetSQLReportWhere <- function(type_analysis, role){
 #Functions to obtain info per type of basic piece of data
 #########
 
+# All of the EvolXXX or StaticXXX contains the same parameters:
+#    period:
+#    startdate:
+#    enddate:
+#    identities_db: MySQL database name
+#    type_analysis: tuple with two values: typeof and value
+#                   typeof = 'companies', 'countries', 'repositories' or ''
+#                   value = any value that corresponds with the type of analysis
+
+
 GetCommits <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # This function contains basic parts of the query to count commits.
+    # That query is built and results returned.
 
     fields = " count(distinct(s.id)) as commits "
     tables = paste(" scmlog s ", GetSQLReportFrom(identities_db, type_analysis))
@@ -227,6 +239,8 @@ GetCommits <- function(period, startdate, enddate, identities_db, type_analysis,
 }
 
 EvolCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # Returns the evolution of commits through the time
+
     return(GetCommits(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
@@ -236,6 +250,9 @@ EvolCommits <- function(period, startdate, enddate, identities_db=NA, type_analy
 
 
 GetAuthors <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # This function contains basic parts of the query to count authors
+    # That query is later built and executed
+
     fields <- " count(distinct(pup.upeople_id)) AS authors "
     tables <- " scmlog s " 
     filters = GetSQLReportWhere(type_analysis, "author")
@@ -262,10 +279,12 @@ GetAuthors <- function(period, startdate, enddate, identities_db, type_analysis,
 }
 
 EvolAuthors <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the evolution of authors through the time
     return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the aggregated number of authors in the specified timeperiod (enddate - startdate)
     return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
@@ -273,6 +292,9 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_
 
 
 GetCommitters <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary) {
+    # This function contains basic parts of the query to count authors
+    # That query is later built and executed
+
     fields <- 'count(distinct(pup.upeople_id)) AS committers '
     tables <- "scmlog s "
     filters = GetSQLReportWhere(type_analysis, "committer")
@@ -298,10 +320,12 @@ GetCommitters <- function(period, startdate, enddate, identities_db, type_analys
 }
 
 EvolCommitters <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the evolution of the number of committers through the time
     return(GetCommitters(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the aggregate number of committers in the specified timeperiod (enddate - startdate)
     return(GetCommitters(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
