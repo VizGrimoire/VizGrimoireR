@@ -832,6 +832,7 @@ GetStaticPeopleSCM <- function(developer_id, startdate, enddate) {
 #
 
 EvolCompanies <- function(period, startdate, enddate){	
+    # Returns the evolution in the provided period of the number of total companies
 
     fields = "count(distinct(upc.company_id)) as companies"
     tables = " scmlog s, people_upeople pup, upeople_companies upc"
@@ -847,6 +848,7 @@ EvolCompanies <- function(period, startdate, enddate){
 }
 
 EvolCountries <- function(period, startdate, enddate){	
+    # Returns the evolution in the provided period of the number of total countries
 
     fields = "count(distinct(upc.country_id)) as countries"
     tables = "scmlog s, people_upeople pup, upeople_countries upc"
@@ -860,6 +862,10 @@ EvolCountries <- function(period, startdate, enddate){
 }
 
 last_activity <- function(days) {
+    # Given a number of days, this function calculates the number of
+    # commits, authors, files, added and removed lines that took place
+    # in a project. 
+
     #commits
     q <- paste("select count(*) as commits_",days,"
                 from scmlog 
@@ -906,6 +912,11 @@ last_activity <- function(days) {
 }
 
 top_people <- function(days, startdate, enddate, role, filters="") {
+    # This function returns the 10 top people participating in the source code.
+    # Dataset can be filtered by the affiliations, where specific companies
+    # can be ignored.
+    # In addition, the number of days allows to limit the study to the last
+    # X days specified in that parameter
 
     affiliations = ""
     for (aff in filters){
@@ -945,6 +956,8 @@ top_people <- function(days, startdate, enddate, role, filters="") {
 }
 
 top_files_modified <- function() {
+      # Top 10 modified files
+
       #FIXME: to be updated to use stardate and enddate values
       q <- paste("select file_name, count(commit_id) as modifications 
                   from action_files a join files f on a.file_id = f.id 
@@ -958,6 +971,8 @@ top_files_modified <- function() {
 
 ## TODO: Follow top_committers implementation
 top_authors <- function(startdate, enddate) {
+    # Top 10 authors without filters
+
     q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
@@ -977,6 +992,7 @@ top_authors <- function(startdate, enddate) {
 
 
 top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
+    # top ten authors with affiliation removal
     #list_affs
     affiliations = ""
     for (aff in list_affs){
@@ -1000,12 +1016,14 @@ top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
                 group by u.identifier
                 order by commits desc
                 LIMIT 10;")
-        query <- new("Query", sql = q)
-        data <- run(query)
-        return (data)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 top_authors_year <- function(year) {
+   # Given a year, this functions provides the top 10 authors 
+   # of such year
     q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
@@ -1017,16 +1035,17 @@ top_authors_year <- function(year) {
                 group by u.identifier
                 order by commits desc
                 LIMIT 10;")
-	query <- new("Query", sql = q)
-	data <- run(query)
-	return (data)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 people <- function() {
-	q <- paste ("select id,identifier from upeople")
-	query <- new("Query", sql = q)
-	data <- run(query)
-	return (data);
+        
+    q <- paste ("select id,identifier from upeople")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data);
 }
 
 
