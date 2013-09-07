@@ -554,12 +554,14 @@ GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_
 #}
 
 StaticAvgCommitsPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+    # returns the average number of commits per period (weekly, monthly, etc) in the specified timeperiod (enddate - startdate)
     return (GetAvgCommitsPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
 GetAvgFilesPeriod <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
-
+    # returns the average number of files per period (Weekly, monthly, etc) in the specified
+    # time period (enddate - startdate) 
     fields = paste(" count(distinct(a.file_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_files_",period, sep="")
     tables = " scmlog s, actions a "
     filters = " s.id = a.commit_id "
@@ -578,11 +580,15 @@ GetAvgFilesPeriod <- function(period, startdate, enddate, identities_db, type_an
 #}
 
 StaticAvgFilesPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    # returns the average number of files per period (Weekly, monthly, etc) in the specified
+    # time period (enddate - startdate)
     return (GetAvgFilesPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
 GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # returns the average number of commits per author in the specified
+    # time period (enddate - startdate)
 
     fields = " count(distinct(s.id))/count(distinct(pup.upeople_id)) as avg_commits_author "
     tables = " scmlog s "
@@ -612,15 +618,21 @@ GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_
 }
 
 EvolAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    # returns the average number of commits per author in the specified
+    # time period (enddate - startdate)
     return (GetAvgCommitsAuthor(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticAvgCommitsAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    # returns the average and total number of commits per author in the specified
+    # time period (enddate - startdate)
     return (GetAvgCommitsAuthor(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
 GetAvgAuthorPeriod <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # returns the average number of authors per period (weekly, monthly) in the specified
+    # time period (enddate - startdate)
 
     fields = paste(" count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="") 
     tables = " scmlog s "
@@ -655,10 +667,15 @@ GetAvgAuthorPeriod <- function(period, startdate, enddate, identities_db, type_a
 #}
 
 StaticAvgAuthorPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    # returns the average number of authors per period (weekly, monthly) in the specified
+    # time period (enddate - startdate)
+
     return (GetAvgAuthorPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 GetAvgCommitterPeriod <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # returns the average number of committers per period (weekly, monthly) in the specified
+    # time period (enddate - startdate)
 
     fields = paste(" count(distinct(pup.upeople_id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_authors_",period, sep="")
     tables = " scmlog s "
@@ -693,12 +710,16 @@ GetAvgCommitterPeriod <- function(period, startdate, enddate, identities_db, typ
 #}
 
 StaticAvgCommitterPeriod <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    # returns the average number of committers per period (weekly, monthly) in the specified
+    # time period (enddate - startdate)
     return (GetAvgCommitterPeriod(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
 GetAvgFilesAuthor <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
-    
+    # returns the average number of files per author (weekly, monthly) in the specified
+    # time period (enddate - startdate)    
+
     fields = " count(distinct(a.file_id))/count(distinct(pup.upeople_id)) as avg_files_author "
     tables = " scmlog s, actions a "
     filters = " s.id = a.commit_id "
@@ -728,17 +749,23 @@ GetAvgFilesAuthor <- function(period, startdate, enddate, identities_db, type_an
 }
 
 EvolAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+    # returns the average number of files per author and its evolution (weekly, monthly) in the specified
+    # time period (enddate - startdate)  
     return(GetAvgFilesAuthor(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 
 StaticAvgFilesAuthor <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+    # returns the average number of files per author (weekly, monthly) in the specified
+    # time period (enddate - startdate)  
     return(GetAvgFilesAuthor(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
 
 StaticURL <- function() {
+    # Returns the SCM URL     
+
     q <- paste("select uri as url,type from repositories limit 1")
 	query <- new("Query", sql = q)
 	data <- run(query)
