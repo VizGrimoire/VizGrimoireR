@@ -140,6 +140,7 @@ GetSQLCountriesWhere <- function(country, role){
 ###########
 
 BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, filters, evolutionary){
+    # Select the way to evolutionary or aggregated dataset
 
     q = ""
 
@@ -155,6 +156,9 @@ BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, f
 }
 
 ExecuteQuery <- function(q){
+    # This function creates a new object Query and
+    # returns the result
+
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
