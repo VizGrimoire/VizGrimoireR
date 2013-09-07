@@ -292,7 +292,7 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_
 
 
 GetCommitters <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary) {
-    # This function contains basic parts of the query to count authors
+    # This function contains basic parts of the query to count committers
     # That query is later built and executed
 
     fields <- 'count(distinct(pup.upeople_id)) AS committers '
@@ -330,9 +330,10 @@ StaticNumCommitters <- function(period, startdate, enddate, identities_db=NA, ty
 }
 
 
-
-
 GetFiles <- function (period, startdate, enddate, identities_db, type_analysis, evolutionary) {
+    # This function contains basic parts of the query to count files
+    # That query is later built and executed
+
     fields <- " count(distinct(a.file_id)) as files "
     tables <- " scmlog s, actions a "
     filters = " a.commit_id = s.id "
@@ -350,19 +351,19 @@ GetFiles <- function (period, startdate, enddate, identities_db, type_analysis, 
 }
 
 EvolFiles <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the evolution of the number of files through the time
     return (GetFiles(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticNumFiles <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the aggregate number of unique files in the specified timeperiod (enddate - startdate)
     return (GetFiles(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
-
-
-
 GetLines <- function (period, startdate, enddate, identities_db, type_analysis, evolutionary){
-    #Evolution of files
+    # This function contains basic parts of the query to count lines
+    # That query is later built and executed
 
     # basic parts of the query
     fields <- "sum(cl.added) as added_lines, sum(cl.removed) as removed_lines"
@@ -383,19 +384,20 @@ GetLines <- function (period, startdate, enddate, identities_db, type_analysis, 
 }
 
 EvolLines <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+    # returns the evolution of the number of lines through the time
     return (GetLines(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticNumLines <- function (period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    # returns the aggregate number of lines in the specified timeperiod (enddate - startdate)
     return (GetLines(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
-
-
 GetBranches <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
-    #Evolution of branches
-
+    # This function contains basic parts of the query to count branches
+    # That query is later built and executed
+    
     # basic parts of the query
     fields <- "count(distinct(a.branch_id)) as branches "
     tables <- " scmlog s, actions a "
@@ -413,16 +415,21 @@ GetBranches <- function(period, startdate, enddate, identities_db, type_analysis
 }
 
 EvolBranches <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the evolution of the number of branches through the time
     return (GetBranches(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticNumBranches <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    # returns the aggregate number of branches in the specified timeperiod (enddate - startdate)
     return (GetBranches(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
 
 GetRepositories <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # This function contains basic parts of the query to count repositories
+    # That query is later built and executed
+
     # basic parts of the query
     fields <- "count(distinct(s.repository_id)) AS repositories "
     tables <- "scmlog s "
@@ -439,20 +446,21 @@ GetRepositories <- function(period, startdate, enddate, identities_db, type_anal
 }
 
 EvolRepositories <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    # returns the evolution of the number of repositories through the time
     return (GetRepositories(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticNumRepositories <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    # returns the aggregate number of repositories in the specified timeperiod (enddate - startdate)
     return (GetRepositories(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
-
-#############
-#Static numbers
-#############
-
 StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+    # returns the aggregate number of commits in the specified timeperiod (enddate - startdate)
+    # TODO: this function is deprecated, but the new one is not ready yet. This should directly call
+    #       GetCommits as similarly done by EvolCommits function.
+
     #TODO: first_date and last_date should be in another function
     select <- "SELECT count(s.id) as commits,
                DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date, 
@@ -474,6 +482,9 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
 }
 
 GetActions <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # This function contains basic parts of the query to count actions.
+    # An action is any type of change done in a file (addition, copy, removal, etc)
+    # That query is later built and executed
 
     fields = " count(distinct(a.id)) as actions "
     tables = " scmlog s, actions a "
@@ -489,14 +500,18 @@ GetActions <- function(period, startdate, enddate, identities_db, type_analysis,
 
     
 EvolActions <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)){
+    # returns the evolution of the number of actions through the time
     return(GetActions(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 StaticNumActions <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+    # returns the aggregate number of actions in the specified timeperiod (enddate - startdate)
     return(GetActions(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 StaticNumLines <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)) {
+    # returns the aggregate number of repositories in the specified timeperiod (enddate - startdate)
+    # TODO: this function is deprecated, this should call GetLines
 
     select <- "select sum(cl.added) as added_lines,
                sum(cl.removed) as removed_lines "
@@ -518,6 +533,8 @@ StaticNumLines <- function(period, startdate, enddate, identities_db=NA, type_an
 }
 
 GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # returns the average number of commits per period of time (day, week, month, etc...) 
+    # in the specified timeperiod (enddate - startdate)
 
     fields = paste(" count(distinct(s.id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_commits_",period, sep="")
     tables = " scmlog s "
