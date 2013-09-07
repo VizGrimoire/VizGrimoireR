@@ -32,6 +32,8 @@
 ##########
 
 GetSCMEvolutionaryData <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
+    # Meta function that includes basic evolutionary metrics from the source code
+    # management system. Those are merged and returned.
 
     # 1- Retrieving information
     commits <- EvolCommits(period, startdate, enddate, i_db, type_analysis)
@@ -54,6 +56,8 @@ GetSCMEvolutionaryData <- function(period, startdate, enddate, i_db=NA, type_ana
 }
 
 GetSCMStaticData <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
+    # Meta function that includes basic aggregated metrics from the source code
+    # management system. Those are merged and returned.
 
     # 1- Retrieving information
     static_commits <- StaticNumCommits(period, startdate, enddate, i_db, type_analysis)
