@@ -1041,7 +1041,8 @@ top_authors_year <- function(year) {
 }
 
 people <- function() {
-        
+    # List of people participating in the source code development
+ 
     q <- paste ("select id,identifier from upeople")
     query <- new("Query", sql = q)
     data <- run(query)
@@ -1050,56 +1051,57 @@ people <- function() {
 
 
 companies_name_wo_affs <- function(affs_list, startdate, enddate) {
-        #List of companies without certain affiliations
-        affiliations = ""
-        for (aff in affs_list){
-            affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
-        }    
+    #List of companies without certain affiliations
+    affiliations = ""
+    for (aff in affs_list){
+       affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }    
 
-        q <- paste ("select distinct(c.name)
-                    from companies c,
-                         people_upeople pup,
-                         upeople_companies upc,
-                         scmlog s
-                    where c.id = upc.company_id and
-                          upc.upeople_id = pup.upeople_id and
-                          s.date >= upc.init and
-                          s.date < upc.end and
-                          pup.people_id = s.author_id and
-                          ",affiliations," 
-                          s.date >=", startdate, " and
-                          s.date < ", enddate, "
-                    group by c.name
-                    order by count(distinct(s.id)) desc;", sep="")
-        query <- new("Query", sql = q)
-        data <- run(query)
-        return (data)
+    q <- paste ("select distinct(c.name)
+                 from companies c,
+                      people_upeople pup,
+                      upeople_companies upc,
+                      scmlog s
+                 where c.id = upc.company_id and
+                       upc.upeople_id = pup.upeople_id and
+                       s.date >= upc.init and
+                       s.date < upc.end and
+                       pup.people_id = s.author_id and
+                       ",affiliations," 
+                       s.date >=", startdate, " and
+                       s.date < ", enddate, "
+                 group by c.name
+                 order by count(distinct(s.id)) desc;", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 companies_name <- function(startdate, enddate) {
     # companies_limit = 30
     
-	q <- paste ("select distinct(c.name)
-                    from companies c,
-                         people_upeople pup,
-                         upeople_companies upc,
-                         scmlog s
-                    where c.id = upc.company_id and
-                          upc.upeople_id = pup.upeople_id and
-                          pup.people_id = s.author_id and
-                          s.date >=", startdate, " and
-                          s.date < ", enddate, "
-                    group by c.name
-                    order by count(distinct(s.id)) desc", sep="")
-                    # order by count(distinct(s.id)) desc LIMIT ", companies_limit, sep="")
-	query <- new("Query", sql = q)
-	data <- run(query)	
-	return (data)
+    q <- paste ("select distinct(c.name)
+                 from companies c,
+                      people_upeople pup,
+                      upeople_companies upc,
+                      scmlog s
+                 where c.id = upc.company_id and
+                       upc.upeople_id = pup.upeople_id and
+                       pup.people_id = s.author_id and
+                       s.date >=", startdate, " and
+                       s.date < ", enddate, "
+                 group by c.name
+                 order by count(distinct(s.id)) desc", sep="")
+                 # order by count(distinct(s.id)) desc LIMIT ", companies_limit, sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)
 }
 
 
 evol_info_data_companies <- function(startdate, enddate) {
-	
+    # DEPRECATED FUNCTION; TO BE REMOVED	
+
 	q <- paste ("select count(distinct(c.id)) as companies 
                      from companies c,
                           upeople_companies upc,
@@ -1178,89 +1180,97 @@ evol_info_data_countries <- function(startdate, enddate) {
     }
 
 company_top_authors <- function(company_name, startdate, enddate) {
-	
-	q <- paste ("select u.id as id, u.identifier  as authors,
-                            count(distinct(s.id)) as commits                         
-                     from people p,
-                          scmlog s,
-                          people_upeople pup,
-                          upeople u,
-                          upeople_companies upc,
-                          companies c
-                     where  p.id = s.author_id and
-                            s.author_id = pup.people_id and
-                            pup.upeople_id = upc.upeople_id and 
-                            pup.upeople_id = u.id and
-                            s.date >= upc.init and 
-                            s.date < upc.end and
-                            upc.company_id = c.id and   
-                            s.date >=", startdate, " and
-                            s.date < ", enddate, " and
-                            c.name =", company_name, "
-                     group by u.id
-                     order by count(distinct(s.id)) desc
-                     limit 10;")
-	query <- new("Query", sql = q)
-	data <- run(query)
-	return (data)
+    # Returns top ten authors per company
+ 	
+    q <- paste ("select u.id as id, u.identifier  as authors,
+                        count(distinct(s.id)) as commits                         
+                 from people p,
+                      scmlog s,
+                      people_upeople pup,
+                      upeople u,
+                      upeople_companies upc,
+                      companies c
+                 where  p.id = s.author_id and
+                        s.author_id = pup.people_id and
+                        pup.upeople_id = upc.upeople_id and 
+                        pup.upeople_id = u.id and
+                        s.date >= upc.init and 
+                        s.date < upc.end and
+                        upc.company_id = c.id and   
+                        s.date >=", startdate, " and
+                        s.date < ", enddate, " and
+                        c.name =", company_name, "
+                 group by u.id
+                 order by count(distinct(s.id)) desc
+                 limit 10;")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 company_top_authors_year <- function(company_name, year){
+    # Top 10 authors per company and in a given year
 	
-	q <- paste ("select u.id as id, u.identifier as authors,
-                            count(distinct(s.id)) as commits                         
-                    from people p,
-                         scmlog s,
-                         people_upeople pup,
-                         upeople u,
-                         upeople_companies upc,
-                         companies c
-                    where  p.id = s.author_id and
-                           s.author_id = pup.people_id and
-                           pup.upeople_id = upc.upeople_id and 
-                           pup.upeople_id = u.id and
-                           s.date >= upc.init and 
-                           s.date < upc.end and
-                           year(s.date)=",year," and
-                           upc.company_id = c.id and
-                           c.name =", company_name, "
-                    group by u.id
-                    order by count(distinct(s.id)) desc
-                    limit 10;")
-	query <- new("Query", sql = q)
-	data <- run(query)
-	return (data)
+    q <- paste ("select u.id as id, u.identifier as authors,
+                        count(distinct(s.id)) as commits                         
+                 from people p,
+                      scmlog s,
+                      people_upeople pup,
+                      upeople u,
+                      upeople_companies upc,
+                      companies c
+                 where  p.id = s.author_id and
+                        s.author_id = pup.people_id and
+                        pup.upeople_id = upc.upeople_id and 
+                        pup.upeople_id = u.id and
+                        s.date >= upc.init and 
+                        s.date < upc.end and
+                        year(s.date)=",year," and
+                        upc.company_id = c.id and
+                        c.name =", company_name, "
+                 group by u.id
+                 order by count(distinct(s.id)) desc
+                 limit 10;")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 evol_companies <- function(period, startdate, enddate){	
+    # Evolution of companies, also deprecated function
 	
-        q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
-                           count(distinct(upc.company_id)) as companies
-                    from   scmlog s,
-                           people_upeople pup,
-                           upeople_companies upc
-                    where  s.author_id = pup.people_id and
-                           pup.upeople_id = upc.upeople_id and
-                           s.date >= upc.init and 
-                           s.date < upc.end and
-                           s.date >=", startdate, " and
-                           s.date < ", enddate, "
-                    group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
-	query <- new("Query", sql = q)
-	data <- run(query)
-	return (data)	
+    q <- paste("select ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id,
+                       count(distinct(upc.company_id)) as companies
+                from   scmlog s,
+                       people_upeople pup,
+                       upeople_companies upc
+                where  s.author_id = pup.people_id and
+                       pup.upeople_id = upc.upeople_id and
+                       s.date >= upc.init and 
+                       s.date < upc.end and
+                       s.date >=", startdate, " and
+                       s.date < ", enddate, "
+                group by ((to_days(s.date) - to_days(",startdate,")) div ",period,")", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)	
 }
 
 repos_name <- function(startdate, enddate) {
-    q <- paste ("select count(*) as total, name
-                 from scmlog s, repositories r
+    # List of repositories name
+
+    q <- paste ("select count(*) as total, 
+                        name
+                 from scmlog s, 
+                      repositories r
                  where s.repository_id=r.id and
-                 s.date >", startdate, " and
-                 s.date <= ", enddate, "
-                 group by repository_id order by total desc");
-	query <- new("Query", sql = q)
-	data <- run(query)
-	return (data)	
+                       s.date >", startdate, " and
+                       s.date <= ", enddate, "
+                 group by repository_id 
+                 order by total desc");
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)	
 }
 
 
@@ -1283,9 +1293,9 @@ scm_countries_names <- function(identities_db, startdate, enddate) {
                       s.date < ", enddate, "
                 group by c.name
                 order by commits desc LIMIT ", countries_limit, sep="")
-	query <- new("Query", sql = q)
-	data <- run(query)	
-	return (data)    
+    query <- new("Query", sql = q)
+    data <- run(query)	
+    return (data)    
 }
 
 
