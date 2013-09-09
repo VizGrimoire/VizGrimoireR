@@ -40,6 +40,10 @@ setClass(
   )
 )
 
+setGeneric (
+  name = "getAnalysis",
+  def=function(.Object){standardGeneric("getAnalysis")}
+)
 
 setMethod(
   "setAnalysis", "DataSource",
