@@ -1224,3 +1224,71 @@ scm_companies_countries_evol <- function(identities_db, company, country, period
     data <- run(query)	
     return (data)
 }
+
+
+##############
+# Micro Studies
+##############
+
+GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db){
+  # This function provides information about the general structure of the community.
+  # This is divided into core, regular and ocassional authors
+  # Core developers are defined as those doing up to a 80% of the total commits
+  # Regular developers are defind as those doing from the 80% to a 99% of the total commits
+  # Occasional developers are defined as those doing from the 99% to the 100% of the commits
+
+  # Init of structure to be returned
+  community <- numeric(0)
+  community$core <- numeric(1)
+  community$regular <- numeric(1)
+  community$occasional <- numeric(1)
+
+  # Database access: developer, %commits
+  q <- paste(" select pup.upeople_id, 
+                      (count(distinct(s.id)) / (select count(*) from scmlog)) *100  as commits 
+               from scmlog s,
+                    people_upeople pup
+               where s.date>=",startdate," and 
+                     s.date<=",enddate," and
+                     s.author_id = pup.people_id
+               group by pup.upeople_id
+               order by count(*) desc; ", sep="")
+
+  query <- new("Query", sql=q)
+  people <- run(query)
+
+  # Calculating number of core, regular and occasional developers
+  cont = 0
+  core = 0
+  core_f = FALSE # flag
+  regular = 0
+  regular_f = FALSE  # flag
+  occasional = 0
+  devs = 0
+
+  for (value in people$commits){
+    cont = cont + value
+    devs = devs + 1
+
+    if (core_f && cont >= 80){
+      #core developers number reached
+      core = devs
+      core_f = FALSE
+    }
+    if (regular_f && cont >= 95){
+      regular = devs
+      regular_f = FALSE
+    }
+  
+  }
+  occasional = devs - regular
+  regular = regular - core
+
+  # inserting values in variable
+  community$core = core
+  community$regular = regular
+  community$occasional = occasional
+
+  return(community)
+
+}
