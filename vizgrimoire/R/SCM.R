@@ -1365,9 +1365,9 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
   # Calculating number of core, regular and occasional developers
   cont = 0
   core = 0
-  core_f = FALSE # flag
+  core_f = TRUE # flag
   regular = 0
-  regular_f = FALSE  # flag
+  regular_f = TRUE  # flag
   occasional = 0
   devs = 0
 
@@ -1397,3 +1397,5 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
   return(community)
 
 }
+
+
