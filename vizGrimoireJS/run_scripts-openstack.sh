@@ -32,11 +32,6 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s $STA
 rm data/whole_project/*
 mv data/json/* data/whole_project/
 cp data/whole_project/* $DIR
-cp data/whole_project/* $DIR/../../../releases/data/whole_project/
-cd $DIR/../../../releases/data/havana/
-git add ./*
-git commit -m "Owl bot"
-cd $CURRENT_DIR
 
 
 #HAVANA
@@ -52,11 +47,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2013-04-04 -e $END -g weeks < scr-analysis.R
 rm data/havana/*
 mv data/json/* data/havana/
-cp data/havana/* $DIR/../../../releases/data/havana/
-cd $DIR/../../../releases/data/havana/
-git add ./*
-git commit -m "Owl bot"
-cd $CURRENT_DIR
+cp data/havana/* $DIR/havana/
 
 
 #GRIZZLY
@@ -72,11 +63,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2012-09-27 -e 2013-04-04 -g weeks < scr-analysis.R
 rm data/grizzly/*
 mv data/json/* data/grizzly/
-cp data/grizzly/* $DIR/../../../releases/data/grizzly/
-cd $DIR/../../../releases/data/havana/
-git add ./*
-git commit -m "Owl bot"
-cd $CURRENT_DIR
+cp data/grizzly/* $DIR/grizzly/
 
 #FOLSOM
 rm data/json/*
@@ -91,11 +78,7 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2012-04-04 -e 2013-09-27 -g weeks < scr-analysis.R
 rm data/folsom/*
 mv data/json/* data/folsom/
-cp data/folsom/* $DIR/../../../releases/data/folsom/
-cd $DIR/../../../releases/data/havana/
-git add ./*
-git commit -m "Owl bot"
-cd $CURRENT_DIR
+cp data/folsom/* $DIR/folsom/
 
 #ESSEX
 rm data/json/*
@@ -110,9 +93,6 @@ LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repos
 LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2011-11-22 -e 2012-04-04 -g weeks < scr-analysis.R
 rm data/essex/*
 mv data/json/* data/essex/
-cp data/essex/* $DIR/../../../releases/data/essex/
-cd $DIR/../../../releases/data/havana/
-git add ./*
-git commit -m "Owl bot"
-cd $CURRENT_DIR
+cp data/essex/* $DIR/essex/
+
 
