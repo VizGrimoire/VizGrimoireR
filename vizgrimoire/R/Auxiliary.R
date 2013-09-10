@@ -563,8 +563,6 @@ completeZeroPeriodIdsWeeks <- function(data, start, end) {
     }  
   }
 
-  print(data)
-  print(samples)
   completedata <- merge(data, samples, all=TRUE)
   completedata[is.na(completedata)] <- 0
   return(completedata)
