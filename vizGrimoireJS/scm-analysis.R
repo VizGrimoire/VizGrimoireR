@@ -129,6 +129,8 @@ latest_activity90 = last_activity(90)
 latest_activity365 = last_activity(365)
 latest_activity730 = last_activity(730) 
 
+community_structure = GetCodeCommunityStructure(period, conf$startdate, conf$enddate, conf$identities_db)
+
 #Data for specific analysis
 if ('companies' %in% reports){
 	static_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
@@ -147,6 +149,7 @@ static_data = merge(static_data, latest_activity60)
 static_data = merge(static_data, latest_activity90)
 static_data = merge(static_data, latest_activity365)
 static_data = merge(static_data, latest_activity730)
+static_data = merge(static_data, community_structure)
 
 
 
