@@ -127,9 +127,9 @@ createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 
 top_authors_data <- top_authors(conf$startdate, conf$enddate)
 top_authors_data <- list()
-top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "" )
-top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "")
-top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "")
+top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
+top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
+top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
 createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 
 # Top files
@@ -180,6 +180,9 @@ if ('companies' %in% reports) {
 if ('repositories' %in% reports) {
     repos  <- repos_name(conf$startdate, conf$enddate)
     repos <- repos$name
+    limit = 30
+    if (length(repos)<limit) limit = length(repos);
+    repos <- repos[1:limit]
     createJSON(repos, paste(destdir,"/scm-repos.json", sep=''))
 	
     for (repo in repos) {
@@ -240,7 +243,7 @@ if ('people' %in% reports) {
     print ('Starting people analysis')
     people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
     people = people$pid
-    limit = 30
+    limit = 100
     if (length(people)<limit) limit = length(people);
     people = people[1:limit]
     createJSON(people, paste(destdir,"/scm-people.json", sep=''))

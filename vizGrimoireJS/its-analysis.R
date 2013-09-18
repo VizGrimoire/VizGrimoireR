@@ -249,7 +249,7 @@ if ('countries' %in% reports) {
 if ('people' %in% reports) {
     people  <- GetPeopleListITS(conf$startdate, conf$enddate)
     people = people$pid
-    limit = 30
+    limit = 100
     if (length(people)<limit) limit = length(people);
     people = people[1:limit]
 	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
