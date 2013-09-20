@@ -249,6 +249,17 @@ GetLastActivityITS <- function(days, closed_condition) {
     query <- new("Query", sql = q)
     data2 = run(query)
 
+    # closers
+    q <- paste ("SELECT count(distinct(pup.upeople_id)) as closers_",days,"
+                 FROM changes, people_upeople pup
+                 WHERE pup.people_id = changes.changed_by and
+                 changed_on >= (
+                     select (max(changed_on) - INTERVAL ",days," day)
+                      from changes) AND", closed_condition, sep="");
+
+    query <- new ("Query", sql = q)
+    data3 <- run(query)
+
     # people_involved    
     q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers_",days,"
                  FROM changes, people_upeople pup
@@ -258,7 +269,7 @@ GetLastActivityITS <- function(days, closed_condition) {
                       from changes)", sep="");
                  
     query <- new ("Query", sql = q)
-    data3 <- run(query)
+    data4 <- run(query)
 
     agg_data = merge(data1, data2)
     agg_data = merge(agg_data, data3)
