@@ -41,7 +41,7 @@ IRCdb=acs_irc_automatortest_1938
 # SCR
 echo "In SCR Analysis ..."
 echo "LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r repositories,people -d $6 -u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R" >> $LOGS 2>&1
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r repositories,people -d $6-u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R >> $LOGS 2>&1
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r repositories,people -d $6 -u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R >> $LOGS 2>&1
 
 # IRC
 echo "In IRC Analysis ..."
