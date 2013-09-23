@@ -95,7 +95,12 @@ def create_tables(db, connector):
 
    return
 
-
+def escape_string (message):
+    if "\\" in message:
+        message = message.replace("\\", "\\\\")
+    if "'" in message:
+        message = message.replace("'", "\\'")
+    return message
 
 def main():
    cfg = getOptions()
@@ -114,9 +119,9 @@ def main():
       done += 1
       if (done % 100 == 0): print (str(done)+" ("+str(total-done)+" pend)")
       name = result[0]
-      name = name.replace("'", "\\'") #avoiding ' errors in MySQL
+      name = escape_string (name)
       email = result[1]
-      email = email.replace("'", "\\'") #avoiding ' errors in MySQL
+      email = escape_string (email)
       query = "select upeople_id from identities where identity='" + name  + "' or identity='"+ email +"';"
       results_ids = execute_query(connector_ids, query)
       if len(results_ids) > 0:

@@ -178,7 +178,12 @@ GetEvolReposITS <- function(period, startdate, enddate) {
 }
 
 GetStaticITS <- function (closed_condition, startdate, enddate) {
-    
+   
+    #TODO: to be refactored similar to the rest of the code
+    q = "SELECT count(distinct(pup.upeople_id)) as allhistory_participants from people_upeople pup"
+    query <- new("Query", sql = q)
+    data0 = run(query)
+ 
     fields = "COUNT(*) as tickets,
               COUNT(*) as opened,
               COUNT(distinct(pup.upeople_id)) as openers,
@@ -216,7 +221,8 @@ GetStaticITS <- function (closed_condition, startdate, enddate) {
     query <- new ("Query", sql = q)
     data7 <- run(query)
     
-    agg_data = merge(data, data1)
+    agg_data = merge(data0, data)
+    agg_data = merge(agg_data, data1)
     agg_data = merge(agg_data, data2)
     agg_data = merge(agg_data, data6)
     agg_data = merge(agg_data, data7)
