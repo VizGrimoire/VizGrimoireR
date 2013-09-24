@@ -114,19 +114,17 @@ def get_vars():
     if not ('end_date' in v):
         v['end_date'] = time.strftime('%Y-%m-%d')    
         
-    #dest_dir
-    v['dest_dir'] = '/tmp/'
     #log_file
     v['log_file'] = '/tmp/prueba.log'
     return v
 
 def execute_scm_script(myvars):
     v = myvars
-    print("Starting SCM analysis ..")
+OA    print("Starting SCM analysis ..")
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < scm-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'], v['db_cvsanaly'], v['db_user'],
                v['db_password'], v['db_identities'], v['start_date'],
-               v['end_date'], v['dest_dir'], v['period'], v['log_file']))
+               v['end_date'], v['json_dir'], v['period'], v['log_file']))
     
 
     print("SCM analysis finished")
@@ -137,7 +135,7 @@ def execute_its_script(myvars):
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s -t %s < its-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'], v['db_bicho'], v['db_user'],
                v['db_password'], v['db_identities'], v['start_date'],
-               v['end_date'], v['dest_dir'], v['period'], v['backend'],
+               v['end_date'], v['json_dir'], v['period'], v['backend'],
                v['log_file']))    
     print("ITS analysis finished")
 
@@ -147,7 +145,7 @@ def execute_mls_script(myvars):
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < mls-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'], v['db_mlstats'], v['db_user'],
                v['db_password'], v['db_identities'], v['start_date'], v['end_date'],
-               v['dest_dir'], v['period'], v['log_file']))    
+               v['json_dir'], v['period'], v['log_file']))    
     print("MLS analysis finished")
 
     
@@ -159,7 +157,7 @@ def execute_scr_script(myvars):
     print("Starting SCR analysis  ..")
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < src-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'],v['db_gerrit'],v['db_user'],v['db_password'],
-               v['db_identities'],v['start_date'],v['end_date'],v['dest_dir'],
+               v['db_identities'],v['start_date'],v['end_date'],v['json_dir'],
                v['period'],v['log_file']))    
     print("SCR analysis finished")
     
@@ -172,7 +170,7 @@ def execute_irc_script(myvars):
     print("Starting IRC analysis  ..")
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < irc-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'],v['db_irc'],v['db_user'],v['db_password'],
-               v['db_identities'],v['start_date'],v['end_date'],v['dest_dir'],
+               v['db_identities'],v['start_date'],v['end_date'],v['json_dir'],
                v['period'],v['log_file']))    
     print("SCR analysis finished")
 
