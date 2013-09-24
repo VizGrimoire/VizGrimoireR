@@ -63,7 +63,7 @@ def read_main_conf(config_file):
     sec = parser.sections()
     # we'll read "generic" for db information and "r" for start_date
     for s in sec:
-        if not((s == "generic") or (s == "r") or (s == "bicho")):
+        if not((s == "generic") or (s == "r")):
             continue
         options[s] = {}
         opti = parser.options(s)
@@ -97,9 +97,9 @@ def read_main_conf(config_file):
 def check_configuration():
     if 'db_bicho' in options['generic']:
         try:
-            'backend' in options['bicho'] == True
-        except:
-            print "Configuration error: Configuration section for [bicho] with 'backend'\
+            'bicho_backend' in options['generic'] == True
+        except:               
+            print "Configuration error: Configuration section for [generic] with 'backend_bicho'\
  variable expected"
             sys.exit(-1)
 
@@ -107,8 +107,6 @@ def get_vars():
     v = {}
     v = options['generic']
     v.update(options['r'])
-    if 'db_bicho' in v:
-        v.update(options['bicho'])
 
     # if end_date is not present or is empty we set up today's date
     if not ('end_date' in v):
@@ -120,7 +118,7 @@ def get_vars():
 
 def execute_scm_script(myvars):
     v = myvars
-OA    print("Starting SCM analysis ..")
+    print("Starting SCM analysis ..")
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < scm-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'], v['db_cvsanaly'], v['db_user'],
                v['db_password'], v['db_identities'], v['start_date'],
@@ -135,7 +133,7 @@ def execute_its_script(myvars):
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s -t %s < its-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'], v['db_bicho'], v['db_user'],
                v['db_password'], v['db_identities'], v['start_date'],
-               v['end_date'], v['json_dir'], v['period'], v['backend'],
+               v['end_date'], v['json_dir'], v['period'], v['bicho_backend'],
                v['log_file']))    
     print("ITS analysis finished")
 
