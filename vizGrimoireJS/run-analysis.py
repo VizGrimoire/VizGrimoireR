@@ -72,28 +72,6 @@ def read_main_conf(config_file):
     return options
 
 
-#
-# Functions used to write to the main log.
-#
-# def compose_msg(text):
-#     # append text to log file
-#     fd = open(msg_body, 'a')
-#     time_tag = '[' + time.strftime('%H:%M:%S') + ']'
-#     fd.write(time_tag + ' ' + text)
-#     fd.write('\n')
-#     fd.close()
-
-
-# def reset_log():
-#     # remove log file
-#     try:
-#         os.remove(msg_body)
-#     except OSError:
-#         fd = open(msg_body, 'w')
-#         fd.write('')
-#         fd.close()
-
-
 def check_configuration():
     if 'db_bicho' in options['generic']:
         try:
@@ -110,10 +88,10 @@ def get_vars():
 
     # if end_date is not present or is empty we set up today's date
     if not ('end_date' in v):
-        v['end_date'] = time.strftime('%Y-%m-%d')    
+        v['end_date'] = time.strftime('%Y-%m-%d')
         
-    #log_file
-    v['log_file'] = '/tmp/prueba.log'
+    # FIXME this should be included in the main log file
+    v['log_file'] = 'run-analysis.log'
     return v
 
 def execute_scm_script(myvars):
