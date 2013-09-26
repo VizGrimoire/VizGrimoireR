@@ -235,7 +235,7 @@ GetLastActivityITS <- function(days, closed_condition) {
                 from issues
                 where submitted_on >= (
                       select (max(submitted_on) - INTERVAL ",days," day)
-                      from issues)", sep="");
+                      from issues)", sep="")
     query <- new("Query", sql = q)
     data1 = run(query)
     
@@ -245,9 +245,22 @@ GetLastActivityITS <- function(days, closed_condition) {
                 where  ", closed_condition,"
                 and changed_on >= (
                       select (max(changed_on) - INTERVAL ",days," day)
-                      from changes)", sep="");
+                      from changes)", sep="")
     query <- new("Query", sql = q)
     data2 = run(query)
+
+    # closers
+    q <- paste ("SELECT count(distinct(pup.upeople_id)) as closers_",days,"
+                 FROM changes, people_upeople pup
+                 WHERE pup.people_id = changes.changed_by and
+                       changed_on >= (
+                       select (max(changed_on) - INTERVAL ",days," day)
+                       from changes) AND", closed_condition, sep="")
+ 
+     query <- new ("Query", sql = q)
+     data3 <- run(query)
+
+
 
     # people_involved    
     q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers_",days,"
@@ -255,13 +268,14 @@ GetLastActivityITS <- function(days, closed_condition) {
                  WHERE pup.people_id = changes.changed_by and
                  changed_on >= (
                      select (max(changed_on) - INTERVAL ",days," day)
-                      from changes)", sep="");
+                      from changes)", sep="")
                  
     query <- new ("Query", sql = q)
-    data3 <- run(query)
+    data4 <- run(query)
 
     agg_data = merge(data1, data2)
     agg_data = merge(agg_data, data3)
+    agg_data = merge(agg_data, data4)
 
     return (agg_data)
 
@@ -326,7 +340,7 @@ GetTopClosers <- function(days = 0, startdate, enddate, identities_db, filter = 
     return (data)
 }
 
-GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {    
+GetTopOpeners <- function(days = 0, startdate, enddate, identities_db, filter = c("")) {    
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
