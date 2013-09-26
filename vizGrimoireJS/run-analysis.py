@@ -139,7 +139,7 @@ def execute_scr_script(myvars):
     
 
 def execute_irc_script(myvars):
-    if not 'db_gerrit' in myvars:
+    if not 'db_irc' in myvars:
         print("IRC analysis disabled")
         return
     v = myvars
