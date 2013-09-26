@@ -65,7 +65,7 @@ latest_activity30 <- lastActivity(30)
 latest_activity90 <- lastActivity(90)
 latest_activity180 <- lastActivity(180)
 latest_activity365 <- lastActivity(365)
-latest_activity730 <- lastActivity(730
+latest_activity730 <- lastActivity(730)
 
 static_data = merge(static_data, latest_activity7)
 static_data = merge(static_data, latest_activity14)
