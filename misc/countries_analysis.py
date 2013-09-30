@@ -80,7 +80,7 @@ def read_options():
                       dest="dbuser",
                       default="root",
                       help="Database user")
-    parser.add_option("--db-password",
+    parser.add_option("-p", "--db-password",
                       action="store",
                       dest="dbpassword",
                       default="",
