@@ -46,6 +46,12 @@ def create_tables(db, connector):
 
    connector.execute(query)
 
+   try:
+       query = "CREATE INDEX companies_names ON companies (name)"
+       connector.execute(query)
+   except Exception:
+       print "Index companies.names  already created"
+
    query = "CREATE TABLE upeople_companies (" + \
            "id int(11) NOT NULL AUTO_INCREMENT," + \
            "upeople_id int(11) NOT NULL," + \
