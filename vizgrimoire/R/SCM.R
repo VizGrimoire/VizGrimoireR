@@ -261,8 +261,21 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_
     return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+GetDiffAuthorsDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods:
 
+    chardates = GetDates(init_date, days)
+    lastauthors = StaticNumAuthors(period, chardates[2], chardates[1])
+    lastauthors = as.numeric(lastauthors[1])
+    prevauthors = StaticNumauthors(period, chardates[3], chardates[2])
+    prevauthors = as.numeric(prevauthors[1])
+    diffauthorsdays = data.frame(diff_netauthors = numeric(1), percentage_authors = numeric(1))
 
+    diffauthorsdays$diff_netauthors = lastauthors - prevauthors
+    diffauthorsdays$percentage_authors = GetPercentageDiff(prevauthors, lastauthors)
+
+    return (diffauthorsdays)
+}
 
 
 GetCommitters <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary) {
