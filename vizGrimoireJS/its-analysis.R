@@ -120,6 +120,16 @@ if ('companies' %in% reports) {
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 
+closed_7 = GetDiffClosedDays(period, conf$enddate, 7, closed_condition)
+closed_30 = GetDiffClosedDays(period, conf$enddate, 30, closed_condition)
+closed_365 = GetDiffClosedDays(period, conf$enddate, 365, closed_condition)
+closers_7 = GetDiffClosersDays(period, conf$enddate, 7, closed_condition)
+closers_30 = GetDiffClosersDays(period, conf$enddate, 30, closed_condition)
+closers_365 = GetDiffClosersDays(period, conf$enddate, 365, closed_condition)
+all_static_info = merge(all_static_info, closers_7)
+all_static_info = merge(all_static_info, closers_30)
+all_static_info = merge(all_static_info, closers_365)
+
 latest_activity7 = GetLastActivityITS(7, closed_condition)
 latest_activity14 = GetLastActivityITS(14, closed_condition)
 latest_activity30 = GetLastActivityITS(30, closed_condition)
