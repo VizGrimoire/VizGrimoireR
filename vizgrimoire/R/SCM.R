@@ -261,18 +261,19 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_
     return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-GetDiffAuthorsDays <- function(period, init_date, days){
+GetDiffAuthorsDays <- function(period, init_date, identities_db=NA, days){
     # This function provides the percentage in activity between two periods:
 
     chardates = GetDates(init_date, days)
-    lastauthors = StaticNumAuthors(period, chardates[2], chardates[1])
+    lastauthors = StaticNumAuthors(period, chardates[2], chardates[1], identities_db)
     lastauthors = as.numeric(lastauthors[1])
-    prevauthors = StaticNumauthors(period, chardates[3], chardates[2])
+    prevauthors = StaticNumAuthors(period, chardates[3], chardates[2], identities_db)
     prevauthors = as.numeric(prevauthors[1])
     diffauthorsdays = data.frame(diff_netauthors = numeric(1), percentage_authors = numeric(1))
-
     diffauthorsdays$diff_netauthors = lastauthors - prevauthors
     diffauthorsdays$percentage_authors = GetPercentageDiff(prevauthors, lastauthors)
+
+    colnames(diffauthorsdays) <- c(paste("diff_netauthors","_",days, sep=""), paste("percentage_authors","_",days, sep=""))
 
     return (diffauthorsdays)
 }
@@ -512,6 +513,8 @@ GetDiffCommitsDays <- function(period, init_date, days){
 
     diffcommitsdays$diff_netcommits = lastcommits - prevcommits
     diffcommitsdays$percentage_commits = GetPercentageDiff(prevcommits, lastcommits)
+
+    colnames(diffcommitsdays) <- c(paste("diff_netcommits","_",days, sep=""), paste("percentage_commits","_",days, sep=""))
 
     return (diffcommitsdays)
 }
