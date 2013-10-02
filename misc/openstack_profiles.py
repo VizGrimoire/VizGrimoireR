@@ -58,6 +58,11 @@ def read_options():
                       dest="profiles_file",
                       default="openstack_profiles.json",
                       help="File Open Stack profiles in JSON format")
+    parser.add_option("-o", "--outfile",
+                      action="store",
+                      dest="outfile",
+                      default="ids_companies_openstack.csv",
+                      help="CSV file with identities to company mapping")
     parser.add_option("-d", "--database",
                       action="store",
                       dest="dbname",
@@ -86,6 +91,16 @@ def read_options():
         parser.error("--file and --database are needed")
 
     return opts
+
+def create_csv(profiles, opts):
+    print "Writing file: " + opts.outfile
+    fd = open(opts.outfile,"w")
+    for profile in profiles:
+        if profile['OrgAffiliations'] is None: profile['OrgAffiliations']=''
+        line = profile['Email']+":"+profile['OrgAffiliations']+"\n"
+        fd.write(line.encode('utf-8'))
+    fd.close()
+
     
 def print_stats(profiles):
     # Some basic stats
@@ -109,6 +124,8 @@ if __name__ == '__main__':
     profiles = json.loads(read_file(opts.profiles_file))
     
     print_stats(profiles)
+    
+    create_csv(profiles, opts)
     
     
     
