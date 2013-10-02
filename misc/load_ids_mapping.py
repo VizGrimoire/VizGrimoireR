@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This script feeds identities, upeople and upeople_countries tables 
-# from a text file with emails and countries
+# This script feeds identities, upeople and 
+# people_countries or people_companies tables 
+# from a text file with emails and countries or companies
 
 # Copyright (C) 2013 Bitergia
 
