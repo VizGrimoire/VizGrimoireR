@@ -39,8 +39,15 @@ def parse_file(file):
     idmail = []
     lines = read_file(file)
     for l in lines:
-        idmail.append(l.split(","))
+        idmail.append(l.split(":"))
     return idmail
+
+def escape_string (message):
+    if "\\" in message:
+        message = message.replace("\\", "\\\\")
+    if "'" in message:
+        message = message.replace("'", "\\'")
+    return message
 
 
 def open_database(myuser, mypassword, mydb):
@@ -63,9 +70,9 @@ def read_options():
                           version="%prog 0.1")
     parser.add_option("-f", "--file",
                       action="store",
-                      dest="countries_file",
+                      dest="data_file",
                       default="email_country.csv",
-                      help="File with email, country in format \"email,country\"")
+                      help="File with data in format \"email:country|company\"")
     parser.add_option("-t", "--test",
                       action="store",
                       dest="countries_test",
@@ -100,7 +107,7 @@ def read_options():
     if len(args) != 0:
         parser.error("Wrong number of arguments")
 
-    if not(opts.map and opts.countries_file and opts.dbname and opts.dbuser):
+    if not(opts.map and opts.data_file and opts.dbname and opts.dbuser):
         parser.error("--map and --file and --database are needed")
     if (opts.map != "countries" and opts.map != "companies"):
         print("Wrong map: " + opts.map+". Only countries and companies supported.")
@@ -275,7 +282,7 @@ if __name__ == '__main__':
         create_test_data(cursor, opts)
         sys.exit(0)      
 
-    ids_file = parse_file(opts.countries_file)
+    ids_file = parse_file(opts.data_file)
 
     count_new = 0
     count_updated = 0
@@ -285,9 +292,9 @@ if __name__ == '__main__':
         email = i[0]
         email = email.replace("'", "\\'") #avoiding ' errors in MySQL
         if (opts.map == "countries"):
-            country = i[1].rstrip('\n') #remove last \n
+            country = escape_string(i[1].rstrip('\n'))
         elif (opts.map == "companies"):
-            company = i[1].rstrip('\n') #remove last \n
+            company = escape_string(i[1].rstrip('\n'))
         
         nmatches = cursor.execute("SELECT upeople_id, type, identity \
                                   FROM identities WHERE identity = '%s'"

@@ -63,20 +63,6 @@ def read_options():
                       dest="outfile",
                       default="ids_companies_openstack.csv",
                       help="CSV file with identities to company mapping")
-    parser.add_option("-d", "--database",
-                      action="store",
-                      dest="dbname",
-                      help="Database where identities table is stored")
-    parser.add_option("-u", "--db-user",
-                      action="store",
-                      dest="dbuser",
-                      default="root",
-                      help="Database user")
-    parser.add_option("-p", "--db-password",
-                      action="store",
-                      dest="dbpassword",
-                      default="",
-                      help="Database password")
     parser.add_option("-g", "--debug",
                       action="store_true",
                       dest="debug",
