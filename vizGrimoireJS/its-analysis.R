@@ -69,6 +69,12 @@ if (conf$backend == 'github'){
 }
 if (conf$backend == 'jira'){
     closed_condition <- "new_value='CLOSED'"
+    reopened_condition <- "new_value='Reopened'"
+    #new_condition <- "status='Open'"
+    #reopened_condition <- "status='Reopened'"
+    open_status <- 'Open'
+    reopened_status <- 'Reopened'
+    name_log_table <- 'issues_log_jira'
 }
 if (conf$backend == 'launchpad'){
     #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
@@ -93,10 +99,16 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
 open <- GetEvolOpened(period, startdate, enddate)
+reopened <- GetEvolReopened(period, startdate, enddate, reopened_condition)
 repos <- GetEvolReposITS(period, startdate, enddate)
+
+# only supports monthly so far
+pending_tickets <- GetEvolPendingTickets(open_status, reopened_status,
+                                         name_log_table, startdate, enddate)
 evol <- merge (open, closed, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
+evol <- merge (evol, pending_tickets, all = TRUE)
 
 if ('companies' %in% reports) {
     info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)

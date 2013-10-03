@@ -65,6 +65,20 @@ GetEvolChanged <- function (period, startdate, enddate) {
     return (GetEvolMetricsITS(fields, period, startdate, enddate));    
 }
 
+##
+## FIXME working on this
+##
+
+GetEvolReopened <- function (period, startdate, enddate, reopened_condition) {
+    fields = 'COUNT(DISTINCT(issue_id)) AS changed, 
+              COUNT(DISTINCT(pup.upeople_id)) as changers'
+    return (GetEvolMetricsITS(fields, period, startdate, enddate, reopened_condition));    
+}
+
+##
+## END working on this
+##
+
 GetEvolOpened<- function (period, startdate, enddate) {
     fields = 'COUNT(DISTINCT(id)) AS opened, 
               COUNT(DISTINCT(pup.upeople_id)) as openers'
@@ -76,6 +90,77 @@ GetEvolOpened<- function (period, startdate, enddate) {
     data <- run(query)
     return (data)	
 }
+
+##
+## FIXME working on this
+##
+
+GetEvolPendingTickets <- function (open_status, reopened_status, name_log_table, startdate, enddate) {
+    ## so far it only supports monthly analysis
+    
+    ## #filter <- "WHERE type = 'Bug' OR type = 'New Feature' OR type = 'Regression Bug' OR type = 'Improvement' OR type = 'Feature Request'"
+    ## liferay_type_filters <- GetLiferayTypeFilters()
+    ## filter <- paste("WHERE (",liferay_type_filters,") ")
+    
+    q <- paste("SELECT id, status, issue_id, date FROM ",name_log_table ," ", filter)
+    query <- new("Query", sql = q)
+    res <- run(query)
+
+    samples <- CalculateMonthPeriods(startdate, enddate)
+    pending_tickets <- count_pending_tickets(samples, res, open_status, reopened_status)
+    colnames(pending_tickets) <- c('month', 'pending_tickets')
+    return(pending_tickets)
+}
+
+count_pending_tickets <- function(samples, res, open_status, reopened_status){
+    # res, samples
+    #
+    # count_pending ( samples, res){
+    pending_tickets = data.frame()
+    periods <- length(samples$unixtime)
+    for (p in (1:periods)){
+        
+        if ( p == periods){
+            break
+        }
+
+        date_label <- samples$date[p]
+        date_unixtime <- samples$unixtime[p]
+        date_month <- samples$month[p]
+        next_unixtime_str <- samples$unixtime[p+1]
+
+        next_month <- as.POSIXlt(as.numeric(next_unixtime_str), origin="1970-01-01")
+        print(paste("date_label = ",date_label, " next_month = ", next_month))
+        
+        test <- subset(res,res$date < next_month)
+
+        if (nrow(test) > 0){
+            maxs <- aggregate(id ~ issue_id, data = test, FUN = max)
+            resultado <- merge(maxs, test)
+            #open_rows <- nrow(subset(resultado, resultado$status=="Open"))
+            open_rows <- nrow(subset(resultado, resultado$status==open_status))
+            #reopened_rows <- nrow(subset(resultado, resultado$status=="Reopened"))
+            reopened_rows <- nrow(subset(resultado, resultado$status==reopened_status))
+            ##
+            open_tickets <- open_rows + reopened_rows
+            print(paste("open tickets:", open_tickets))
+        }else{
+            open_tickets <- 0
+        }
+        #aux_df = data.frame(unixtime=date_unixtime,date=date_label,tickets=open_tickets)
+        aux_df <- data.frame(month=date_month, pending_tickets = open_tickets)
+        if (nrow(pending_tickets)){
+            pending_tickets <- merge(pending_tickets,aux_df, all=TRUE)
+        }else{
+            pending_tickets <- aux_df
+        }        
+    }
+    return(pending_tickets)
+}
+
+##
+## END working on it
+##
 
 
 GetEvolBMIIndex <- function(closed_condition, period, startdate, enddate){
