@@ -171,7 +171,6 @@ static_data = merge(static_data, latest_activity730)
 
 # 3- Creating file with static data
 createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
-stop()
 
 # Top authors
 
