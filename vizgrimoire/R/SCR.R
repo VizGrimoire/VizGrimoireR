@@ -124,7 +124,6 @@ GetReposSCRName <- function (startdate, enddate, limit = 0){
     if (limit > 0) {
         limit_sql = paste(" LIMIT ", limit)
     }
-
     q = paste("SELECT t.url as name, COUNT(DISTINCT(i.id)) AS issues
                FROM  issues i, trackers t
                WHERE i.tracker_id = t.id AND
@@ -137,17 +136,40 @@ GetReposSCRName <- function (startdate, enddate, limit = 0){
     return (data)
 }
 
+GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
+    limit_sql=""
+    if (limit > 0) {
+        limit_sql = paste(" LIMIT ", limit)
+    }    
+    q = paste("SELECT c.name as name, COUNT(DISTINCT(i.id)) AS issues
+               FROM  ",identities_db,".companies c,
+                     ",identities_db,".upeople_companies upc,
+                     people_upeople pup,
+                     issues i
+               WHERE i.submitted_by = pup.people_id AND
+                 upc.upeople_id = pup.upeople_id AND
+                 c.id = upc.company_id AND
+                 i.submitted_on >=",  startdate, " AND
+                 i.submitted_on < ", enddate, "
+               GROUP BY c.name
+               ORDER BY issues DESC ",limit_sql,";", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
 
 #########
 #Functions about the status of the review
 #########
 
 # REVIEWS
-GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutionary){
+GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutionary, identities_db){
 
     #Building the query
     fields = paste(" count(distinct(i.issue)) as ", type)
-    tables = paste("issues i", GetSQLReportFromSCR(NA, type_analysis))
+    tables = paste("issues i", GetSQLReportFromSCR(identities_db, type_analysis))
     filters <- ifelse(type == "submitted", "",
               ifelse(type == "opened", " (i.status = 'NEW' or i.status = 'WORKINPROGRESS') ",
               ifelse(type == "new", " i.status = 'NEW' ",
@@ -166,6 +188,7 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
     }else{
         q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
     }
+    
 
     #Retrieving results
     query <- new("Query", sql = q)
@@ -175,61 +198,61 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
 
 # EVOLUTIONARY META FUNCTIONS BASED ON REVIEWS
 
-EvolReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, TRUE))
+EvolReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "opened", type_analysis, TRUE))
+EvolReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "opened", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "new", type_analysis, TRUE))
+EvolReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "new", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, TRUE))
+EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "closed", type_analysis, TRUE))
+EvolReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "closed", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "merged", type_analysis, TRUE))
+EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "merged", type_analysis, TRUE, identities_db))
 }
-EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, TRUE))
+EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, TRUE, identities_db))
 }
 
 # STATIC META FUNCTIONS BASED ON REVIEWS
 
-StaticReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, FALSE))
+StaticReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "opened", type_analysis, FALSE))
+StaticReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "opened", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "new", type_analysis, FALSE))
+StaticReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "new", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, FALSE))
+StaticReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "closed", type_analysis, FALSE))
+StaticReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "closed", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "merged", type_analysis, FALSE))
+StaticReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "merged", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, FALSE))
+StaticReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, FALSE, identities_db))
 }
 
 #WORK ON PATCHES: ANY REVIEW MAY HAVE MORE THAN ONE PATCH

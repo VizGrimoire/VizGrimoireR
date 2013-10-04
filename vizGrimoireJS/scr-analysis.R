@@ -177,6 +177,42 @@ if ('repositories' %in% reports) {
 }
 
 ########
+#ANALYSIS PER COMPANY
+########
+
+print("ANALYSIS PER COMPANY BASIC")
+if ('repositories' %in% reports) {
+    # repos  <- GetReposSCRName(conf$startdate, conf$enddate, 30)
+    repos  <- GetCompaniesSCRName(conf$startdate, conf$enddate, conf$identities_db)
+    repos <- repos$name
+    repos_file_names = gsub("/","_",repos)
+    createJSON(repos_file_names, paste(destdir,"/scr-companies.json", sep=''))
+    
+    # missing information from the rest of type of reviews, patches and
+    # number of patches waiting for reviewer and submitter 
+    for (company in repos) {
+        company_file = gsub("/","_",company)
+        type_analysis = list('company', company)
+        # Evol
+        submitted <- EvolReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        submitted <- completePeriodIds(submitted, conf$granularity, conf)
+        merged <- EvolReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        merged <- completePeriodIds(merged, conf$granularity, conf)
+        abandoned <- EvolReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        abandoned <- completePeriodIds(abandoned, conf$granularity, conf)
+        evol = merge(submitted, merged, all = TRUE)
+        evol = merge(evol, abandoned, all = TRUE)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        createJSON(evol, paste(destdir, "/",company_file,"-scr-evolutionary.json", sep=''))
+        # Static
+        static <- StaticReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
+        static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
+        createJSON(static, paste(destdir, "/",company_file,"-scr-static.json", sep=''))
+    }
+}
+
+########
 # PEOPLE
 ########
 if ('people' %in% reports) {
