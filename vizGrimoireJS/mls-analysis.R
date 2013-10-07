@@ -129,7 +129,7 @@ if ('repositories' %in% reports) {
 }
 
 if ('companies' %in% reports){    
-    companies = companiesNames(identities_db, startdate, enddate)
+    companies = companiesNames(identities_db, startdate, enddate, c("-Bot"))
     createJSON(companies, paste(destdir,"/mls-companies.json",sep=''))
    
     for (company in companies){       
