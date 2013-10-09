@@ -164,11 +164,8 @@ if __name__ == '__main__':
     myvars = {}
     myvars = get_vars()
 
-    execute_scr_script(myvars)
-    sys.exit()
     execute_scm_script(myvars)
     execute_its_script(myvars)
     execute_mls_script(myvars)
+    execute_scr_script(myvars)
     execute_irc_script(myvars)
-    
-

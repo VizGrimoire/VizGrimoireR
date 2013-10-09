@@ -149,7 +149,10 @@ GetFiltersReposIRC <- function () {
 }
 
 GetReposNameIRC <- function() {
-    q <- "SELECT name FROM channels"
+    q <- "SELECT name, count(i.id) AS total
+          FROM irclog i, channels c
+          WHERE i.channel_id=c.id
+          GROUP BY name ORDER BY total DESC"
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data$name)
