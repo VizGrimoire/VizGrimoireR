@@ -42,7 +42,7 @@ GetSQLRepositoriesWhereSCR <- function(repository){
 
 GetSQLCompaniesFromSCR <- function(identities_db){
     #tables necessaries for companies
-    return (paste(" , ",identities_db,".people_upeople pup,
+    return (paste(" , people_upeople pup,
                   ",identities_db,".upeople_companies upc,
                   ",identities_db,".companies c", sep=""))
 }
@@ -59,7 +59,7 @@ GetSQLCompaniesWhereSCR <- function(company){
 
 GetSQLCountriesFromSCR <- function(identities_db){
     #tables necessaries for companies
-    return (paste(" , ",identities_db,".people_upeople pup,
+    return (paste(" , people_upeople pup,
                   ",identities_db,".upeople_countries upc,
                   ",identities_db,".countries c ", sep=""))
 }
@@ -149,6 +149,7 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
                WHERE i.submitted_by = pup.people_id AND
                  upc.upeople_id = pup.upeople_id AND
                  c.id = upc.company_id AND
+                 i.status = 'merged' AND
                  i.submitted_on >=",  startdate, " AND
                  i.submitted_on < ", enddate, "
                GROUP BY c.name
@@ -157,8 +158,6 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
     data <- run(query)
     return (data)
 }
-
-
 
 #########
 #Functions about the status of the review
@@ -179,16 +178,14 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
               ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
               NA)))))))
     filters = paste(filters, GetSQLReportWhereSCR(type_analysis), sep="")
-    print(filters)
 
     #Adding dates filters (and evolutionary or static analysis)
     if (evolutionary){
         q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
                       startdate, enddate)
-    }else{
+    } else{
         q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
     }
-    
 
     #Retrieving results
     query <- new("Query", sql = q)
