@@ -1375,4 +1375,50 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
 
 }
 
+GetCommitsSummaryCompanies <- function(period, startdate, enddate, identities_db, num_companies){
 
+    companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
+    companies <- companies$name
+
+    first = TRUE
+    first_companies = data.frame()
+    count = 1
+    for (company in companies){
+        company_name = paste("'", company, "'", sep='')
+        company_aux = paste("", company, "", sep='')
+
+        commits = EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, list("company", company_name))
+        commits <- completePeriodIds(commits, conf$granularity, conf)
+        commits <- commits[order(commits$id), ]
+        commits[is.na(commits)] <- 0
+
+        if (count <= num_companies -1){
+            #Case of companies with entity in the dataset
+            if (first){
+                first = FALSE
+                first_companies = commits
+            } 
+            first_companies = merge(first_companies, commits, all=TRUE)       
+            colnames(first_companies)[colnames(first_companies)=="commits"] <- company_aux
+        } else {
+            
+            #Case of companies that are aggregated in the field Others
+            if (first==FALSE){
+                first = TRUE
+                first_companies$Others = commits$commits
+            }else{
+                first_companies$Others = first_companies$Others + commits$commits
+            }
+        }        
+        count = count + 1
+        #print(first_companies)
+    }
+
+    #TODO: remove global variables...
+    first_companies <- completePeriodIds(first_companies, conf$granularity, conf)
+    first_companies <- first_companies[order(first_companies$id), ]
+    first_companies[is.na(first_companies)] <- 0
+    print(first_companies)
+
+    return(first_companies)
+}
