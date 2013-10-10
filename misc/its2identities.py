@@ -94,7 +94,20 @@ def create_tables(db, connector):
 
    return
 
-def insert_identity(connector_ids, connector_its, people_id, 
+def insert_identity(connector_ids, connector_its, upeople_id, 
+                    name, email, user_id):                        
+    if name != None:
+        query = "insert into identities(upeople_id, identity, type)" + \
+                "values(" + str(upeople_id) + ", '" + name + "', 'name');"
+        execute_query(connector_ids, query)
+
+    if email != None:
+        query = "insert into identities(upeople_id, identity, type)" + \
+                "values(" + str(upeople_id) + ", '" + email + "', 'email');"
+        execute_query(connector_ids, query)
+
+
+def insert_upeople(connector_ids, connector_its, people_id, 
                     name, email, user_id):
     # Insert in people_upeople, identities and upeople (new identitiy)
  
@@ -110,7 +123,7 @@ def insert_identity(connector_ids, connector_its, people_id,
         uidentifier = name 
     elif user_id and user_id != 'None':
         uidentifier = user_id 
-    query = "insert into upeople(id, identifier) values(" + str(upeople_id) + ",'"+str(uidentifier)+"');"
+    query = "insert into upeople (id, identifier) values(" + str(upeople_id) + ",'"+str(uidentifier)+"');"
     execute_query(connector_ids, query)
     
     if name != 'None':
@@ -166,21 +179,30 @@ def main():
         
       results_ids = search_identity(connector_ids, name)
       if name != '' and len(results_ids) > 0:
+        upeople_id = int(results_ids[0][0])
         print "Reusing identity by name " + name
-        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+        reuse_identity(connector_its, people_id, upeople_id)
+        # Insert email identity also
+        if (email != ''):
+            insert_identity(connector_ids, connector_its, 
+                            upeople_id, None, email, None)
         continue
       results_ids = search_identity(connector_ids, email)
       if email != '' and len(results_ids) > 0:
         print "Reusing identity by email " + email
-        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+        reuse_identity(connector_its, people_id, upeople_id)
+        # Insert name identity also
+        if (name != ''):
+            insert_identity(connector_ids, connector_its, 
+                            upeople_id, name, None, None)
         continue
       results_ids = search_identity(connector_ids, user_id)
       if user_id != '' and len(results_ids) > 0:
         print "Reusing identity by user_id " + user_id
-        reuse_identity(connector_its, people_id, int(results_ids[0][0]))
+        reuse_identity(connector_its, people_id, upeople_id)
         continue
-      insert_identity(connector_ids, connector_its, 
-                      people_id, name, email, user_id)
+      insert_upeople(connector_ids, connector_its, 
+                     people_id, name, email, user_id)
    db_ids.commit()
    
    # Print total people and unique people
