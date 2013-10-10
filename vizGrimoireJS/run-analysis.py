@@ -85,6 +85,9 @@ def get_vars():
     v = {}
     v = options['generic']
     v.update(options['r'])
+    # Fixed locations
+    v['r_libs'] = '../../r-lib'
+    v['json_dir'] = '../../../json'
 
     # if end_date is not present or is empty we set up today's date
     if not ('end_date' in v):
@@ -96,6 +99,9 @@ def get_vars():
     return v
 
 def execute_scm_script(myvars):
+    if not 'db_cvsanaly' in myvars:
+        print("SCM analysis disabled")
+        return
     v = myvars
     print("Starting SCM analysis ..")
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < scm-analysis.R >> %s 2>&1" %
@@ -107,6 +113,9 @@ def execute_scm_script(myvars):
     print("SCM analysis finished")
 
 def execute_its_script(myvars):
+    if not 'db_bicho' in myvars:
+        print("ITS analysis disabled")
+        return
     v = myvars
     print("Starting ITS analysis  ..")
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s -t %s < its-analysis.R >> %s 2>&1" %
@@ -117,6 +126,9 @@ def execute_its_script(myvars):
     print("ITS analysis finished")
 
 def execute_mls_script(myvars):
+    if not 'db_mlstats' in myvars:
+        print("MLS analysis disabled")
+        return
     v = myvars
     print("Starting MLS analysis  ..")
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < mls-analysis.R >> %s 2>&1" %
