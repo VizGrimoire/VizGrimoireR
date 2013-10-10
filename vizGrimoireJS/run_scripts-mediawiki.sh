@@ -16,6 +16,7 @@ LOGS=mediawiki.log
 DIR=$5
 # REPORTS="repositories,countries,companies,people"
 REPORTS="repositories,people"
+REPORTS_SCR="repositories,people,companies"
 
 echo "Analisys from $START to $END"
 echo "LOGS in $LOGS"
@@ -40,8 +41,8 @@ IRCdb=acs_irc_automatortest_1938
 
 # SCR
 echo "In SCR Analysis ..."
-echo "LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r repositories,people -d $6 -u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R" >> $LOGS 2>&1
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r repositories,people -d $6 -u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R >> $LOGS 2>&1
+echo "LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS_SCR -d $6 -u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R" >> $LOGS 2>&1
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -r $REPORTS_SCR -d $6 -u root -i $1  -s $START -e $END -o $DIR -g months  < scr-analysis.R >> $LOGS 2>&1
 
 # IRC
 echo "In IRC Analysis ..."

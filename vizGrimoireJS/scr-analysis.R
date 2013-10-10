@@ -154,6 +154,7 @@ if ('repositories' %in% reports) {
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for (repo in repos) {
+        print (repo)
         repo_file = gsub("/","_",repo)
         type_analysis = list('repository', repo)
         # Evol
@@ -183,14 +184,15 @@ if ('repositories' %in% reports) {
 print("ANALYSIS PER COMPANY BASIC")
 if ('repositories' %in% reports) {
     # repos  <- GetReposSCRName(conf$startdate, conf$enddate, 30)
-    repos  <- GetCompaniesSCRName(conf$startdate, conf$enddate, conf$identities_db)
-    repos <- repos$name
-    repos_file_names = gsub("/","_",repos)
-    createJSON(repos_file_names, paste(destdir,"/scr-companies.json", sep=''))
+    companies  <- GetCompaniesSCRName(conf$startdate, conf$enddate, conf$identities_db)
+    companies <- repos$name
+    companies_file_names = gsub("/","_",companies)
+    createJSON(companies_file_names, paste(destdir,"/scr-companies.json", sep=''))
     
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
-    for (company in repos) {
+    for (company in companies) {
+        print(company)
         company_file = gsub("/","_",company)
         type_analysis = list('company', company)
         # Evol

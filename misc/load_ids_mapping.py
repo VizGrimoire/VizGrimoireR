@@ -176,7 +176,7 @@ def update_upeople_company(cursor, upeople_id, company, debug):
                    % (company_id, upeople_id))
 
 def insert_upeople_company(cursor, upeople_id, company, debug):    
-    company_ud = get_company_id(cursor, company, debug)
+    company_id = get_company_id(cursor, company, debug)
     query = "INSERT INTO upeople_companies (company_id, upeople_id) VALUES (%s, '%s')" % (company_id, upeople_id)
     if (debug): print query
     cursor.execute(query)
@@ -343,7 +343,7 @@ if __name__ == '__main__':
                     insert_upeople_country(cursor, upeople_id, country, opts.debug)
                 elif (opts.map == "companies"):
                     insert_upeople_company(cursor, upeople_id, company, opts.debug)
-                count_updated +=1
+                count_added +=1
             else:
                 if (opts.map == "companies"):
                     update_upeople_company(cursor, upeople_id, company, opts.debug)
