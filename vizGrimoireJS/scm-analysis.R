@@ -65,7 +65,7 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 #########
 
 commits = GetCommitsSummaryCompanies(period, conf$startdate, conf$enddate, conf$identities_db, 10)
-createJSON (evol_data, paste(destdir,"/scm-companies-commits-summary.json", sep=''))
+createJSON (commits, paste(destdir,"/scm-companies-commits-summary.json", sep=''))
 
 # 1- Retrieving and 2- merging data
 evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db)
