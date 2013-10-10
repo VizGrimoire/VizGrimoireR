@@ -323,7 +323,11 @@ dupIds = {}
 
 # Now, check all identities in persons
 for person in people:
-    (id, name, email) = person
+    try:
+        (id, name, email) = person
+    except:
+        # Not a cvsanaly db just create empty tables
+        break
     # In Linux kernel, there are several "???", "", etc. names
     # Let's substitute them for something meaningful (the id)
     if name in ("???", "?", "", "root"):
