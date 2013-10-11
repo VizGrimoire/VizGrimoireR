@@ -488,7 +488,8 @@ GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA))
 # Tops
 ##
 
-GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+# Is this right???
+GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
@@ -503,8 +504,8 @@ GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots
         date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
     }
     
-    q <- paste("SELECT up.id as id, up.identifier as closers,
-                       count(distinct(c.id)) as closed
+    q <- paste("SELECT up.id as id, up.identifier as reviewers,
+                       count(distinct(c.id)) as reviewed
                 FROM people_upeople pup, changes c, ", identities_db,".upeople up
                 WHERE ", filter_bots, "
                     c.changed_by = pup.people_id and
@@ -513,39 +514,62 @@ GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots
                     c.changed_on < ", enddate, "
                     ",date_limit, "
                 GROUP BY up.identifier
-                ORDER BY closed desc
+                ORDER BY reviewed desc
                 LIMIT 10;", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetTopOpenersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, merged = FALSE) {
     date_limit = ""
+    merged_sql = ""
+    rol = "openers"
+    action = "opened"
     filter_bots = ''
     for (bot in bots){
         filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
-    }    
-    
+    }
+
     if (days != 0 ) {
         query <- new("Query",
                 sql = "SELECT @maxdate:=max(submitted_on) from issues limit 1")
         data <- run(query)
         date_limit <- paste(" AND DATEDIFF(@maxdate, submitted_on)<",days)
-    }    
+    }
+
+    if (merged) {
+        merged_sql = " AND status='MERGED' "
+        rol = "mergers"
+        action = "merged"
+    }
         
-    q <- paste("SELECT up.id as id, up.identifier as openers,
-                    count(distinct(i.id)) as opened
+    q <- paste("SELECT up.id as id, up.identifier as ",rol,",
+                    count(distinct(i.id)) as ",action,"
                 FROM people_upeople pup, issues i, ", identities_db,".upeople up
                 WHERE ", filter_bots, "
                     i.submitted_by = pup.people_id and
                     pup.upeople_id = up.id and
                     i.submitted_on >= ", startdate, " and
                     i.submitted_on < ", enddate, "
-                    ",date_limit, "
+                    ",date_limit, merged_sql, "
                 GROUP BY up.identifier
-                ORDER BY opened desc
+                ORDER BY ",action," desc
                 LIMIT 10;", sep="")
+    return(q)
+}
+
+GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE)
+    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
