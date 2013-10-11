@@ -745,6 +745,61 @@ GetDiffSendersDays <- function(period, init_date, days){
 
 }
 
+EvolMessagesSentCompanies <- function(company_name, i_db, period, startdate, enddate) {
+    
+    fields = paste('COUNT(m.message_ID) AS sent')
+    tables = GetTablesCompanies(i_db)
+    filters = paste(GetFiltersCompanies(),' AND
+                    c.name = \'',company_name,'\'',sep='')
+    q <- GetSQLPeriod(period,'first_date', fields, tables, filters, 
+            startdate, enddate)                    
+    query <- new ("Query", sql = q)
+    sent<- run(query)    
+    return (sent)   
+}
 
+GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, num_companies){
+    companies  <- companiesNames(identities_db, startdate, enddate, c("-Bot", "-Individual", "-Unknown"))
+
+    first = TRUE
+    first_companies = data.frame()
+    count = 1
+    for (company in companies){
+
+        sent = EvolMessagesSentCompanies(company, identities_db, period, startdate, enddate)
+        sent <- completePeriodIds(sent, conf$granularity, conf)
+        sent <- sent[order(sent$id), ]
+        sent[is.na(sent)] <- 0
+
+        if (count <= num_companies -1){
+            #Case of companies with entity in the dataset
+            if (first){
+                first = FALSE
+                first_companies = sent
+            }
+            first_companies = merge(first_companies, sent, all=TRUE)
+            colnames(first_companies)[colnames(first_companies)=="sent"] <- company
+        } else {
+
+            #Case of companies that are aggregated in the field Others
+            if (first==FALSE){
+                first = TRUE
+                first_companies$Others = sent$sent
+            }else{
+                first_companies$Others = first_companies$Others + sent$sent
+            }
+        }
+        count = count + 1
+        #print(first_companies)
+    }
+
+    #TODO: remove global variables...
+    first_companies <- completePeriodIds(first_companies, conf$granularity, conf)
+    first_companies <- first_companies[order(first_companies$id), ]
+    first_companies[is.na(first_companies)] <- 0
+    print(first_companies)
+
+    return(first_companies)
+}
 
 
