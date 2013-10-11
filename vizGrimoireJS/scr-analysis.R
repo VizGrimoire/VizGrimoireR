@@ -238,11 +238,10 @@ if ('people' %in% reports) {
 }
 
 # Tops
-
 top_reviewers <- list()
-top_reviewers[['closers.']] <- GetTopClosersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['closers.last year']]<- GetTopClosersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['closers.last month']]<- GetTopClosersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['reviewers']] <- GetTopReviewersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['reviewers.last year']]<- GetTopReviewersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots)
 
 # Top openers
 top_openers <- list()
@@ -250,5 +249,11 @@ top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf
 top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
 top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
 
-createJSON (c(top_reviewers, top_openers), paste(destdir,"/scr-top.json", sep=''))
+# Top mergers
+top_mergers <- list()
+top_mergers[['mergers.']]<-GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
+
+createJSON (c(top_reviewers, top_openers, top_mergers), paste(destdir,"/scr-top.json", sep=''))
 
