@@ -1376,6 +1376,11 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
 }
 
 GetCommitsSummaryCompanies <- function(period, startdate, enddate, identities_db, num_companies){
+    # This function returns the following dataframe structrure
+    # unixtime, date, week/month/..., company1, company2, ... company[num_companies -1], others
+    # The 3 first fields are used for data and ordering purposes
+    # The "companyX" fields are those that provide info about that company
+    # The "Others" field is the aggregated value of the rest of the companies
 
     companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
     companies <- companies$name
