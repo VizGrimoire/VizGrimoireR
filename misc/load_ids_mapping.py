@@ -149,9 +149,12 @@ def insert_upeople_country(cursor, upeople_id, country, debug):
         print ("New country added " + country)
     else:
         country_id = cursor.fetchall()[0][0]
-        
-    cursor.execute("INSERT INTO upeople_countries (country_id, upeople_id) VALUES (%s, '%s')"
+    
+    try:
+        cursor.execute("INSERT INTO upeople_countries (country_id, upeople_id) VALUES (%s, '%s')"
                    % (country_id, upeople_id))
+    except:
+        print ("Mapping already exists for " + upeople_id + " " + country)
 
 def get_company_id(cursor, company, debug):
     company_id = None
@@ -172,8 +175,11 @@ def get_company_id(cursor, company, debug):
 
 def update_upeople_company(cursor, upeople_id, company, debug):
     company_id = get_company_id(cursor, company, debug)
-    cursor.execute("UPDATE upeople_companies SET company_id='%s' WHERE upeople_id='%s'"
+    try:
+        cursor.execute("UPDATE upeople_companies SET company_id='%s' WHERE upeople_id='%s'"
                    % (company_id, upeople_id))
+    except:
+        print ("Mapping already exists for " + str(upeople_id) + " " + company)   
 
 def insert_upeople_company(cursor, upeople_id, company, debug):    
     company_id = get_company_id(cursor, company, debug)
