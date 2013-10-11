@@ -182,10 +182,10 @@ if ('repositories' %in% reports) {
 ########
 
 print("ANALYSIS PER COMPANY BASIC")
-if ('repositories' %in% reports) {
+if ('companies' %in% reports) {
     # repos  <- GetReposSCRName(conf$startdate, conf$enddate, 30)
     companies  <- GetCompaniesSCRName(conf$startdate, conf$enddate, conf$identities_db)
-    companies <- repos$name
+    companies <- companies$name
     companies_file_names = gsub("/","_",companies)
     createJSON(companies_file_names, paste(destdir,"/scr-companies.json", sep=''))
     
