@@ -54,6 +54,9 @@ enddate <- conf$enddate
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 rfield = reposField()
 
+sent <- GetSentSummaryCompanies(period, startdate, enddate, identities_db, 10)
+createJSON (sent, paste(destdir,"/mls-sent-companies-summary.json", sep=''))
+
 data <- GetEvolMLS(rfield, period, startdate, enddate, identities_db, reports)
 data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))

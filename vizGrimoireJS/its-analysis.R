@@ -56,7 +56,6 @@ if (conf$granularity == 'years') {
     nperiod = 1
 } else {stop(paste("Incorrect period:",conf$granularity))}
 
-
 # backends
 if (conf$backend == 'allura'){
     closed_condition <- "new_value='CLOSED'"
@@ -89,6 +88,10 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 destdir <- conf$destination
 
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
+
+closed = GetClosedSummaryCompanies(period, startdate, enddate, identities_db, closed_condition, 10)
+createJSON (closed, paste(destdir,"/its-closed-companies-summary.json", sep=''))
+
 
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
@@ -152,8 +155,8 @@ createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 # Top closers
 top_closers_data <- list()
 top_closers_data[['closers.']]<-GetTopClosersByAssignee(0, conf$startdate, conf$enddate,identities_db, c("-Bot"))
-top_closers_data[['closers.last year']]<-GetTopClosersByAssignee(365, conf$startdate, conf$enddate,identities_db, c("-Bot"))
-top_closers_data[['closers.last month']]<-GetTopClosersByAssignee(31, conf$startdate, conf$enddate,identities_db, c("-Bot"))
+#top_closers_data[['closers.last year']]<-GetTopClosersByAssignee(365, conf$startdate, conf$enddate,identities_db, c("-Bot"))
+#top_closers_data[['closers.last month']]<-GetTopClosersByAssignee(31, conf$startdate, conf$enddate,identities_db, c("-Bot"))
 
 
 createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
