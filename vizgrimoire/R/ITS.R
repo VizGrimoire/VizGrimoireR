@@ -628,6 +628,7 @@ GetCompanyEvolClosed <- function(company_name, closed_condition, period,
         startdate, enddate, identities_db){
     q <- GetCompanyClosed (company_name, closed_condition, period, 
                     startdate, enddate, identities_db, TRUE)
+    print(q)
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
@@ -1046,31 +1047,71 @@ MarkovChain<-function()
 }
 
 
+GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db, closed_condition, num_companies){
 
+    # All companies info
+    q = paste(
+         "SELECT com.name as name, 
+                 YEARWEEK( changed_on , 3 ) AS week,  
+                 COUNT(DISTINCT(issue_id)) AS closed 
+         FROM changes c, 
+              people_upeople pup,
+              ",identities_db,".upeople_companies upc , 
+              ",identities_db,".companies com 
+         WHERE changed_on >=",startdate," AND 
+               changed_on < ",enddate,"  AND  
+               pup.people_id = c.changed_by AND 
+               pup.upeople_id = upc.upeople_id AND 
+               changed_on >= upc.init AND 
+               changed_on < upc.end  AND  
+               ",closed_condition,"  AND 
+               upc.company_id = com.id
+         GROUP BY com.name, 
+                  YEARWEEK( changed_on , 3 )   
+         ORDER BY com.name, 
+                  YEARWEEK( changed_on , 3 );", sep="")
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+ 
+    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, c("-Bot", "-Individual", "-Unknown"))
+    companies <- companies$name
+    
+    count = 1
+    first_companies = data.frame()
+    first = TRUE
+    for (company in companies){
+        # Cleaning data
+        print(company)
+        company_data = subset(data, data$name %in% company)
+        company_data <- completePeriodIds(company_data, conf$granularity, conf)
+        company_data <- company_data[order(company_data$id), ]
+        company_data[is.na(company_data)] <- 0
+        company_data$name <- NULL
+        
+        # Up to here, everything's correct, dataset is as expected
+        # In the following I should move to merge companies and others
+        # as similarly done in mls and scm
+        if (count <= num_companies -1){
+            # Case of companies with entity in the dataset
+            if (first){
+                first = FALSE
+                first_companies = company_data
+            }
+            first_companies = merge(first_companies, company_data, all=TRUE)
+            colnames(first_companies)[colnames(first_companies)=="closed"] <- company
 
+        } else {
+            #Case of companies that are aggregated in the field Others
+            if (first==FALSE){
+                first = TRUE
+                first_companies$Others = company_data$closed
+            }else{
+                first_companies$Others = first_companies$Others + company_data$closed
+            }
+        }
+        count = count + 1
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return(first_companies)
+}
