@@ -43,7 +43,6 @@ query.scm <- "SELECT author_id as id,
 ## when upeople table (unique identities) is available
 ##
 
-
 query.scm.unique <- "SELECT 
     upeople.uid as id,
     people.name as name,
@@ -58,7 +57,8 @@ WHERE
     people.id = upeople.id
 GROUP BY upeople.uid"
 
-# Query for getting first and last date from MLS database
+## Query for getting first and last date for all senders in a MLS database
+##
 query.mls <- "SELECT people.email_address as id,
                      people.name as name,
                      people.email_address as email,
@@ -69,7 +69,9 @@ query.mls <- "SELECT people.email_address as id,
                     AND people.email_address = messages_people.email_address
               GROUP BY people.email_address"
 
-## Query to get first and last date from ITS changes
+## Query to get first and last date for all people in an ITS (Bicho)
+##  database (changes table)
+##
 query.its <- "SELECT changes.changed_by as id,
                      people.name as name,
                      people.email as email,
@@ -80,18 +82,30 @@ query.its <- "SELECT changes.changed_by as id,
               WHERE changes.changed_by = people.id
               GROUP BY changes.changed_by"
 
-
+## Build an SQL query to get people active since months ago.
+##
+## Returns a query to get all records produced by a "first and last date" query
+##  which include a lastdate larger than months before now
+## Returned queries are like
+##  SELECT * FROM ( .... ) mytable
+##  WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL 4 MONTH)
+## Arguments: query and number of months for intervals
+##
 build.query <- function (query, months) {
-    q <- paste("SELECT * FROM ( ",query,")mytable
-                WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",months," month)")
+    q <- paste("SELECT * FROM ( ", query, ") mytable
+                WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",
+                months," MONTH)")
     return(q)
 }
+
+## Declaring Demographics class
+##
 
 setClass(Class="Demographics",
          contains="data.frame",
          )
 
-## Initialize by storing the options that will be used later
+## Initialize it by storing the options that will be used later
 setMethod(f="initialize",
           signature="Demographics",
           definition=function(.Object, type, months, unique = FALSE, query = NULL){
