@@ -138,6 +138,7 @@ def insert_upeople_company(connector, upeople_id, company_id):
 
 
 def main(db):
+   sys.exit(0) # disable for Mediawiki report
    cfg = getOptions()   
    db, connector = connect(cfg)
    create_tables(db, connector)
@@ -145,7 +146,7 @@ def main(db):
    people = execute_query(connector, query)   
    rexp = "(.*@)(.*)"
    
-   for person in people:    
+   for person in people:
       upeople_id = int(person[0])
       email = str(person[1])
       if len(email) == 0:
