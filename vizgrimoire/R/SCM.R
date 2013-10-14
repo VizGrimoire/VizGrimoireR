@@ -437,7 +437,7 @@ StaticNumRepositories <- function(period, startdate, enddate, identities_db, typ
 
 StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
     #TODO: first_date and last_date should be in another function
-    select <- "SELECT count(s.id) as commits,
+    select <- "SELECT count(distinct(s.id)) as commits,
                DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date, 
                DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date "
     from <- " FROM scmlog s, actions a "
@@ -1324,21 +1324,38 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
   community$regular <- numeric(1)
   community$occasional <- numeric(1)
 
+  q <- paste("select count(distinct(s.id)) 
+                       from scmlog s, people p, actions a
+                       where s.author_id = p.id and 
+                             p.email <> '%gerrit@%' and
+                             p.email <> '%jenkins@%' and
+                             s.id = a.commit_id and
+                             s.date>=",startdate," and
+                             s.date<=",enddate,";", sep="")
+  query <- new("Query", sql=q)
+  total <- run(query)
+  total_commits <- as.numeric(total)
+
   # Database access: developer, %commits
   q <- paste(" select pup.upeople_id, 
-                      (count(distinct(s.id)) / (select count(*) from scmlog)) *100  as commits 
+                      (count(distinct(s.id))) as commits 
                from scmlog s,
                     actions a,
-                    people_upeople pup
+                    people_upeople pup,
+                    people p
                where s.id = a.commit_id and
                      s.date>=",startdate," and 
                      s.date<=",enddate," and
-                     s.author_id = pup.people_id
+                     s.author_id = pup.people_id and
+                     s.author_id = p.id and
+                     p.email <> '%gerrit@%' and
+                     p.email <> '%jenkins@%'
                group by pup.upeople_id
-               order by count(*) desc; ", sep="")
+               order by commits desc; ", sep="")
 
   query <- new("Query", sql=q)
   people <- run(query)
+  people$commits = (people$commits / total_commits) * 100
 
   # Calculating number of core, regular and occasional developers
   cont = 0
