@@ -67,6 +67,7 @@ query.mls <- "SELECT people.email_address as id,
               FROM messages, messages_people, people
               WHERE messages.message_ID = messages_people.message_id
                     AND people.email_address = messages_people.email_address
+                    AND messages_people.type_of_recipient = \"From\"
               GROUP BY people.email_address"
 
 ## Query to get first and last date for all people in an ITS (Bicho)
@@ -110,16 +111,43 @@ setMethod(f="initialize",
           signature="Demographics",
           definition=function(.Object, type, months, unique = FALSE, query = NULL){
               cat("~~~ Demographics: initializator ~~~ \n")
-              # do I need the as(...) ?
-              ## .Object@type <- type
-              ## .Object@months <- months
-              ## .Object@unique <- unique
               attr(.Object, 'type') <- type
               attr(.Object, 'months') <- months
               attr(.Object, 'unique') <- unique
+              if (type == 'scm') {
+                  cat("~~~ SCM query\n")
+                  if (unique) {
+                      sql <- query.scm.unique
+                  } else {
+                      sql <- query.scm
+                  }
+              } else if (type == 'mls') {
+                  cat("~~~ MLS query\n")
+                  sql <- query.mls
+              } else if (type == 'its') {
+                  cat("~~~ ITS query\n")
+                  sql <- query.its
+              }
+              q <- new("Query", sql = sql)
+              ## Attr activity is a dataframe with a row per person,
+              ##  each row has its date for first and last activity,
+              ##  and the staying time in the repo (in days)
+              ## Dates have to be formated properly
+              activity <- run (q)
+              activity$firstdate <- strptime(activity$firstdatestr,
+                                             format="%Y-%m-%d %H:%M:%S")
+              activity$lastdate <- strptime(activity$lastdatestr,
+                                            format="%Y-%m-%d %H:%M:%S")
+              activity$stay <- round (as.numeric(
+                  difftime(activity$lastdate,
+                           activity$firstdate,
+                           units="days"))) 
+              attr(.Object, 'activity') <- activity
               return(.Object)
           })
 
+##
+## Generic Aging function
 ##
 setGeneric (
   name= "Aging",
@@ -127,32 +155,24 @@ setGeneric (
   )
 
 ##
+## Get activity data for persons still active in a Demographics object
+##
+## Returns a dataframe which is the activity attr of the objcet
+## It includes one row per person, with dated for first and last activity,
+##  and the staying time in the repo (in days), for those that are still
+##  active duirng the last .Object@months.
 setMethod(f="Aging",
           signature="Demographics",
           definition=function(.Object){
             cat("~~~ Demographics - Aging ~~~ \n")
-            
-            if (attr(.Object, 'type') == 'scm'){
-                cat("~~~ SCM query\n")
-                if (attr(.Object, 'unique')) {
-                    q <- new ("Query", sql = build.query(query.scm.unique,attr(.Object, 'months')))
-                } else {
-                    q <- new ("Query", sql = build.query(query.scm,attr(.Object, 'months')))
-                }
-            } else if (attr(.Object, 'type') == 'mls'){
-                cat("~~~ MLS query\n")
-                q <- new("Query", sql = build.query(query.mls,attr(.Object, 'months')))
-            } else if (attr(.Object, 'type') == 'its'){
-                cat("~~~ ITS query\n")
-                q <- new("Query", sql = build.query(query.its,attr(.Object, 'months')))
-            }
-            
-            res <- run (q)
-            res$firstdate <- strptime(res$firstdatestr,
-                                      format="%Y-%m-%d %H:%M:%S")
-            res$lastdate <- strptime(res$firstdatestr,
-                                     format="%Y-%m-%d %H:%M:%S")
-            return(res)
+            currenttime <- strptime(Sys.time(), format="%Y-%m-%d %H:%M:%S")
+            active <- subset (attr (.Object, 'activity'),
+                      floor(as.numeric(difftime(currenttime, lastdate,
+                                                units="days"))) <=
+                              attr (.Object, 'months') * 30)
+            active$left <- floor(as.numeric(difftime(currenttime, active$lastdate,
+                                                units="days")))
+            return(active)
           }
           )
 
@@ -168,20 +188,6 @@ setMethod(f="Birth",
           definition=function(.Object){
             cat("~~~ Demographics - Birth ~~~ \n")
             
-            if (attr(.Object, 'type') == 'scm'){
-                cat("~~~ SCM query\n")
-                if (attr(.Object, 'unique')) {
-                    q <- new ("Query", sql = query.scm.unique)
-                } else {
-                    q <- new ("Query", sql = query.scm)
-                }
-            } else if (attr(.Object, 'type') == 'mls'){
-                cat("~~~ MLS query\n")
-                q <- new("Query", sql = query.mls)
-            } else if (attr(.Object, 'type') == 'its'){
-                cat("~~~ ITS query\n")
-                q <- new("Query", sql = query.its)
-            }
             
             res <- run (q)
             res$firstdate <- strptime(res$firstdatestr,
@@ -192,40 +198,6 @@ setMethod(f="Birth",
           }
           )
 
-
-## ##
-## setMethod(f="initialize",
-##           signature="Demographics",
-##           definition=function(.Object, type, months, unique = FALSE, query = NULL){
-##             cat("~~~ Demographics: initializator ~~~ \n")
-            
-##             if (type == 'scm'){
-##                 cat("~~~ SCM query\n")
-##                 if (unique) {
-##                     q <- new ("Query", sql = build.query(query.scm.unique,months))
-##                 } else {
-##                     q <- new ("Query", sql = build.query(query.scm,months))
-##                 }
-##             } else if (type == 'mls'){
-##                 cat("~~~ MLS query\n")
-##                 q <- new("Query", sql = build.query(query.mls,months))
-##             } else if (type == 'its'){
-##                 cat("~~~ ITS query\n")
-##                 q <- new("Query", sql = build.query(query.its,months))
-##             }
-            
-##             as(.Object,"data.frame") <- run (q)
-##             .Object$firstdate <- strptime(.Object$firstdatestr,
-##                                           format="%Y-%m-%d %H:%M:%S")
-##             .Object$lastdate <- strptime(.Object$lastdatestr,
-##                                          format="%Y-%m-%d %H:%M:%S")
-##             .Object$stay <- round (as.numeric(
-##                                      difftime(.Object$lastdate,
-##                                               .Object$firstdate,
-##                                               units="days")))            
-##             return(.Object)
-##           }
-##           )
 
 ##
 ## Create a JSON file out of an object of this class
