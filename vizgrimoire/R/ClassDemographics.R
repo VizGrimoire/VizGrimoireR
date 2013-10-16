@@ -157,10 +157,10 @@ setGeneric (
 ##
 ## Get activity data for persons still active in a Demographics object
 ##
-## Returns a dataframe which is the activity attr of the objcet
-## It includes one row per person, with dated for first and last activity,
-##  and the staying time in the repo (in days), for those that are still
-##  active duirng the last .Object@months.
+## Returns a dataframe with one row per person, with dates for first
+##  and last activity, and the staying time in the repo (in days),
+##  for those that are still active duirng the last .Object@months.
+##
 setMethod(f="Aging",
           signature="Demographics",
           definition=function(.Object){
@@ -177,24 +177,23 @@ setMethod(f="Aging",
           )
 
 ##
+## Generic Birth function
+##
 setGeneric (
   name= "Birth",
   def=function(.Object){standardGeneric("Birth")}
   )
 
 ##
+## Get date of "birth" (entry) in the project (but it does more, see below)
+##
+## Returns a dataframe with all the data in the activity dataframe attribute
+##
 setMethod(f="Birth",
           signature="Demographics",
           definition=function(.Object){
             cat("~~~ Demographics - Birth ~~~ \n")
-            
-            
-            res <- run (q)
-            res$firstdate <- strptime(res$firstdatestr,
-                                      format="%Y-%m-%d %H:%M:%S")
-            res$lastdate <- strptime(res$firstdatestr,
-                                     format="%Y-%m-%d %H:%M:%S")
-            return(res)
+            return(attr(.Object, 'activity'))
           }
           )
 
