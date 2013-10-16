@@ -234,11 +234,15 @@ setGeneric (
   def=function(.Object,...){standardGeneric("GetAges")}
   )
 ##
-## Ages of developers for a certain date
+## Ages of developers for a certain date (spot date)
 ##
-## - date: date as string (eg: "2010-01-01")
+## Considers a developer to be active for that spot date it shows
+##  activity before it (was born before it) and after it (is
+##  showing to be alive after that spot date)
+## - date: date (spot date) as string (eg: "2010-01-01")
 ## - normalize.by: number of days to add to each age (or NULL
-##    for no normalization)
+##    for no normalization). This is useful for considering
+##    developers of age 0 to be really of age normalize.by
 ## Value: an Ages object
 ##
 setMethod(
@@ -246,20 +250,22 @@ setMethod(
   signature="Demographics",
   definition=function(.Object, date, normalize.by = NULL) {
 
-    active <- subset (as.data.frame (.Object),
-                      firstdate <= strptime(date, format="%Y-%m-%d") &
-                      lastdate >= strptime(date, format="%Y-%m-%d"))
-    age <- round (as.numeric (difftime (strptime(date, format="%Y-%m-%d"),
-                                        active$firstdate, units="days")))
-    if (is.null(normalize.by)) {
-      normalization <- 0
-    } else {
-      normalization <- normalize.by
-    }
-    ages <- new ("Ages", date=date,
-                 id = active$id, name = active$name, email = active$email,
-                 age = age + normalization)
-    return (ages)
+      spot.date <- strptime(date, format="%Y-%m-%d")
+      ## Get developers active (born) before spot.date, and still
+      ## active after it (that is, not dead yet).
+      active <- subset (attr(.Object, 'activity'),
+                        firstdate <= spot.date & lastdate >= spot.date)
+      age <- round (as.numeric (difftime (strptime(date, format="%Y-%m-%d"),
+                                          active$firstdate, units="days")))
+      if (is.null(normalize.by)) {
+          normalization <- 0
+      } else {
+          normalization <- normalize.by
+      }
+      ages <- new ("Ages", date=date,
+                   id = active$id, name = active$name, email = active$email,
+                   age = age + normalization)
+      return (ages)
   }
   )
 
