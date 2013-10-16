@@ -92,7 +92,10 @@ query.its <- "SELECT changes.changed_by as id,
 ##  WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL 4 MONTH)
 ## Arguments: query and number of months for intervals
 ##
+## DEPRECATED: This function seems not to be needed anymore
+##
 build.query <- function (query, months) {
+    cat("~~~ Demographics: build.query [DEPRECATED] ~~~ \n")
     q <- paste("SELECT * FROM ( ", query, ") mytable
                 WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",
                 months," MONTH)")
@@ -149,6 +152,8 @@ setMethod(f="initialize",
 ##
 ## Generic Aging function
 ##
+## DEPRECATED: This function seems not to be needed anymore
+##
 setGeneric (
   name= "Aging",
   def=function(.Object){standardGeneric("Aging")}
@@ -161,10 +166,12 @@ setGeneric (
 ##  and last activity, and the staying time in the repo (in days),
 ##  for those that are still active duirng the last .Object@months.
 ##
+## DEPRECATED: This function seems not to be needed anymore
+##
 setMethod(f="Aging",
           signature="Demographics",
           definition=function(.Object){
-            cat("~~~ Demographics - Aging ~~~ \n")
+            cat("~~~ Demographics - Aging [DEPRECATED] ~~~ \n")
             currenttime <- strptime(Sys.time(), format="%Y-%m-%d %H:%M:%S")
             active <- subset (attr (.Object, 'activity'),
                       floor(as.numeric(difftime(currenttime, lastdate,
@@ -179,6 +186,8 @@ setMethod(f="Aging",
 ##
 ## Generic Birth function
 ##
+## DEPRECATED: This function seems not to be needed anymore
+##
 setGeneric (
   name= "Birth",
   def=function(.Object){standardGeneric("Birth")}
@@ -189,10 +198,12 @@ setGeneric (
 ##
 ## Returns a dataframe with all the data in the activity dataframe attribute
 ##
+## DEPRECATED: This function seems not to be needed anymore
+##
 setMethod(f="Birth",
           signature="Demographics",
           definition=function(.Object){
-            cat("~~~ Demographics - Birth ~~~ \n")
+            cat("~~~ Demographics - Birth [DEPRECATED] ~~~ \n")
             return(attr(.Object, 'activity'))
           }
           )
