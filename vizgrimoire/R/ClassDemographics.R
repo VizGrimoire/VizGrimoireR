@@ -135,7 +135,10 @@ setMethod(f="initialize",
               attr(.Object, 'type') <- type
               attr(.Object, 'months') <- months
               attr(.Object, 'unique') <- unique
-              if (type == 'scm') {
+              if (!is.null(query)) {
+                  ## We have a query, that's it
+                  sql <- query
+              } else if (type == 'scm') {
                   cat("~~~ SCM query\n")
                   if (unique) {
                       sql <- query.scm.unique
