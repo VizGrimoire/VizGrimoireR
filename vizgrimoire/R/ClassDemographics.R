@@ -109,10 +109,28 @@ setClass(Class="Demographics",
          contains="data.frame",
          )
 
-## Initialize it by storing the options that will be used later
+##
+## Demographics class: instantiation
+##
+## Queries the database to get demographics data, and stores it for later
+##  processing
+##
+## Arguments:
+##  - type: "scm" | "its" | "mls"
+##     Select specific queries for scm, its or mls MetricsGrimoire databases
+##  - months: Number of months per period (not really used)
+##     [DEPRECATED]
+##  - unique: whether to use the tables of MetricsGrimoire databases
+##     with unique identities
+##  - query: specific query to use
+##     When specified, renders type and unique void
+##     The query should produce rows with id, name, email, actions,
+##     firstdatestr, lastdatestr (each row corresponds to the activity
+##     of a single person)
+##
 setMethod(f="initialize",
           signature="Demographics",
-          definition=function(.Object, type, months, unique = FALSE, query = NULL){
+          definition=function(.Object, type, months = 6, unique = FALSE, query = NULL){
               cat("~~~ Demographics: initializator ~~~ \n")
               attr(.Object, 'type') <- type
               attr(.Object, 'months') <- months
