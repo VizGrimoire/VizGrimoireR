@@ -581,7 +581,7 @@ GetStaticRepoITS <- function (repo, startdate, enddate) {
 # Companies
 #
 # TODO: Strange companies name order using issues and not closed like countries
-GetCompaniesNameITS <- function(startdate, enddate, identities_db, filter=c()) {
+GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condition, filter=c()) {
     # companies_limit = 30    
     affiliations = ""
     for (aff in filter){
@@ -590,15 +590,17 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, filter=c()) {
     tables = GetTablesCompaniesITS(identities_db)
     tables = paste(tables,",",identities_db,".companies com")
                     
-    q <- paste ("SELECT DISTINCT(com.name)
+    q <- paste ("SELECT com.name
                  FROM ", tables, "
                  WHERE ", GetFiltersCompaniesITS()," AND
                  com.id = upc.company_id and
                  ",affiliations,"
                  c.changed_on >= ", startdate, " AND
-                 c.changed_on < ", enddate, "
+                 c.changed_on < ", enddate, " AND
+                 ", closed_condition,"
                  group by com.name
                  order by count(distinct(c.issue_id)) desc", sep="")
+    print(q)
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
@@ -1070,11 +1072,12 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
                   YEARWEEK( changed_on , 3 )   
          ORDER BY com.name, 
                   YEARWEEK( changed_on , 3 );", sep="")
+         #",closed_condition,"  AND
     print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
- 
-    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, c("-Bot", "-Individual", "-Unknown"))
+    print("Companies name")
+    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, c("-Bot", "-Individual", "-Unknown"))
     companies <- companies$name
     
     count = 1
