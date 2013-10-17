@@ -33,18 +33,33 @@ rm data/whole_project/*
 mv data/json/* data/whole_project/
 cp data/whole_project/* $DIR
 
+#ICEHOUSE
+rm data/json/*
+mkdir -p data/icehouse
+#SCM
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2013-10-17 -e $END -g weeks < scm-analysis.R
+#MLS
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2013-10-17 -e $END -g weeks < mls-analysis.R
+#ITS
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2013-10-17 -e $END -g weeks -t launchpad < its-analysis.R
+#SCR
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2013-04-04 -e $END -g weeks < scr-analysis.R
+rm data/icehouse/*
+mv data/json/* data/icehouse/
+cp data/icehouse/* $DIR/icehouse/
+
 
 #HAVANA
 rm data/json/*
 mkdir -p data/havana
 #SCM
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks < scm-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $1 -u root -i $1 -r repositories,companies -s 2013-04-04 -e 2013-10-17 -g weeks < scm-analysis.R
 #MLS
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks < mls-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $2 -u root -i $1 -r repositories,companies -s 2013-04-04 -e 2013-10-17 -g weeks < mls-analysis.R
 #ITS
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2013-04-04 -e $END -g weeks -t launchpad < its-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $3 -u root -i $1 -r repositories,companies -s 2013-04-04 -e 2013-10-17 -g weeks -t launchpad < its-analysis.R
 #SCR
-LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2013-04-04 -e $END -g weeks < scr-analysis.R
+LANG= R_LIBS=../../r-lib:$R_LIBS R --vanilla --args -d $6 -u root -i $1  -s 2013-04-04 -e 2013-10-17 -g weeks < scr-analysis.R
 rm data/havana/*
 mv data/json/* data/havana/
 cp data/havana/* $DIR/havana/
