@@ -394,7 +394,7 @@ GetLines <- function (period, startdate, enddate, identities_db, type_analysis, 
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     data <- ExecuteQuery(q)
-    data$negative_removed_lines <- -data$removed_lines
+    if (length(data)>0) {data$negative_removed_lines <- -data$removed_lines}
     return (data)
 }
 
