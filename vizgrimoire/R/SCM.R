@@ -1430,21 +1430,38 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
   community$regular <- numeric(1)
   community$occasional <- numeric(1)
 
+  q <- paste("select count(distinct(s.id))
+                       from scmlog s, people p, actions a
+                       where s.author_id = p.id and
+                             p.email <> '%gerrit@%' and
+                             p.email <> '%jenkins@%' and
+                             s.id = a.commit_id and
+                             s.date>=",startdate," and
+                             s.date<=",enddate,";", sep="")
+  query <- new("Query", sql=q)
+  total <- run(query)
+  total_commits <- as.numeric(total)
+
   # Database access: developer, %commits
-  q <- paste(" select pup.upeople_id, 
-                      (count(distinct(s.id)) / (select count(*) from scmlog)) *100  as commits 
+  q <- paste(" select pup.upeople_id,
+                      (count(distinct(s.id))) as commits
                from scmlog s,
                     actions a,
-                    people_upeople pup
-               where s.id = a.commit_id and 
-                     s.date>=",startdate," and 
+                    people_upeople pup,
+                    people p
+               where s.id = a.commit_id and
+                     s.date>=",startdate," and
                      s.date<=",enddate," and
-                     s.author_id = pup.people_id
+                     s.author_id = pup.people_id and
+                     s.author_id = p.id and
+                     p.email <> '%gerrit@%' and
+                     p.email <> '%jenkins@%'
                group by pup.upeople_id
-               order by count(*) desc; ", sep="")
+               order by commits desc; ", sep="")
 
   query <- new("Query", sql=q)
   people <- run(query)
+  people$commits = (people$commits / total_commits) * 100
 
   # Calculating number of core, regular and occasional developers
   cont = 0
@@ -1468,7 +1485,7 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
       regular = devs
       regular_f = FALSE
     }
-  
+
   }
   occasional = devs - regular
   regular = regular - core
@@ -1481,5 +1498,3 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
   return(community)
 
 }
-
-
