@@ -554,6 +554,8 @@ GetDiffCommitsDays <- function(period, init_date, days){
     diffcommitsdays$diff_netcommits = lastcommits - prevcommits
     diffcommitsdays$percentage_commits = GetPercentageDiff(prevcommits, lastcommits)
 
+    colnames(diffcommitsdays) <- c(paste("diff_netcommits","_",days, sep=""), paste("percentage_commits","_",days, sep=""))
+
     return (diffcommitsdays)
 }
 
