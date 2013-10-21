@@ -346,7 +346,7 @@ setMethod(
   definition=function(.Object, date, filename, periods=4) {
     ages <- GetAges (.Object, date)
     JSON (ages, paste(c(filename, date, ".json"), collapse = ""))
-    Pyramid (ages, paste(c(filename, date), collapse = ""), 4)
+    Pyramid (ages, paste(c(filename, date), collapse = ""), periods)
     return (ages)
   }
   )
