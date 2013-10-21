@@ -477,7 +477,7 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
     #       GetCommits as similarly done by EvolCommits function.
 
     #TODO: first_date and last_date should be in another function
-    select <- "SELECT count(s.id) as commits,
+    select <- "SELECT count(distinct(s.id)) as commits,
                DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date, 
                DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date "
     from <- " FROM scmlog s, actions a " 
