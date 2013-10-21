@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This script feeds identities, upeople and upeople_countries tables 
-# from a text file with emails and countries
+# This script feeds identities, upeople and 
+# people_countries or people_companies tables 
+# from a text file with emails and countries or companies
 
 # Copyright (C) 2013 Bitergia
 
@@ -25,8 +26,7 @@
 # based on work by: Luis Cañas-Díaz <lcanas@bitergia.com>
 
 from optparse import OptionParser
-import MySQLdb, sys
-
+import MySQLdb, sys, random
 
 def read_file(file):
     fd = open(file,"r")
@@ -39,8 +39,15 @@ def parse_file(file):
     idmail = []
     lines = read_file(file)
     for l in lines:
-        idmail.append(l.split(","))
+        idmail.append(l.split(":"))
     return idmail
+
+def escape_string (message):
+    if "\\" in message:
+        message = message.replace("\\", "\\\\")
+    if "'" in message:
+        message = message.replace("'", "\\'")
+    return message
 
 
 def open_database(myuser, mypassword, mydb):
@@ -63,9 +70,9 @@ def read_options():
                           version="%prog 0.1")
     parser.add_option("-f", "--file",
                       action="store",
-                      dest="countries_file",
+                      dest="data_file",
                       default="email_country.csv",
-                      help="File with email, country in format \"email,country\"")
+                      help="File with data in format \"email:country|company\"")
     parser.add_option("-t", "--test",
                       action="store",
                       dest="countries_test",
@@ -80,7 +87,7 @@ def read_options():
                       dest="dbuser",
                       default="root",
                       help="Database user")
-    parser.add_option("--db-password",
+    parser.add_option("-p", "--db-password",
                       action="store",
                       dest="dbpassword",
                       default="",
@@ -90,13 +97,21 @@ def read_options():
                       dest="debug",
                       default=False,
                       help="Debug mode")
+    parser.add_option("-m", "--map",
+                      action="store",
+                      dest="map",
+                      help="countries or companies map")
+
     (opts, args) = parser.parse_args()
     #print(opts)
     if len(args) != 0:
         parser.error("Wrong number of arguments")
 
-    if not(opts.countries_file and opts.dbname and opts.dbuser):
-        parser.error("--file and --database are needed")
+    if not(opts.map and opts.data_file and opts.dbname and opts.dbuser):
+        parser.error("--map and --file and --database are needed")
+    if (opts.map != "countries" and opts.map != "companies"):
+        print("Wrong map: " + opts.map+". Only countries and companies supported.")
+        sys.exit(1)
 
     return opts
 
@@ -128,8 +143,7 @@ def insert_upeople_country(cursor, upeople_id, country, debug):
 
     if results == 0:
         query = "INSERT INTO countries (name) VALUES ('%s')" % (country)
-        if debug:
-            print(query)
+        if debug: print(query)
         cursor.execute(query)
         # country_id = con.insert_id()
         country_id = cursor.lastrowid
@@ -139,8 +153,29 @@ def insert_upeople_country(cursor, upeople_id, country, debug):
     cursor.execute("INSERT INTO upeople_countries (country_id, upeople_id) VALUES (%s, '%s')"
                    % (country_id, upeople_id))
 
+def insert_upeople_company(cursor, upeople_id, country, debug):
     
-def create_tables(cursor, con):
+    company_id = None
+    query = "SELECT id FROM companies WHERE name = '%s'" % (country)
+    results = cursor.execute(query)
+
+    if results == 0:
+        query = "INSERT INTO companies (name) VALUES ('%s')" % (country)
+        if debug: print(query)
+        cursor.execute(query)
+        # company_id = con.insert_id()
+        company_id = cursor.lastrowid
+    else:
+        company_id = cursor.fetchall()[0][0]
+
+    cursor.execute("INSERT INTO upeople_companies (company_id, upeople_id) VALUES (%s, '%s')"
+                   % (company_id, upeople_id))
+
+def create_tables(cursor, con, opts):
+    if (opts.map == "countries"): create_tables_countries(cursor, con)
+    elif (opts.map == "companies"): create_tables_companies(cursor, con)
+
+def create_tables_countries(cursor, con):
 #   query = "DROP TABLE IF EXISTS countries"
 #   cursor.execute(query)
 #   query = "DROP TABLE IF EXISTS upeople_countries"
@@ -153,7 +188,7 @@ def create_tables(cursor, con):
            ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
 
    cursor.execute(query)
-   
+
    query = "CREATE TABLE IF NOT EXISTS upeople_countries (" + \
            "id int(11) NOT NULL AUTO_INCREMENT," + \
            "upeople_id int(11) NOT NULL," + \
@@ -173,41 +208,93 @@ def create_tables(cursor, con):
    con.commit()
    return
 
+def create_tables_companies(cursor, con):
+#   query = "DROP TABLE IF EXISTS companies"
+#   cursor.execute(query)
+#   query = "DROP TABLE IF EXISTS upeople_companies"
+#   cursor.execute(query)
+
+   query = "CREATE TABLE IF NOT EXISTS companies (" + \
+           "id int(11) NOT NULL AUTO_INCREMENT," + \
+           "name varchar(255) NOT NULL," + \
+           "PRIMARY KEY (id)" + \
+           ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
+
+   cursor.execute(query)
+
+   query = "CREATE TABLE IF NOT EXISTS upeople_companies (" + \
+           "id int(11) NOT NULL AUTO_INCREMENT," + \
+           "upeople_id int(11) NOT NULL," + \
+           "company_id int(11) NOT NULL," + \
+           "PRIMARY KEY (id)" + \
+           ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
+   cursor.execute(query)
+
+   try:
+       query = "CREATE INDEX upcom_up ON upeople_companies (upeople_id);"
+       cursor.execute(query)
+       query = "CREATE INDEX upcom_c ON upeople_companies (company_id);"
+       cursor.execute(query)
+   except Exception:
+       print "Indexes upc_up and upcom_c already created"
+
+   con.commit()
+   return
+
 def create_test_data(cursor, opts):
-    import random
+    if (opts.map == "countries"): return create_test_data_countries(cursor, opts)
+    elif (opts.map == "companies"): create_test_data_companies(cursor, opts)
+
+
+def create_test_data_countries(cursor, opts):
     test_countries = ['country1', 'country2', 'country3', 'country4', 'country5']
     cursor.execute("DELETE FROM countries")
     cursor.execute("DELETE FROM upeople_countries")
     cursor.execute("SELECT id FROM upeople")
     identities = cursor.fetchall()
-    
+
     for id in identities:
         country = test_countries[random.randint(0,len(test_countries)-1)]
-        insert_upeople_country(cursor, id[0], country, opts.debug)    
-    
+        insert_upeople_country(cursor, id[0], country, opts.debug)
+
+def create_test_data_companies(cursor, opts):
+    test_companies = ['company1', 'company2', 'company3', 'company4', 'company5']
+    cursor.execute("DELETE FROM companies")
+    cursor.execute("DELETE FROM upeople_companies")
+    cursor.execute("SELECT id FROM upeople")
+    identities = cursor.fetchall()
+
+    for id in identities:
+        company = test_companies[random.randint(0,len(test_companies)-1)]
+        insert_upeople_company(cursor, id[0], company, opts.debug)
+
+
 if __name__ == '__main__':
     opts = None
     opts = read_options()
     con = open_database(opts.dbuser, opts.dbpassword, opts.dbname)
     
     cursor = con.cursor()
-    create_tables(cursor, con)
+    create_tables(cursor, con, opts)
 
     if opts.countries_test: # helper code to test without real data
         print("Creating test data ...")
         create_test_data(cursor, opts)
         sys.exit(0)      
 
-    ids_file = parse_file(opts.countries_file)
+    ids_file = parse_file(opts.data_file)
 
-    cont_new = 0
-    cont_updated = 0
-    cont_cached = 0
+    count_new = 0
+    count_updated = 0
+    count_cached = 0
     for i in ids_file:
 
         email = i[0]
         email = email.replace("'", "\\'") #avoiding ' errors in MySQL
-        country = i[1].rstrip('\n') #remove last \n
+        if (opts.map == "countries"):
+            country = escape_string(i[1].rstrip('\n'))
+        elif (opts.map == "companies"):
+            company = escape_string(i[1].rstrip('\n'))
         
         nmatches = cursor.execute("SELECT upeople_id, type, identity \
                                   FROM identities WHERE identity = '%s'"
@@ -219,8 +306,11 @@ if __name__ == '__main__':
                       % (str(i)))
             upeople_id = insert_upeople(cursor, opts.debug, email)
             insert_identity(cursor, opts.debug, (upeople_id, email, "email"))
-            insert_upeople_country(cursor, upeople_id, country, opts.debug)
-            cont_new += 1
+            if (opts.map == "countries"):
+                insert_upeople_country(cursor, upeople_id, country, opts.debug)
+            elif (opts.map == "companies"):
+                insert_upeople_company(cursor, upeople_id, company, opts.debug)
+            count_new += 1
         else:
             # there is one or more matches. There could be a lot of them!
             # if there are duplicated upeople_id we use the first we see
@@ -233,14 +323,17 @@ if __name__ == '__main__':
             nmatches = cursor.execute(query)
             
             if nmatches == 0:
-                insert_upeople_country(cursor, upeople_id, country, opts.debug)
-                cont_updated +=1
+                if (opts.map == "countries"):
+                    insert_upeople_country(cursor, upeople_id, country, opts.debug)
+                elif (opts.map == "companies"):
+                    insert_upeople_company(cursor, upeople_id, company, opts.debug)
+                count_updated +=1
             else:
-                cont_cached += 1
+                count_cached += 1
             
         con.commit()
 
     close_database(con)
-    print("New upeople entries: %s" % (cont_new))
-    print("Updated identities:  %s" % (cont_updated))
-    print("Already stored identities: %s" % (cont_cached))
+    print("New upeople entries: %s" % (count_new))
+    print("Updated identities:  %s" % (count_updated))
+    print("Already stored identities: %s" % (count_cached))

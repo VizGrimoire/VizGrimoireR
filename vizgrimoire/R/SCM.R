@@ -288,7 +288,22 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_
     return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+GetDiffAuthorsDays <- function(period, init_date, identities_db=NA, days){
+    # This function provides the percentage in activity between two periods:
 
+    chardates = GetDates(init_date, days)
+    lastauthors = StaticNumAuthors(period, chardates[2], chardates[1], identities_db)
+    lastauthors = as.numeric(lastauthors[1])
+    prevauthors = StaticNumAuthors(period, chardates[3], chardates[2], identities_db)
+    prevauthors = as.numeric(prevauthors[1])
+    diffauthorsdays = data.frame(diff_netauthors = numeric(1), percentage_authors = numeric(1))
+    diffauthorsdays$diff_netauthors = lastauthors - prevauthors
+    diffauthorsdays$percentage_authors = GetPercentageDiff(prevauthors, lastauthors)
+
+    colnames(diffauthorsdays) <- c(paste("diff_netauthors","_",days, sep=""), paste("percentage_authors","_",days, sep=""))
+
+    return (diffauthorsdays)
+}
 
 
 GetCommitters <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary) {
@@ -379,7 +394,7 @@ GetLines <- function (period, startdate, enddate, identities_db, type_analysis, 
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     data <- ExecuteQuery(q)
-    data$negative_removed_lines <- -data$removed_lines
+    if (length(data)>0) {data$negative_removed_lines <- -data$removed_lines}
     return (data)
 }
 
@@ -478,8 +493,70 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
     #executing the query
     q <- paste(select, from, where, rest)
 
+    print("StaticNumCommits")
+    print(startdate)
+    print(enddate)
     return(ExecuteQuery(q))
 }
+
+GetDates <- function(init_date, days) {
+    # This functions returns an array with three dates
+    # First: init_date
+    # Second: init_date - days
+    # Third: init_date - days - days
+    enddate = gsub("'", "", init_date)
+
+    enddate = as.Date(enddate)
+    startdate = enddate - days
+    prevdate = enddate - days - days
+
+    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
+                   paste("'", as.character(startdate), "'", sep=""),
+                   paste("'", as.character(prevdate), "'", sep=""))
+    return (chardates)
+}
+
+GetPercentageDiff <- function(value1, value2){
+    # This function returns whe % diff between value 1 and value 2.
+    # The difference could be positive or negative, but the returned value
+    # is always > 0
+
+    percentage = 0
+    print(paste("prevcommits=", value1))
+    print(paste("lastcommits=",value2))
+
+    if (value1 < value2){
+        diff = value2 - value1
+        percentage = as.integer((diff/value1) * 100)
+    }
+    if (value1 > value2){
+        percentage = as.integer((1-(value2/value1)) * 100)
+    }
+    return(percentage)
+}
+
+GetDiffCommitsDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods:
+    #    Period one: enddate - days
+    #    Period two: (enddate - days) - days
+    # Example: Difference of activity between last 7 days of 2012 and previous 7 days
+    #          Period 1: commits between 2012-12-31 and 2012-12-24
+    #          Period 2: commits between 2012-12-24 and 2012-12-17
+    # The netvalue indicates if this is an increment (positive value) or decrement (negative value)
+
+    chardates = GetDates(init_date, days)
+    lastcommits = StaticNumCommits(period, chardates[2], chardates[1])
+    lastcommits = as.numeric(lastcommits[1])
+    prevcommits = StaticNumCommits(period, chardates[3], chardates[2])
+    prevcommits = as.numeric(prevcommits[1])
+    diffcommitsdays = data.frame(diff_netcommits = numeric(1), percentage_commits = numeric(1))
+
+    diffcommitsdays$diff_netcommits = lastcommits - prevcommits
+    diffcommitsdays$percentage_commits = GetPercentageDiff(prevcommits, lastcommits)
+
+    return (diffcommitsdays)
+}
+
 
 GetActions <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # This function contains basic parts of the query to count actions.
@@ -860,6 +937,9 @@ EvolCountries <- function(period, startdate, enddate){
 	countries<- run(query)
 	return(countries)
 }
+
+
+
 
 last_activity <- function(days) {
     # Given a number of days, this function calculates the number of

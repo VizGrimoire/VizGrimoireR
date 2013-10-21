@@ -33,26 +33,34 @@ import re
 from optparse import OptionGroup, OptionParser
 
 def create_tables(db, connector):
-   query = "DROP TABLE IF EXISTS companies"
-   connector.execute(query)
-   query = "DROP TABLE IF EXISTS upeople_companies"
-   connector.execute(query)
+#   query = "DROP TABLE IF EXISTS companies"
+#   connector.execute(query)
+#   query = "DROP TABLE IF EXISTS upeople_companies"
+#   connector.execute(query)
 
-   query = "CREATE TABLE companies (" + \
+   query = "CREATE TABLE IF NOT EXISTS companies (" + \
            "id int(11) NOT NULL AUTO_INCREMENT," + \
            "name varchar(255) NOT NULL," + \
-           "PRIMARY KEY (id)" + \
-           ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
+           "PRIMARY KEY (id)," + \
+           "UNIQUE KEY (name)" + \
+           ") ENGINE=MyISAM DEFAULT CHARSET=utf8 "
 
    connector.execute(query)
 
-   query = "CREATE TABLE upeople_companies (" + \
+   try:
+       query = "CREATE INDEX companies_names ON companies (name)"
+       connector.execute(query)
+   except Exception:
+       print "Index companies.names  already created"
+
+   query = "CREATE TABLE IF NOT EXISTS upeople_companies (" + \
            "id int(11) NOT NULL AUTO_INCREMENT," + \
            "upeople_id int(11) NOT NULL," + \
            "company_id int(11) NOT NULL," + \
            "init datetime," + \
            "end datetime," + \
-           "PRIMARY KEY (id)" + \
+           "PRIMARY KEY (id)," + \
+           "UNIQUE KEY (upeople_id, company_id, init)" + \
            ") ENGINE=MyISAM DEFAULT CHARSET=utf8"
    connector.execute(query)
 
@@ -104,52 +112,48 @@ def getOptions():
     
     return ops
 
+def insert_company(connector, name):
+    q = "INSERT INTO companies (name) VALUES ('"+name+"')";
+    execute_query(connector, q)
+
+def get_company_id(connector, name):
+    company_id = None
+    q = "SELECT id FROM companies WHERE name ='"+name+"'"
+    res = execute_query(connector, q)
+    if len(res) == 0:
+        insert_company(connector,name)
+        company_id = get_company_id(connector, name)
+    else: company_id = res[0][0]
+    return company_id
+
+def insert_upeople_company(connector, upeople_id, company_id):
+    q = "INSERT INTO upeople_companies(upeople_id, company_id, init, end) " + \
+            "VALUES(" + str(upeople_id) + "," + \
+            str(company_id) + "," + \
+            "'1900-01-01', '2100-01-01' );"
+    try:
+        execute_query(connector, q)
+    except:
+        print "Already inserted: " +str(upeople_id)+ " in company "+ str(company_id) + " in 1900-01-01"
+
 
 def main(db):
-
-   companies = ["unknown"]
-   pe_com = {}
-   
-   cfg = getOptions()
-   
+   cfg = getOptions()   
    db, connector = connect(cfg)
-
    create_tables(db, connector)
-
    query = "select upeople_id, identity from identities where type='email';"
-   people = execute_query(connector, query)
-
+   people = execute_query(connector, query)   
    rexp = "(.*@)(.*)"
-
+   
    for person in people:    
-      author_id = int(person[0])
+      upeople_id = int(person[0])
       email = str(person[1])
-      #email = str(person[2])
       if len(email) == 0:
-         pe_com[author_id] = 1 #unknown company
+         company_id = get_company_id(connector, 'Unknown')
       if re.match(rexp, email):
          m = re.match(rexp, email)
          company = str(m.groups()[1].split('.')[0])
-         if company not in companies:
-            companies.append(company)
-         pe_com[author_id] = (companies.index(company) + 1) #+1 in order to avoid the insertion of 0 in the database
-      else:
-         pe_com[author_id] = 1
-   
-   #inserting data in upeople_companies table
-   for item in pe_com.iteritems():
-      author_id = int(item[0])
-      company_id = int(item[1])
-      query = "INSERT INTO upeople_companies(upeople_id, company_id, init, end) " + \
-              "VALUES(" + str(author_id) + "," + \
-                          str(company_id) + "," + \
-                          "'1900-01-01', '2100-01-01' );"
-      connector.execute(query)
-
-   #inserting companies in companies table      
-   for company in companies:
-      query = "INSERT INTO companies(name) " +\
-              "VALUES('" + company + "');"
-      connector.execute(query)
+         company_id = get_company_id(connector, company)
+      insert_upeople_company(connector, upeople_id, company_id)
       
 if __name__ == "__main__":main(sys.argv[1])

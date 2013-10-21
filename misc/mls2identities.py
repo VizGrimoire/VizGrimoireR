@@ -141,7 +141,9 @@ def main():
          # Max (upeople_)id from upeople table
          query = "select max(id) from upeople;"
          results = execute_query(connector_ids, query)
-         upeople_id = int(results[0][0]) + 1
+         max = results[0][0]
+         if max is None: max = 0
+         upeople_id = int(max) + 1
          
          # query = "insert into upeople(id) values("+ str(upeople_id) +");"
          query = "insert into upeople(id, identifier) values(" + str(upeople_id) + ",'"+uidentifier+"');"
