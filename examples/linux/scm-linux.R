@@ -164,3 +164,34 @@ treemap.actions(subdir.2013.actions,
                 type="dens",
                 file="/tmp/linux-treemap-actions-2013-authors-subdir.pdf")
 
+
+##
+## Demography study
+##
+demos.unique <- new ("Demographics", type="scm", unique=TRUE)
+for (date in c("2003-03-01", "2005-03-01", "2007-03-01", "2009-03-01",
+               "2011-03-01", "2013-03-01")) {
+  ProcessAges (demos.unique, date, "/tmp/linux-pyramid-", periods=1)
+}
+
+ages.merged <- new ("AgesMulti",
+                    c(GetAges (demos.unique, "2003-03-01", 10*365),
+                      GetAges (demos.unique, "2005-03-01", 8*365),
+                      GetAges (demos.unique, "2007-03-01", 6*365),
+                      GetAges (demos.unique, "2009-03-01", 4*365),
+                      GetAges (demos.unique, "2011-03-01", 2*365),
+                      GetAges (demos.unique, "2013-03-01")))
+
+JSON (ages.merged, "/tmp/linux-merged.json")
+PyramidBar (ages.merged, position="dodge",
+            "/tmp/linux-pyramid-dodge", periods=1)
+PyramidBar (ages.merged, position="identity",
+            "/tmp/linux-pyramid-identity", periods=1)
+PyramidFaceted (ages.merged, "/tmp/linux-pyramid-faceted", periods=1)
+## Uncomment to use your own HTML template
+## Pyramid3D (ages.merged, dirname="/tmp/linux-pyramid-3d",
+##            template="webgl-template.html")
+Pyramid3D (ages.merged, dirname="/tmp/linux-pyramid-3d", periods=1)
+Pyramid3D (ages.merged, interactive=TRUE, periods=1)
+
+CloseDBChannel()
