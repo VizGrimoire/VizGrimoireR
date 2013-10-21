@@ -44,7 +44,7 @@ query.scm <- "SELECT author_id as id,
 ##
 
 query.scm.unique <- "SELECT 
-    upeople.uid as id,
+    upeople.id as id,
     people.name as name,
     people.email as email,
     count(scmlog.id) as actions,
@@ -55,7 +55,7 @@ FROM
 WHERE
     scmlog.author_id = upeople.id AND
     people.id = upeople.id
-GROUP BY upeople.uid"
+GROUP BY upeople.id"
 
 ## Query for getting first and last date for all senders in a MLS database
 ##
