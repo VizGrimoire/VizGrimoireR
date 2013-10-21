@@ -230,8 +230,8 @@ GetCommits <- function(period, startdate, enddate, identities_db, type_analysis,
     # That query is built and results returned.
 
     fields = " count(distinct(s.id)) as commits "
-    tables = paste(" scmlog s ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = GetSQLReportWhere(type_analysis, "author")
+    tables = paste(" scmlog s, actions a ", GetSQLReportFrom(identities_db, type_analysis))
+    filters = paste(GetSQLReportWhere(type_analysis, "author"), " and s.id=a.commit_id ") 
     
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
@@ -480,9 +480,10 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
     select <- "SELECT count(s.id) as commits,
                DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date, 
                DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date "
-    from <- " FROM scmlog s "
+    from <- " FROM scmlog s, actions a " 
     where <- paste(" where s.date >=", startdate, " and
-                     s.date < ", enddate, sep="")
+                     s.date < ", enddate, " and
+                     s.id = a.commit_id ", sep="")
     rest <- ""
 
     # specific parts of the query depending on the report needed
@@ -493,9 +494,6 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
     #executing the query
     q <- paste(select, from, where, rest)
 
-    print("StaticNumCommits")
-    print(startdate)
-    print(enddate)
     return(ExecuteQuery(q))
 }
 
@@ -522,8 +520,6 @@ GetPercentageDiff <- function(value1, value2){
     # is always > 0
 
     percentage = 0
-    print(paste("prevcommits=", value1))
-    print(paste("lastcommits=",value2))
 
     if (value1 < value2){
         diff = value2 - value1
@@ -616,14 +612,13 @@ GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_
     # in the specified timeperiod (enddate - startdate)
 
     fields = paste(" count(distinct(s.id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_commits_",period, sep="")
-    tables = " scmlog s "
-    filters = ""
+    tables = " scmlog s, actions a "
+    filters = " s.id = a.commit_id "
 
     tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"), sep="")
 
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
-
     return(ExecuteQuery(q))
 }
 
@@ -670,10 +665,10 @@ GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_
     # time period (enddate - startdate)
 
     fields = " count(distinct(s.id))/count(distinct(pup.upeople_id)) as avg_commits_author "
-    tables = " scmlog s "
-    filters = ""
+    tables = " scmlog s, actions a " 
+    filters = " s.id = a.commit_id " 
 
-    filters = GetSQLReportWhere(type_analysis, "author")
+    filters = paste(filters, GetSQLReportWhere(type_analysis, "author"), sep="")
 
     #specific parts of the query depending on the report needed
     tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
@@ -692,7 +687,6 @@ GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_
     }
 
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
-
     return(ExecuteQuery(q))
 }
 
@@ -1058,9 +1052,11 @@ top_authors <- function(startdate, enddate) {
     q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
+                     actions a,
                      people_upeople pup,
                      upeople u
-                where s.author_id = pup.people_id and
+                where s.id = a.commit_id and
+                      s.author_id = pup.people_id and 
                       pup.upeople_id = u.id and
                       s.date >=", startdate, " and
                       s.date < ", enddate, "
@@ -1084,11 +1080,13 @@ top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
     q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
+                     actions a,
                      people_upeople pup,
                      upeople u, 
                      upeople_companies upc,
                      companies c
-                where s.author_id = pup.people_id and
+                where s.id = a.commit_id and 
+                      s.author_id = pup.people_id and 
                       pup.upeople_id = u.id and
                       s.date >=", startdate, " and
                       s.date < ", enddate, " and
@@ -1268,11 +1266,13 @@ company_top_authors <- function(company_name, startdate, enddate) {
                         count(distinct(s.id)) as commits                         
                  from people p,
                       scmlog s,
+                      actions a, 
                       people_upeople pup,
                       upeople u,
                       upeople_companies upc,
                       companies c
-                 where  p.id = s.author_id and
+                 where  s.id = a.commit_id and
+                        p.id = s.author_id and 
                         s.author_id = pup.people_id and
                         pup.upeople_id = upc.upeople_id and 
                         pup.upeople_id = u.id and
@@ -1434,8 +1434,10 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
   q <- paste(" select pup.upeople_id, 
                       (count(distinct(s.id)) / (select count(*) from scmlog)) *100  as commits 
                from scmlog s,
+                    actions a,
                     people_upeople pup
-               where s.date>=",startdate," and 
+               where s.id = a.commit_id and 
+                     s.date>=",startdate," and 
                      s.date<=",enddate," and
                      s.author_id = pup.people_id
                group by pup.upeople_id
