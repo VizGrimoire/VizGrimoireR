@@ -48,6 +48,20 @@ conf <- ConfFromOptParse()
 SetDBChannel (database = conf$database,
 	      user = conf$dbuser, password = conf$dbpassword)
 
+##
+## Plot messages sent per timezone
+##
+## Expects a dataframe with a column for timezones (as -12..11 GMT) and
+##   another one with number of messages for that timezone
+##
+plot.tz <- function (df, file="", height = 4, width = 6) {
+  chart <- qplot (df$timezone, df$messages, geom="bar", stat="identity") +
+    xlab("Timezones (relative to GMT)") +
+    ylab("Messages")
+  produce.charts (chart = chart, filename = file,
+                  height = height, width = width)  
+}
+
 ## Rationale for the calculus of timezones in the query below:
 ##  We want to have hours from -12 to +11, as offsets from GMT
 ##  We start with times in seconds, as positive or negative, which is what
@@ -72,9 +86,27 @@ q <- new ("Query", sql = query.tz.count)
 timezones <- run (q)
 timezones.total <- sum (timezones$messages)
 timezones$fraction <- timezones$messages / timezones.total
-chart <- qplot (timezones$timezone, timezones$messages, geom="bar", stat="identity")
-chart
+chart <- qplot (timezones$timezone, timezones$messages, geom="bar", stat="identity") +
+  xlab("Timezones (relative to GMT)") +
+  ylab("Messages")
+produce.charts (chart = chart, filename = "/tmp/linux-mls-timezones",
+                height = 4, width = 6)
 
+query.tz.year.count <- "SELECT
+  ((first_date_tz div 3600) + 36) mod 24 - 12 AS timezone,
+  YEAR(first_date) as year,
+  count(first_date_tz) AS messages
+FROM messages
+GROUP BY timezone, year
+ORDER BY year, timezone"
+q <- new ("Query", sql = query.tz.year.count)
+timezones.year <- run (q)
+timezones.2002 <- subset (timezones.year, year=="2002")
+plot.tz (timezones.2002, "/tmp/linux-mls-timezones-2002", height = 2, width = 6)
+timezones.2007 <- subset (timezones.year, year=="2007")
+plot.tz (timezones.2007, "/tmp/linux-mls-timezones-2007", height = 2, width = 6)
+timezones.2012 <- subset (timezones.year, year=="2012")
+plot.tz (timezones.2012, "/tmp/linux-mls-timezones-2012", height = 2, width = 6)
 
 ##
 ## Returns the first and last dates in MLS repository
