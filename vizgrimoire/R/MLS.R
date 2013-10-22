@@ -652,3 +652,152 @@ lastActivity <- function(days) {
     
     return(agg_data)    
 }
+
+##############
+#MICRO STUDIES
+##############
+
+
+GetDates <- function(init_date, days) {
+    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
+    # This functions returns an array with three dates
+    # First: init_date
+    # Second: init_date - days
+    # Third: init_date - days - days
+    enddate = gsub("'", "", init_date)
+
+    enddate = as.Date(enddate)
+    startdate = enddate - days
+    prevdate = enddate - days - days
+
+    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
+                   paste("'", as.character(startdate), "'", sep=""),
+                   paste("'", as.character(prevdate), "'", sep=""))
+    return (chardates)
+}
+
+GetPercentageDiff <- function(value1, value2){
+    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
+    # This function returns whe % diff between value 1 and value 2.
+    # The difference could be positive or negative, but the returned value
+    # is always > 0
+
+    percentage = 0
+    print(paste("prevcommits=", value1))
+    print(paste("lastcommits=",value2))
+
+    if (value1 < value2){
+        diff = value2 - value1
+        percentage = as.integer((diff/value1) * 100)
+    }
+    if (value1 > value2){
+        percentage = as.integer((1-(value2/value1)) * 100)
+    }
+    return(percentage)
+}
+
+StaticNumSent <- function(startdate, enddate){
+   fields = paste(" COUNT(*) as sent ")
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = GetFiltersOwnUniqueIdsMLS()
+    q <- GetSQLGlobal('first_date', fields, tables, filters,
+            startdate, enddate)
+    print(q)
+    query <- new ("Query", sql = q)
+    sent <- run(query)
+    return(sent)
+}
+
+StaticNumSenders <- function(startdate, enddate){
+fields = paste(" COUNT(DISTINCT(pup.upeople_id)) as senders ")
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = GetFiltersOwnUniqueIdsMLS()
+    q <- GetSQLGlobal('first_date', fields, tables, filters,
+            startdate, enddate)
+    print(q)
+    query <- new ("Query", sql = q)
+    senders <- run(query)
+    return(senders)
+}
+
+GetDiffSentDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(init_date, days)
+    lastsent = StaticNumSent(chardates[2], chardates[1])
+    lastsent = as.numeric(lastsent[1])
+    prevsent = StaticNumSent(chardates[3], chardates[2])
+    prevsent = as.numeric(prevsent[1])
+    diffsentdays = data.frame(diff_netsent = numeric(1), percentage_sent = numeric(1))
+
+    diffsentdays$diff_netsent = lastsent - prevsent
+    diffsentdays$percentage_sent = GetPercentageDiff(prevsent, lastsent)
+
+    colnames(diffsentdays) <- c(paste("diff_netsent","_",days, sep=""), paste("percentage_sent","_",days, sep=""))
+
+    return (diffsentdays)
+}
+
+GetDiffSendersDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(init_date, days)
+    lastsenders = StaticNumSenders(chardates[2], chardates[1])
+    lastsenders = as.numeric(lastsenders[1])
+    prevsenders = StaticNumSenders(chardates[3], chardates[2])
+    prevsenders = as.numeric(prevsenders[1])
+    diffsendersdays = data.frame(diff_netsenders = numeric(1), percentage_senders = numeric(1))
+
+    diffsendersdays$diff_netsenders = lastsenders - prevsenders
+    diffsendersdays$percentage_senders = GetPercentageDiff(prevsenders, lastsenders)
+
+    colnames(diffsendersdays) <- c(paste("diff_netsenders","_",days, sep=""), paste("percentage_senders","_",days, sep=""))
+
+    return (diffsendersdays)
+
+}
+
+
+GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, num_companies){
+    companies  <- companiesNames(identities_db, startdate, enddate, c("-Bot", "-Individual", "-Unknown"))
+
+    first = TRUE
+    first_companies = data.frame()
+    count = 1
+    for (company in companies){
+
+        sent = EvolMessagesSentCompanies(company, identities_db, period, startdate, enddate)
+        sent <- completePeriodIds(sent, conf$granularity, conf)
+        sent <- sent[order(sent$id), ]
+        sent[is.na(sent)] <- 0
+
+        if (count <= num_companies -1){
+            #Case of companies with entity in the dataset
+            if (first){
+                first = FALSE
+                first_companies = sent
+            }
+            first_companies = merge(first_companies, sent, all=TRUE)
+            colnames(first_companies)[colnames(first_companies)=="sent"] <- company
+        } else {
+
+            #Case of companies that are aggregated in the field Others
+            if (first==FALSE){
+                first = TRUE
+                first_companies$Others = sent$sent
+            }else{
+                first_companies$Others = first_companies$Others + sent$sent
+            }
+        }
+        count = count + 1
+        #print(first_companies)
+    }
+
+    #TODO: remove global variables...
+    first_companies <- completePeriodIds(first_companies, conf$granularity, conf)
+    first_companies <- first_companies[order(first_companies$id), ]
+    first_companies[is.na(first_companies)] <- 0
+    print(first_companies)
+
+    return(first_companies)
+
+}
+

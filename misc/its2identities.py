@@ -89,6 +89,8 @@ def create_tables(db, connector):
                                upeople_id int(11) NOT NULL,
                                PRIMARY KEY (people_id)
                   ) ENGINE=MyISAM DEFAULT CHARSET=utf8""")
+   query = "CREATE INDEX pup_upid ON people_upeople (upeople_id)"
+   connector.execute(query)
    connector.execute("ALTER TABLE people_upeople DISABLE KEYS")
    db.commit()
 
@@ -189,6 +191,7 @@ def main():
         continue
       results_ids = search_identity(connector_ids, email)
       if email != '' and len(results_ids) > 0:
+        upeople_id = int(results_ids[0][0])
         print "Reusing identity by email " + email
         reuse_identity(connector_its, people_id, upeople_id)
         # Insert name identity also
@@ -198,6 +201,7 @@ def main():
         continue
       results_ids = search_identity(connector_ids, user_id)
       if user_id != '' and len(results_ids) > 0:
+        upeople_id = int(results_ids[0][0])
         print "Reusing identity by user_id " + user_id
         reuse_identity(connector_its, people_id, upeople_id)
         continue

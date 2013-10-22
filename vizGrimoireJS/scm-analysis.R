@@ -89,6 +89,7 @@ createJSON (evol_data, paste(destdir,"/scm-evolutionary.json", sep=''))
 # 1- Retrieving information
 static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db)
 static_url <- StaticURL()
+diffcommits <- GetDiffCommitsDays(period, conf$enddate, 365)
 latest_activity7 = last_activity(7)
 latest_activity14 = last_activity(14)
 latest_activity30 = last_activity(30)
@@ -97,6 +98,8 @@ latest_activity90 = last_activity(90)
 latest_activity180 = last_activity(180)
 latest_activity365 = last_activity(365)
 latest_activity730 = last_activity(730)
+
+community_structure = GetCodeCommunityStructure(period, conf$startdate, conf$enddate, conf$identities_db)
 
 #Data for specific analysis
 if ('companies' %in% reports){
@@ -109,6 +112,7 @@ if ('countries' %in% reports){
 }
 # 2- Merging information
 static_data = merge(static_data, static_url)
+static_data = merge(static_data, diffcommits)
 static_data = merge(static_data, latest_activity7)
 static_data = merge(static_data, latest_activity14)
 static_data = merge(static_data, latest_activity30)
@@ -117,11 +121,11 @@ static_data = merge(static_data, latest_activity90)
 static_data = merge(static_data, latest_activity180)
 static_data = merge(static_data, latest_activity365)
 static_data = merge(static_data, latest_activity730)
+static_data = merge(static_data, community_structure)
 
 
 # 3- Creating file with static data
 createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
-
 
 # Top authors
 

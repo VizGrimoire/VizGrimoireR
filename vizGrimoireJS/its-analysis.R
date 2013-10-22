@@ -196,7 +196,7 @@ if ('repositories' %in% reports) {
 if ('companies' %in% reports) {
 
     # companies <- its_companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate, identities_db)
-    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, c("-Bot", "-Individual", "-Unknown"))
+    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, c("-Bot", "-Individual", "-Unknown"))
     companies <- companies$name
     createJSON(companies, paste(c(destdir,"/its-companies.json"), collapse=''))
     

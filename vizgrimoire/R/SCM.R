@@ -230,8 +230,8 @@ GetCommits <- function(period, startdate, enddate, identities_db, type_analysis,
     # That query is built and results returned.
 
     fields = " count(distinct(s.id)) as commits "
-    tables = paste(" scmlog s ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = GetSQLReportWhere(type_analysis, "author")
+    tables = paste(" scmlog s, actions a ", GetSQLReportFrom(identities_db, type_analysis))
+    filters = paste(GetSQLReportWhere(type_analysis, "author"), " and s.id=a.commit_id ") 
     
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
@@ -288,7 +288,22 @@ StaticNumAuthors <- function(period, startdate, enddate, identities_db=NA, type_
     return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+GetDiffAuthorsDays <- function(period, init_date, identities_db=NA, days){
+    # This function provides the percentage in activity between two periods:
 
+    chardates = GetDates(init_date, days)
+    lastauthors = StaticNumAuthors(period, chardates[2], chardates[1], identities_db)
+    lastauthors = as.numeric(lastauthors[1])
+    prevauthors = StaticNumAuthors(period, chardates[3], chardates[2], identities_db)
+    prevauthors = as.numeric(prevauthors[1])
+    diffauthorsdays = data.frame(diff_netauthors = numeric(1), percentage_authors = numeric(1))
+    diffauthorsdays$diff_netauthors = lastauthors - prevauthors
+    diffauthorsdays$percentage_authors = GetPercentageDiff(prevauthors, lastauthors)
+
+    colnames(diffauthorsdays) <- c(paste("diff_netauthors","_",days, sep=""), paste("percentage_authors","_",days, sep=""))
+
+    return (diffauthorsdays)
+}
 
 
 GetCommitters <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary) {
@@ -379,7 +394,7 @@ GetLines <- function (period, startdate, enddate, identities_db, type_analysis, 
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     data <- ExecuteQuery(q)
-    data$negative_removed_lines <- -data$removed_lines
+    if (length(data)>0) {data$negative_removed_lines <- -data$removed_lines}
     return (data)
 }
 
@@ -462,12 +477,13 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
     #       GetCommits as similarly done by EvolCommits function.
 
     #TODO: first_date and last_date should be in another function
-    select <- "SELECT count(s.id) as commits,
+    select <- "SELECT count(distinct(s.id)) as commits,
                DATE_FORMAT (min(s.date), '%Y-%m-%d') as first_date, 
                DATE_FORMAT (max(s.date), '%Y-%m-%d') as last_date "
-    from <- " FROM scmlog s "
+    from <- " FROM scmlog s, actions a " 
     where <- paste(" where s.date >=", startdate, " and
-                     s.date < ", enddate, sep="")
+                     s.date < ", enddate, " and
+                     s.id = a.commit_id ", sep="")
     rest <- ""
 
     # specific parts of the query depending on the report needed
@@ -480,6 +496,65 @@ StaticNumCommits <- function(period, startdate, enddate, identities_db=NA, type_
 
     return(ExecuteQuery(q))
 }
+
+GetDates <- function(init_date, days) {
+    # This functions returns an array with three dates
+    # First: init_date
+    # Second: init_date - days
+    # Third: init_date - days - days
+    enddate = gsub("'", "", init_date)
+
+    enddate = as.Date(enddate)
+    startdate = enddate - days
+    prevdate = enddate - days - days
+
+    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
+                   paste("'", as.character(startdate), "'", sep=""),
+                   paste("'", as.character(prevdate), "'", sep=""))
+    return (chardates)
+}
+
+GetPercentageDiff <- function(value1, value2){
+    # This function returns whe % diff between value 1 and value 2.
+    # The difference could be positive or negative, but the returned value
+    # is always > 0
+
+    percentage = 0
+
+    if (value1 < value2){
+        diff = value2 - value1
+        percentage = as.integer((diff/value1) * 100)
+    }
+    if (value1 > value2){
+        percentage = as.integer((1-(value2/value1)) * 100)
+    }
+    return(percentage)
+}
+
+GetDiffCommitsDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods:
+    #    Period one: enddate - days
+    #    Period two: (enddate - days) - days
+    # Example: Difference of activity between last 7 days of 2012 and previous 7 days
+    #          Period 1: commits between 2012-12-31 and 2012-12-24
+    #          Period 2: commits between 2012-12-24 and 2012-12-17
+    # The netvalue indicates if this is an increment (positive value) or decrement (negative value)
+
+    chardates = GetDates(init_date, days)
+    lastcommits = StaticNumCommits(period, chardates[2], chardates[1])
+    lastcommits = as.numeric(lastcommits[1])
+    prevcommits = StaticNumCommits(period, chardates[3], chardates[2])
+    prevcommits = as.numeric(prevcommits[1])
+    diffcommitsdays = data.frame(diff_netcommits = numeric(1), percentage_commits = numeric(1))
+
+    diffcommitsdays$diff_netcommits = lastcommits - prevcommits
+    diffcommitsdays$percentage_commits = GetPercentageDiff(prevcommits, lastcommits)
+
+    colnames(diffcommitsdays) <- c(paste("diff_netcommits","_",days, sep=""), paste("percentage_commits","_",days, sep=""))
+
+    return (diffcommitsdays)
+}
+
 
 GetActions <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # This function contains basic parts of the query to count actions.
@@ -537,14 +612,13 @@ GetAvgCommitsPeriod <- function(period, startdate, enddate, identities_db, type_
     # in the specified timeperiod (enddate - startdate)
 
     fields = paste(" count(distinct(s.id))/timestampdiff(",period,",min(s.date),max(s.date)) as avg_commits_",period, sep="")
-    tables = " scmlog s "
-    filters = ""
+    tables = " scmlog s, actions a "
+    filters = " s.id = a.commit_id "
 
     tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
     filters <- paste(filters, GetSQLReportWhere(type_analysis, "author"), sep="")
 
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
-
     return(ExecuteQuery(q))
 }
 
@@ -591,10 +665,10 @@ GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_
     # time period (enddate - startdate)
 
     fields = " count(distinct(s.id))/count(distinct(pup.upeople_id)) as avg_commits_author "
-    tables = " scmlog s "
-    filters = ""
+    tables = " scmlog s, actions a " 
+    filters = " s.id = a.commit_id " 
 
-    filters = GetSQLReportWhere(type_analysis, "author")
+    filters = paste(filters, GetSQLReportWhere(type_analysis, "author"), sep="")
 
     #specific parts of the query depending on the report needed
     tables <- paste(tables, GetSQLReportFrom(identities_db, type_analysis))
@@ -613,7 +687,6 @@ GetAvgCommitsAuthor <- function(period, startdate, enddate, identities_db, type_
     }
 
     q <- BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
-
     return(ExecuteQuery(q))
 }
 
@@ -861,6 +934,9 @@ EvolCountries <- function(period, startdate, enddate){
 	return(countries)
 }
 
+
+
+
 last_activity <- function(days) {
     # Given a number of days, this function calculates the number of
     # commits, authors, files, added and removed lines that took place
@@ -977,9 +1053,11 @@ top_authors <- function(startdate, enddate) {
     q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
+                     actions a,
                      people_upeople pup,
                      upeople u
-                where s.author_id = pup.people_id and
+                where s.id = a.commit_id and
+                      s.author_id = pup.people_id and 
                       pup.upeople_id = u.id and
                       s.date >=", startdate, " and
                       s.date < ", enddate, "
@@ -1003,11 +1081,13 @@ top_authors_wo_affiliations <- function(list_affs, startdate, enddate) {
     q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
                 FROM scmlog s,
+                     actions a,
                      people_upeople pup,
                      upeople u, 
                      upeople_companies upc,
                      companies c
-                where s.author_id = pup.people_id and
+                where s.id = a.commit_id and 
+                      s.author_id = pup.people_id and 
                       pup.upeople_id = u.id and
                       s.date >=", startdate, " and
                       s.date < ", enddate, " and
@@ -1187,11 +1267,13 @@ company_top_authors <- function(company_name, startdate, enddate) {
                         count(distinct(s.id)) as commits                         
                  from people p,
                       scmlog s,
+                      actions a, 
                       people_upeople pup,
                       upeople u,
                       upeople_companies upc,
                       companies c
-                 where  p.id = s.author_id and
+                 where  s.id = a.commit_id and
+                        p.id = s.author_id and 
                         s.author_id = pup.people_id and
                         pup.upeople_id = upc.upeople_id and 
                         pup.upeople_id = u.id and
@@ -1349,19 +1431,38 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
   community$regular <- numeric(1)
   community$occasional <- numeric(1)
 
+  q <- paste("select count(distinct(s.id))
+                       from scmlog s, people p, actions a
+                       where s.author_id = p.id and
+                             p.email <> '%gerrit@%' and
+                             p.email <> '%jenkins@%' and
+                             s.id = a.commit_id and
+                             s.date>=",startdate," and
+                             s.date<=",enddate,";", sep="")
+  query <- new("Query", sql=q)
+  total <- run(query)
+  total_commits <- as.numeric(total)
+
   # Database access: developer, %commits
-  q <- paste(" select pup.upeople_id, 
-                      (count(distinct(s.id)) / (select count(*) from scmlog)) *100  as commits 
+  q <- paste(" select pup.upeople_id,
+                      (count(distinct(s.id))) as commits
                from scmlog s,
-                    people_upeople pup
-               where s.date>=",startdate," and 
+                    actions a,
+                    people_upeople pup,
+                    people p
+               where s.id = a.commit_id and
+                     s.date>=",startdate," and
                      s.date<=",enddate," and
-                     s.author_id = pup.people_id
+                     s.author_id = pup.people_id and
+                     s.author_id = p.id and
+                     p.email <> '%gerrit@%' and
+                     p.email <> '%jenkins@%'
                group by pup.upeople_id
-               order by count(*) desc; ", sep="")
+               order by commits desc; ", sep="")
 
   query <- new("Query", sql=q)
   people <- run(query)
+  people$commits = (people$commits / total_commits) * 100
 
   # Calculating number of core, regular and occasional developers
   cont = 0
@@ -1385,7 +1486,7 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
       regular = devs
       regular_f = FALSE
     }
-  
+
   }
   occasional = devs - regular
   regular = regular - core
@@ -1399,4 +1500,55 @@ GetCodeCommunityStructure <- function(period, startdate, enddate, identities_db)
 
 }
 
+
+GetCommitsSummaryCompanies <- function(period, startdate, enddate, identities_db, num_companies){
+    # This function returns the following dataframe structrure
+    # unixtime, date, week/month/..., company1, company2, ... company[num_companies -1], others
+    # The 3 first fields are used for data and ordering purposes
+    # The "companyX" fields are those that provide info about that company
+    # The "Others" field is the aggregated value of the rest of the companies
+
+    companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
+    companies <- companies$name
+
+    first = TRUE
+    first_companies = data.frame()
+    count = 1
+    for (company in companies){
+        company_name = paste("'", company, "'", sep='')
+        company_aux = paste("", company, "", sep='')
+
+        commits = EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, list("company", company_name))
+        commits <- completePeriodIds(commits, conf$granularity, conf)
+        commits <- commits[order(commits$id), ]
+        commits[is.na(commits)] <- 0
+
+        if (count <= num_companies -1){
+            #Case of companies with entity in the dataset
+            if (first){
+                first = FALSE
+                first_companies = commits
+            }
+            first_companies = merge(first_companies, commits, all=TRUE)
+            colnames(first_companies)[colnames(first_companies)=="commits"] <- company_aux
+        } else {
+
+            #Case of companies that are aggregated in the field Others
+            if (first==FALSE){
+                first = TRUE
+                first_companies$Others = commits$commits
+            }else{
+                first_companies$Others = first_companies$Others + commits$commits
+            }
+        }
+        count = count + 1
+    }
+
+    #TODO: remove global variables...
+    first_companies <- completePeriodIds(first_companies, conf$granularity, conf)
+    first_companies <- first_companies[order(first_companies$id), ]
+    first_companies[is.na(first_companies)] <- 0
+
+    return(first_companies)
+}
 
