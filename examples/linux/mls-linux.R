@@ -54,9 +54,10 @@ SetDBChannel (database = conf$database,
 ## Expects a dataframe with a column for timezones (as -12..11 GMT) and
 ##   another one with number of messages for that timezone
 ##
-plot.tz <- function (df, file="", height = 4, width = 6) {
+plot.tz <- function (df, file="", height = 4, width = 6,
+                     xlab = "Timezones (relative to GMT)") {
   chart <- qplot (df$timezone, df$messages, geom="bar", stat="identity") +
-    xlab("Timezones (relative to GMT)") +
+    xlab(xlab) +
     ylab("Messages")
   produce.charts (chart = chart, filename = file,
                   height = height, width = width)  
@@ -102,11 +103,14 @@ ORDER BY year, timezone"
 q <- new ("Query", sql = query.tz.year.count)
 timezones.year <- run (q)
 timezones.2002 <- subset (timezones.year, year=="2002")
-plot.tz (timezones.2002, "/tmp/linux-mls-timezones-2002", height = 2, width = 6)
+plot.tz (timezones.2002, "/tmp/linux-mls-timezones-2002",
+         height = 2, width = 10, xlab="")
 timezones.2007 <- subset (timezones.year, year=="2007")
-plot.tz (timezones.2007, "/tmp/linux-mls-timezones-2007", height = 2, width = 6)
+plot.tz (timezones.2007, "/tmp/linux-mls-timezones-2007",
+         height = 2, width = 10, xlab="")
 timezones.2012 <- subset (timezones.year, year=="2012")
-plot.tz (timezones.2012, "/tmp/linux-mls-timezones-2012", height = 2, width = 6)
+plot.tz (timezones.2012, "/tmp/linux-mls-timezones-2012",
+         height = 2, width = 10, xlab="")
 
 ##
 ## Returns the first and last dates in MLS repository
