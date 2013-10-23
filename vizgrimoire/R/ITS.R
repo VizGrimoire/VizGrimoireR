@@ -379,19 +379,24 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
 
 GetReposNameITS <- function() {
     # q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
-    q <- paste ("SELECT url AS name FROM trackers")
+    # q <- paste ("SELECT url AS name FROM trackers")
+    q <- paste ("SELECT url AS name FROM (
+                  SELECT url, count(*) as total, tracker_id
+                  FROM issues, trackers
+                  WHERE issues.tracker_id=trackers.id
+                  GROUP BY tracker_id ORDER BY total DESC) t")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetRepoEvolClosed <- function(repo, closed_condition, period, startdate, enddate){    
+GetRepoEvolClosed <- function(repo, closed_condition, period, startdate, enddate){
     fields = 'COUNT(DISTINCT(issue_id)) AS closed, 
               COUNT(DISTINCT(pup.upeople_id)) AS closers'
     tables= GetTablesReposITS()
     filters = paste(GetFiltersReposITS(),'AND',closed_condition,
             "AND trackers.url=",repo)    
-    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters,
             startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
