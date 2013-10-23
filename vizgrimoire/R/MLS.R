@@ -258,22 +258,28 @@ reposField <- function() {
 
 reposNames <- function (rfield, startdate, enddate) {    
     names = ""    
-    if (rfield == "mailing_list_url") {
-        query <- new ("Query",
-                sql = paste("SELECT DISTINCT(mailing_list_url) FROM messages m 
-                             WHERE m.first_date >= ",startdate," AND
-                             m.first_date < ",enddate))   
+    if (rfield == "mailing_list_url") {        
+        q = paste("SELECT ml.mailing_list_url, COUNT(message_ID) AS total 
+                   FROM messages m, mailing_lists ml
+                   WHERE m.mailing_list_url = ml.mailing_list_url AND 
+                   m.first_date >= ",startdate," AND
+                   m.first_date < ",enddate,"
+                   GROUP BY ml.mailing_list_url ORDER by total desc")
+        query <- new ("Query", sql = q)
+        print(q)
         mailing_lists <- run(query)
         mailing_lists_files <- run(query)
         names = mailing_lists_files
     } else {
-        query <- new ("Query", 
-                sql = paste("SELECT DISTINCT(mailing_list) FROM messages m 
-                             WHERE m.first_date >= ",startdate," AND
-                             m.first_date < ",enddate))
+        # TODO: not ordered yet by total messages
+        q = paste("SELECT DISTINCT(mailing_list) FROM messages m 
+                        WHERE m.first_date >= ",startdate," AND
+                        m.first_date < ",enddate)
+        query <- new ("Query", sql = q)
+        print(q)
         mailing_lists <- run(query)
         names = mailing_lists
-    }    
+    }     
     return (names)    
 }
 
@@ -584,6 +590,7 @@ GetStaticPeopleMLS <- function(developer_id, startdate, enddate) {
 #
 top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
 
+    limit = 30
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " c.name<>'", aff ,"' and ", sep="")
@@ -609,7 +616,7 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
                   date_limit, "
                 GROUP BY up.identifier
                 ORDER BY sent desc
-                LIMIT 10;", sep="")    
+                LIMIT ",limit, ";", sep="")    
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
