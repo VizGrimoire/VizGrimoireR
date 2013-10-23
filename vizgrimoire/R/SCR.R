@@ -8,7 +8,7 @@
 ## This program is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-## GNU General Public License for more details. 
+## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with this program; if not, write to the Free Software
@@ -24,7 +24,6 @@
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
-
 
 ##########
 # Specific FROM and WHERE clauses per type of report
@@ -42,7 +41,7 @@ GetSQLRepositoriesWhereSCR <- function(repository){
 
 GetSQLCompaniesFromSCR <- function(identities_db){
     #tables necessaries for companies
-    return (paste(" , ",identities_db,".people_upeople pup,
+    return (paste(" , people_upeople pup,
                   ",identities_db,".upeople_companies upc,
                   ",identities_db,".companies c", sep=""))
 }
@@ -59,7 +58,7 @@ GetSQLCompaniesWhereSCR <- function(company){
 
 GetSQLCountriesFromSCR <- function(identities_db){
     #tables necessaries for companies
-    return (paste(" , ",identities_db,".people_upeople pup,
+    return (paste(" , people_upeople pup,
                   ",identities_db,".upeople_countries upc,
                   ",identities_db,".countries c ", sep=""))
 }
@@ -78,7 +77,7 @@ GetSQLCountriesWhereSCR <- function(country){
 
 GetSQLReportFromSCR <- function(identities_db, type_analysis){
     #generic function to generate 'from' clauses
-    #"type" is a list of two values: type of analysis and value of 
+    #"type" is a list of two values: type of analysis and value of
     #such analysis
 
     analysis = type_analysis[1]
@@ -95,11 +94,10 @@ GetSQLReportFromSCR <- function(identities_db, type_analysis){
     return (from)
 }
 
-
 GetSQLReportWhereSCR <- function(type_analysis){
     #generic function to generate 'where' clauses
 
-    #"type" is a list of two values: type of analysis and value of 
+    #"type" is a list of two values: type of analysis and value of
     #such analysis
 
     analysis = type_analysis[1]
@@ -124,7 +122,6 @@ GetReposSCRName <- function (startdate, enddate, limit = 0){
     if (limit > 0) {
         limit_sql = paste(" LIMIT ", limit)
     }
-
     q = paste("SELECT t.url as name, COUNT(DISTINCT(i.id)) AS issues
                FROM  issues i, trackers t
                WHERE i.tracker_id = t.id AND
@@ -137,17 +134,39 @@ GetReposSCRName <- function (startdate, enddate, limit = 0){
     return (data)
 }
 
+GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
+    limit_sql=""
+    if (limit > 0) {
+        limit_sql = paste(" LIMIT ", limit)
+    }
+    q = paste("SELECT c.name as name, COUNT(DISTINCT(i.id)) AS issues
+               FROM  ",identities_db,".companies c,
+                     ",identities_db,".upeople_companies upc,
+                     people_upeople pup,
+                     issues i
+               WHERE i.submitted_by = pup.people_id AND
+                 upc.upeople_id = pup.upeople_id AND
+                 c.id = upc.company_id AND
+                 i.status = 'merged' AND
+                 i.submitted_on >=",  startdate, " AND
+                 i.submitted_on < ", enddate, "
+               GROUP BY c.name
+               ORDER BY issues DESC ",limit_sql,";", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
 
 #########
 #Functions about the status of the review
 #########
 
 # REVIEWS
-GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutionary){
+GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutionary, identities_db){
 
     #Building the query
     fields = paste(" count(distinct(i.issue)) as ", type)
-    tables = paste("issues i", GetSQLReportFromSCR(NA, type_analysis))
+    tables = paste("issues i", GetSQLReportFromSCR(identities_db, type_analysis))
     filters <- ifelse(type == "submitted", "",
               ifelse(type == "opened", " (i.status = 'NEW' or i.status = 'WORKINPROGRESS') ",
               ifelse(type == "new", " i.status = 'NEW' ",
@@ -157,13 +176,12 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
               ifelse(type == "abandoned", " i.status = 'ABANDONED' ",
               NA)))))))
     filters = paste(filters, GetSQLReportWhereSCR(type_analysis), sep="")
-    print(filters)
 
     #Adding dates filters (and evolutionary or static analysis)
     if (evolutionary){
         q <- GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
                       startdate, enddate)
-    }else{
+    } else{
         q = GetSQLGlobal(" i.submitted_on ", fields, tables, filters, startdate, enddate)
     }
 
@@ -175,61 +193,61 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
 
 # EVOLUTIONARY META FUNCTIONS BASED ON REVIEWS
 
-EvolReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, TRUE))
+EvolReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "opened", type_analysis, TRUE))
+EvolReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "opened", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "new", type_analysis, TRUE))
+EvolReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "new", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, TRUE))
+EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "closed", type_analysis, TRUE))
+EvolReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "closed", type_analysis, TRUE, identities_db))
 }
 
-EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "merged", type_analysis, TRUE))
+EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "merged", type_analysis, TRUE, identities_db))
 }
-EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, TRUE))
+EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, TRUE, identities_db))
 }
 
 # STATIC META FUNCTIONS BASED ON REVIEWS
 
-StaticReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, FALSE))
+StaticReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "submitted", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "opened", type_analysis, FALSE))
+StaticReviewsOpened <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "opened", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "new", type_analysis, FALSE))
+StaticReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "new", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, FALSE))
+StaticReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "closed", type_analysis, FALSE))
+StaticReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "closed", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "merged", type_analysis, FALSE))
+StaticReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "merged", type_analysis, FALSE, identities_db))
 }
 
-StaticReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA)){
-    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, FALSE))
+StaticReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, FALSE, identities_db))
 }
 
 #WORK ON PATCHES: ANY REVIEW MAY HAVE MORE THAN ONE PATCH
@@ -303,19 +321,19 @@ StaticPatchesSent <- function(period, startdate, enddate, type_analysis = list(N
 GetWaiting4Reviewer <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
 
      fields = " count(distinct(c.id)) as WaitingForReviewer "
-     tables = " changes c, 
+     tables = " changes c,
                 issues i,
-                      (select c.issue_id as issue_id, 
-                              c.old_value as old_value, 
-                              max(c.id) as id 
-                       from changes c, 
-                            issues i 
-                       where c.issue_id = i.id and 
-                             i.status='NEW' 
+                      (select c.issue_id as issue_id,
+                              c.old_value as old_value,
+                              max(c.id) as id
+                       from changes c,
+                            issues i
+                       where c.issue_id = i.id and
+                             i.status='NEW'
                        group by c.issue_id, c.old_value) t1 "
      tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters =  " i.id = c.issue_id
-                  and t1.id = c.id   
+                  and t1.id = c.id
                   and (c.field='CRVW' or c.field='VRIF')
                   and (c.new_value=1 or c.new_value=2) "
      filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
@@ -341,25 +359,23 @@ StaticWaiting4Reviewer <- function(period, startdate, enddate, identities_db=NA,
     return (GetWaiting4Reviewer(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-
-
 GetWaiting4Submitter <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
 
      fields = "count(distinct(c.id)) as WaitingForSubmitter "
-     tables = "  changes c, 
+     tables = "  changes c,
                  issues i,
-                      (select c.issue_id as issue_id, 
-                              c.old_value as old_value, 
-                              max(c.id) as id 
-                       from changes c, 
-                            issues i 
-                       where c.issue_id = i.id and 
-                             i.status='NEW' 
+                      (select c.issue_id as issue_id,
+                              c.old_value as old_value,
+                              max(c.id) as id
+                       from changes c,
+                            issues i
+                       where c.issue_id = i.id and
+                             i.status='NEW'
                        group by c.issue_id, c.old_value) t1 "
      tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters = " i.id = c.issue_id
-                 and t1.id = c.id  
-                 and (c.field='CRVW' or c.field='VRIF') 
+                 and t1.id = c.id
+                 and (c.field='CRVW' or c.field='VRIF')
                  and (c.new_value=-1 or c.new_value=-2) "
      filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
 
@@ -384,9 +400,7 @@ StaticWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA
     return (GetWaiting4Submitter(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-
 #REVIEWERS
-
 
 GetReviewers <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # TODO: so far without unique identities
@@ -416,40 +430,39 @@ StaticReviewers <- function (period, startdate, enddate, identities_db = NA, typ
     return (GetReviewers(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-
 GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA)){
 
     q <- "select i.issue as review,
-                 t1.old_value as patch, 
-                 timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened 
+                 t1.old_value as patch,
+                 timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened
           from (
-                select c.issue_id as issue_id, 
-                       c.old_value as old_value, 
-                       min(c.changed_on) as min_time, 
-                       max(c.changed_on) as max_time 
-                from changes c, 
-                     issues i 
-                where c.issue_id = i.id and 
-                      i.status='NEW'  
-                group by c.issue_id, 
+                select c.issue_id as issue_id,
+                       c.old_value as old_value,
+                       min(c.changed_on) as min_time,
+                       max(c.changed_on) as max_time
+                from changes c,
+                     issues i
+                where c.issue_id = i.id and
+                      i.status='NEW'
+                group by c.issue_id,
                          c.old_value) t1,
                issues i
           where t1.issue_id = i.id
           order by timeOpened desc
           limit 20;"
-    fields = paste(" i.issue as review, ", 
+    fields = paste(" i.issue as review, ",
                    " t1.old_value as patch, ",
                    " timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened, ")
     tables = " issues i,
-               (select c.issue_id as issue_id, 
-                       c.old_value as old_value, 
-                       min(c.changed_on) as min_time, 
-                       max(c.changed_on) as max_time 
-                from changes c, 
-                     issues i 
-                where c.issue_id = i.id and 
-                      i.status='NEW'  
-                group by c.issue_id, 
+               (select c.issue_id as issue_id,
+                       c.old_value as old_value,
+                       min(c.changed_on) as min_time,
+                       max(c.changed_on) as max_time
+                from changes c,
+                     issues i
+                where c.issue_id = i.id and
+                      i.status='NEW'
+                group by c.issue_id,
                          c.old_value) t1 "
     tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
     filters = " t1.issue_id = i.id "
@@ -468,13 +481,13 @@ GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA))
 # Tops
 ##
 
-GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+# Is this right???
+GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
         filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
     }
-
 
     if (days != 0 ) {
         query <- new("Query",
@@ -482,9 +495,9 @@ GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots
         data <- run(query)
         date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
     }
-    
-    q <- paste("SELECT up.id as id, up.identifier as closers,
-                       count(distinct(c.id)) as closed
+
+    q <- paste("SELECT up.id as id, up.identifier as reviewers,
+                       count(distinct(c.id)) as reviewed
                 FROM people_upeople pup, changes c, ", identities_db,".upeople up
                 WHERE ", filter_bots, "
                     c.changed_by = pup.people_id and
@@ -493,39 +506,62 @@ GetTopClosersSCR   <- function(days = 0, startdate, enddate, identities_db, bots
                     c.changed_on < ", enddate, "
                     ",date_limit, "
                 GROUP BY up.identifier
-                ORDER BY closed desc
+                ORDER BY reviewed desc
                 LIMIT 10;", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetTopOpenersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, merged = FALSE) {
     date_limit = ""
+    merged_sql = ""
+    rol = "openers"
+    action = "opened"
     filter_bots = ''
     for (bot in bots){
         filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
-    }    
-    
+    }
+
     if (days != 0 ) {
         query <- new("Query",
                 sql = "SELECT @maxdate:=max(submitted_on) from issues limit 1")
         data <- run(query)
         date_limit <- paste(" AND DATEDIFF(@maxdate, submitted_on)<",days)
-    }    
-        
-    q <- paste("SELECT up.id as id, up.identifier as openers,
-                    count(distinct(i.id)) as opened
+    }
+
+    if (merged) {
+        merged_sql = " AND status='MERGED' "
+        rol = "mergers"
+        action = "merged"
+    }
+
+    q <- paste("SELECT up.id as id, up.identifier as ",rol,",
+                    count(distinct(i.id)) as ",action,"
                 FROM people_upeople pup, issues i, ", identities_db,".upeople up
                 WHERE ", filter_bots, "
                     i.submitted_by = pup.people_id and
                     pup.upeople_id = up.id and
                     i.submitted_on >= ", startdate, " and
                     i.submitted_on < ", enddate, "
-                    ",date_limit, "
+                    ",date_limit, merged_sql, "
                 GROUP BY up.identifier
-                ORDER BY opened desc
+                ORDER BY ",action," desc
                 LIMIT 10;", sep="")
+    return(q)
+}
+
+GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE)
+    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -574,7 +610,6 @@ GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
     }
     return (q)
 }
-
 
 GetPeopleEvolSCR <- function(developer_id, period, startdate, enddate) {
     q <- GetPeopleQuerySCR(developer_id, period, startdate, enddate, TRUE)
