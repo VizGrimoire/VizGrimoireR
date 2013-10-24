@@ -75,6 +75,21 @@ static_data = merge(static_data, latest_activity90)
 static_data = merge(static_data, latest_activity180)
 static_data = merge(static_data, latest_activity365)
 static_data = merge(static_data, latest_activity730)
+
+sent_7 = GetDiffSentDays(period, conf$enddate, 7)
+sent_30 = GetDiffSentDays(period, conf$enddate, 30)
+sent_365 = GetDiffSentDays(period, conf$enddate, 365)
+senders_7 = GetDiffSendersDays(period, conf$enddate, 7)
+senders_30 = GetDiffSendersDays(period, conf$enddate, 30)
+senders_365 = GetDiffSendersDays(period, conf$enddate, 365)
+static_data = merge(static_data, sent_7)
+static_data = merge(static_data, sent_30)
+static_data = merge(static_data, sent_365)
+
+#static_data = merge(static_data, senders_7)
+#static_data = merge(static_data, senders_30)
+#static_data = merge(static_data, senders_365)
+
 createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
 
