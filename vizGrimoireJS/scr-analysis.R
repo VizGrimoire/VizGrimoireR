@@ -249,7 +249,7 @@ top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf
 top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
 top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
 
-# Top mergers
+# Top mergers 
 top_mergers <- list()
 top_mergers[['mergers.']]<-GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots)
 top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
@@ -257,3 +257,7 @@ top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$e
 
 createJSON (c(top_reviewers, top_openers, top_mergers), paste(destdir,"/scr-top.json", sep=''))
 
+# Top mergers 100
+limit = 100
+top_mergers_100 <- GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, limit)
+createJSON (top_mergers_100, paste(destdir,"/scr-top-100.json", sep=''))

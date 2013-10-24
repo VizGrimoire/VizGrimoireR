@@ -521,7 +521,7 @@ GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bo
     return (data)
 }
 
-GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, merged = FALSE) {
+GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, merged = FALSE, limit = 10) {
     date_limit = ""
     merged_sql = ""
     rol = "openers"
@@ -555,7 +555,7 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
                     ",date_limit, merged_sql, "
                 GROUP BY up.identifier
                 ORDER BY ",action," desc
-                LIMIT 10;", sep="")
+                LIMIT ",limit, sep="")
     return(q)
 }
 
@@ -567,8 +567,8 @@ GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) 
     return (data)
 }
 
-GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
-    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE)
+GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit = 10) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE, limit)
     print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
