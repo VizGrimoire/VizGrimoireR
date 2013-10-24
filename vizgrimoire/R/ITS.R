@@ -267,6 +267,31 @@ GetPercentageDiff <- function(value1, value2){
     return(percentage)
 }
 
+StaticNumClosed <- function(closed_condition, startdate, enddate){
+    fields = ' COUNT(DISTINCT(issue_id)) as closed'
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(),"AND",closed_condition)
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+}
+
+GetDiffClosedDays <- function(period, init_date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(init_date, days)
+    lastclosed = StaticNumClosed(closed_condition, chardates[2], chardates[1])
+    lastclosed = as.numeric(lastclosed[1])
+    prevclosed = StaticNumClosed(closed_condition, chardates[3], chardates[2])
+    prevclosed = as.numeric(prevclosed[1])
+    diffcloseddays = data.frame(diff_netclosed = numeric(1), percentage_closed = numeric(1))
+
+    diffcloseddays$diff_netclosed = lastclosed - prevclosed
+    diffcloseddays$percentage_closed = GetPercentageDiff(prevclosed, lastclosed)
+
+    colnames(diffcloseddays) <- c(paste("diff_netclosed","_",days, sep=""), paste("percentage_closed","_",days, sep=""))
+
+    return (diffcloseddays)
+}
 
 
 
