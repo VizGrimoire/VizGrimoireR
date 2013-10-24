@@ -86,9 +86,9 @@ static_data = merge(static_data, sent_7)
 static_data = merge(static_data, sent_30)
 static_data = merge(static_data, sent_365)
 
-#static_data = merge(static_data, senders_7)
-#static_data = merge(static_data, senders_30)
-#static_data = merge(static_data, senders_365)
+static_data = merge(static_data, senders_7)
+static_data = merge(static_data, senders_30)
+static_data = merge(static_data, senders_365)
 
 createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
