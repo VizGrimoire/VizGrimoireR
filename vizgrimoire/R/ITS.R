@@ -293,6 +293,34 @@ GetDiffClosedDays <- function(period, init_date, days, closed_condition){
     return (diffcloseddays)
 }
 
+StaticNumClosers <- function(closed_condition, startdate, enddate){
+    # closers
+    fields = 'COUNT(DISTINCT(pup.upeople_id)) as closers '
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(),"AND",closed_condition)
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+    return (data1)
+}
+
+GetDiffClosersDays <- function(period, init_date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+
+    chardates = GetDates(init_date, days)
+    lastclosers = StaticNumClosers(closed_condition, chardates[2], chardates[1])
+    lastclosers = as.numeric(lastclosers[1])
+    prevclosers = StaticNumClosers(closed_condition, chardates[3], chardates[2])
+    prevclosers = as.numeric(prevclosers[1])
+    diffclosersdays = data.frame(diff_netclosers = numeric(1), percentage_closers = numeric(1))
+
+    diffclosersdays$diff_netclosers = lastclosers - prevclosers
+    diffclosersdays$percentage_closers = GetPercentageDiff(prevclosers, lastclosers)
+
+    colnames(diffclosersdays) <- c(paste("diff_netclosers","_",days, sep=""), paste("percentage_closers","_",days, sep=""))
+
+    return (diffclosersdays)
+}
 
 
 
