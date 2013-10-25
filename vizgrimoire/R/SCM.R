@@ -1238,12 +1238,14 @@ evol_companies <- function(period, startdate, enddate){
 }
 
 repos_name <- function(startdate, enddate) {
-    q <- paste ("select count(*) as total, name
-                 from scmlog s, repositories r
+    q <- paste ("select r.name as name
+                 from scmlog s, 
+                      repositories r
                  where s.repository_id=r.id and
-                 s.date >", startdate, " and
-                 s.date <= ", enddate, "
-                 group by repository_id order by total desc");
+                       s.date >", startdate, " and
+                       s.date <= ", enddate, "
+                 group by r.name 
+                 order count(distinct(s.id)) desc");
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)	
