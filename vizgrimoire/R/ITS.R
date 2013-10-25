@@ -473,9 +473,17 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identities_db, filter = 
 # REPOSITORIES
 #
 
-GetReposNameITS <- function() {
-    # q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
-    q <- paste ("SELECT url AS name FROM trackers")
+GetReposNameITS <- function(startdate, enddate, identities_db) {
+    q <- paste ("select t.url as name
+                 from issues i, 
+                      trackers t
+                 where i.tracker_id = t.id and
+                       i.submitted_on >= ", startdate, " AND
+                       i.submitted_on < ", enddate, " AND
+                       ", closed_condition,"
+                 group by t.url
+                 order by count(distinct(i.id)) desc;", sep="")
+
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -1102,6 +1110,7 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
                 first_companies = company_data
             }
             first_companies = merge(first_companies, company_data, all=TRUE)
+            print(first_companies)
             colnames(first_companies)[colnames(first_companies)=="closed"] <- company
 
         } else {
