@@ -33,6 +33,7 @@
 
 library("vizgrimoire")
 library("ISOweek")
+library("zoo")
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 
@@ -64,6 +65,7 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 # WARNING: info specific for the wikimedia case, this should be removed for other communities
 #          or in the case that bots are required to be in the analysis
 bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot')
+
 
 #########
 #EVOLUTIONARY DATA
@@ -238,6 +240,33 @@ if ('people' %in% reports) {
         createJSON(static, paste(destdir,"/people-",upeople_id,"-scr-static.json", sep=''))
     }
 }
+
+##
+# Quarters analysis
+##
+
+# quarters: http://rss.acs.unt.edu/Rdoc/library/zoo/html/yearqtr.html
+print(as.yearqtr(as.POSIXlt(conf$str_enddate)))
+print(as.yearqtr(as.POSIXlt(conf$str_startdate)))
+quarters = ((as.yearqtr(as.POSIXlt(conf$str_enddate)))-as.yearqtr(as.POSIXlt(conf$str_startdate)))*4
+
+start = as.POSIXlt(conf$str_startdate)
+companies_quarters <- list()
+for (i in 0:quarters) {
+    year = start$year+1900
+    quarter = (i%%4)+1
+    print (paste(year, quarter))
+    data <- GetCompaniesQuarteSCR(year, quarter, conf$identities_db)
+    companies_quarters[[paste(year,quarter)]]<-data
+    start$mon = start$mon+3
+    # hate doing this staff by hand
+    if (start$mon>11) {
+        start$year = start$year+(start$mon%%11)
+        start$mon = (start$mon%/%11)-1
+    }
+}
+createJSON(companies_quarters, paste(destdir,"/scr-companies-quarters.json", sep=''))
+
 
 # Tops
 top_reviewers <- list()
