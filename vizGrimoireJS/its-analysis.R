@@ -166,7 +166,7 @@ createJSON (top_closers_data, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # Repositories
 if ('repositories' %in% reports) {	
-	repos  <- GetReposNameITS()
+	repos  <- GetReposNameITS(startdate, enddate, closed_condition)
 	repos <- repos$name
 	createJSON(repos, paste(c(destdir,"/its-repos.json"), collapse=''))
 	

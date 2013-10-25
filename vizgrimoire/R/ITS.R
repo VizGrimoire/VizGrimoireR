@@ -473,7 +473,7 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identities_db, filter = 
 # REPOSITORIES
 #
 
-GetReposNameITS <- function(startdate, enddate, identities_db) {
+GetReposNameITS <- function(startdate, enddate, closed_condition) {
     q <- paste ("select t.url as name
                  from issues i, 
                       trackers t
