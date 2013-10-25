@@ -141,7 +141,7 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
     if (limit > 0) {
         limit_sql = paste(" LIMIT ", limit)
     }    
-    q = paste("SELECT c.name as name, COUNT(DISTINCT(i.id)) AS issues
+    q = paste("SELECT c.id as id, c.name as name, COUNT(DISTINCT(i.id)) AS total
                FROM  ",identities_db,".companies c,
                      ",identities_db,".upeople_companies upc,
                      people_upeople pup,
@@ -153,7 +153,7 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
                  i.submitted_on >=",  startdate, " AND
                  i.submitted_on < ", enddate, "
                GROUP BY c.name
-               ORDER BY issues DESC ",limit_sql,";", sep="")
+               ORDER BY total DESC ",limit_sql,";", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -561,7 +561,6 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
 
 GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) {
     q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -569,7 +568,6 @@ GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) 
 
 GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit = 10) {
     q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE, limit)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -591,9 +589,11 @@ GetFiltersOwnUniqueIdsSCR <- function (table='') {
 }
 
 GetPeopleListSCR <- function(startdate, enddate) {
-    fields = "DISTINCT(pup.upeople_id) as id, count(c.id) as total"
+    fields = "DISTINCT(pup.upeople_id) as id, count(c.id) as total, name"
     tables = GetTablesOwnUniqueIdsSCR()
+    tables = paste(tables,",people")
     filters = GetFiltersOwnUniqueIdsSCR()
+    filters = paste(filters,"AND people.id=pup.people_id")
     filters = paste(filters,"GROUP BY id ORDER BY total desc")
     q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)

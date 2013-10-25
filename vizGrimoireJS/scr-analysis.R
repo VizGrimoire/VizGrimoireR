@@ -185,6 +185,7 @@ print("ANALYSIS PER COMPANY BASIC")
 if ('companies' %in% reports) {
     # repos  <- GetReposSCRName(conf$startdate, conf$enddate, 30)
     companies  <- GetCompaniesSCRName(conf$startdate, conf$enddate, conf$identities_db)
+    createJSON(companies, paste(destdir,"/scr-companies-all.json", sep=''))
     companies <- companies$name
     companies_file_names = gsub("/","_",companies)
     createJSON(companies_file_names, paste(destdir,"/scr-companies.json", sep=''))
@@ -220,6 +221,7 @@ if ('companies' %in% reports) {
 if ('people' %in% reports) {
     print("PEOPLE ANALYSIS")
     people = GetPeopleListSCR(conf$startdate, conf$enddate)
+    createJSON(people, paste(destdir,"/scr-people-all.json",sep=''))
     people = people$id
     limit = 60
     if (length(people)<limit) limit = length(people);
