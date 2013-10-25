@@ -1044,12 +1044,14 @@ companies_name_wo_affs <- function(affs_list, startdate, enddate) {
                     from companies c,
                          people_upeople pup,
                          upeople_companies upc,
-                         scmlog s
+                         scmlog s,
+                         actions a
                     where c.id = upc.company_id and
                           upc.upeople_id = pup.upeople_id and
                           s.date >= upc.init and
                           s.date < upc.end and
                           pup.people_id = s.author_id and
+                          s.id = a.commit_id and
                           ",affiliations," 
                           s.date >=", startdate, " and
                           s.date < ", enddate, "
@@ -1067,10 +1069,12 @@ companies_name <- function(startdate, enddate) {
                     from companies c,
                          people_upeople pup,
                          upeople_companies upc,
-                         scmlog s
+                         scmlog s,
+                         actions a
                     where c.id = upc.company_id and
                           upc.upeople_id = pup.upeople_id and
                           pup.people_id = s.author_id and
+                          s.id = a.commit_id and
                           s.date >=", startdate, " and
                           s.date < ", enddate, "
                     group by c.name
