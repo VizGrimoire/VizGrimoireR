@@ -256,25 +256,32 @@ reposField <- function() {
     return (rfield);                
 }
 
-reposNames <- function (rfield, startdate, enddate) {    
-    names = ""    
+reposNames <- function (rfield, startdate, enddate) {
+    names = ""
     if (rfield == "mailing_list_url") {
-        query <- new ("Query",
-                sql = paste("SELECT DISTINCT(mailing_list_url) FROM messages m 
-                             WHERE m.first_date >= ",startdate," AND
-                             m.first_date < ",enddate))   
+        q = paste("SELECT ml.mailing_list_url, 
+                          COUNT(message_ID) AS total
+                   FROM messages m, 
+                        mailing_lists ml
+                   WHERE m.mailing_list_url = ml.mailing_list_url AND
+                         m.first_date >= ",startdate," AND
+                         m.first_date < ",enddate,"
+                   GROUP BY ml.mailing_list_url ORDER by total desc")
+        query <- new ("Query", sql = q)
         mailing_lists <- run(query)
         mailing_lists_files <- run(query)
         names = mailing_lists_files
     } else {
-        query <- new ("Query", 
-                sql = paste("SELECT DISTINCT(mailing_list) FROM messages m 
-                             WHERE m.first_date >= ",startdate," AND
-                             m.first_date < ",enddate))
+        # TODO: not ordered yet by total messages
+        q = paste("SELECT DISTINCT(mailing_list) 
+                   FROM messages m
+                   WHERE m.first_date >= ",startdate," AND
+                         m.first_date < ",enddate)
+        query <- new ("Query", sql = q)
         mailing_lists <- run(query)
         names = mailing_lists
-    }    
-    return (names)    
+    }
+    return (names)
 }
 
 GetEvolReposMLS <- function (rfield, repo, period, startdate, enddate) {    
