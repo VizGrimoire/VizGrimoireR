@@ -634,12 +634,14 @@ GetPeopleStaticSCR <- function(developer_id, startdate, enddate) {
     return (data)
 }
 
-# Per quarter analysis: Companies and People.
+########################################
+# Quarter analysis: Companies and People
+########################################
 
 # No use of generic query because changes table is not used
 GetCompaniesQuarteSCR <- function(year, quarter, identities_db) {
     q <- (paste("
-           SELECT COUNT(i.id) AS total, c.name, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year 
+           SELECT COUNT(i.id) AS total, c.name, c.id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year 
            FROM issues i, people p , people_upeople pup, 
              ",identities_db,".upeople_companies upc,",identities_db,".companies c
            WHERE i.submitted_by=p.id AND pup.people_id=p.id 
