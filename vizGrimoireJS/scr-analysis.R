@@ -252,12 +252,15 @@ quarters = ((as.yearqtr(as.POSIXlt(conf$str_enddate)))-as.yearqtr(as.POSIXlt(con
 
 start = as.POSIXlt(conf$str_startdate)
 companies_quarters <- list()
+people_quarters <- list()
 for (i in 0:quarters) {
     year = start$year+1900
     quarter = (i%%4)+1
-    print (paste(year, quarter))
-    data <- GetCompaniesQuarteSCR(year, quarter, conf$identities_db)
+    print (paste ("Analyzing for companies and people  quarter ",paste(year, quarter)))
+    data <- GetCompaniesQuartersSCR(year, quarter, conf$identities_db)
     companies_quarters[[paste(year,quarter)]]<-data
+    data_people <- GetPeopleQuartersSCR(year, quarter, conf$identities_db)
+    people_quarters[[paste(year,quarter)]]<-data_people
     start$mon = start$mon+3
     # hate doing this staff by hand
     if (start$mon>11) {
@@ -266,7 +269,7 @@ for (i in 0:quarters) {
     }
 }
 createJSON(companies_quarters, paste(destdir,"/scr-companies-quarters.json", sep=''))
-
+createJSON(people_quarters, paste(destdir,"/scr-people-quarters.json", sep=''))
 
 # Tops
 top_reviewers <- list()
