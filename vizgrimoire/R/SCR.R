@@ -605,7 +605,7 @@ GetPeopleListSCR <- function(startdate, enddate) {
     q = "SELECT COUNT(i.id) as total, pup.upeople_id as id, name
          FROM issues i, people p, people_upeople pup
          WHERE i.submitted_by=p.id AND p.id = pup.people_id AND status='merged'
-         GROUP by pup.upeople_id"
+         GROUP by pup.upeople_id ORDER by total desc"
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)
@@ -634,7 +634,7 @@ GetPeopleQuerySCRChanges <- function(developer_id, period, startdate, enddate, e
 # Average review time is 3.6 days so it is an approach to use submission time as merged time
 # For month analysis, 10% error in average for times
 GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
-    fields = "COUNT(i.id) AS merged, pup.upeople_id as id, name"
+    fields = "COUNT(i.id) AS closed"
     tables = "issues i, people p, people_upeople pup"
     filters = paste("i.submitted_by=p.id AND p.id = pup.people_id AND
                      status='merged' AND pup.upeople_id = ", developer_id)
@@ -642,7 +642,9 @@ GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
         q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
                 startdate, enddate)
     } else {
-        fields = paste(fields)
+        fields = paste(fields,
+                ",DATE_FORMAT (min(submitted_on),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(submitted_on),'%Y-%m-%d') as last_date")
         q = GetSQLGlobal('submitted_on', fields, tables, filters,
                          startdate, enddate)
     }
