@@ -588,8 +588,8 @@ GetFiltersOwnUniqueIdsSCR <- function (table='') {
     return (filters)
 }
 
-GetPeopleListSCR <- function(startdate, enddate) {
-    fields = "DISTINCT(pup.upeople_id) as id, count(c.id) as total, name"
+GetPeopleListSCRChanges <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id, count(i.id) as total, name"
     tables = GetTablesOwnUniqueIdsSCR()
     tables = paste(tables,",people")
     filters = GetFiltersOwnUniqueIdsSCR()
@@ -601,7 +601,18 @@ GetPeopleListSCR <- function(startdate, enddate) {
 	return (data)
 }
 
-GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
+GetPeopleListSCR <- function(startdate, enddate) {
+    q = "SELECT COUNT(i.id) as total, pup.upeople_id as id, name
+         FROM issues i, people p, people_upeople pup
+         WHERE i.submitted_by=p.id AND p.id = pup.people_id AND status='merged
+         GROUP by pup.upeople_id"
+	query <- new("Query", sql = q)
+	data <- run(query)
+	return (data)
+}
+
+
+GetPeopleQuerySCRChanges <- function(developer_id, period, startdate, enddate, evol) {
     fields = "COUNT(c.id) AS closed"
     tables = GetTablesOwnUniqueIdsSCR()
     filters = paste(GetFiltersOwnUniqueIdsSCR(), "AND pup.upeople_id = ", developer_id)
@@ -619,6 +630,24 @@ GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
     return (q)
 }
 
+# In Mediawiki Changes tables is wrong until 2013-05 so we use isuess table
+# Average review time is 3.6 days so it is an approach to use submission time as merged time
+# For month analysis, 10% error in average for times
+GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
+    fields = "COUNT(i.id) AS merged, pup.upeople_id as id, name"
+    tables = "issues i, people p, people_upeople pup"
+    filters = paste("i.submitted_by=p.id AND p.id = pup.people_id AND
+                     status='merged' AND pup.upeople_id = ", developer_id)
+    if (evol) {
+        q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
+                startdate, enddate)
+    } else {
+        fields = paste(fields)
+        q = GetSQLGlobal('submitted_on', fields, tables, filters,
+                         startdate, enddate)
+    }
+    return (q)
+}
 
 GetPeopleEvolSCR <- function(developer_id, period, startdate, enddate) {
     q <- GetPeopleQuerySCR(developer_id, period, startdate, enddate, TRUE)
