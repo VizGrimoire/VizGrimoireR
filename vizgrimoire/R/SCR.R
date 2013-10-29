@@ -604,7 +604,7 @@ GetPeopleListSCRChanges <- function(startdate, enddate) {
 GetPeopleListSCR <- function(startdate, enddate) {
     q = "SELECT COUNT(i.id) as total, pup.upeople_id as id, name
          FROM issues i, people p, people_upeople pup
-         WHERE i.submitted_by=p.id AND p.id = pup.people_id AND status='merged
+         WHERE i.submitted_by=p.id AND p.id = pup.people_id AND status='merged'
          GROUP by pup.upeople_id"
 	query <- new("Query", sql = q)
 	data <- run(query)
