@@ -28,7 +28,7 @@
 # structure: identity;company;init_date;end_date
 # The whole process should be as follows:
 # 1- Obtain previous mentioned file with the following query:
-# select distinct u.identifier, c.name, upc.init, upc.end from people_upeople pup, upeople u, upeople_companies upc, companies c where u.id=upc.upeople_id and upc.company_id = c.id and u.id=pup.upeople_id order by u.identifier into outfile '/tmp/affiliations.csv' fields terminated by ':' lines terminated by '\n';
+# select distinct u.identifier, c.name, upc.init, upc.end from people_upeople pup, upeople u, upeople_companies upc, companies c where u.id=upc.upeople_id and upc.company_id = c.id and u.id=pup.upeople_id order by u.identifier into outfile '/tmp/affiliations.csv' fields terminated by ';' lines terminated by '\n';
 # 2- Re-run cvsanaly 
 # 3- Re-run unifypeople.py script, so identities, upeople and people_upeople tables are created and populated
 # 4- Copy old companies table as follows: create table companies as select * from <old_database>.companies
