@@ -42,9 +42,11 @@ GetStaticDataMediaWiki <- function(period, startdate, enddate, i_db=NA, type_ana
     # 1- Retrieving information
     reviews <- StaticNumReviewsMediaWiki(period, startdate, enddate, i_db, type_analysis)
     authors <- StaticNumAuthorsMediaWiki(period, startdate, enddate, i_db, type_analysis)
+    pages <- StaticPagesMediaWiki(period, startdate, enddate, i_db, type_analysis)
 
     # 2- Merging information
     static_data = merge(reviews, authors)
+    static_data = merge(static_data, pages)
 
     return (static_data)
 }
@@ -54,21 +56,23 @@ GetEvolDataMediaWiki <- function(period, startdate, enddate, i_db=NA, type_analy
     # 1- Retrieving information
     reviews <- EvolReviewsMediaWiki(period, startdate, enddate, i_db, type_analysis)
     authors <- EvolAuthorsMediaWiki(period, startdate, enddate, i_db, type_analysis)
-    
+    pages <- EvolPagesMediaWiki(period, startdate, enddate)
+
     # 2- Merging information
     evol_data = merge(reviews, authors, all = TRUE)
-    
+    evol_data = merge(evol_data, pages, all = TRUE)
+
     return (evol_data)
 }
 
 StaticNumReviewsMediaWiki <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {    
     select <- "SELECT count(rev_id) as reviews,
-               DATE_FORMAT (min(date), '%Y-%m-%d') as first_date, 
+               DATE_FORMAT (min(date), '%Y-%m-%d') as first_date,
                DATE_FORMAT (max(date), '%Y-%m-%d') as last_date "
     from <- " FROM wiki_pages_revs "
     where <- paste(" where date >=", startdate, " and
                      date < ", enddate, sep="")
-    q <- paste(select, from, where)    
+    q <- paste(select, from, where)
     return(ExecuteQuery(q))
 }
 
@@ -79,6 +83,42 @@ StaticNumAuthorsMediaWiki <- function(period, startdate, enddate, identities_db=
                     date < ", enddate, sep="")
     q <- paste(select, from, where)    
     return(ExecuteQuery(q))
+}
+
+
+
+
+GetQueryPagesMediaWiki <- function(period, startdate, enddate, evol) {
+    fields <- "COUNT(page_id) as pages"
+    tables <- " (
+            SELECT wiki_pages.page_id, MIN(date) as date FROM wiki_pages, wiki_pages_revs
+            WHERE wiki_pages.page_id=wiki_pages_revs.page_id 
+            GROUP BY wiki_pages.page_id) t "
+    filters <- ''
+
+    if (evol) {
+            q = GetSQLPeriod(period,'date', fields, tables, filters,
+                            startdate, enddate)
+    } else {
+            q = GetSQLGlobal('date', fields, tables, filters,
+                            startdate, enddate)
+    }
+    return(q)
+}
+
+
+StaticPagesMediaWiki <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+    q <- GetQueryPagesMediaWiki(period, startdate, enddate, FALSE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+EvolPagesMediaWiki <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+    q <- GetQueryPagesMediaWiki(period, startdate, enddate, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 GetReviewsMediaWiki <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
@@ -96,7 +136,7 @@ EvolReviewsMediaWiki <- function(period, startdate, enddate, identities_db=NA, t
 GetAuthorsMediaWiki <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
     fields = " count(distinct(user)) as authors "
     tables = paste(" wiki_pages_revs ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = GetSQLReportWhere(type_analysis, "author")    
+    filters = GetSQLReportWhere(type_analysis, "author")
     q <- BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)    
     return(ExecuteQuery(q))
 }
