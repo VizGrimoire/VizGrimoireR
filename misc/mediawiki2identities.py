@@ -67,7 +67,7 @@ def connect(db, cfg):
    host = cfg.db_hostname
 
    try:
-      db = MySQLdb.connect(user = user, passwd = password, db = db)      
+      db = MySQLdb.connect(user = user, passwd = password, db = db, charset='utf8')      
       return db, db.cursor()
    except:
       print("Database connection error")
