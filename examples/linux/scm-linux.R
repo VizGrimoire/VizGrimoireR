@@ -53,8 +53,8 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 ##
 treemap.actions <- function(df, index=c("dir", "subdir"),
                             vSize="actions",
-                            vColor="actions",
-                            type="value",
+                            vColor=NULL,
+                            type="index",
                             file="", height = 4, width = 6) {
   if (file != "") {
     pdf(file=file, height=height, width=width)
@@ -195,3 +195,47 @@ Pyramid3D (ages.merged, dirname="/tmp/linux-pyramid-3d", periods=1)
 Pyramid3D (ages.merged, interactive=TRUE, periods=1)
 
 CloseDBChannel()
+
+##
+## Get n first elements from a list, as a string separated by "/"
+##  Works for n=1, n=2
+##  (for use by sapply)
+##
+get.element <- function (elements, n) {
+  if (length(elements) > n) {
+    if (n == 1) {
+      return(elements[[1]])
+    } else {
+      return(paste(elements[1], elements[2], sep="/"))
+    }
+  } else {
+    return("")
+  }
+}
+
+##
+## Get nth directory component in path
+## If no n is specified, get first directory component
+## If there is no such component (eg, it is already file name) return ""
+## (Vectorized)
+##
+get.dir <- function (file, n = 1) {
+  file.dirs <- sapply (file, strsplit, "/")
+  len <- sapply (file.dirs, length, simplify=FALSE)
+  dir <- sapply (file.dirs, get.element, n)
+  return (ifelse (len >= n, dir, ""))
+}
+
+## cloc --report-file=/tmp/linux-loc.csv --csv --skip-uniqueness --by-file .
+##
+files.loc <- read.csv("/tmp/linux-loc.csv")
+files.loc$filename <- substring(files.loc$filename, 3)
+files.loc$dir <- get.dir(files.loc$filename)
+files.loc$subdir <- get.dir(files.loc$filename, 2)
+
+treemap(files.loc, index=c("dir", "subdir"), vSize="code", vColor="code")
+
+treemap.actions(files.loc,
+                index=c("dir", "subdir"),
+                vSize="code",
+                file="/tmp/linux-treemap-loc-subdir.pdf")

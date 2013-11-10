@@ -229,6 +229,101 @@ GetStaticITS <- function (closed_condition, startdate, enddate) {
     return(agg_data)
 }
 
+GetDates <- function(init_date, days) {
+    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
+    # This functions returns an array with three dates
+    # First: init_date
+    # Second: init_date - days
+    # Third: init_date - days - days
+    enddate = gsub("'", "", init_date)
+
+    enddate = as.Date(enddate)
+    startdate = enddate - days
+    prevdate = enddate - days - days
+
+    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
+                   paste("'", as.character(startdate), "'", sep=""),
+                   paste("'", as.character(prevdate), "'", sep=""))
+    return (chardates)
+}
+
+GetPercentageDiff <- function(value1, value2){
+    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
+    # This function returns whe % diff between value 1 and value 2.
+    # The difference could be positive or negative, but the returned value
+    # is always > 0
+
+    percentage = 0
+    print(paste("prevcommits=", value1))
+    print(paste("lastcommits=",value2))
+
+    if (value1 < value2){
+        diff = value2 - value1
+        percentage = as.integer((diff/value1) * 100)
+    }
+    if (value1 > value2){
+        percentage = as.integer((1-(value2/value1)) * 100)
+    }
+    return(percentage)
+}
+
+StaticNumClosed <- function(closed_condition, startdate, enddate){
+    fields = ' COUNT(DISTINCT(issue_id)) as closed'
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(),"AND",closed_condition)
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+}
+
+GetDiffClosedDays <- function(period, init_date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(init_date, days)
+    lastclosed = StaticNumClosed(closed_condition, chardates[2], chardates[1])
+    lastclosed = as.numeric(lastclosed[1])
+    prevclosed = StaticNumClosed(closed_condition, chardates[3], chardates[2])
+    prevclosed = as.numeric(prevclosed[1])
+    diffcloseddays = data.frame(diff_netclosed = numeric(1), percentage_closed = numeric(1))
+
+    diffcloseddays$diff_netclosed = lastclosed - prevclosed
+    diffcloseddays$percentage_closed = GetPercentageDiff(prevclosed, lastclosed)
+
+    colnames(diffcloseddays) <- c(paste("diff_netclosed","_",days, sep=""), paste("percentage_closed","_",days, sep=""))
+
+    return (diffcloseddays)
+}
+
+StaticNumClosers <- function(closed_condition, startdate, enddate){
+    # closers
+    fields = 'COUNT(DISTINCT(pup.upeople_id)) as closers '
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(),"AND",closed_condition)
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+    return (data1)
+}
+
+GetDiffClosersDays <- function(period, init_date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+
+    chardates = GetDates(init_date, days)
+    lastclosers = StaticNumClosers(closed_condition, chardates[2], chardates[1])
+    lastclosers = as.numeric(lastclosers[1])
+    prevclosers = StaticNumClosers(closed_condition, chardates[3], chardates[2])
+    prevclosers = as.numeric(prevclosers[1])
+    diffclosersdays = data.frame(diff_netclosers = numeric(1), percentage_closers = numeric(1))
+
+    diffclosersdays$diff_netclosers = lastclosers - prevclosers
+    diffclosersdays$percentage_closers = GetPercentageDiff(prevclosers, lastclosers)
+
+    colnames(diffclosersdays) <- c(paste("diff_netclosers","_",days, sep=""), paste("percentage_closers","_",days, sep=""))
+
+    return (diffclosersdays)
+}
+
+
+
 GetLastActivityITS <- function(days, closed_condition) {
     # opened issues
     q <- paste("select count(*) as opened_",days,"

@@ -1138,7 +1138,7 @@ companies_name_wo_affs <- function(affs_list, startdate, enddate) {
        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
     }    
 
-    q <- paste ("select distinct(c.name)
+    q <- paste ("select c.name
                  from companies c,
                       people_upeople pup,
                       upeople_companies upc,
@@ -1161,7 +1161,7 @@ companies_name_wo_affs <- function(affs_list, startdate, enddate) {
 companies_name <- function(startdate, enddate) {
     # companies_limit = 30
     
-    q <- paste ("select distinct(c.name)
+    q <- paste ("select c.name
                  from companies c,
                       people_upeople pup,
                       upeople_companies upc,
