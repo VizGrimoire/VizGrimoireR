@@ -188,7 +188,6 @@ if __name__ == '__main__':
     myvars = get_vars()
 
     execute_mediawiki_script(myvars)
-    sys.exit(0)
     execute_scm_script(myvars)
     execute_its_script(myvars)
     execute_mls_script(myvars)
