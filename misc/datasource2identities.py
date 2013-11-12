@@ -165,7 +165,7 @@ def reuse_identity(cursor_ds, people_id, upeople_id):
     try:
         cursor_ds.execute(query, (people_id, upeople_id))
     except _mysql_exceptions.IntegrityError:
-        print (people_id, " to ", upeople_id, " already exits")
+        print (people_id, " to ", upeople_id, " already exits").encode('utf-8')
 
 def main():
    cfg = getOptions()
@@ -213,7 +213,7 @@ def main():
       results_ids = search_identity(cursor_ids, name)
       if name != '' and len(results_ids) > 0:
         upeople_id = int(results_ids[0][0])
-        print "Reusing identity by name " + name
+        print ("Reusing identity by name " + name).encode('utf-8')
         reuse_identity(cursor_ds, people_id, upeople_id)
         # Insert email identity also
         if (email != ''):
@@ -224,7 +224,7 @@ def main():
       results_ids = search_identity(cursor_ids, email)
       if email != '' and len(results_ids) > 0:
         upeople_id = int(results_ids[0][0])
-        print "Reusing identity by email " + email
+        print ("Reusing identity by email " + email).encode('utf-8')
         reuse_identity(cursor_ds, people_id, upeople_id)
         # Insert name identity also
         if (name != ''):
@@ -235,7 +235,7 @@ def main():
       results_ids = search_identity(cursor_ids, user_id)
       if user_id != '' and len(results_ids) > 0:
         upeople_id = int(results_ids[0][0])
-        print "Reusing identity by user_id " + user_id
+        print ("Reusing identity by user_id " + user_id).encode('utf-8')
         reuse_identity(cursor_ds, people_id, upeople_id)
         reusedids = reusedids+1
         continue
