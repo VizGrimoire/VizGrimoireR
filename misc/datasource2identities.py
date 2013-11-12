@@ -104,18 +104,18 @@ def insert_identity(cursor_ids, cursor_ds, upeople_id,
                     name, email, user_id):
     if name != None and name != '':
         query = "INSERT INTO identities(upeople_id, identity, type)" + \
-                "VALUES(" + str(upeople_id) + ", '" + name + "', 'name');"
-        execute_query(cursor_ids, query)
+                "VALUES ( %s, %s, 'name')";
+        cursor_ids.execute(query, (upeople_id, name))
 
     if email != None and email != '':
         query = "INSERT INTO identities(upeople_id, identity, type)" + \
-                "VALUES(" + str(upeople_id) + ", '" + email + "', 'email');"
-        execute_query(cursor_ids, query)
-        
+                "VALUES(%s, %s, 'email');"
+        cursor_ids.execute(query, (upeople_id, email))
+
     if user_id != None and user_id != '':
         query = "INSERT INTO identities(upeople_id, identity, type)" + \
-                "VALUES(" + str(upeople_id) + ", '" + user_id + "', 'user_id');"
-        execute_query(cursor_ids, query)
+                "VALUES( %s, %s, 'user_id');"
+        cursor_ids.execute(query, (upeople_id, user_id))
 
 def insert_upeople(cursor_ids, cursor_ds, people_id, 
                     name, email, user_id):
