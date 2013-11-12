@@ -80,7 +80,6 @@ def connect(db, cfg):
 
 def execute_query(connector, query):
    results = int (connector.execute(query))
-   cont = 0
    if results > 0:
       result1 = connector.fetchall()
       return result1
@@ -156,9 +155,10 @@ def insert_upeople(cursor_ids, cursor_ds, people_id,
     reuse_identity(cursor_ds, people_id, upeople_id)
     
 def search_identity(cursor_ids, field):
-   query = "SELECT upeople_id FROM identities WHERE identity='"+field+"'"
-   results_ids = execute_query(cursor_ids, query)
-   return results_ids
+   query = "SELECT upeople_id FROM identities WHERE identity = %s"
+   results = int (cursor_ids.execute(query, (field)))
+   if results > 0: return cursor_ids.fetchall() 
+   else: return []
 
 def reuse_identity(cursor_ds, people_id, upeople_id):
     query = "INSERT INTO people_upeople (people_id, upeople_id) VALUES (%s, %s)"
