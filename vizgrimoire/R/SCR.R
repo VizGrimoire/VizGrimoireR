@@ -262,9 +262,9 @@ GetEvaluations <- function(period, startdate, enddate, type, type_analysis, evol
     #Building the query
     fields = paste (" count(distinct(c.id)) as ", type)
     tables = paste(" changes c, issues i ", GetSQLReportFromSCR(NA, type_analysis))
-    filters <- ifelse( type == 'verified', " c.field = 'VRIF' ",
+    filters <- ifelse( type == 'verified', " (c.field = 'VRIF' OR c.field = 'Verified')",
                ifelse( type == 'approved', " c.field = 'APRV' ",
-               ifelse( type == 'codereview', " c.field = 'CRVW' ",
+               ifelse( type == 'codereview', " (c.field = 'CRVW' OR c.field = 'Code-Review')",
                ifelse( type == 'sent', " c.field = 'SUBM' ",
                NA))))
     filters = paste(filters, " and i.id = c.issue_id ")
