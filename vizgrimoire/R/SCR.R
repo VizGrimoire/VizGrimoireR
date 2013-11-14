@@ -335,8 +335,8 @@ GetWaiting4Reviewer <- function(period, startdate, enddate, identities_db, type_
                        group by c.issue_id, c.old_value) t1 "
      tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters =  " i.id = c.issue_id
-                  and t1.id = c.id   
-                  and (c.field='CRVW' or c.field='VRIF')
+                  and t1.id = c.id
+                  and (c.field='CRVW' or c.field='Code-Review' or c.field='Verified' or c.field='VRIF')
                   and (c.new_value=1 or c.new_value=2) "
      filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
 
@@ -378,8 +378,8 @@ GetWaiting4Submitter <- function(period, startdate, enddate, identities_db, type
                        group by c.issue_id, c.old_value) t1 "
      tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters = " i.id = c.issue_id
-                 and t1.id = c.id  
-                 and (c.field='CRVW' or c.field='VRIF') 
+                 and t1.id = c.id
+	             and (c.field='CRVW' or c.field='Code-Review' or c.field='Verified' or c.field='VRIF')
                  and (c.new_value=-1 or c.new_value=-2) "
      filters = paste(filters, GetSQLReportWhereSCR(type_analysis))
 
