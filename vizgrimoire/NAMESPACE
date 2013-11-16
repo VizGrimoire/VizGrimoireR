@@ -1,16 +1,19 @@
 exportPattern("^[[:alpha:]]+")
 exportMethods(
   "initialize",
+  "CSV",
   "GetAges",
   "ProcessAges",
   "GetActivity",
   "JSON",
+  "PlotCharts",
   "PlotDist",
   "Plot",
   "Pyramid",
   "QuantilizeMonths",
   "QuantilizeYears",
   "Query",
+  "RegionTZ",
   "run",
   "show" 
 )
@@ -31,7 +34,9 @@ exportClasses(
   "TimedEvents",
   "Times",
   "TimeSeriesYears",
-  "SCMPeriodActivity"
+  "SCMPeriodActivity",
+  "MLSTZ",
+  "Regions"
 )
 import("RMySQL")
 import("rjson")
