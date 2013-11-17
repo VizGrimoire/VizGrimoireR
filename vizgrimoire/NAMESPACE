@@ -40,3 +40,9 @@ exportClasses(
   "MLSTZ",
   "Regions"
 )
+import("RMySQL")
+import("rjson")
+import("RColorBrewer")
+import("ggplot2")
+import("rgl")
+import("optparse")
