@@ -44,7 +44,7 @@ def connect(database):
    password = ''
    host = 'localhost'
    try:
-      db =  MySQLdb.connect(host,user,password,database)
+      db =  MySQLdb.connect(host,user,password,database,charset='utf8')
       return db, db.cursor()
    except:
       print("Database connection error")
