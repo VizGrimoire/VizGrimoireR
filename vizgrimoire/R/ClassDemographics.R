@@ -43,9 +43,8 @@ query.scm <- "SELECT author_id as id,
 ## when upeople table (unique identities) is available
 ##
 
-
 query.scm.unique <- "SELECT 
-    upeople.uid as id,
+    upeople.id as id,
     people.name as name,
     people.email as email,
     count(scmlog.id) as actions,
@@ -56,9 +55,10 @@ FROM
 WHERE
     scmlog.author_id = upeople.id AND
     people.id = upeople.id
-GROUP BY upeople.uid"
+GROUP BY upeople.id"
 
-# Query for getting first and last date from MLS database
+## Query for getting first and last date for all senders in a MLS database
+##
 query.mls <- "SELECT people.email_address as id,
                      people.name as name,
                      people.email_address as email,
@@ -67,9 +67,12 @@ query.mls <- "SELECT people.email_address as id,
               FROM messages, messages_people, people
               WHERE messages.message_ID = messages_people.message_id
                     AND people.email_address = messages_people.email_address
+                    AND messages_people.type_of_recipient = \"From\"
               GROUP BY people.email_address"
 
-## Query to get first and last date from ITS changes
+## Query to get first and last date for all people in an ITS (Bicho)
+##  database (changes table)
+##
 query.its <- "SELECT changes.changed_by as id,
                      people.name as name,
                      people.email as email,
@@ -80,32 +83,97 @@ query.its <- "SELECT changes.changed_by as id,
               WHERE changes.changed_by = people.id
               GROUP BY changes.changed_by"
 
-
+## Build an SQL query to get people active since months ago.
+##
+## Returns a query to get all records produced by a "first and last date" query
+##  which include a lastdate larger than months before now
+## Returned queries are like
+##  SELECT * FROM ( .... ) mytable
+##  WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL 4 MONTH)
+## Arguments: query and number of months for intervals
+##
+## DEPRECATED: This function seems not to be needed anymore
+##
 build.query <- function (query, months) {
-    q <- paste("SELECT * FROM ( ",query,")mytable
-                WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",months," month)")
+    cat("~~~ Demographics: build.query [DEPRECATED] ~~~ \n")
+    q <- paste("SELECT * FROM ( ", query, ") mytable
+                WHERE mytable.lastdatestr > SUBDATE(NOW(), INTERVAL ",
+                months," MONTH)")
     return(q)
 }
+
+## Declaring Demographics class
+##
 
 setClass(Class="Demographics",
          contains="data.frame",
          )
 
-## Initialize by storing the options that will be used later
+##
+## Demographics class: instantiation
+##
+## Queries the database to get demographics data, and stores it for later
+##  processing
+##
+## Arguments:
+##  - type: "scm" | "its" | "mls"
+##     Select specific queries for scm, its or mls MetricsGrimoire databases
+##  - months: Number of months per period (not really used)
+##     [DEPRECATED]
+##  - unique: whether to use the tables of MetricsGrimoire databases
+##     with unique identities
+##  - query: specific query to use
+##     When specified, renders type and unique void
+##     The query should produce rows with id, name, email, actions,
+##     firstdatestr, lastdatestr (each row corresponds to the activity
+##     of a single person)
+##
 setMethod(f="initialize",
           signature="Demographics",
-          definition=function(.Object, type, months, unique = FALSE, query = NULL){
+          definition=function(.Object, type, months = 6, unique = FALSE, query = NULL){
               cat("~~~ Demographics: initializator ~~~ \n")
-              # do I need the as(...) ?
-              ## .Object@type <- type
-              ## .Object@months <- months
-              ## .Object@unique <- unique
               attr(.Object, 'type') <- type
               attr(.Object, 'months') <- months
               attr(.Object, 'unique') <- unique
+              if (!is.null(query)) {
+                  ## We have a query, that's it
+                  sql <- query
+              } else if (type == 'scm') {
+                  cat("~~~ SCM query\n")
+                  if (unique) {
+                      sql <- query.scm.unique
+                  } else {
+                      sql <- query.scm
+                  }
+              } else if (type == 'mls') {
+                  cat("~~~ MLS query\n")
+                  sql <- query.mls
+              } else if (type == 'its') {
+                  cat("~~~ ITS query\n")
+                  sql <- query.its
+              }
+              q <- new("Query", sql = sql)
+              ## Attr activity is a dataframe with a row per person,
+              ##  each row has its date for first and last activity,
+              ##  and the staying time in the repo (in days)
+              ## Dates have to be formated properly
+              activity <- run (q)
+              activity$firstdate <- strptime(activity$firstdatestr,
+                                             format="%Y-%m-%d %H:%M:%S")
+              activity$lastdate <- strptime(activity$lastdatestr,
+                                            format="%Y-%m-%d %H:%M:%S")
+              activity$stay <- round (as.numeric(
+                  difftime(activity$lastdate,
+                           activity$firstdate,
+                           units="days"))) 
+              attr(.Object, 'activity') <- activity
               return(.Object)
           })
 
+##
+## Generic Aging function
+##
+## DEPRECATED: This function seems not to be needed anymore
 ##
 setGeneric (
   name= "Aging",
@@ -113,35 +181,33 @@ setGeneric (
   )
 
 ##
+## Get activity data for persons still active in a Demographics object
+##
+## Returns a dataframe with one row per person, with dates for first
+##  and last activity, and the staying time in the repo (in days),
+##  for those that are still active duirng the last .Object@months.
+##
+## DEPRECATED: This function seems not to be needed anymore
+##
 setMethod(f="Aging",
           signature="Demographics",
           definition=function(.Object){
-            cat("~~~ Demographics - Aging ~~~ \n")
-            
-            if (attr(.Object, 'type') == 'scm'){
-                cat("~~~ SCM query\n")
-                if (attr(.Object, 'unique')) {
-                    q <- new ("Query", sql = build.query(query.scm.unique,attr(.Object, 'months')))
-                } else {
-                    q <- new ("Query", sql = build.query(query.scm,attr(.Object, 'months')))
-                }
-            } else if (attr(.Object, 'type') == 'mls'){
-                cat("~~~ MLS query\n")
-                q <- new("Query", sql = build.query(query.mls,attr(.Object, 'months')))
-            } else if (attr(.Object, 'type') == 'its'){
-                cat("~~~ ITS query\n")
-                q <- new("Query", sql = build.query(query.its,attr(.Object, 'months')))
-            }
-            
-            res <- run (q)
-            res$firstdate <- strptime(res$firstdatestr,
-                                      format="%Y-%m-%d %H:%M:%S")
-            res$lastdate <- strptime(res$firstdatestr,
-                                     format="%Y-%m-%d %H:%M:%S")
-            return(res)
+            cat("~~~ Demographics - Aging [DEPRECATED] ~~~ \n")
+            currenttime <- strptime(Sys.time(), format="%Y-%m-%d %H:%M:%S")
+            active <- subset (attr (.Object, 'activity'),
+                      floor(as.numeric(difftime(currenttime, lastdate,
+                                                units="days"))) <=
+                              attr (.Object, 'months') * 30)
+            active$left <- floor(as.numeric(difftime(currenttime, active$lastdate,
+                                                units="days")))
+            return(active)
           }
           )
 
+##
+## Generic Birth function
+##
+## DEPRECATED: This function seems not to be needed anymore
 ##
 setGeneric (
   name= "Birth",
@@ -149,69 +215,20 @@ setGeneric (
   )
 
 ##
+## Get date of "birth" (entry) in the project (but it does more, see below)
+##
+## Returns a dataframe with all the data in the activity dataframe attribute
+##
+## DEPRECATED: This function seems not to be needed anymore
+##
 setMethod(f="Birth",
           signature="Demographics",
           definition=function(.Object){
-            cat("~~~ Demographics - Birth ~~~ \n")
-            
-            if (attr(.Object, 'type') == 'scm'){
-                cat("~~~ SCM query\n")
-                if (attr(.Object, 'unique')) {
-                    q <- new ("Query", sql = query.scm.unique)
-                } else {
-                    q <- new ("Query", sql = query.scm)
-                }
-            } else if (attr(.Object, 'type') == 'mls'){
-                cat("~~~ MLS query\n")
-                q <- new("Query", sql = query.mls)
-            } else if (attr(.Object, 'type') == 'its'){
-                cat("~~~ ITS query\n")
-                q <- new("Query", sql = query.its)
-            }
-            
-            res <- run (q)
-            res$firstdate <- strptime(res$firstdatestr,
-                                      format="%Y-%m-%d %H:%M:%S")
-            res$lastdate <- strptime(res$firstdatestr,
-                                     format="%Y-%m-%d %H:%M:%S")
-            return(res)
+            cat("~~~ Demographics - Birth [DEPRECATED] ~~~ \n")
+            return(attr(.Object, 'activity'))
           }
           )
 
-
-## ##
-## setMethod(f="initialize",
-##           signature="Demographics",
-##           definition=function(.Object, type, months, unique = FALSE, query = NULL){
-##             cat("~~~ Demographics: initializator ~~~ \n")
-            
-##             if (type == 'scm'){
-##                 cat("~~~ SCM query\n")
-##                 if (unique) {
-##                     q <- new ("Query", sql = build.query(query.scm.unique,months))
-##                 } else {
-##                     q <- new ("Query", sql = build.query(query.scm,months))
-##                 }
-##             } else if (type == 'mls'){
-##                 cat("~~~ MLS query\n")
-##                 q <- new("Query", sql = build.query(query.mls,months))
-##             } else if (type == 'its'){
-##                 cat("~~~ ITS query\n")
-##                 q <- new("Query", sql = build.query(query.its,months))
-##             }
-            
-##             as(.Object,"data.frame") <- run (q)
-##             .Object$firstdate <- strptime(.Object$firstdatestr,
-##                                           format="%Y-%m-%d %H:%M:%S")
-##             .Object$lastdate <- strptime(.Object$lastdatestr,
-##                                          format="%Y-%m-%d %H:%M:%S")
-##             .Object$stay <- round (as.numeric(
-##                                      difftime(.Object$lastdate,
-##                                               .Object$firstdate,
-##                                               units="days")))            
-##             return(.Object)
-##           }
-##           )
 
 ##
 ## Create a JSON file out of an object of this class
@@ -238,11 +255,15 @@ setGeneric (
   def=function(.Object,...){standardGeneric("GetAges")}
   )
 ##
-## Ages of developers for a certain date
+## Ages of developers for a certain date (spot date)
 ##
-## - date: date as string (eg: "2010-01-01")
+## Considers a developer to be active for that spot date it shows
+##  activity before it (was born before it) and after it (is
+##  showing to be alive after that spot date)
+## - date: date (spot date) as string (eg: "2010-01-01")
 ## - normalize.by: number of days to add to each age (or NULL
-##    for no normalization)
+##    for no normalization). This is useful for considering
+##    developers of age 0 to be really of age normalize.by
 ## Value: an Ages object
 ##
 setMethod(
@@ -250,20 +271,22 @@ setMethod(
   signature="Demographics",
   definition=function(.Object, date, normalize.by = NULL) {
 
-    active <- subset (as.data.frame (.Object),
-                      firstdate <= strptime(date, format="%Y-%m-%d") &
-                      lastdate >= strptime(date, format="%Y-%m-%d"))
-    age <- round (as.numeric (difftime (strptime(date, format="%Y-%m-%d"),
-                                        active$firstdate, units="days")))
-    if (is.null(normalize.by)) {
-      normalization <- 0
-    } else {
-      normalization <- normalize.by
-    }
-    ages <- new ("Ages", date=date,
-                 id = active$id, name = active$name, email = active$email,
-                 age = age + normalization)
-    return (ages)
+      spot.date <- strptime(date, format="%Y-%m-%d")
+      ## Get developers active (born) before spot.date, and still
+      ## active after it (that is, not dead yet).
+      active <- subset (attr(.Object, 'activity'),
+                        firstdate <= spot.date & lastdate >= spot.date)
+      age <- round (as.numeric (difftime (strptime(date, format="%Y-%m-%d"),
+                                          active$firstdate, units="days")))
+      if (is.null(normalize.by)) {
+          normalization <- 0
+      } else {
+          normalization <- normalize.by
+      }
+      ages <- new ("Ages", date=date,
+                   id = active$id, name = active$name, email = active$email,
+                   age = age + normalization)
+      return (ages)
   }
   )
 
@@ -323,7 +346,7 @@ setMethod(
   definition=function(.Object, date, filename, periods=4) {
     ages <- GetAges (.Object, date)
     JSON (ages, paste(c(filename, date, ".json"), collapse = ""))
-    Pyramid (ages, paste(c(filename, date), collapse = ""), 4)
+    Pyramid (ages, paste(c(filename, date), collapse = ""), periods)
     return (ages)
   }
   )

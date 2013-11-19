@@ -314,6 +314,101 @@ GetStaticITS <- function (closed_condition, startdate, enddate) {
     return(agg_data)
 }
 
+GetDates <- function(init_date, days) {
+    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
+    # This functions returns an array with three dates
+    # First: init_date
+    # Second: init_date - days
+    # Third: init_date - days - days
+    enddate = gsub("'", "", init_date)
+
+    enddate = as.Date(enddate)
+    startdate = enddate - days
+    prevdate = enddate - days - days
+
+    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
+                   paste("'", as.character(startdate), "'", sep=""),
+                   paste("'", as.character(prevdate), "'", sep=""))
+    return (chardates)
+}
+
+GetPercentageDiff <- function(value1, value2){
+    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
+    # This function returns whe % diff between value 1 and value 2.
+    # The difference could be positive or negative, but the returned value
+    # is always > 0
+
+    percentage = 0
+    print(paste("prevcommits=", value1))
+    print(paste("lastcommits=",value2))
+
+    if (value1 < value2){
+        diff = value2 - value1
+        percentage = as.integer((diff/value1) * 100)
+    }
+    if (value1 > value2){
+        percentage = as.integer((1-(value2/value1)) * 100)
+    }
+    return(percentage)
+}
+
+StaticNumClosed <- function(closed_condition, startdate, enddate){
+    fields = ' COUNT(DISTINCT(issue_id)) as closed'
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(),"AND",closed_condition)
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+}
+
+GetDiffClosedDays <- function(period, init_date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(init_date, days)
+    lastclosed = StaticNumClosed(closed_condition, chardates[2], chardates[1])
+    lastclosed = as.numeric(lastclosed[1])
+    prevclosed = StaticNumClosed(closed_condition, chardates[3], chardates[2])
+    prevclosed = as.numeric(prevclosed[1])
+    diffcloseddays = data.frame(diff_netclosed = numeric(1), percentage_closed = numeric(1))
+
+    diffcloseddays$diff_netclosed = lastclosed - prevclosed
+    diffcloseddays$percentage_closed = GetPercentageDiff(prevclosed, lastclosed)
+
+    colnames(diffcloseddays) <- c(paste("diff_netclosed","_",days, sep=""), paste("percentage_closed","_",days, sep=""))
+
+    return (diffcloseddays)
+}
+
+StaticNumClosers <- function(closed_condition, startdate, enddate){
+    # closers
+    fields = 'COUNT(DISTINCT(pup.upeople_id)) as closers '
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(),"AND",closed_condition)
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+    return (data1)
+}
+
+GetDiffClosersDays <- function(period, init_date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+
+    chardates = GetDates(init_date, days)
+    lastclosers = StaticNumClosers(closed_condition, chardates[2], chardates[1])
+    lastclosers = as.numeric(lastclosers[1])
+    prevclosers = StaticNumClosers(closed_condition, chardates[3], chardates[2])
+    prevclosers = as.numeric(prevclosers[1])
+    diffclosersdays = data.frame(diff_netclosers = numeric(1), percentage_closers = numeric(1))
+
+    diffclosersdays$diff_netclosers = lastclosers - prevclosers
+    diffclosersdays$percentage_closers = GetPercentageDiff(prevclosers, lastclosers)
+
+    colnames(diffclosersdays) <- c(paste("diff_netclosers","_",days, sep=""), paste("percentage_closers","_",days, sep=""))
+
+    return (diffclosersdays)
+}
+
+
+
 GetLastActivityITS <- function(days, closed_condition) {
     # opened issues
     q <- paste("select count(*) as opened_",days,"
@@ -463,19 +558,24 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
 
 GetReposNameITS <- function() {
     # q <- paste ("select SUBSTRING_INDEX(url,'/',-1) AS name FROM trackers")
-    q <- paste ("SELECT url AS name FROM trackers")
+    # q <- paste ("SELECT url AS name FROM trackers")
+    q <- paste ("SELECT url AS name FROM (
+                  SELECT url, count(*) as total, tracker_id
+                  FROM issues, trackers
+                  WHERE issues.tracker_id=trackers.id
+                  GROUP BY tracker_id ORDER BY total DESC) t")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetRepoEvolClosed <- function(repo, closed_condition, period, startdate, enddate){    
+GetRepoEvolClosed <- function(repo, closed_condition, period, startdate, enddate){
     fields = 'COUNT(DISTINCT(issue_id)) AS closed, 
               COUNT(DISTINCT(pup.upeople_id)) AS closers'
     tables= GetTablesReposITS()
     filters = paste(GetFiltersReposITS(),'AND',closed_condition,
             "AND trackers.url=",repo)    
-    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters,
             startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -569,7 +669,7 @@ GetStaticRepoITS <- function (repo, startdate, enddate) {
 # Companies
 #
 # TODO: Strange companies name order using issues and not closed like countries
-GetCompaniesNameITS <- function(startdate, enddate, identities_db, filter=c()) {
+GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condition, filter=c()) {
     # companies_limit = 30    
     affiliations = ""
     for (aff in filter){
@@ -578,13 +678,14 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, filter=c()) {
     tables = GetTablesCompaniesITS(identities_db)
     tables = paste(tables,",",identities_db,".companies com")
                     
-    q <- paste ("SELECT DISTINCT(com.name)
+    q <- paste ("SELECT com.name
                  FROM ", tables, "
                  WHERE ", GetFiltersCompaniesITS()," AND
                  com.id = upc.company_id and
                  ",affiliations,"
                  c.changed_on >= ", startdate, " AND
-                 c.changed_on < ", enddate, "
+                 c.changed_on < ", enddate, " AND
+                 ", closed_condition,"
                  group by com.name
                  order by count(distinct(c.issue_id)) desc", sep="")
     query <- new("Query", sql = q)
@@ -1034,31 +1135,74 @@ MarkovChain<-function()
 }
 
 
+GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db, closed_condition, num_companies){
 
+    # All companies info
+    q = paste(
+         "SELECT com.name as name,
+                 YEARWEEK( changed_on , 3 ) AS week,
+                 COUNT(DISTINCT(issue_id)) AS closed
+         FROM changes c,
+              people_upeople pup,
+              ",identities_db,".upeople_companies upc ,
+              ",identities_db,".companies com
+         WHERE changed_on >=",startdate," AND
+               changed_on < ",enddate,"  AND
+               pup.people_id = c.changed_by AND
+               pup.upeople_id = upc.upeople_id AND
+               changed_on >= upc.init AND
+               changed_on < upc.end  AND
+               ",closed_condition,"  AND
+               upc.company_id = com.id
+         GROUP BY com.name,
+                  YEARWEEK( changed_on , 3 )
+         ORDER BY com.name,
+                  YEARWEEK( changed_on , 3 );", sep="")
+         #",closed_condition,"  AND
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    print("Companies name")
+    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, c("-Bot", "-Individual", "-Unknown"))
+    companies <- companies$name
 
+    count = 1
+    first_companies = data.frame()
+    first = TRUE
+    for (company in companies){
+        # Cleaning data
+        print(company)
+        company_data = subset(data, data$name %in% company)
+        company_data <- completePeriodIds(company_data, conf$granularity, conf)
+        company_data <- company_data[order(company_data$id), ]
+        company_data[is.na(company_data)] <- 0
+        company_data$name <- NULL
 
+        # Up to here, everything's correct, dataset is as expected
+        # In the following I should move to merge companies and others
+        # as similarly done in mls and scm
+        if (count <= num_companies -1){
+            # Case of companies with entity in the dataset
+            if (first){
+                first = FALSE
+                first_companies = company_data
+            }
+            first_companies = merge(first_companies, company_data, all=TRUE)
+            print(first_companies)
+            colnames(first_companies)[colnames(first_companies)=="closed"] <- company
 
+        } else {
+            #Case of companies that are aggregated in the field Others
+            if (first==FALSE){
+                first = TRUE
+                first_companies$Others = company_data$closed
+            }else{
+                first_companies$Others = first_companies$Others + company_data$closed
+            }
+        }
+        count = count + 1
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return(first_companies)
+}
 

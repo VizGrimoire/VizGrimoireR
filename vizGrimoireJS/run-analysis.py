@@ -160,10 +160,25 @@ def execute_irc_script(myvars):
     os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < irc-analysis.R >> %s 2>&1" %
               (v['r_libs'], v['reports'],v['db_irc'],v['db_user'],v['db_password'],
                v['db_identities'],v['start_date'],v['end_date'],v['json_dir'],
-               v['period'],v['log_file']))    
-    print("SCR analysis finished")
-
+               v['period'],v['log_file']))
+    print("IRC analysis finished")
     
+def execute_mediawiki_script(myvars):
+    if not 'db_mediawiki' in myvars:
+        print("mediawiki analysis disabled")
+        return
+    v = myvars
+    print("Starting MediaWiki analysis  ..")
+    print("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < mediawiki-analysis.R >> %s 2>&1" %
+              (v['r_libs'], v['reports'],v['db_mediawiki'],v['db_user'],v['db_password'],
+               v['db_identities'],v['start_date'],v['end_date'],v['json_dir'],
+               v['period'],v['log_file']))
+
+    os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < mediawiki-analysis.R >> %s 2>&1" %
+              (v['r_libs'], v['reports'],v['db_mediawiki'],v['db_user'],v['db_password'],
+               v['db_identities'],v['start_date'],v['end_date'],v['json_dir'],
+               v['period'],v['log_file']))
+    print("MediaWiki analysis finished")
 
 if __name__ == '__main__':
     opt = get_options()
@@ -172,10 +187,9 @@ if __name__ == '__main__':
     myvars = {}
     myvars = get_vars()
 
+    execute_mediawiki_script(myvars)
     execute_scm_script(myvars)
     execute_its_script(myvars)
     execute_mls_script(myvars)
     execute_scr_script(myvars)
     execute_irc_script(myvars)
-    
-
