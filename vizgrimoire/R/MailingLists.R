@@ -174,10 +174,12 @@ GetSQLReportWhere <- function(type_analysis){
 #                   typeof = 'companies', 'countries', 'repositories' or ''
 #                   value = any value that corresponds with the type of analysis
 
+
+# Emails Sent
 GetEmailsSent <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # Generic function that counts emails sent
 
-    fields = " COUNT(m.message_ID) AS sent "
+    fields = " count(distinct(m.message_ID)) as sent "
     tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))
     filters = GetSQLReportWhere(type_analysis)
 
@@ -197,6 +199,28 @@ AggEmailsSent <- function(period, startdate, enddate, identities_db, type_analys
     return(GetEmailsSent(period, startdate, enddate, identities_db, type_analysis = list(NA, NA), FALSE))
 }
 
+# Threads
+GetThreads <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # Generic function that counts threads
 
+    fields = " count(distinct(m.is_response_of)) as threads"
+    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))    
+    filters = GetSQLReportWhere(type_analysis)
 
+    q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
+
+    return(ExecuteQuery(q))
+}
+
+EvolThreads <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Aggregated number of emails sent
+    return(GetThreads(period, startdate, enddate, identities_db, type_analysis = list(NA, NA), TRUE))
+}
+ 
+
+AggThreads <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Aggregated number of emails sent
+    return(GetThreads(period, startdate, enddate, identities_db, type_analysis = list(NA, NA), FALSE))
+}
+ 
 
