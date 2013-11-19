@@ -39,6 +39,14 @@ conf <- ConfFromOptParse()
 idb = conf$identities_db
 error = FALSE
 
+SetDBChannel (database = "lcanas_mlstats_openstack_1376", user = conf$dbuser, password = conf$dbpassword)
+idb = conf$identities_db
+test.suite <- defineTestSuite("MailingLists",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'mailinglists.R$')
+test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0) {q(status=1)}
+
 SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 test.suite <- defineTestSuite("SCM",
@@ -67,6 +75,8 @@ test.suite <- defineTestSuite("StatTest",
 
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0){q(status=1)}
+
+
 #printTextProtocol(test.result)
 
 
