@@ -74,6 +74,10 @@ if (conf$backend == 'launchpad'){
     #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
     closed_condition <- "(new_value='Fix Committed')"
 }
+if (conf$backend == 'redmine'){
+    closed_condition <- paste("(new_value='Resolved' OR new_value='Closed' OR new_value='Rejected'",
+                              " OR new_value='Won\\'t Fix' OR new_value='Can\\'t reproduce' OR new_value='Duplicate')")
+}
 
 # dates
 startdate <- conf$startdate
