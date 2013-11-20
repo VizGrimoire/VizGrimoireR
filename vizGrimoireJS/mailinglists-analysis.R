@@ -69,3 +69,8 @@ print(data)
 data <- AggMLSResponses(period, startdate, enddate, identities_db, list(NA, NA))
 print(data)
 
+data <- EvolMLSInit(period, startdate, enddate, identities_db, list(NA, NA))
+print(data)
+data <- AggMLSInit(period, startdate, enddate, identities_db, list(NA, NA))
+print(data)
+

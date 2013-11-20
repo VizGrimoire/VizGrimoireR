@@ -271,7 +271,7 @@ AggMLSRepositories <- function(rfield, period, startdate, enddate, identities_db
 }
 
 
-#Responses
+# Messages replying a thread
 GetMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # Generic function that counts replies
 
@@ -293,6 +293,30 @@ EvolMLSResponses <- function(period, startdate, enddate, identities_db, type_ana
 AggMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis){
     # Aggregated number of emails replied
     return(GetMLSResponses(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+# Messages starting threads
+GetMLSInit <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # Generic function that counts replies
+
+    fields = " count(distinct(m.message_ID)) as sent_init"
+    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))
+    filters = paste(GetSQLReportWhere(type_analysis), " m.is_response_of is null ", sep="")
+
+    q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
+    print(q)
+    return(ExecuteQuery(q))
+}
+
+EvolMLSInit <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Evol number of messages starting a thread
+    return(GetMLSInit(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+
+AggMLSInit <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Aggregated number of emails starting a thread
+    return(GetMLSInit(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
 
