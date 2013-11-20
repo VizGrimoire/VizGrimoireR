@@ -79,3 +79,8 @@ print(data)
 data <- AggMLSSenders(period, startdate, enddate, identities_db, list(NA, NA))
 print(data)
 
+data <- EvolMLSSendersResponse(period, startdate, enddate, identities_db, list(NA, NA))
+print(data)
+data <- AggMLSSendersResponse(period, startdate, enddate, identities_db, list(NA, NA))
+print(data)
+
