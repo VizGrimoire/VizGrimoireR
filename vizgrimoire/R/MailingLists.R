@@ -296,6 +296,43 @@ AggMLSSendersResponse <- function(period, startdate, enddate, identities_db, typ
 }
 
 
+# People starting threads
+
+GetMLSSendersInit <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    #Generic function that counts people sending messages
+
+    fields = " count(distinct(pup.upeople_id)) as senders_init "
+    tables = paste(" messages m ", GetSQLReportFrom(identitites_db, type_analysis))
+    print(tables)
+    if (tables == " messages m  "){
+        # basic case: it's needed to add unique ids filters
+        tables = paste(tables, ", messages_people mp, people_upeople pup ")
+        filters = GetFiltersOwnUniqueIdsMLS()
+    } else {
+        filters = GetSQLReportWhere(type_analysis)
+    }
+    filters = paste(filters, " and m.is_response_of is null ", sep="")
+
+
+    q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
+    print(q)
+    return(ExecuteQuery(q))
+}
+
+EvolMLSSendersInit <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Evolution of people sending emails
+    return(GetMLSSendersInit(period, startdate, enddate, identities_db, type_analysis , TRUE))
+}
+
+AggMLSSendersInit <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Agg of people sending emails
+    return(GetMLSSendersInit(period, startdate, enddate, identities_db, type_analysis , FALSE))
+}
+
+
+
+
+
 # Threads
 GetThreads <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # Generic function that counts threads
