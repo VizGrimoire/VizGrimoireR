@@ -64,3 +64,8 @@ print(data)
 data <- AggMLSRepositories(rfield, period, startdate, enddate, identities_db, list(NA, NA))
 print(data)
 
+data <- EvolMLSResponses(period, startdate, enddate, identities_db, list(NA, NA))
+print(data)
+data <- AggMLSResponses(period, startdate, enddate, identities_db, list(NA, NA))
+print(data)
+

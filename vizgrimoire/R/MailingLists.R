@@ -178,6 +178,12 @@ reposField <- function() {
 }
 
 
+GetFiltersResponse <- function() {
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+}
+
+
 #########
 #Functions to obtain info per type of basic piece of data
 #########
@@ -263,4 +269,30 @@ AggMLSRepositories <- function(rfield, period, startdate, enddate, identities_db
     # Aggregated number of emails sent
     return(GetMLSRepositories(rfield, period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
+
+
+#Responses
+GetMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # Generic function that counts replies
+
+    fields = " count(distinct(m.message_ID)) as sent_response"
+    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))
+    filters = paste(GetSQLReportWhere(type_analysis), " m.is_response_of is not null ", sep="")
+
+    q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
+    print(q)
+    return(ExecuteQuery(q))
+}
+
+EvolMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Evol number of replies
+    return(GetMLSResponses(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+
+AggMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Aggregated number of emails replied
+    return(GetMLSResponses(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
 
