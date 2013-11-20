@@ -139,5 +139,3 @@ while (cut.date >= first.date) {
   ProcessAges (demos, as.character(cut.date), "/tmp/pyramid-")
 }
 
-
-

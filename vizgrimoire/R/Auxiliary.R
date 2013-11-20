@@ -944,6 +944,64 @@ hist3d<-function(x,y=NULL,x.nclass="auto",y.nclass="auto",alpha=1,
   }
 }
 
+##
+## Plot a ggplot2 chart to a PDF file
+##
+qplotpdf <- function (chart, file = NULL, height = 3.5, width = 5) {
+    if (! is.null(file)) {
+        file <- paste (c(file, ".pdf"), collapse='')
+        pdf(file=file, height=height, width=width)
+    }
+    print(chart)
+    if (! is.null(file)) {
+        dev.off()
+    }
+}
+
+##
+## Plot shares for values from a column of a dataframe
+## Plots a stacked bar chart
+##
+PlotSharesBar <- function (file, regions, column) {
+    chart <- ggplot(data=regions, 
+                    aes_string (x = "factor(1)",
+                                y = column,
+                                fill = "region"
+                                ),
+                    )
+    chart <- chart + geom_bar(width = 1, stat="identity")
+    qplotpdf (chart, file)
+}
+
+##
+## Plot shares for values from a column of a dataframe
+## Plots a pie chart
+##
+PlotSharesPie <- function (file, regions, column) {
+    chart <- ggplot(data=regions, 
+                    aes_string (x = "factor(1)",
+                                y = column,
+                                fill = "region"
+                                ),
+                    )
+    chart <- chart + geom_bar(width = 1, stat="identity")
+    chart <- chart + coord_polar(theta = "y")
+    chart <- chart + scale_x_discrete("")
+    qplotpdf (chart, file)
+}
+
+##
+## Plot shares for values from a column of a dataframe
+## Plots all available charts
+##
+PlotSharesAll <- function (file.prefix, regions, column) {
+    PlotSharesBar (paste(c(file.prefix, "-bar"),
+                         collapse=''),
+                   regions, column)
+    PlotSharesPie (paste(c(file.prefix, "-pie"),
+                         collapse=''),
+                   regions, column)
+}
 
 ##
 ## Generic JSON function for using it in hierarchies of objects that need it
@@ -954,11 +1012,37 @@ setGeneric (
  )
 
 ##
+## Generic CSV function for using it in hierarchies of objects that need it
+##
+setGeneric (
+  name= "CSV",
+  def=function(.Object,...){standardGeneric("CSV")}
+  )
+
+##
 ## Generic Plot function for using it in hierarchies of objects that need it
 ##
 setGeneric (
   name= "Plot",
   def=function(.Object,...){standardGeneric("Plot")}
+  )
+
+##
+## Generic PlotCharts function for using it in hierarchies of objects
+##  that need it
+##
+setGeneric (
+  name= "PlotCharts",
+  def=function(.Object,...){standardGeneric("PlotCharts")}
+  )
+
+##
+## Generic PlotShares function for using it in hierarchies of objects
+##  that need it
+##
+setGeneric (
+  name= "PlotShares",
+  def=function(.Object,...){standardGeneric("PlotShares")}
   )
 
 ##
@@ -968,6 +1052,15 @@ setGeneric (
  name= "PlotDist",
  def=function(object,...){standardGeneric("PlotDist")}
  )
+
+##
+## Generic RegionTZ function for using it in hierarchies of objects that need it
+##
+setGeneric (
+ name= "RegionTZ",
+ def=function(.Object,...){standardGeneric("RegionTZ")}
+ )
+
 
 ##
 ## Code for producing JSON files suitable for vizGrimoire.JS
