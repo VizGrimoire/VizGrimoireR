@@ -85,6 +85,14 @@ GetSQLCountriesWhere <- function(){
 
 }
 
+# Using senders only here!
+GetFiltersOwnUniqueIdsMLS <- function () {
+    return ('m.message_ID = mp.message_id AND
+             mp.email_address = pup.people_id AND
+             mp.type_of_recipient=\'From\'')
+}
+
+
 ##############
 # Generic functions to check evolutionary or aggregated info
 # and for the execution of the final query
@@ -221,6 +229,39 @@ AggEmailsSent <- function(period, startdate, enddate, identities_db, type_analys
     # Aggregated number of emails sent
     return(GetEmailsSent(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
+
+
+# People sending emails
+GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    #Generic function that counts people sending messages
+    
+    fields = " count(distinct(pup.upeople_id)) as senders "
+    tables = paste(" messages m ", GetSQLReportFrom(identitites_db, type_analysis))
+    print(tables)
+    if (tables == " messages m  "){
+        # basic case: it's needed to add unique ids filters
+        tables = paste(tables, ", messages_people mp, people_upeople pup ")
+        filters = GetFiltersOwnUniqueIdsMLS()
+    } else {
+        filters = GetSQLReportWhere(type_analysis)
+    }
+
+    q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
+    print(q)
+    return(ExecuteQuery(q))
+}
+
+EvolMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Evolution of people sending emails
+    return(GetMLSSenders(period, startdate, enddate, identities_db, type_analysis , TRUE))
+}
+
+AggMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Agg of people sending emails
+    return(GetMLSSenders(period, startdate, enddate, identities_db, type_analysis , FALSE))
+}
+
+
 
 # Threads
 GetThreads <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
