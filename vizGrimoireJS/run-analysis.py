@@ -95,7 +95,8 @@ def get_vars():
         
     # FIXME this should be included in the main log file
     v['log_file'] = 'run-analysis.log'
-    if [v['db_password'] == ""]: v['db_password']="''"
+    if (v['db_password'] == ""):
+        v['db_password']="''"
     return v
 
 def execute_scm_script(myvars):
