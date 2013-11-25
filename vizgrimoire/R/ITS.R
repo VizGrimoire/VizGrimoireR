@@ -361,9 +361,21 @@ StaticNumClosed <- function(closed_condition, startdate, enddate){
     data1 <- run(query)
 }
 
-GetDiffClosedDays <- function(period, init_date, days, closed_condition){
+##
+## GetDiffClosedDays
+##
+## Get differences in number of closed tickets between two periods.
+##  - date: final date of the two periods.
+##  - days: number of days for each period.
+##  - closed_condition: SQL string to define the condition of "closed"
+##     for a ticket
+## Example of parameters, for analizing the difference during the last
+##  two weeks for the day 2013-11-25:
+##  (date="2013-11-25", days=7, closed_condition=...)
+##
+GetDiffClosedDays <- function(date, days, closed_condition){
     # This function provides the percentage in activity between two periods
-    chardates = GetDates(init_date, days)
+    chardates = GetDates(date, days)
     lastclosed = StaticNumClosed(closed_condition, chardates[2], chardates[1])
     lastclosed = as.numeric(lastclosed[1])
     prevclosed = StaticNumClosed(closed_condition, chardates[3], chardates[2])
@@ -389,10 +401,22 @@ StaticNumClosers <- function(closed_condition, startdate, enddate){
     return (data1)
 }
 
-GetDiffClosersDays <- function(period, init_date, days, closed_condition){
+##
+## GetDiffClosersDays
+##
+## Get differences in number of ticket closers between two periods.
+##  - date: final date of the two periods.
+##  - days: number of days for each period.
+##  - closed_condition: SQL string to define the condition of "closed"
+##     for a ticket
+## Example of parameters, for analizing the difference during the last
+##  two weeks for the day 2013-11-25:
+##  (date="2013-11-25", days=7, closed_condition=...)
+##
+GetDiffClosersDays <- function(date, days, closed_condition){
     # This function provides the percentage in activity between two periods
 
-    chardates = GetDates(init_date, days)
+    chardates = GetDates(date, days)
     lastclosers = StaticNumClosers(closed_condition, chardates[2], chardates[1])
     lastclosers = as.numeric(lastclosers[1])
     prevclosers = StaticNumClosers(closed_condition, chardates[3], chardates[2])
