@@ -435,7 +435,7 @@ GetLastActivityITS <- function(days, closed_condition) {
                  WHERE pup.people_id = changes.changed_by and
                  changed_on >= (
                      select (max(changed_on) - INTERVAL ",days," day)
-                      from changes) AND", closed_condition, sep="");
+                      from changes) AND ", closed_condition, sep="");
 
     query <- new ("Query", sql = q)
     data3 <- run(query)
