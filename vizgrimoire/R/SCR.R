@@ -245,10 +245,13 @@ EvolReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis
 }
 
 # PENDING = NEW - MERGED - ABANDONED
-EvolReviewsPendingChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+EvolReviewsPendingChanges<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
     data = EvolReviewsNewChanges(period, conf$startdate, conf$enddate)
+    data <- completePeriodIds(data, conf$granularity, conf)
     data1 = EvolReviewsMergedChanges(period, conf$startdate, conf$enddate)
+    data1 <- completePeriodIds(data1, conf$granularity, conf)
     data2 = EvolReviewsAbandonedChanges(period, conf$startdate, conf$enddate)
+    data2 <- completePeriodIds(data2, conf$granularity, conf)
     pending = merge(data, data1, all=TRUE)
     pending = merge(pending, data2, all=TRUE)
     pending$merged_changes = -pending$merged_changes
