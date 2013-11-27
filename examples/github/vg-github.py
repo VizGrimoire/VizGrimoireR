@@ -69,7 +69,7 @@ parser.add_argument("--ghuser",
 parser.add_argument("--ghpasswd",
                     help="GitHub password")
 parser.add_argument("--vgdir",
-                    help="Directory with vigGrimoireR and vizGrimoireJS directories")
+                    help="Directory with vigGrimoireR, vizGrimoireJS and vizGrimoireUtils directories")
 
 args = parser.parse_args()
 
@@ -104,11 +104,11 @@ rConf = {"libdir": dir + "/rlib",
          "its-analysis": args.vgdir + \
              "/VizGrimoireR/examples/github/its-analysis-github.R",
          "unifypeople": args.vgdir + \
-             "/VizGrimoireR/misc/unifypeople.py",
-         "its2id": args.vgdir + \
-             "/VizGrimoireR/misc/its2identities.py",
+             "/VizGrimoireUtils/identities/unifypeople.py",
+         "ds2id": args.vgdir + \
+             "/VizGrimoireUtils/identities/datasource2identities.py",
          "domains": args.vgdir + \
-             "/VizGrimoireR/misc/domains_analysis.py"}
+             "/VizGrimoireUtils/identities/domains_analysis.py"}
 
 conf = {"cvsanaly": cvsanalyConf,
         "bicho":    bichoConf}
@@ -175,9 +175,10 @@ call (["R", "CMD", "INSTALL", rConf["vgrpkg"]], env=env)
 # Run unique identities stuff
 call ([rConf["unifypeople"], "-d", dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd, "-i", "no"])
-call ([rConf["its2id"],
-       "--db-database-its=" + dbPrefix + "_" + "bicho",
-       "--db-database-ids=" + dbPrefix + "_" + "cvsanaly",
+call ([rConf["ds2id"],
+       "--data-source=its" + dbPrefix + "_" + "bicho",
+       "--db-name-ds=" + dbPrefix + "_" + "bicho",
+       "--db-name-ids=" + dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd])
 
 # Run affiliation stuff
