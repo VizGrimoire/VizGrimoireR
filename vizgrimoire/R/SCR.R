@@ -205,6 +205,21 @@ EvolReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, N
     return (GetReviews(period, startdate, enddate, "new", type_analysis, TRUE, identities_db))
 }
 
+GetEvolChanges<- function(period, startdate, enddate, value) {
+    fields = paste("count(issue_id) as ", value, "_changes", sep = "")
+    tables = "changes"
+    filters = paste("new_value='",value,"'",sep="")
+    q <- GetSQLPeriod(period, " changed_on", fields, tables, filters,
+            startdate, enddate)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+EvolReviewsNewChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetEvolChanges(period, startdate, enddate, "new"))
+}
+
 EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, TRUE, identities_db))
 }
@@ -216,8 +231,31 @@ EvolReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA
 EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "merged", type_analysis, TRUE, identities_db))
 }
+
+EvolReviewsMergedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetEvolChanges(period, startdate, enddate, "merged"))
+}
+
 EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, TRUE, identities_db))
+}
+
+EvolReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetEvolChanges(period, startdate, enddate, "abandoned"))
+}
+
+# PENDING = NEW - MERGED - ABANDONED
+EvolReviewsPendingChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    data = EvolReviewsNewChanges(period, conf$startdate, conf$enddate)
+    data1 = EvolReviewsMergedChanges(period, conf$startdate, conf$enddate)
+    data2 = EvolReviewsAbandonedChanges(period, conf$startdate, conf$enddate)
+    pending = merge(data, data1, all=TRUE)
+    pending = merge(pending, data2, all=TRUE)
+    pending$merged_changes = -pending$merged_changes
+    pending$abandoned_changes = -pending$abandoned_changes
+    sum <- rowSums(subset(pending, select = c("new_changes","merged_changes","abandoned_changes")))
+    pending <- data.frame(month=pending$month, pending=sum)
+    return (pending)
 }
 
 # STATIC META FUNCTIONS BASED ON REVIEWS
