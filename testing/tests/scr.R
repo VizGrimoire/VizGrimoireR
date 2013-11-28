@@ -41,6 +41,11 @@ test.EvolReviewsNew <- function()
     expect_that(2, equals(nrow(EvolReviewsNew('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
 }
 
+test.EvolReviewsNewChanges <- function()
+{
+    expect_that(0, equals(nrow(EvolReviewsNewChanges('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
 test.EvolReviewsInProgress <- function()
 {
     expect_that(0, equals(nrow(EvolReviewsInProgress('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
@@ -56,9 +61,19 @@ test.EvolReviewsMerged <- function()
     expect_that(54, equals(nrow(EvolReviewsMerged('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
 }
 
+test.EvolReviewsMergedChanges <- function()
+{
+    expect_that(0, equals(nrow(EvolReviewsMergedChanges('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
 test.EvolReviewsAbandoned <- function()
 {
     expect_that(53, equals(nrow(EvolReviewsAbandoned('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
+}
+
+test.EvolReviewsAbandonedChanges <- function()
+{
+    expect_that(0, equals(nrow(EvolReviewsAbandonedChanges('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
 }
 
 test.EvolPatchesApproved <- function()
