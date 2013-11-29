@@ -95,67 +95,72 @@ GetEvolOpened<- function (period, startdate, enddate) {
 ## FIXME working on this
 ##
 
-GetEvolPendingTickets <- function (open_status, reopened_status, name_log_table, startdate, enddate) {
-    ## so far it only supports monthly analysis
-    
-    ## #filter <- "WHERE type = 'Bug' OR type = 'New Feature' OR type = 'Regression Bug' OR type = 'Improvement' OR type = 'Feature Request'"
-    ## liferay_type_filters <- GetLiferayTypeFilters()
-    ## filter <- paste("WHERE (",liferay_type_filters,") ")
-    
+GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name_log_table) {
+    # Return backlog of tickets in the statuses passed as parameter
     q <- paste("SELECT id, status, issue_id, date FROM ",name_log_table ," ", filter)
     query <- new("Query", sql = q)
     res <- run(query)
 
-    samples <- CalculateMonthPeriods(startdate, enddate)
-    pending_tickets <- count_pending_tickets(samples, res, open_status, reopened_status)
-    colnames(pending_tickets) <- c('month', 'pending_tickets')
+    if (period == "months") {
+        samples <- GetMonthsBetween(startdate, enddate, extra=TRUE)
+        pending_tickets <- CountBacklogTickets(samples, res, statuses)
+        colnames(pending_tickets) <- c('month', 'pending_tickets')
+    }
+    else if (period == "weeks"){
+        samples <- GetWeeksBetween(startdate, enddate, extra=TRUE)
+        pending_tickets <- CountBacklogTickets(samples, res, statuses)
+        colnames(pending_tickets) <- c('week', 'pending_tickets')
+    }
+
     return(pending_tickets)
 }
 
-count_pending_tickets <- function(samples, res, open_status, reopened_status){
-    # res, samples
+CountBacklogTickets <- function(samples, res, statuses){
+    # return number of tickets in status = statuses per period of time
     #
-    # count_pending ( samples, res){
-    pending_tickets = data.frame()
+    # Warning: heavy algorithm, it could be improved if the backlog is
+    # calculated backwards and the data is reduced in every iteration
+    #
+    # Fixme: it is needed to check if there are more that a status for
+    # an issue at the same time
+    #
+    backlog_tickets = data.frame()
     periods <- length(samples$unixtime)
     for (p in (1:periods)){
-        
+
         if ( p == periods){
             break
         }
 
-        date_label <- samples$date[p]
         date_unixtime <- samples$unixtime[p]
-        date_month <- samples$month[p]
         next_unixtime_str <- samples$unixtime[p+1]
 
-        next_month <- as.POSIXlt(as.numeric(next_unixtime_str), origin="1970-01-01")
-        print(paste("date_label = ",date_label, " next_month = ", next_month))
-        
-        test <- subset(res,res$date < next_month)
+        next_date <- as.POSIXlt(as.numeric(next_unixtime_str), origin="1970-01-01")
+        ## print(paste("[" , date() , "] date_unixtime = ",date <- unixtime, " next_date = ", next <- date)) # debug mode?
 
-        if (nrow(test) > 0){
-            maxs <- aggregate(id ~ issue_id, data = test, FUN = max)
-            resultado <- merge(maxs, test)
-            #open_rows <- nrow(subset(resultado, resultado$status=="Open"))
-            open_rows <- nrow(subset(resultado, resultado$status==open_status))
-            #reopened_rows <- nrow(subset(resultado, resultado$status=="Reopened"))
-            reopened_rows <- nrow(subset(resultado, resultado$status==reopened_status))
-            ##
-            open_tickets <- open_rows + reopened_rows
-            print(paste("open tickets:", open_tickets))
+        resfilter <- subset(res,res$date < next_date)
+
+        if (nrow(resfilter) > 0){
+            maxs <- aggregate(date ~ issue_id, data = resfilter, FUN = max)
+            resultado <- merge(maxs, resfilter)
+            # filtering by status
+            total <- 0
+            for (s in statuses){
+                aux <- nrow(subset(resultado, resultado$status==s))
+                total <- aux + total
+            }
+            ## print(paste("[" , date() , "] backlog tickets:", total)) # debug mode?
         }else{
-            open_tickets <- 0
+            total <- 0
         }
-        #aux_df = data.frame(unixtime=date_unixtime,date=date_label,tickets=open_tickets)
-        aux_df <- data.frame(month=date_month, pending_tickets = open_tickets)
-        if (nrow(pending_tickets)){
-            pending_tickets <- merge(pending_tickets,aux_df, all=TRUE)
+        aux_df <- data.frame(month=date_unixtime, backlog_tickets = total)
+        if (nrow(backlog_tickets)){
+            backlog_tickets <- merge(backlog_tickets,aux_df, all=TRUE)
         }else{
-            pending_tickets <- aux_df
-        }        
+            backlog_tickets <- aux_df
+        }
     }
-    return(pending_tickets)
+    return(backlog_tickets)
 }
 
 ##
