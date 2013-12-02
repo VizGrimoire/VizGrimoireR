@@ -65,6 +65,7 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 #          or in the case that bots are required to be in the analysis
 bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot')
 
+
 #########
 #EVOLUTIONARY DATA
 ########
@@ -78,15 +79,23 @@ data = EvolReviewsOpened(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsNew(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsNewChanges(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsInProgress(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsClosed(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsMerged(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsMergedChanges(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsAbandoned(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-# print(reviews.evol)
+data = EvolReviewsAbandonedChanges(period, conf$startdate, conf$enddate)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+# It only works with gerrit dbs with new, merged, abandoned info in changes.
+# data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
+# reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 #Patches info
 data = EvolPatchesVerified(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
