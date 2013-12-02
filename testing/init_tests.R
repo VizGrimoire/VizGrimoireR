@@ -77,14 +77,6 @@ test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0){q(status=1)}
 
 
-test.suite <- defineTestSuite("AuxiliaryTest",
-                              dirs = file.path("tests"),
-                              testFileRegexp = 'auxiliary.R$')
-
-test.result <- runTestSuite(test.suite)
-if (getErrors(test.result)[1]>0){q(status=1)}
-
-
 #printTextProtocol(test.result)
 
 
