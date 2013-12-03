@@ -47,3 +47,25 @@ test.StaticNumSentIRC.Week <- function()
     number <- as.numeric(result[1])
     expect_that(0, equals(number))
 }
+
+test.StaticNumSendersIRC.Month <- function()
+{
+    result <- StaticNumSendersIRC('month', "'2013-01-01'", "'2013-02-01'", NA, list(NA, NA))
+    number <- as.numeric(result[1])
+    expect_that(28, equals(number))
+
+    result <- StaticNumSendersIRC('month', "'2012-01-01'", "'2012-02-01'", NA, list(NA, NA))
+    number <- as.numeric(result[1])
+    expect_that(0, equals(number))
+}
+
+test.StaticNumSendersIRC.Week <- function()
+{
+    result <- StaticNumSendersIRC('week', "'2013-01-01'", "'2013-01-08'", NA, list(NA, NA))
+    number <- as.numeric(result[1])
+    expect_that(14, equals(number))
+
+    result <- StaticNumSendersIRC('week', "'2012-01-01'", "'2012-01-08'", NA, list(NA, NA))
+    number <- as.numeric(result[1])
+    expect_that(0, equals(number))
+}
