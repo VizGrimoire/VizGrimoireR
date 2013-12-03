@@ -108,9 +108,22 @@ createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))
 #############
 # STATIC DATA
 #############
+diffsent.365 = GetIRCDiffMessagesDays(period, conf$enddate, 365)
+diffsenders.365 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 365)
+diffsent.30 = GetIRCDiffMessagesDays(period, conf$enddate, 30)
+diffsenders.30 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 30)
+diffsent.7 = GetIRCDiffMessagesDays(period, conf$enddate, 7)
+diffsenders.7 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 7)
 
-static_data = GetStaticDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
-createJSON (static_data, paste(destdir,"/irc-static.json", sep=''))
+static.data = GetStaticDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
+static.data = merge(static.data, diffsent.365)
+static.data = merge(static.data, diffsent.30)
+static.data = merge(static.data, diffsent.7)
+static.data = merge(static.data, diffsenders.365)
+static.data = merge(static.data, diffsenders.30)
+static.data = merge(static.data, diffsenders.7)
+
+createJSON (static.data, paste(destdir,"/irc-static.json", sep=''))
 
 ###################
 # EVOLUTIONARY DATA
