@@ -319,44 +319,6 @@ GetStaticITS <- function (closed_condition, startdate, enddate) {
     return(agg_data)
 }
 
-GetDates <- function(init_date, days) {
-    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
-    # This functions returns an array with three dates
-    # First: init_date
-    # Second: init_date - days
-    # Third: init_date - days - days
-    enddate = gsub("'", "", init_date)
-
-    enddate = as.Date(enddate)
-    startdate = enddate - days
-    prevdate = enddate - days - days
-
-    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
-                   paste("'", as.character(startdate), "'", sep=""),
-                   paste("'", as.character(prevdate), "'", sep=""))
-    return (chardates)
-}
-
-GetPercentageDiff <- function(value1, value2){
-    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
-    # This function returns whe % diff between value 1 and value 2.
-    # The difference could be positive or negative, but the returned value
-    # is always > 0
-
-    percentage = 0
-    print(paste("prevcommits=", value1))
-    print(paste("lastcommits=",value2))
-
-    if (value1 < value2){
-        diff = value2 - value1
-        percentage = as.integer((diff/value1) * 100)
-    }
-    if (value1 > value2){
-        percentage = as.integer((1-(value2/value1)) * 100)
-    }
-    return(percentage)
-}
-
 StaticNumClosed <- function(closed_condition, startdate, enddate){
     fields = ' COUNT(DISTINCT(issue_id)) as closed'
     tables = GetTablesOwnUniqueIdsITS()
