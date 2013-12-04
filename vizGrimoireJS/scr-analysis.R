@@ -115,8 +115,8 @@ reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, con
 data = EvolReviewers(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # print(reviews.evol)
-# Time to Review info
-data = GetTimeToReviewEvolSCR (period, conf$startdate, conf$enddate)
+# Time to Review info: Wikimedia data ok after '2013-04-30'
+data = GetTimeToReviewEvolSCR (period, "'2013-04-30'", conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # Create JSON
 createJSON(reviews.evol, paste(destdir,"/scr-evolutionary.json", sep=''))
@@ -149,10 +149,12 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 #Reviewers info
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
 # print(reviews.static)
-# Time to Review info
-reviews.static = merge(reviews.static, StaticTimeToReviewSCR(conf$startdate, conf$enddate))
+# Time to Review info: Wikimedia data ok after '2013-04-30'
+reviews.static = merge(reviews.static, StaticTimeToReviewSCR("'2013-04-30'", conf$enddate))
 # Create JSON
 createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
+
+stop()
 
 ########
 #ANALYSIS PER REPOSITORY
