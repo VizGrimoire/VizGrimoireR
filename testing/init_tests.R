@@ -76,6 +76,13 @@ test.suite <- defineTestSuite("StatTest",
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0){q(status=1)}
 
+SetDBChannel (database = "jenkins_irc_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+test.suite <- defineTestSuite("IRC",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'irc.R$')
+test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0){q(status=1)}
+
 
 #printTextProtocol(test.result)
 

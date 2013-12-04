@@ -48,3 +48,31 @@ test.completeZeroPeriods <- function()
         res6 <- sum(filled_weeks$commits)
         expect_that(423, equals(res6))
 }
+
+test.GetDates.Week <- function ()
+    {
+        init.date <- "2014-01-01"
+        week.days <- 7
+        char.dates <- GetDates(init.date, week.days)
+        expect_that(char.dates[2], equals("'2013-12-25'"))
+        expect_that(char.dates[3], equals("'2013-12-18'"))
+    }
+
+test.GetDates.Month <- function()
+    {
+        init.date <- "2014-01-01"
+        month.days <- 30
+        char.dates <- GetDates(init.date, month.days)
+        expect_that(char.dates[2], equals("'2013-12-02'"))
+        expect_that(char.dates[3], equals("'2013-11-02'"))
+    }
+
+test.GetDates.Year <- function()
+    {
+        init.date <- "2014-01-01"
+        year.days <- 365
+        char.dates <- GetDates(init.date, year.days)
+        expect_that(char.dates[2], equals("'2013-01-01'"))
+        expect_that(char.dates[3], equals("'2012-01-02'"))
+}
+
