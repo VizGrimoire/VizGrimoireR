@@ -66,6 +66,9 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 #          or in the case that bots are required to be in the analysis
 bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot')
 
+# From this date the changes timestap are
+startok <- "'2013-04-30'"
+
 #########
 #EVOLUTIONARY DATA
 ########
@@ -87,12 +90,15 @@ data = EvolReviewsClosed(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsMerged(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-data = EvolReviewsMergedChanges(period, conf$startdate, conf$enddate)
+# Ok data after startok
+data = EvolReviewsMergedChanges(period, startok, conf$enddate)
+print(completePeriodIds(data, conf$granularity, conf))
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-data = EvolReviewsAbandoned(period, conf$startdate, conf$enddate)
+data = EvolReviewsAbandoned(period, startok, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-data = EvolReviewsAbandonedChanges(period, conf$startdate, conf$enddate)
+data = EvolReviewsAbandonedChanges(period, startok, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+# For pending we need all data so accumulation is right
 data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 #Patches info
@@ -116,11 +122,10 @@ data = EvolReviewers(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # print(reviews.evol)
 # Time to Review info: Wikimedia data ok after '2013-04-30'
-data = GetTimeToReviewEvolSCR (period, "'2013-04-30'", conf$enddate)
+data = GetTimeToReviewEvolSCR (period, startok, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # Create JSON
 createJSON(reviews.evol, paste(destdir,"/scr-evolutionary.json", sep=''))
-
 
 #########
 #STATIC DATA
@@ -150,11 +155,9 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
 # print(reviews.static)
 # Time to Review info: Wikimedia data ok after '2013-04-30'
-reviews.static = merge(reviews.static, StaticTimeToReviewSCR("'2013-04-30'", conf$enddate))
+reviews.static = merge(reviews.static, StaticTimeToReviewSCR(startok, conf$enddate))
 # Create JSON
 createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
-
-stop()
 
 ########
 #ANALYSIS PER REPOSITORY
