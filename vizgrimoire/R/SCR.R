@@ -594,7 +594,6 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
 
 GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) {
     q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -602,7 +601,6 @@ GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) 
 
 GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
     q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -665,3 +663,42 @@ GetPeopleStaticSCR <- function(developer_id, startdate, enddate) {
     data <- run(query)
     return (data)
 }
+
+################
+# Time to review
+################
+
+GetTimeToReviewQuerySCR <- function(startdate, enddate) {
+    # Subquery to get the time to review for all reviews
+    fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on"
+    tables = "issues, changes"
+    filters = "issues.id = changes.issue_id AND field='status' "
+    filters = paste (filters, "AND new_value='MERGED'")
+    q = GetSQLGlobal('changed_on', fields, tables, filters,
+                    startdate, enddate)
+    print(q)
+    return (q)
+}
+
+GetTimeToReviewEvolSCR <- function(period, startdate, enddate) {
+    q <- GetTimeToReviewQuerySCR (startdate, enddate)
+    # Evolution in time of AVG review time
+    fields = "SUM(revtime)/COUNT(revtime) AS review_time_days_avg"
+    tables = paste("(",q,") t")
+    filters = ""
+    q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
+            startdate, enddate)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+StaticTimeToReviewSCR <- function(startdate, enddate) {
+    q <- GetTimeToReviewQuerySCR (startdate, enddate)
+    # Total AVG review time
+    q = paste(" SELECT AVG(revtime) AS review_time_days_avg FROM (",q,") t")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
