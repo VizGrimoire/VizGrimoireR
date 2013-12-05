@@ -22,6 +22,7 @@
 ##
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
+##   Alvaro del Castillo <acs@bitergia.com>
 
 
 #Evolutionary info tests
@@ -41,6 +42,7 @@ test.EvolReviewsNew <- function()
     expect_that(2, equals(nrow(EvolReviewsNew('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
 }
 
+# old gerrit test db that does not included needed status in changes table
 test.EvolReviewsNewChanges <- function()
 {
     expect_that(0, equals(nrow(EvolReviewsNewChanges('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
@@ -61,6 +63,7 @@ test.EvolReviewsMerged <- function()
     expect_that(54, equals(nrow(EvolReviewsMerged('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
 }
 
+# old gerrit test db that does not included needed status in changes table
 test.EvolReviewsMergedChanges <- function()
 {
     expect_that(0, equals(nrow(EvolReviewsMergedChanges('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
@@ -71,6 +74,7 @@ test.EvolReviewsAbandoned <- function()
     expect_that(53, equals(nrow(EvolReviewsAbandoned('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
 }
 
+# old gerrit test db that does not included needed status in changes table
 test.EvolReviewsAbandonedChanges <- function()
 {
     expect_that(0, equals(nrow(EvolReviewsAbandonedChanges('week', "'2012-01-01'", "'2013-01-01'", list(NA, NA)))))
@@ -187,6 +191,16 @@ test.StaticReviewers <- function()
     expect_that(1545, equals(as.numeric(StaticReviewers('week', "'2012-01-01'", "'2013-01-01'", idb,  list(NA, NA))[1])))
 }
 
+# old gerrit test db that does not included needed status in changes table
+#test.GetTimeToReviewEvolSCR <- function()
+#{
+    # print (GetTimeToReviewEvolSCR('week', "'2013-01-01'", "'2014-01-01'")[1])
+    # expect_that(0, equals(as.numeric(GetTimeToReviewEvolSCR('week', "'2013-01-01'", "'2014-01-01'")[1])))
+#}
 
-
-
+# old gerrit test db that does not included needed status in changes table
+#test.StaticTimeToReviewSCR <- function()
+#{
+    # print (StaticTimeToReviewSCR("'2013-01-01'", "'2014-01-01'"))
+    # expect_that(0, equals(as.numeric(StaticTimeToReviewSCR("'2013-01-01'", "'2014-01-01'"))))
+#}
