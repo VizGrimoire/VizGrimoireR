@@ -69,7 +69,7 @@ StaticNumSentIRC <- function(period, startdate, enddate, identities_db=NA, type_
     from <- " FROM irclog "
     where <- paste(" where date >=", startdate, " and
                      date < ", enddate, sep="")
-    q <- paste(select, from, where)    
+    q <- paste(select, from, where)
     return(ExecuteQuery(q))
 }
 
@@ -78,9 +78,49 @@ StaticNumSendersIRC <- function(period, startdate, enddate, identities_db=NA, ty
     from <- " FROM irclog "
     where <- paste(" where date >=", startdate, " and
                     date < ", enddate, sep="")
-    q <- paste(select, from, where)    
+    q <- paste(select, from, where)
     return(ExecuteQuery(q))
 }
+
+GetIRCDiffMessagesDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods.
+    #
+    # The netvalue indicates if this is an increment (positive value) or decrement (negative value)
+
+    chardates = GetDates(init_date, days)
+    lastmessages = StaticNumSentIRC(period, chardates[2], chardates[1])
+    lastmessages = as.numeric(lastmessages[1])
+    prevmessages = StaticNumSentIRC(period, chardates[3], chardates[2])
+    prevmessages = as.numeric(prevmessages[1])
+    diffmessagesdays = data.frame(diff_netmessages = numeric(1), percentage_messages = numeric(1))
+
+    diffmessagesdays$diff_netmessages = lastmessages - prevmessages
+    diffmessagesdays$percentage_messages = GetPercentageDiff(prevmessages, lastmessages)
+
+    colnames(diffmessagesdays) <- c(paste("diff_netsent","_",days, sep=""), paste("percentage_sent","_",days, sep=""))
+
+    return (diffmessagesdays)
+}
+
+
+GetIRCDiffSendersDays <- function(period, init_date, identities_db=NA, days){
+    # This function provides the percentage in activity between two periods:
+    # Fixme: equal to GetDiffAuthorsDays
+
+    chardates = GetDates(init_date, days)
+    lastsenders = StaticNumSendersIRC(period, chardates[2], chardates[1], identities_db)
+    lastsenders = as.numeric(lastsenders[1])
+    prevsenders = StaticNumSendersIRC(period, chardates[3], chardates[2], identities_db)
+    prevsenders = as.numeric(prevsenders[1])
+    diffsendersdays = data.frame(diff_netsenders = numeric(1), percentage_senders = numeric(1))
+    diffsendersdays$diff_netsenders = lastsenders - prevsenders
+    diffsendersdays$percentage_senders = GetPercentageDiff(prevsenders, lastsenders)
+
+    colnames(diffsendersdays) <- c(paste("diff_netsenders","_",days, sep=""), paste("percentage_senders","_",days, sep=""))
+
+    return (diffsendersdays)
+}
+
 
 GetSentIRC <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
     fields = " count(distinct(message)) as sent "
