@@ -676,7 +676,6 @@ GetTimeToReviewQuerySCR <- function(startdate, enddate) {
     filters = paste (filters, "AND new_value='MERGED'")
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
-    print(q)
     return (q)
 }
 
