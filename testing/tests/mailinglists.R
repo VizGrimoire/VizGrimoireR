@@ -102,3 +102,22 @@ test.EvolMLSSendersInit.Company <- function()
     expect_that(12, equals(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
 }
 
+
+test.EvolThreads.Week <- function()
+{
+    print(nrow(EvolThreads('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
+    expect_that(50, equals(nrow(EvolThreads('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+test.EvolThreads.Month <- function()
+{
+    print(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
+    expect_that(12, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+test.EvolThreads.Company <- function()
+{
+    print(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace'))))
+    expect_that(12, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
+}
+
