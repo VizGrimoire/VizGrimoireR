@@ -33,20 +33,20 @@
 
 GetMLSSQLRepositoriesFrom <- function(){
     # tables necessary for repositories
-    return (" messages m ")
+    #return (" messages m ") 
+    return ("")
 }
 
 GetMLSSQLRepositoriesWhere <- function(repository){
     # fields necessary to match info among tables
-    return (paste(" m.mailing_list_url = 'repository' "))
+    return (paste(" m.mailing_list_url = '",repository,"' "))
 }
 
 
-GetMLSSQLCompaniesFrom <- function(){
+GetMLSSQLCompaniesFrom <- function(i_db){
     # fields necessary for the companies analysis
     
-    return(paste(" messages m,
-                   messages_people mp, 
+    return(paste(" , messages_people mp, 
                    people_upeople pup,
                    ",i_db,".companies c,
                    ",i_db,".upeople_companies upc", sep=""))
@@ -60,13 +60,12 @@ GetMLSSQLCompaniesWhere <- function(){
                    pup.upeople_id = upc.upeople_id and
                    upc.company_id = c.id and
                    m.first_date >= upc.init and
-                   m.first_date < upc.end "), sep="")
+                   m.first_date < upc.end ", sep=""))
 }
 
 GetMLSSQLCountriesFrom <- function(){
     # fields necessary for the countries analysis
-    return(paste(" messages m,
-                   messages_people mp, 
+    return(paste(" , messages_people mp, 
                    people_upeople pup,
                    ",i_db,".countries c,
                    ",i_db,".upeople_countries upc ", sep=""))
@@ -81,7 +80,7 @@ GetMLSSQLCountriesWhere <- function(){
                    pup.upeople_id = upc.upeople_id and
                    upc.company_id = c.id and
                    m.first_date >= upc.init and
-                   m.first_date < upc.end "), sep="")
+                   m.first_date < upc.end ", sep=""))
 
 }
 
@@ -162,7 +161,7 @@ GetMLSSQLReportWhere <- function(type_analysis){
 
     if (! is.na(analysis)){
         where <- ifelse (analysis == 'repository', paste(where, GetMLSSQLRepositoriesWhere(value)),
-                ifelse (analysis == 'company', paste(where, GetMLSSQLCompaniesWhere(value)),
+                ifelse (analysis == 'company', paste(where, GetMLSSQLCompaniesWhere()),
                 ifelse (analysis == 'country', paste(where, GetMLSSQLCountriesWhere(value)),
                 NA)))
     }
