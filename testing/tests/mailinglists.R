@@ -64,3 +64,22 @@ test.EvolMLSSenders.Company <- function()
     expect_that(12, equals(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
 }
 
+
+test.EvolMLSSendersResponse.Week <- function()
+{
+    print(nrow(EvolMLSSendersResponse('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
+    expect_that(50, equals(nrow(EvolMLSSendersResponse('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+test.EvolMLSSendersResponse.Month <- function()
+{
+    print(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
+    expect_that(12, equals(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
+
+test.EvolMLSSendersResponse.Company <- function()
+{
+    print(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace'))))
+    expect_that(12, equals(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
+}
+
