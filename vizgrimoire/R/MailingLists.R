@@ -63,7 +63,7 @@ GetMLSSQLCompaniesWhere <- function(){
                    m.first_date < upc.end ", sep=""))
 }
 
-GetMLSSQLCountriesFrom <- function(){
+GetMLSSQLCountriesFrom <- function(i_db){
     # fields necessary for the countries analysis
     return(paste(" , messages_people mp, 
                    people_upeople pup,
@@ -235,7 +235,7 @@ GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analys
     #Generic function that counts people sending messages
     
     fields = " count(distinct(pup.upeople_id)) as senders "
-    tables = paste(" messages m ", GetMLSSQLReportFrom(identitites_db, type_analysis))
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
     print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
@@ -267,7 +267,7 @@ GetMLSSendersResponse <- function(period, startdate, enddate, identities_db, typ
     #Generic function that counts people sending messages
 
     fields = " count(distinct(pup.upeople_id)) as senders_response "
-    tables = paste(" messages m ", GetMLSSQLReportFrom(identitites_db, type_analysis))
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
     print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
@@ -301,7 +301,7 @@ GetMLSSendersInit <- function(period, startdate, enddate, identities_db, type_an
     #Generic function that counts people sending messages
 
     fields = " count(distinct(pup.upeople_id)) as senders_init "
-    tables = paste(" messages m ", GetMLSSQLReportFrom(identitites_db, type_analysis))
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
     print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
