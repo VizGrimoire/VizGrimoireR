@@ -31,18 +31,18 @@
 # Specific FROM and WHERE clauses per type of report
 ##############
 
-GetSQLRepositoriesFrom <- function(){
+GetMLSSQLRepositoriesFrom <- function(){
     # tables necessary for repositories
     return (" messages m ")
 }
 
-GetSQLRepositoriesWhere <- function(repository){
+GetMLSSQLRepositoriesWhere <- function(repository){
     # fields necessary to match info among tables
     return (paste(" m.mailing_list_url = 'repository' "))
 }
 
 
-GetSQLCompaniesFrom <- function(){
+GetMLSSQLCompaniesFrom <- function(){
     # fields necessary for the companies analysis
     
     return(paste(" messages m,
@@ -52,7 +52,7 @@ GetSQLCompaniesFrom <- function(){
                    ",i_db,".upeople_companies upc", sep=""))
 }
 
-GetSQLCompaniesWhere <- function(){
+GetMLSSQLCompaniesWhere <- function(){
     # filters for the companies analysis
     return(paste(" m.message_ID = mp.message_id and
                    mp.email_address = pup.people_id and
@@ -63,7 +63,7 @@ GetSQLCompaniesWhere <- function(){
                    m.first_date < upc.end "), sep="")
 }
 
-GetSQLCountriesFrom <- function(){
+GetMLSSQLCountriesFrom <- function(){
     # fields necessary for the countries analysis
     return(paste(" messages m,
                    messages_people mp, 
@@ -72,7 +72,7 @@ GetSQLCountriesFrom <- function(){
                    ",i_db,".upeople_countries upc ", sep=""))
 }
 
-GetSQLCountriesWhere <- function(){
+GetMLSSQLCountriesWhere <- function(){
     # filters necessary for the countries analysis
 
     return(paste(" m.message_ID = mp.message_id and
@@ -86,7 +86,7 @@ GetSQLCountriesWhere <- function(){
 }
 
 # Using senders only here!
-GetFiltersOwnUniqueIdsMLS <- function () {
+GetMLSFiltersOwnUniqueIdsMLS <- function () {
     return ('m.message_ID = mp.message_id AND
              mp.email_address = pup.people_id AND
              mp.type_of_recipient=\'From\'')
@@ -104,10 +104,10 @@ BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, f
     q = ""
 
     if (evolutionary) {
-         q <- GetSQLPeriod(period, date_field, fields, tables, filters,
+         q <- GetMLSSQLPeriod(period, date_field, fields, tables, filters,
             startdate, enddate)
     } else {
-         q <- GetSQLGlobal(date_field, fields, tables, filters,
+         q <- GetMLSSQLGlobal(date_field, fields, tables, filters,
                            startdate, enddate)
     }
 
@@ -130,7 +130,7 @@ ExecuteQuery <- function(q){
 ##########
 
 
-GetSQLReportFrom <- function(identities_db, type_analysis){
+GetMLSSQLReportFrom <- function(identities_db, type_analysis){
     #generic function to generate 'from' clauses
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
@@ -141,16 +141,16 @@ GetSQLReportFrom <- function(identities_db, type_analysis){
     from = ""
 
     if (! is.na(analysis)){
-        from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesFrom()),
-                ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(identities_db)),
-                ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(identities_db)),
+        from <- ifelse (analysis == 'repository', paste(from, GetMLSSQLRepositoriesFrom()),
+                ifelse (analysis == 'company', paste(from, GetMLSSQLCompaniesFrom(identities_db)),
+                ifelse (analysis == 'country', paste(from, GetMLSSQLCountriesFrom(identities_db)),
                 NA)))
     }
     return (from)
 }
 
 
-GetSQLReportWhere <- function(type_analysis){
+GetMLSSQLReportWhere <- function(type_analysis){
     #generic function to generate 'where' clauses
 
     #"type" is a list of two values: type of analysis and value of 
@@ -161,9 +161,9 @@ GetSQLReportWhere <- function(type_analysis){
     where = ""
 
     if (! is.na(analysis)){
-        where <- ifelse (analysis == 'repository', paste(where, GetSQLRepositoriesWhere(value)),
-                ifelse (analysis == 'company', paste(where, GetSQLCompaniesWhere(value)),
-                ifelse (analysis == 'country', paste(where, GetSQLCountriesWhere(value)),
+        where <- ifelse (analysis == 'repository', paste(where, GetMLSSQLRepositoriesWhere(value)),
+                ifelse (analysis == 'company', paste(where, GetMLSSQLCompaniesWhere(value)),
+                ifelse (analysis == 'country', paste(where, GetMLSSQLCountriesWhere(value)),
                 NA)))
     }
     return (where)
@@ -186,8 +186,8 @@ reposField <- function() {
 }
 
 
-GetFiltersResponse <- function() {
-    filters = GetFiltersOwnUniqueIdsMLS()
+GetMLSFiltersResponse <- function() {
+    filters = GetMLSFiltersOwnUniqueIdsMLS()
     filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
 }
 
@@ -211,8 +211,8 @@ GetEmailsSent <- function(period, startdate, enddate, identities_db, type_analys
     # Generic function that counts emails sent
 
     fields = " count(distinct(m.message_ID)) as sent "
-    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = GetSQLReportWhere(type_analysis)
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
+    filters = GetMLSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
     print(q)
@@ -236,14 +236,14 @@ GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analys
     #Generic function that counts people sending messages
     
     fields = " count(distinct(pup.upeople_id)) as senders "
-    tables = paste(" messages m ", GetSQLReportFrom(identitites_db, type_analysis))
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identitites_db, type_analysis))
     print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
         tables = paste(tables, ", messages_people mp, people_upeople pup ")
-        filters = GetFiltersOwnUniqueIdsMLS()
+        filters = GetMLSFiltersOwnUniqueIdsMLS()
     } else {
-        filters = GetSQLReportWhere(type_analysis)
+        filters = GetMLSSQLReportWhere(type_analysis)
     }
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
@@ -268,14 +268,14 @@ GetMLSSendersResponse <- function(period, startdate, enddate, identities_db, typ
     #Generic function that counts people sending messages
 
     fields = " count(distinct(pup.upeople_id)) as senders_response "
-    tables = paste(" messages m ", GetSQLReportFrom(identitites_db, type_analysis))
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identitites_db, type_analysis))
     print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
         tables = paste(tables, ", messages_people mp, people_upeople pup ")
-        filters = GetFiltersOwnUniqueIdsMLS()
+        filters = GetMLSFiltersOwnUniqueIdsMLS()
     } else {
-        filters = GetSQLReportWhere(type_analysis)
+        filters = GetMLSSQLReportWhere(type_analysis)
     }
     filters = paste(filters, " and m.is_response_of is not null ", sep="")
 
@@ -302,14 +302,14 @@ GetMLSSendersInit <- function(period, startdate, enddate, identities_db, type_an
     #Generic function that counts people sending messages
 
     fields = " count(distinct(pup.upeople_id)) as senders_init "
-    tables = paste(" messages m ", GetSQLReportFrom(identitites_db, type_analysis))
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identitites_db, type_analysis))
     print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
         tables = paste(tables, ", messages_people mp, people_upeople pup ")
-        filters = GetFiltersOwnUniqueIdsMLS()
+        filters = GetMLSFiltersOwnUniqueIdsMLS()
     } else {
-        filters = GetSQLReportWhere(type_analysis)
+        filters = GetMLSSQLReportWhere(type_analysis)
     }
     filters = paste(filters, " and m.is_response_of is null ", sep="")
 
@@ -338,8 +338,8 @@ GetThreads <- function(period, startdate, enddate, identities_db, type_analysis,
     # Generic function that counts threads
 
     fields = " count(distinct(m.is_response_of)) as threads"
-    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))    
-    filters = GetSQLReportWhere(type_analysis)
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))    
+    filters = GetMLSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
 
@@ -362,8 +362,8 @@ GetMLSRepositories <- function(rfield, period, startdate, enddate, identities_db
     # Generic function that counts threads
 
     fields = " COUNT(DISTINCT(',rfield,')) AS repositories  "
-    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = GetSQLReportWhere(type_analysis)
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
+    filters = GetMLSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
 
@@ -387,8 +387,8 @@ GetMLSResponses <- function(period, startdate, enddate, identities_db, type_anal
     # Generic function that counts replies
 
     fields = " count(distinct(m.message_ID)) as sent_response"
-    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = paste(GetSQLReportWhere(type_analysis), " m.is_response_of is not null ", sep="")
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
+    filters = paste(GetMLSSQLReportWhere(type_analysis), " m.is_response_of is not null ", sep="")
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
     print(q)
@@ -411,8 +411,8 @@ GetMLSInit <- function(period, startdate, enddate, identities_db, type_analysis,
     # Generic function that counts replies
 
     fields = " count(distinct(m.message_ID)) as sent_init"
-    tables = paste(" messages m ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = paste(GetSQLReportWhere(type_analysis), " m.is_response_of is null ", sep="")
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
+    filters = paste(GetMLSSQLReportWhere(type_analysis), " m.is_response_of is null ", sep="")
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
     print(q)
