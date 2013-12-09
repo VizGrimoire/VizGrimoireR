@@ -63,6 +63,9 @@ if (conf$backend == 'allura'){
 }
 if (conf$backend == 'bugzilla'){
     closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
+    reopened_condition <- "new_value='NEW'"
+    name_log_table <- 'issues_log_bugzilla'
+    statuses = c("NEW", "ASSIGNED")
 }
 if (conf$backend == 'github'){
     closed_condition <- "field='closed'"
@@ -107,8 +110,10 @@ reopened <- GetEvolReopened(period, startdate, enddate, reopened_condition)
 repos <- GetEvolReposITS(period, startdate, enddate)
 
 # only supports monthly so far
-pending_tickets <- GetEvolPendingTickets(open_status, reopened_status,
-                                         name_log_table, startdate, enddate)
+#pending_tickets <- GetEvolPendingTickets(open_status, reopened_status,
+#                                         name_log_table, startdate, enddate)
+pending_tickets <- GetEvolBacklogTickets(period, startdate, enddate, statuses, name_log_table)
+
 evol <- merge (open, closed, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
@@ -144,12 +149,12 @@ if ('countries' %in% reports) {
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 
-closed_7 = GetDiffClosedDays(period, conf$enddate, 7, closed_condition)
-closed_30 = GetDiffClosedDays(period, conf$enddate, 30, closed_condition)
-closed_365 = GetDiffClosedDays(period, conf$enddate, 365, closed_condition)
-closers_7 = GetDiffClosersDays(period, conf$enddate, 7, closed_condition)
-closers_30 = GetDiffClosersDays(period, conf$enddate, 30, closed_condition)
-closers_365 = GetDiffClosersDays(period, conf$enddate, 365, closed_condition)
+closed_7 = GetDiffClosedDays(conf$enddate, 7, closed_condition)
+closed_30 = GetDiffClosedDays(conf$enddate, 30, closed_condition)
+closed_365 = GetDiffClosedDays(conf$enddate, 365, closed_condition)
+closers_7 = GetDiffClosersDays(conf$enddate, 7, closed_condition)
+closers_30 = GetDiffClosersDays(conf$enddate, 30, closed_condition)
+closers_365 = GetDiffClosersDays(conf$enddate, 365, closed_condition)
 all_static_info = merge(all_static_info, closers_7)
 all_static_info = merge(all_static_info, closers_30)
 all_static_info = merge(all_static_info, closers_365)
