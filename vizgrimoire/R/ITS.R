@@ -95,25 +95,28 @@ GetEvolOpened<- function (period, startdate, enddate) {
 ## FIXME working on this
 ##
 
-GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name_log_table) {
+GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.logtable, filter="") {
     # Return backlog of tickets in the statuses passed as parameter
-    q <- paste("SELECT id, status, issue_id, date FROM ",name_log_table ," ", filter)
+    q <- paste("SELECT DISTINCT issue_id, status, date FROM ",name.logtable," ", filter ," ORDER BY date ASC")
     query <- new("Query", sql = q)
     res <- run(query)
 
+    pending.tickets <- data.frame()
+
     if (period == "months") {
         samples <- GetMonthsBetween(startdate, enddate, extra=TRUE)
-        pending_tickets <- CountBacklogTickets(samples, res, statuses)
-        colnames(pending_tickets) <- c('month', 'pending_tickets')
+        pending.tickets <- CountBacklogTickets(samples, res, statuses)
+        colnames(pending.tickets) <- c('month', 'pending_tickets')
     }
     else if (period == "weeks"){
         samples <- GetWeeksBetween(startdate, enddate, extra=TRUE)
-        pending_tickets <- CountBacklogTickets(samples, res, statuses)
-        colnames(pending_tickets) <- c('week', 'pending_tickets')
+        pending.tickets <- CountBacklogTickets(samples, res, statuses)
+        colnames(pending.tickets) <- c('week', 'pending_tickets')
     }
-
-    return(pending_tickets)
+    
+    return(pending.tickets)
 }
+
 
 CountBacklogTickets <- function(samples, res, statuses){
     # return number of tickets in status = statuses per period of time
@@ -136,7 +139,7 @@ CountBacklogTickets <- function(samples, res, statuses){
         next_unixtime_str <- samples$unixtime[p+1]
 
         next_date <- as.POSIXlt(as.numeric(next_unixtime_str), origin="1970-01-01")
-        ## print(paste("[" , date() , "] date_unixtime = ",date <- unixtime, " next_date = ", next <- date)) # debug mode?
+        #print(paste("[" , date() , "] date_unixtime = ",date_unixtime, " next_date = ", next_date)) # debug mode?
 
         resfilter <- subset(res,res$date < next_date)
 
