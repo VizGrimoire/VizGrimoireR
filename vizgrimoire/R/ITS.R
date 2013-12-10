@@ -109,6 +109,10 @@ GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.lo
         samples <- GetMonthsBetween(start, end, extra=TRUE)
         pending.tickets <- CountBacklogTickets(samples, res, statuses)
         colnames(pending.tickets) <- c('month', 'pending_tickets')
+        posixdates = as.POSIXlt(as.numeric(pending.tickets$month), origin="1970-01-01")
+        dates = as.Date(posixdates)
+        dates = as.numeric(format(dates, "%Y"))*12 + as.numeric(format(dates, "%m"))
+        pending.tickets$month=dates
     }
     else if (period == "week"){
         samples <- GetWeeksBetween(start, end, extra=TRUE)
