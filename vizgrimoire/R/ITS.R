@@ -102,14 +102,16 @@ GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.lo
     res <- run(query)
 
     pending.tickets <- data.frame()
+    start = as.POSIXlt(gsub("'", "", startdate))
+    end = as.POSIXlt(gsub("'", "", enddate))
 
     if (period == "month") {
-        samples <- GetMonthsBetween(startdate, enddate, extra=TRUE)
+        samples <- GetMonthsBetween(start, end, extra=TRUE)
         pending.tickets <- CountBacklogTickets(samples, res, statuses)
         colnames(pending.tickets) <- c('month', 'pending_tickets')
     }
     else if (period == "week"){
-        samples <- GetWeeksBetween(startdate, enddate, extra=TRUE)
+        samples <- GetWeeksBetween(start, end, extra=TRUE)
         pending.tickets <- CountBacklogTickets(samples, res, statuses)
         colnames(pending.tickets) <- c('week', 'pending_tickets')
     }
