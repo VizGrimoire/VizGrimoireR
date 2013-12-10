@@ -109,6 +109,8 @@ if ('repositories' %in% reports) {
         data<-GetEvolReposMLS(rfield, repo, period, startdate, enddate)
         data <- completePeriodIds(data, conf$granularity, conf)        
         listname_file = gsub("/","_",repo)
+        listname_file = gsub("<","__",listname_file)
+        listname_file = gsub(">","___",listname_file)
         
         # TODO: Multilist approach. We will obsolete it in future
         createJSON (data, paste(destdir,"/mls-",listname_file,"-evolutionary.json",sep=''))
