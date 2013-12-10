@@ -98,8 +98,8 @@ if ('repositories' %in% reports) {
     createJSON (repos, paste(destdir,"/mls-lists.json", sep=''))
     repos <- repos$mailing_list
     repos_file_names = gsub("/","_",repos)
-    repos_file_names = gsub("<","__",repos)
-    repos_file_names = gsub(">","___",repos)
+    repos_file_names = gsub("<","__",repos_file_names)
+    repos_file_names = gsub(">","___",repos_file_names)
     createJSON(repos_file_names, paste(destdir,"/mls-repos.json", sep=''))
     
     print (repos)
