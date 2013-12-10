@@ -95,6 +95,10 @@ GetEvolOpened<- function (period, startdate, enddate) {
 ## FIXME working on this
 ##
 
+BuildWeekDate <- function(date){
+   return(paste(getISOWEEKYear(date), getISOWEEKWeek(date), sep=""))
+}
+
 GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.logtable, filter="") {
     # Return backlog of tickets in the statuses passed as parameter
     q <- paste("SELECT DISTINCT issue_id, status, date FROM ",name.logtable," ", filter ," ORDER BY date ASC")
@@ -112,12 +116,19 @@ GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.lo
         posixdates = as.POSIXlt(as.numeric(pending.tickets$month), origin="1970-01-01")
         dates = as.Date(posixdates)
         dates = as.numeric(format(dates, "%Y"))*12 + as.numeric(format(dates, "%m"))
-        pending.tickets$month=dates
+        pending.tickets$month = dates
     }
     else if (period == "week"){
         samples <- GetWeeksBetween(start, end, extra=TRUE)
         pending.tickets <- CountBacklogTickets(samples, res, statuses)
         colnames(pending.tickets) <- c('week', 'pending_tickets')
+        posixdates = as.POSIXlt(as.numeric(pending.tickets$week), origin="1970-01-01")
+        dates = as.Date(posixdates)
+        #It's needed in this case to call a function to build the correct
+        #yearweek value according to how this is done in MySQL
+        dates = lapply(dates, BuildWeekDate)
+        dates = as.numeric(dates) 
+        pending.tickets$week = dates
     }
     
     return(pending.tickets)
