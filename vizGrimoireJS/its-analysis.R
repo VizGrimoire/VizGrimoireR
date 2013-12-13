@@ -66,6 +66,8 @@ if (conf$backend == 'bugzilla'){
     reopened_condition <- "new_value='NEW'"
     name_log_table <- 'issues_log_bugzilla'
     statuses = c("NEW", "ASSIGNED")
+    #Pretty specific states in Red Hat's Bugzilla
+    statuses = c("ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED")
 }
 if (conf$backend == 'github'){
     closed_condition <- "field='closed'"
@@ -87,6 +89,8 @@ if (conf$backend == 'redmine'){
     closed_condition <- paste("(new_value='Resolved' OR new_value='Closed' OR new_value='Rejected'",
                               " OR new_value='Won\\'t Fix' OR new_value='Can\\'t reproduce' OR new_value='Duplicate')")
 }
+
+#print(MarkovChain())
 
 # dates
 startdate <- conf$startdate
@@ -112,12 +116,24 @@ repos <- GetEvolReposITS(period, startdate, enddate)
 # only supports monthly so far
 #pending_tickets <- GetEvolPendingTickets(open_status, reopened_status,
 #                                         name_log_table, startdate, enddate)
-pending_tickets <- GetEvolBacklogTickets(period, startdate, enddate, statuses, name_log_table)
+
 
 evol <- merge (open, closed, all = TRUE)
-evol <- merge (evol, changed, all = TRUE)
+evol <- merge (evol, reopened, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
-evol <- merge (evol, pending_tickets, all = TRUE)
+evol <- merge (evol, changed, all = TRUE)
+
+for (status in statuses)
+{
+    tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
+    colnames(tickets_status)[2] <- status
+    print(status)
+    print(tickets_status)
+    evol <- merge (evol, tickets_status, all = TRUE)
+}
+
+
+print(evol)
 
 if ('companies' %in% reports) {
     info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
