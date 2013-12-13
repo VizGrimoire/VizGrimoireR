@@ -127,8 +127,6 @@ for (status in statuses)
 {
     tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
     colnames(tickets_status)[2] <- status
-    print(status)
-    print(tickets_status)
     evol <- merge (evol, tickets_status, all = TRUE)
 }
 
