@@ -110,7 +110,6 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
 open <- GetEvolOpened(period, startdate, enddate)
-reopened <- GetEvolReopened(period, startdate, enddate, reopened_condition)
 repos <- GetEvolReposITS(period, startdate, enddate)
 
 # only supports monthly so far
@@ -119,7 +118,6 @@ repos <- GetEvolReposITS(period, startdate, enddate)
 
 
 evol <- merge (open, closed, all = TRUE)
-evol <- merge (evol, reopened, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 
