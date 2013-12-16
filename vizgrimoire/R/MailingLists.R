@@ -191,6 +191,65 @@ GetMLSFiltersResponse <- function() {
 }
 
 
+##########
+# Meta functions that aggregate all evolutionary or static data in one call
+##########
+
+
+GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+
+    data = data.frame()
+
+    if (evolutionary == TRUE){
+        sent = EvolEmailsSent(period, startdate, enddate, identities_db)
+        senders = EvolMLSSenders(period, startdate, enddate, identities_db)
+        repositories = EvolMLSRepositories(period, startdate, enddate, identities_db)
+        threads = EvolThreads(period, startdate, enddate, identities_db)
+        sent_response = EvolMLSResponses(period, startdate, enddate, identities_db)
+        senders_response = EvolMLSSendersResponse(period, startdate, enddate, identities_db)
+        senders_init = EvolMLSSendersInit(period, startdate, enddate, identities_db)
+        #countries = 
+        #companies =
+
+        data = merge(sent, senders, all=TRUE)
+        data = merge(data, repositories, all=TRUE)
+        data = merge(data, threads, all=TRUE)
+        data = merge(data, sent_response, all=TRUE)
+        data = merge(data, senders_init, all=TRUE)
+
+    } else {
+        sent = AggEmailsSent(period, startdate, enddate, identities_db)
+        senders = AggMLSSenders(period, startdate, enddate, identities_db)
+        repositories = AggMLSRepositories(period, startdate, enddate, identities_db)
+        threads = AggThreads(period, startdate, enddate, identities_db)
+        sent_response = AggMLSResponses(period, startdate, enddate, identities_db)
+        senders_response = AggMLSSendersResponse(period, startdate, enddate, identities_db)
+        senders_init = AggMLSSendersInit(period, startdate, enddate, identities_db)
+
+        data = merge(sent, senders, all=TRUE)
+        data = merge(data, repositories, all=TRUE)
+        data = merge(data, threads, all=TRUE)
+        data = merge(data, sent_response, all=TRUE)
+        data = merge(data, senders_init, all=TRUE)
+    }
+
+    return (data)
+}
+
+
+EvolMLSInfo <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    #Evolutionary info all merged in a dataframe
+    return(GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+
+StaticMLSInfo <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    #Agg info all merged in a dataframe
+    return(GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+
 #########
 #Functions to obtain info per type of basic piece of data
 #########
