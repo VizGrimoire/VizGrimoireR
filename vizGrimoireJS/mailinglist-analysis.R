@@ -61,7 +61,7 @@ data <- completePeriodIds(data, conf$granularity, conf)
 createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
 
-static_data = EvolMLSInfo(period, startdate, enddate, rfield, identities_db)
+static_data = StaticMLSInfo(period, startdate, enddate, rfield, identities_db)
 
 latest_activity7 <- lastActivity(7)
 latest_activity14 <- lastActivity(14)

@@ -262,7 +262,13 @@ StaticMLSInfo <- function(period, startdate, enddate, identities_db, rfield, typ
 GetEmailsSent <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # Generic function that counts emails sent
 
-    fields = " count(distinct(m.message_ID)) as sent "
+    if (evolutionary){
+        fields = " count(distinct(m.message_ID)) as sent "
+    } else {
+        fields = " count(distinct(m.message_ID)) as sent,
+                   DATE_FORMAT (min(m.first_date), '%Y-%m-%d') as first_date,
+                   DATE_FORMAT (max(m.first_date), '%Y-%m-%d') as last_date "
+    }
     tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
     filters = GetMLSSQLReportWhere(type_analysis)
 
@@ -281,7 +287,6 @@ AggEmailsSent <- function(period, startdate, enddate, identities_db, type_analys
     # Aggregated number of emails sent
     return(GetEmailsSent(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
-
 
 # People sending emails
 GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
