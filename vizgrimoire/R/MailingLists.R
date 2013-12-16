@@ -430,3 +430,278 @@ AggMLSInit <- function(period, startdate, enddate, identities_db, type_analysis)
 }
 
 
+
+####################
+# Lists of repositories, companies, countries, etc
+# Functions to obtain list of names (of repositories) per type of analysis
+####################
+
+
+# WARNING: Functions directly copied from old MLS.R
+
+reposNames <- function (rfield, startdate, enddate) {
+    names = ""
+    if (rfield == "mailing_list_url") {
+        q = paste("SELECT ml.mailing_list_url, COUNT(message_ID) AS total
+                   FROM messages m, mailing_lists ml
+                   WHERE m.mailing_list_url = ml.mailing_list_url AND
+                   m.first_date >= ",startdate," AND
+                   m.first_date < ",enddate,"
+                   GROUP BY ml.mailing_list_url ORDER by total desc")
+        query <- new ("Query", sql = q)
+        print(q)
+        mailing_lists <- run(query)
+        mailing_lists_files <- run(query)
+        names = mailing_lists_files
+    } else {
+        # TODO: not ordered yet by total messages
+        q = paste("SELECT DISTINCT(mailing_list) FROM messages m
+                        WHERE m.first_date >= ",startdate," AND
+                        m.first_date < ",enddate)
+        query <- new ("Query", sql = q)
+        print(q)
+        mailing_lists <- run(query)
+        names = mailing_lists
+    }
+    return (names)
+}
+
+
+countriesNames <- function (identities_db, startdate, enddate, filter=c()) {
+    countries_limit = 30
+
+    filter_countries = ""
+    for (country in filter){
+        filter_countries <- paste(filter_countries, " c.name<>'",aff,"' AND ",sep="")
+    }
+
+    q <- paste("SELECT c.name as name, COUNT(m.message_ID) as sent
+                FROM ", GetTablesCountries(identities_db), "
+                WHERE ", GetFiltersCountries(), " AND
+                  ", filter_countries, "
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate,"
+                GROUP BY c.name
+                ORDER BY COUNT((m.message_ID)) DESC LIMIT ",
+                countries_limit , sep="")
+
+companiesNames <- function (i_db, startdate, enddate, filter=c()) {
+    companies_limit = 30
+    filter_companies = ""
+
+    for (company in filter){
+        filter_companies <- paste(filter_companies, " c.name<>'",company,
+                "' AND ",sep="")
+    }
+
+    q <- paste("SELECT c.name as name, COUNT(DISTINCT(m.message_ID)) as sent
+                FROM ", GetTablesCompanies(i_db), "
+                WHERE ", GetFiltersCompanies(), " AND
+                  ", filter_companies, "
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate,"
+                GROUP BY c.name
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT ",
+            companies_limit , sep="")
+
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data$name)
+}
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return(data$name)
+}
+
+
+
+
+
+#########################
+# Top activity developers
+#########################
+
+
+top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
+
+    limit = 30
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " c.name<>'", aff ,"' and ", sep="")
+    }
+
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new ("Query",
+                sql = "SELECT @maxdate:=max(first_date) from messages limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate,first_date)<",days)
+    }
+
+    q <- paste("SELECT up.id as id, up.identifier as senders,
+                COUNT(distinct(m.message_id)) as sent
+                FROM ", GetTablesCompanies(identities_db),
+                     ",",identities_db,".upeople up
+                WHERE ", GetFiltersCompanies(), " AND
+                  pup.upeople_id = up.id AND
+                  ", affiliations , "
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate,
+                  date_limit, "
+                GROUP BY up.identifier
+                ORDER BY sent desc
+                LIMIT ",limit, ";", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+#######################
+# Functions to analyze last activity
+#######################
+
+lastActivity <- function(days) {
+    #commits
+    q <- paste("select count(distinct(message_ID)) as sent_",days,"
+                from messages
+                where first_date >= (
+                  select (max(first_date) - INTERVAL ",days," day)
+                  from messages)", sep="");
+    query <- new("Query", sql = q)
+    data1 = run(query)
+
+    q <- paste("select count(distinct(pup.upeople_id)) as senders_",days,"
+                from messages m,
+                  people_upeople pup,
+                  messages_people mp
+                where pup.people_id = mp.email_address  and
+                  m.message_ID = mp.message_id and
+                  m.first_date >= (select (max(first_date) - INTERVAL ",days," day)
+                                   from messages)",
+         sep="");
+    query <- new("Query", sql = q)
+    data2 = run(query)
+
+    agg_data = merge(data1, data2)
+
+    return(agg_data)
+}
+
+
+
+#####################
+# MICRO STUDIES
+#####################
+
+StaticNumSent <- function(startdate, enddate){
+   fields = paste(" COUNT(*) as sent ")
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = GetFiltersOwnUniqueIdsMLS()
+    q <- GetSQLGlobal('first_date', fields, tables, filters,
+            startdate, enddate)
+    print(q)
+    query <- new ("Query", sql = q)
+    sent <- run(query)
+    return(sent)
+}
+
+StaticNumSenders <- function(startdate, enddate){
+fields = paste(" COUNT(DISTINCT(pup.upeople_id)) as senders ")
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = GetFiltersOwnUniqueIdsMLS()
+    q <- GetSQLGlobal('first_date', fields, tables, filters,
+            startdate, enddate)
+    print(q)
+    query <- new ("Query", sql = q)
+    senders <- run(query)
+    return(senders)
+}
+
+GetDiffSentDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(init_date, days)
+    lastsent = StaticNumSent(chardates[2], chardates[1])
+    lastsent = as.numeric(lastsent[1])
+    prevsent = StaticNumSent(chardates[3], chardates[2])
+    prevsent = as.numeric(prevsent[1])
+    diffsentdays = data.frame(diff_netsent = numeric(1), percentage_sent = numeric(1))
+
+    diffsentdays$diff_netsent = lastsent - prevsent
+    diffsentdays$percentage_sent = GetPercentageDiff(prevsent, lastsent)
+
+    colnames(diffsentdays) <- c(paste("diff_netsent","_",days, sep=""), paste("percentage_sent","_",days, sep=""))
+
+    return (diffsentdays)
+}
+
+
+GetDiffSendersDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(init_date, days)
+    lastsenders = StaticNumSenders(chardates[2], chardates[1])
+    lastsenders = as.numeric(lastsenders[1])
+    prevsenders = StaticNumSenders(chardates[3], chardates[2])
+    prevsenders = as.numeric(prevsenders[1])
+    diffsendersdays = data.frame(diff_netsenders = numeric(1), percentage_senders = numeric(1))
+
+    diffsendersdays$diff_netsenders = lastsenders - prevsenders
+    diffsendersdays$percentage_senders = GetPercentageDiff(prevsenders, lastsenders)
+
+    colnames(diffsendersdays) <- c(paste("diff_netsenders","_",days, sep=""), paste("percentage_senders","_",days, sep=""))
+
+    return (diffsendersdays)
+
+}
+
+
+GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, num_companies){
+    # This function provides the top <num_companies> sending messages to the mailing
+    # lists
+
+    companies  <- companiesNames(identities_db, startdate, enddate, c("-Bot", "-Individual", "-Unknown"))
+
+    first = TRUE
+    first_companies = data.frame()
+    count = 1
+    for (company in companies){
+
+        sent = EvolMessagesSentCompanies(company, identities_db, period, startdate, enddate)
+        sent <- completePeriodIds(sent, conf$granularity, conf)
+        sent <- sent[order(sent$id), ]
+        sent[is.na(sent)] <- 0
+
+        if (count <= num_companies -1){
+            #Case of companies with entity in the dataset
+            if (first){
+                first = FALSE
+                first_companies = sent
+            }
+            first_companies = merge(first_companies, sent, all=TRUE)
+            colnames(first_companies)[colnames(first_companies)=="sent"] <- company
+        } else {
+
+            #Case of companies that are aggregated in the field Others
+            if (first==FALSE){
+                first = TRUE
+                first_companies$Others = sent$sent
+            }else{
+                first_companies$Others = first_companies$Others + sent$sent
+            }
+        }
+        count = count + 1
+        #print(first_companies)
+    }
+
+    #TODO: remove global variables...
+    first_companies <- completePeriodIds(first_companies, conf$granularity, conf)
+    first_companies <- first_companies[order(first_companies$id), ]
+    first_companies[is.na(first_companies)] <- 0
+    print(first_companies)
+
+    return(first_companies)
+
+}
+
+
+
