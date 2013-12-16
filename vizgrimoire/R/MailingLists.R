@@ -272,12 +272,12 @@ GetEmailsSent <- function(period, startdate, enddate, identities_db, type_analys
     return(ExecuteQuery(q))
 }
 
-EvolEmailsSent <- function(period, startdate, enddate, identities_db, type_analysis){
+EvolEmailsSent <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Evolution of emails sent
     return(GetEmailsSent(period, startdate, enddate, identities_db, type_analysis , TRUE))
 }
 
-AggEmailsSent <- function(period, startdate, enddate, identities_db, type_analysis){
+AggEmailsSent <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Aggregated number of emails sent
     return(GetEmailsSent(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
@@ -303,12 +303,12 @@ GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analys
     return(ExecuteQuery(q))
 }
 
-EvolMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis){
+EvolMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Evolution of people sending emails
     return(GetMLSSenders(period, startdate, enddate, identities_db, type_analysis , TRUE))
 }
 
-AggMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis){
+AggMLSSenders <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Agg of people sending emails
     return(GetMLSSenders(period, startdate, enddate, identities_db, type_analysis , FALSE))
 }
@@ -337,12 +337,12 @@ GetMLSSendersResponse <- function(period, startdate, enddate, identities_db, typ
     return(ExecuteQuery(q))
 }
 
-EvolMLSSendersResponse <- function(period, startdate, enddate, identities_db, type_analysis){
+EvolMLSSendersResponse <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Evolution of people sending emails
     return(GetMLSSendersResponse(period, startdate, enddate, identities_db, type_analysis , TRUE))
 }
 
-AggMLSSendersResponse <- function(period, startdate, enddate, identities_db, type_analysis){
+AggMLSSendersResponse <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Agg of people sending emails
     return(GetMLSSendersResponse(period, startdate, enddate, identities_db, type_analysis , FALSE))
 }
@@ -371,12 +371,12 @@ GetMLSSendersInit <- function(period, startdate, enddate, identities_db, type_an
     return(ExecuteQuery(q))
 }
 
-EvolMLSSendersInit <- function(period, startdate, enddate, identities_db, type_analysis){
+EvolMLSSendersInit <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Evolution of people sending emails
     return(GetMLSSendersInit(period, startdate, enddate, identities_db, type_analysis , TRUE))
 }
 
-AggMLSSendersInit <- function(period, startdate, enddate, identities_db, type_analysis){
+AggMLSSendersInit <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Agg of people sending emails
     return(GetMLSSendersInit(period, startdate, enddate, identities_db, type_analysis , FALSE))
 }
@@ -398,13 +398,13 @@ GetThreads <- function(period, startdate, enddate, identities_db, type_analysis,
     return(ExecuteQuery(q))
 }
 
-EvolThreads <- function(period, startdate, enddate, identities_db, type_analysis){
+EvolThreads <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Aggregated number of emails sent
     return(GetThreads(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
  
 
-AggThreads <- function(period, startdate, enddate, identities_db, type_analysis){
+AggThreads <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Aggregated number of emails sent
     return(GetThreads(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
@@ -422,13 +422,13 @@ GetMLSRepositories <- function(rfield, period, startdate, enddate, identities_db
     return(ExecuteQuery(q))
 }
 
-EvolMLSRepositories <- function(rfield, period, startdate, enddate, identities_db, type_analysis){
+EvolMLSRepositories <- function(rfield, period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Aggregated number of emails sent
     return(GetMLSRepositories(rfield, period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 
-AggMLSRepositories <- function(rfield, period, startdate, enddate, identities_db, type_analysis){
+AggMLSRepositories <- function(rfield, period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Aggregated number of emails sent
     return(GetMLSRepositories(rfield, period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
@@ -447,13 +447,13 @@ GetMLSResponses <- function(period, startdate, enddate, identities_db, type_anal
     return(ExecuteQuery(q))
 }
 
-EvolMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis){
+EvolMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Evol number of replies
     return(GetMLSResponses(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 
-AggMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis){
+AggMLSResponses <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Aggregated number of emails replied
     return(GetMLSResponses(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
@@ -471,13 +471,13 @@ GetMLSInit <- function(period, startdate, enddate, identities_db, type_analysis,
     return(ExecuteQuery(q))
 }
 
-EvolMLSInit <- function(period, startdate, enddate, identities_db, type_analysis){
+EvolMLSInit <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Evol number of messages starting a thread
     return(GetMLSInit(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 
-AggMLSInit <- function(period, startdate, enddate, identities_db, type_analysis){
+AggMLSInit <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
     # Aggregated number of emails starting a thread
     return(GetMLSInit(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
