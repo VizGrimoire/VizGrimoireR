@@ -20,12 +20,6 @@
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 
-##############
-# Meta functions to automatically call other functions
-##############
-
-#TBD
-
 
 ##############
 # Specific FROM and WHERE clauses per type of report
@@ -196,7 +190,7 @@ GetMLSFiltersResponse <- function() {
 ##########
 
 
-GetMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis, evolutionary){
+GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_analysis, evolutionary){
 
     data = data.frame()
 
@@ -661,6 +655,62 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
     data <- run(query)
     return (data)
 }
+
+repoTopSenders <- function(repo, identities_db, startdate, enddate){
+    q <- paste("SELECT up.identifier as senders,
+                COUNT(m.message_id) as sent
+                FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up
+                WHERE ", GetFiltersOwnUniqueIdsMLS(), " AND
+                  pup.upeople_id = up.id AND
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate," AND
+                  ",rfield,"='",repo,"'
+                GROUP BY up.identifier
+                ORDER BY sent desc
+                LIMIT 10", sep="")
+
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+countryTopSenders <- function(country_name, identities_db, startdate, enddate){
+    q <- paste("SELECT up.identifier as senders,
+                  COUNT(DISTINCT(m.message_id)) as sent
+                FROM ", GetTablesCountries(identities_db),
+                  ", ",identities_db,".upeople up
+                WHERE ", GetFiltersCountries(), " AND
+                  up.id = upc.upeople_id AND
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate," AND
+                  c.name = '",country_name,"'
+                GROUP BY up.identifier
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+companyTopSenders <- function(company_name, identities_db, startdate, enddate){
+    q <- paste("SELECT up.identifier as senders,
+                  COUNT(DISTINCT(m.message_id)) as sent
+                FROM ", GetTablesCompanies(identities_db),
+                  ", ",identities_db,".upeople up
+                WHERE ", GetFiltersCompanies(), " AND
+                  up.id = upc.upeople_id AND
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate," AND
+                  c.name = '",company_name,"'
+                GROUP BY up.identifier
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
 
 
 #######################
