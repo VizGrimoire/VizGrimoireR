@@ -196,14 +196,14 @@ GetMLSFiltersResponse <- function() {
 ##########
 
 
-GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+GetMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis, evolutionary){
 
     data = data.frame()
 
     if (evolutionary == TRUE){
         sent = EvolEmailsSent(period, startdate, enddate, identities_db)
         senders = EvolMLSSenders(period, startdate, enddate, identities_db)
-        repositories = EvolMLSRepositories(period, startdate, enddate, identities_db)
+        repositories = EvolMLSRepositories(rfield, period, startdate, enddate, identities_db)
         threads = EvolThreads(period, startdate, enddate, identities_db)
         sent_response = EvolMLSResponses(period, startdate, enddate, identities_db)
         senders_response = EvolMLSSendersResponse(period, startdate, enddate, identities_db)
@@ -220,7 +220,7 @@ GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, evolutionar
     } else {
         sent = AggEmailsSent(period, startdate, enddate, identities_db)
         senders = AggMLSSenders(period, startdate, enddate, identities_db)
-        repositories = AggMLSRepositories(period, startdate, enddate, identities_db)
+        repositories = AggMLSRepositories(rfield, period, startdate, enddate, identities_db)
         threads = AggThreads(period, startdate, enddate, identities_db)
         sent_response = AggMLSResponses(period, startdate, enddate, identities_db)
         senders_response = AggMLSSendersResponse(period, startdate, enddate, identities_db)
@@ -237,15 +237,15 @@ GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, evolutionar
 }
 
 
-EvolMLSInfo <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+EvolMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_analysis = list(NA, NA)){
     #Evolutionary info all merged in a dataframe
-    return(GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, TRUE))
+    return(GetMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis, TRUE))
 }
 
 
-StaticMLSInfo <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+StaticMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_analysis = list(NA, NA)){
     #Agg info all merged in a dataframe
-    return(GetMLSInfo(period, startdate, enddate, identities_db, type_analysis, FALSE))
+    return(GetMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis, FALSE))
 }
 
 
@@ -573,6 +573,53 @@ companiesNames <- function (i_db, startdate, enddate, filter=c()) {
 }
 
 
+########################
+# People functions as in the old version, still to be refactored!
+########################
+
+GetListPeopleMLS <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id, count(m.message_ID) total"
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters = paste(filters,"GROUP BY id ORDER BY total desc")
+    q = GetSQLGlobal('first_date',fields,tables, filters, startdate, enddate)
+    print(q)
+        query <- new("Query", sql = q)
+        data <- run(query)
+        return (data)
+}
+
+GetQueryPeopleMLS <- function(developer_id, period, startdate, enddate, evol) {
+    fields = "COUNT(m.message_ID) AS sent"
+    tables = GetTablesOwnUniqueIdsMLS()
+    filters = paste(GetFiltersOwnUniqueIdsMLS(), "AND pup.upeople_id = ", developer_id)
+
+    if (evol) {
+        q = GetSQLPeriod(period,'first_date', fields, tables, filters,
+                startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(first_date),'%Y-%m-%d') as first_date,
+                DATE_FORMAT (max(first_date),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('first_date', fields, tables, filters,
+                startdate, enddate)
+    }
+    return (q)
+}
+
+GetEvolPeopleMLS <- function(developer_id, period, startdate, enddate) {
+    q <- GetQueryPeopleMLS(developer_id, period, startdate, enddate, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetStaticPeopleMLS <- function(developer_id, startdate, enddate) {
+    q <- GetQueryPeopleMLS(developer_id, period, startdate, enddate, FALSE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
 
 
 
