@@ -206,7 +206,11 @@ GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_a
         data = merge(sent, senders, all=TRUE)
         data = merge(data, repositories, all=TRUE)
         data = merge(data, threads, all=TRUE)
-        data = merge(data, sent_response, all=TRUE)
+        if (nrow(sent_response) > 0){
+            #in some cases not value is returned, this should be
+            #used in the rest of cases, to be fixed...
+            data = merge(data, sent_response, all=TRUE)
+        }
         data = merge(data, senders_init, all=TRUE)
 
     } else {
