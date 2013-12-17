@@ -111,7 +111,6 @@ BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, f
 ExecuteQuery <- function(q){
     # This function creates a new object Query and
     # returns the result
-
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -273,7 +272,6 @@ GetEmailsSent <- function(period, startdate, enddate, identities_db, type_analys
     filters = GetMLSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-    print(q)
 
     return(ExecuteQuery(q))
 }
@@ -294,7 +292,6 @@ GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analys
     
     fields = " count(distinct(pup.upeople_id)) as senders "
     tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
-    print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
         tables = paste(tables, ", messages_people mp, people_upeople pup ")
@@ -304,7 +301,6 @@ GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analys
     }
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-    print(q)
     return(ExecuteQuery(q))
 }
 
@@ -326,7 +322,6 @@ GetMLSSendersResponse <- function(period, startdate, enddate, identities_db, typ
 
     fields = " count(distinct(pup.upeople_id)) as senders_response "
     tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
-    print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
         tables = paste(tables, ", messages_people mp, people_upeople pup ")
@@ -338,7 +333,6 @@ GetMLSSendersResponse <- function(period, startdate, enddate, identities_db, typ
 
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-    print(q)
     return(ExecuteQuery(q))
 }
 
@@ -360,7 +354,6 @@ GetMLSSendersInit <- function(period, startdate, enddate, identities_db, type_an
 
     fields = " count(distinct(pup.upeople_id)) as senders_init "
     tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
-    print(tables)
     if (tables == " messages m  "){
         # basic case: it's needed to add unique ids filters
         tables = paste(tables, ", messages_people mp, people_upeople pup ")
@@ -372,7 +365,6 @@ GetMLSSendersInit <- function(period, startdate, enddate, identities_db, type_an
 
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-    print(q)
     return(ExecuteQuery(q))
 }
 
@@ -418,7 +410,7 @@ AggThreads <- function(period, startdate, enddate, identities_db, type_analysis 
 GetMLSRepositories <- function(rfield, period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # Generic function that counts threads
 
-    fields = " COUNT(DISTINCT(',rfield,')) AS repositories  "
+    fields = paste(" COUNT(DISTINCT(",rfield,")) AS repositories  ", sep="")
     tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
     filters = GetMLSSQLReportWhere(type_analysis)
 
@@ -448,7 +440,6 @@ GetMLSResponses <- function(period, startdate, enddate, identities_db, type_anal
     filters = paste(GetMLSSQLReportWhere(type_analysis), " m.is_response_of is not null ", sep="")
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-    print(q)
     return(ExecuteQuery(q))
 }
 
@@ -472,7 +463,6 @@ GetMLSInit <- function(period, startdate, enddate, identities_db, type_analysis,
     filters = paste(GetMLSSQLReportWhere(type_analysis), " m.is_response_of is null ", sep="")
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-    print(q)
     return(ExecuteQuery(q))
 }
 
@@ -507,7 +497,6 @@ reposNames <- function (rfield, startdate, enddate) {
                    m.first_date < ",enddate,"
                    GROUP BY ml.mailing_list_url ORDER by total desc")
         query <- new ("Query", sql = q)
-        print(q)
         mailing_lists <- run(query)
         mailing_lists_files <- run(query)
         names = mailing_lists_files
@@ -517,7 +506,6 @@ reposNames <- function (rfield, startdate, enddate) {
                         WHERE m.first_date >= ",startdate," AND
                         m.first_date < ",enddate)
         query <- new ("Query", sql = q)
-        print(q)
         mailing_lists <- run(query)
         names = mailing_lists
     }
@@ -582,7 +570,6 @@ GetListPeopleMLS <- function(startdate, enddate) {
     filters = GetFiltersOwnUniqueIdsMLS()
     filters = paste(filters,"GROUP BY id ORDER BY total desc")
     q = GetSQLGlobal('first_date',fields,tables, filters, startdate, enddate)
-    print(q)
         query <- new("Query", sql = q)
         data <- run(query)
         return (data)
@@ -761,7 +748,6 @@ StaticNumSent <- function(startdate, enddate){
     filters = GetFiltersOwnUniqueIdsMLS()
     q <- GetSQLGlobal('first_date', fields, tables, filters,
             startdate, enddate)
-    print(q)
     query <- new ("Query", sql = q)
     sent <- run(query)
     return(sent)
@@ -773,7 +759,6 @@ fields = paste(" COUNT(DISTINCT(pup.upeople_id)) as senders ")
     filters = GetFiltersOwnUniqueIdsMLS()
     q <- GetSQLGlobal('first_date', fields, tables, filters,
             startdate, enddate)
-    print(q)
     query <- new ("Query", sql = q)
     senders <- run(query)
     return(senders)
@@ -858,7 +843,6 @@ GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, n
     first_companies <- completePeriodIds(first_companies, conf$granularity, conf)
     first_companies <- first_companies[order(first_companies$id), ]
     first_companies[is.na(first_companies)] <- 0
-    print(first_companies)
 
     return(first_companies)
 

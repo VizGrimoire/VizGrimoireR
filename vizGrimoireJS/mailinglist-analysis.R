@@ -54,14 +54,14 @@ enddate <- conf$enddate
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 rfield = reposField()
 
-data <- EvolMLSInfo(period, startdate, enddate, rfield, identities_db)
+data <- EvolMLSInfo(period, startdate, enddate, identities_db, rfield)
 
 data <- completePeriodIds(data, conf$granularity, conf)
 
 createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
 
-static_data = StaticMLSInfo(period, startdate, enddate, rfield, identities_db)
+static_data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
 
 latest_activity7 <- lastActivity(7)
 latest_activity14 <- lastActivity(14)
@@ -106,7 +106,6 @@ if ('repositories' %in% reports) {
     repos_file_names = gsub(">","___",repos_file_names)
     createJSON(repos_file_names, paste(destdir,"/mls-repos.json", sep=''))
     
-    print (repos)
     
     for (repo in repos) {    
         # Evol data   
