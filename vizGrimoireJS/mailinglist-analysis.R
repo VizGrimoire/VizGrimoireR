@@ -141,15 +141,15 @@ if ('countries' %in% reports) {
         if (is.na(country)) next
         print (country)
         country_name = paste("'", country, "'", sep="")
-
-        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("country", country_name)))
+        type_analysis = list("country", country_name)
+        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
         data <- completePeriodIds(data, conf$granularity, conf)        
         createJSON (data, paste(destdir,"/",country,"-mls-evolutionary.json",sep=''))
         
         top_senders = countryTopSenders (country, identities_db, startdate, enddate)
         createJSON(top_senders, paste(destdir,"/",country,"-mls-top-senders.json", sep=''))        
         
-        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("country", country_name)))
+        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, list("country", country_name))
         createJSON (data, paste(destdir,"/",country,"-mls-static.json",sep=''))
     }
 }
@@ -161,14 +161,14 @@ if ('companies' %in% reports){
     for (company in companies){       
         print (company)
         company_name = paste("'", company, "'", sep="")
-        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", country_name)))
+        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", company_name)))
         data <- completePeriodIds(data, conf$granularity, conf)
         createJSON(data, paste(destdir,"/",company,"-mls-evolutionary.json", sep=''))
 
         top_senders = companyTopSenders (company, identities_db, startdate, enddate)
         createJSON(top_senders, paste(destdir,"/",company,"-mls-top-senders.json", sep=''))
 
-        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", country_name)))
+        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", company_name)))
         createJSON(data, paste(destdir,"/",company,"-mls-static.json", sep=''))
     }
 }

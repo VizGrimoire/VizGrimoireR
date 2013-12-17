@@ -33,7 +33,7 @@ GetMLSSQLRepositoriesFrom <- function(){
 
 GetMLSSQLRepositoriesWhere <- function(repository){
     # fields necessary to match info among tables
-    return (paste(" m.mailing_list_url = '",repository,"' "))
+    return (paste(" m.mailing_list_url = ",repository," "))
 }
 
 
@@ -46,7 +46,7 @@ GetMLSSQLCompaniesFrom <- function(i_db){
                    ",i_db,".upeople_companies upc", sep=""))
 }
 
-GetMLSSQLCompaniesWhere <- function(){
+GetMLSSQLCompaniesWhere <- function(name){
     # filters for the companies analysis
     return(paste(" m.message_ID = mp.message_id and
                    mp.email_address = pup.people_id and
@@ -54,7 +54,8 @@ GetMLSSQLCompaniesWhere <- function(){
                    pup.upeople_id = upc.upeople_id and
                    upc.company_id = c.id and
                    m.first_date >= upc.init and
-                   m.first_date < upc.end ", sep=""))
+                   m.first_date < upc.end and
+                   c.name = ",name, sep=""))
 }
 
 GetMLSSQLCountriesFrom <- function(i_db){
@@ -65,16 +66,15 @@ GetMLSSQLCountriesFrom <- function(i_db){
                    ",i_db,".upeople_countries upc ", sep=""))
 }
 
-GetMLSSQLCountriesWhere <- function(){
+GetMLSSQLCountriesWhere <- function(name){
     # filters necessary for the countries analysis
 
     return(paste(" m.message_ID = mp.message_id and
                    mp.email_address = pup.people_id and
                    mp.type_of_recipient=\'From\' and
                    pup.upeople_id = upc.upeople_id and
-                   upc.company_id = c.id and
-                   m.first_date >= upc.init and
-                   m.first_date < upc.end ", sep=""))
+                   upc.country_id = c.id and
+                   c.name=",name, sep=""))
 
 }
 
@@ -147,14 +147,13 @@ GetMLSSQLReportWhere <- function(type_analysis){
 
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
-
     analysis = type_analysis[1]
     value = type_analysis[2]
     where = ""
 
     if (! is.na(analysis)){
         where <- ifelse (analysis == 'repository', paste(where, GetMLSSQLRepositoriesWhere(value)),
-                ifelse (analysis == 'company', paste(where, GetMLSSQLCompaniesWhere()),
+                ifelse (analysis == 'company', paste(where, GetMLSSQLCompaniesWhere(value)),
                 ifelse (analysis == 'country', paste(where, GetMLSSQLCountriesWhere(value)),
                 NA)))
     }
@@ -194,13 +193,13 @@ GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_a
     data = data.frame()
 
     if (evolutionary == TRUE){
-        sent = EvolEmailsSent(period, startdate, enddate, identities_db)
-        senders = EvolMLSSenders(period, startdate, enddate, identities_db)
-        repositories = EvolMLSRepositories(rfield, period, startdate, enddate, identities_db)
-        threads = EvolThreads(period, startdate, enddate, identities_db)
-        sent_response = EvolMLSResponses(period, startdate, enddate, identities_db)
-        senders_response = EvolMLSSendersResponse(period, startdate, enddate, identities_db)
-        senders_init = EvolMLSSendersInit(period, startdate, enddate, identities_db)
+        sent = EvolEmailsSent(period, startdate, enddate, identities_db, type_analysis)
+        senders = EvolMLSSenders(period, startdate, enddate, identities_db, type_analysis)
+        repositories = EvolMLSRepositories(rfield, period, startdate, enddate, identities_db, type_analysis)
+        threads = EvolThreads(period, startdate, enddate, identities_db, type_analysis)
+        sent_response = EvolMLSResponses(period, startdate, enddate, identities_db, type_analysis)
+        senders_response = EvolMLSSendersResponse(period, startdate, enddate, identities_db, type_analysis)
+        senders_init = EvolMLSSendersInit(period, startdate, enddate, identities_db, type_analysis)
         #countries = 
         #companies =
 
@@ -211,13 +210,13 @@ GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_a
         data = merge(data, senders_init, all=TRUE)
 
     } else {
-        sent = AggEmailsSent(period, startdate, enddate, identities_db)
-        senders = AggMLSSenders(period, startdate, enddate, identities_db)
-        repositories = AggMLSRepositories(rfield, period, startdate, enddate, identities_db)
-        threads = AggThreads(period, startdate, enddate, identities_db)
-        sent_response = AggMLSResponses(period, startdate, enddate, identities_db)
-        senders_response = AggMLSSendersResponse(period, startdate, enddate, identities_db)
-        senders_init = AggMLSSendersInit(period, startdate, enddate, identities_db)
+        sent = AggEmailsSent(period, startdate, enddate, identities_db, type_analysis)
+        senders = AggMLSSenders(period, startdate, enddate, identities_db, type_analysis)
+        repositories = AggMLSRepositories(rfield, period, startdate, enddate, identities_db, type_analysis)
+        threads = AggThreads(period, startdate, enddate, identities_db, type_analysis)
+        sent_response = AggMLSResponses(period, startdate, enddate, identities_db, type_analysis)
+        senders_response = AggMLSSendersResponse(period, startdate, enddate, identities_db, type_analysis)
+        senders_init = AggMLSSendersInit(period, startdate, enddate, identities_db, type_analysis)
 
         data = merge(sent, senders, all=TRUE)
         data = merge(data, repositories, all=TRUE)
@@ -272,7 +271,6 @@ GetEmailsSent <- function(period, startdate, enddate, identities_db, type_analys
     filters = GetMLSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-
     return(ExecuteQuery(q))
 }
 
@@ -297,8 +295,19 @@ GetMLSSenders <- function(period, startdate, enddate, identities_db, type_analys
         tables = paste(tables, ", messages_people mp, people_upeople pup ")
         filters = GetMLSFiltersOwnUniqueIdsMLS()
     } else {
+        #not sure if this line is useful anymore...
         filters = GetMLSSQLReportWhere(type_analysis)
     }
+
+    if (type_analysis[1] == "repository"){
+        #Adding people_upeople table
+        tables <- paste(tables, ",  messages_people mp, 
+                        people_upeople pup ", sep="") 
+        filters <- paste(filters, " and m.message_ID = mp.message_id and
+                   mp.email_address = pup.people_id and
+                   mp.type_of_recipient=\'From\' ", sep="")
+    }
+
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
     return(ExecuteQuery(q))
@@ -329,6 +338,15 @@ GetMLSSendersResponse <- function(period, startdate, enddate, identities_db, typ
     } else {
         filters = GetMLSSQLReportWhere(type_analysis)
     }
+    if (type_analysis[1] == "repository"){
+        #Adding people_upeople table
+        tables <- paste(tables, ",  messages_people mp, 
+                        people_upeople pup ", sep="")
+        filters <- paste(filters, " and m.message_ID = mp.message_id and
+                   mp.email_address = pup.people_id and
+                   mp.type_of_recipient=\'From\' ", sep="")
+    }
+    
     filters = paste(filters, " and m.is_response_of is not null ", sep="")
 
 
@@ -361,6 +379,15 @@ GetMLSSendersInit <- function(period, startdate, enddate, identities_db, type_an
     } else {
         filters = GetMLSSQLReportWhere(type_analysis)
     }
+    if (type_analysis[1] == "repository"){
+        #Adding people_upeople table
+        tables <- paste(tables, ",  messages_people mp, 
+                        people_upeople pup ", sep="")
+        filters <- paste(filters, " and m.message_ID = mp.message_id and
+                   mp.email_address = pup.people_id and
+                   mp.type_of_recipient=\'From\' ", sep="")
+    }
+
     filters = paste(filters, " and m.is_response_of is null ", sep="")
 
 
@@ -415,7 +442,6 @@ GetMLSRepositories <- function(rfield, period, startdate, enddate, identities_db
     filters = GetMLSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-
     return(ExecuteQuery(q))
 }
 
@@ -437,7 +463,7 @@ GetMLSResponses <- function(period, startdate, enddate, identities_db, type_anal
 
     fields = " count(distinct(m.message_ID)) as sent_response"
     tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
-    filters = paste(GetMLSSQLReportWhere(type_analysis), " m.is_response_of is not null ", sep="")
+    filters = paste(GetMLSSQLReportWhere(type_analysis), " and m.is_response_of is not null ", sep="")
 
     q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
     return(ExecuteQuery(q))
@@ -836,7 +862,6 @@ GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, n
             }
         }
         count = count + 1
-        #print(first_companies)
     }
 
     #TODO: remove global variables...
