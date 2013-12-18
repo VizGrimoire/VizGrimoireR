@@ -187,6 +187,22 @@ CountBacklogTickets <- function(samples, res, statuses){
 ## END working on it
 ##
 
+GetCurrentStatus <- function(period, startdate, enddate, status){
+    # This functions provides  of the status specified by 'status'
+    # group by submitted date. Thus, as an example, for those issues 
+    # in status = open, it is possible to know when they were submitted
+
+    fields = paste(" count(distinct(id)) as current_", status, sep="")
+    tables = " issues "
+    filters = paste(" status = '", status, "' ", sep="")
+    q <- GetSQLPeriod(period,'submitted_on', fields, tables, filters,
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
 
 GetEvolBMIIndex <- function(closed_condition, period, startdate, enddate){
     #Metric based on chapter 4.3.1
@@ -1078,6 +1094,8 @@ evol_closed_gerrit <- function (period, startdate, enddate) {
 
 MarkovChain<-function()
 {
+    #warning: this function needs some more attention...
+    # some variables at the end are not used
     q<-paste("select distinct(new_value) as value
               from changes 
               where field like '%status%'")
@@ -1085,15 +1103,17 @@ MarkovChain<-function()
     query <- new ("Query", sql = q)
     status <- run(query)  
 
+    print(status)
     T<-status[order(status$value),]
     T1<-gsub("'", "", T)
 
+    print(T1)
     new_value<-function(old)
     {        
         q<-paste("select old_value, new_value, count(*) as issue
                   from changes 
-                  where field like '%status%'
-                  and old_value like '%", old , "%' 
+                  where field like '%status%' and
+                        old_value like '%", old , "%' 
                   group by old_value, new_value;", sep="")
              
         query <- new ("Query", sql = q)
@@ -1104,45 +1124,42 @@ MarkovChain<-function()
         x[,2]<-x1
 
         i<-0
-	all<-0
-	end<-NULL
+        all<-0
+        end<-NULL
   
-     	for( i in 1:length(T1)){  
-
-    	     if(is.element(T1[i],x$new_value)){
-                        i<-i+1 }
-
-   	     else{  
-            		c<-data.frame(old_value=0,new_value=T1[i],issue=0,f=0)
-            		x<-rbind(x,c)
-            		i<-i+1}
-
-   		}
-
-
+        for( i in 1:length(T1)){  
+            if(is.element(T1[i],x$new_value)){
+                i<-i+1 
+            }
+            else{
+                c<-data.frame(old_value=0,new_value=T1[i],issue=0,f=0)
+                x<-rbind(x,c)
+                i<-i+1
+            }
+        }
         good<-x[order(x$new_value),]
-
         return(good)
+    }
 
-     }
+    j<-0
+    all<-c()
+    markov_result = list()
 
-  j<-0
-  all<-c()
-
-  for( j in 1:length(T1))
-  	{  v<-new_value(T1[j])
-    	   good<-v[order(v$new_value),]
-     	   g<-good$f
-           all<-c(all,g)
-           j<-j+1
-         }
-
-  MARKOV<-matrix(all,ncol=12,nrow=12,byrow=TRUE)
-  colnames(MARKOV)<-v$new_value
-  rownames(MARKOV)<-v$new_value
-
-  return(MARKOV)
-
+    for( j in 1:length(T1)) {  
+        v<-new_value(T1[j])
+        markov_result[[T1[j]]] <- v
+        good<-v[order(v$new_value),]
+     	g<-good$f
+        all<-c(all,g)
+        j<-j+1
+    }
+    #MARKOV<-matrix(all,ncol=12,nrow=12,byrow=TRUE)
+    
+    #print(MARKOV)
+    #colnames(MARKOV)<-v$new_value
+    #rownames(MARKOV)<-v$new_value
+    #return(MARKOV)
+    return(markov_result)
 }
 
 
