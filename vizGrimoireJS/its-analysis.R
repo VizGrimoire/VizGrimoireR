@@ -134,17 +134,14 @@ for (status in statuses)
     colnames(tickets_status)[2] <- status
 
     #Issues per status
-    #current_status <- GetCurrentStatus(period, startdate, enddate, status)
-    #print(current_status)
+    current_status <- GetCurrentStatus(period, startdate, enddate, status)
     
     #Merging data
-    #if (nrow(current_status)>=0){
-    #    evol <- merge(evol, current_status, all=TRUE)
-    #}
+    if (nrow(current_status)>0){
+        evol <- merge(evol, current_status, all=TRUE)
+    }
     evol <- merge (evol, tickets_status, all = TRUE)
-
 }
-
 
 print(evol)
 
