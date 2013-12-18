@@ -594,6 +594,54 @@ companiesNames <- function (i_db, startdate, enddate, filter=c()) {
 # People functions as in the old version, still to be refactored!
 ########################
 
+GetTablesOwnUniqueIdsMLS <- function() {
+    return ('messages m, messages_people mp, people_upeople pup')
+}
+
+# Using senders only here!
+GetFiltersOwnUniqueIdsMLS <- function () {
+    return ('m.message_ID = mp.message_id AND
+             mp.email_address = pup.people_id AND
+             mp.type_of_recipient=\'From\'')
+}
+
+GetTablesCountries <- function(i_db) {
+    return (paste(GetTablesOwnUniqueIdsMLS(),',
+                  ',i_db,'.countries c,
+                  ',i_db,'.upeople_countries upc',sep=''))
+}
+
+GetFiltersCountries <- function() {
+    return (paste(GetFiltersOwnUniqueIdsMLS(),' AND
+                  pup.upeople_id = upc.upeople_id AND
+                  upc.country_id = c.id'))
+}
+
+GetTablesCompanies <- function(i_db) {
+    return (paste(GetTablesOwnUniqueIdsMLS(),',
+                  ',i_db,'.companies c,
+                  ',i_db,'.upeople_companies upc',sep=''))
+}
+
+GetFiltersCompanies <- function() {
+    return (paste(GetFiltersOwnUniqueIdsMLS(),' AND
+                  pup.upeople_id = upc.upeople_id AND
+                  upc.company_id = c.id AND
+                  m.first_date >= upc.init AND
+                  m.first_date < upc.end'))
+}
+
+GetFiltersInit <- function() {
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters_init = paste(filters, " AND m.is_response_of IS NULL")
+}
+GetFiltersResponse <- function() {
+    filters = GetFiltersOwnUniqueIdsMLS()
+    filters_response = paste(filters, " AND m.is_response_of IS NOT NULL")
+}
+
+
+
 GetListPeopleMLS <- function(startdate, enddate) {
     fields = "DISTINCT(pup.upeople_id) as id, count(m.message_ID) total"
     tables = GetTablesOwnUniqueIdsMLS()

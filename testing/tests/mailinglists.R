@@ -29,95 +29,92 @@
 #Evolutionary functions
 test.EvolEmailsSent.Week <- function()
 {
-    print(nrow(EvolEmailsSent('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
     expect_that(50, equals(nrow(EvolEmailsSent('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.EvolEmailsSent.Month <- function()
 {
-    print(nrow(EvolEmailsSent('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
     expect_that(12, equals(nrow(EvolEmailsSent('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.EvolEmailsSent.Company <- function()
 {
-    print(nrow(EvolEmailsSent('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Red Hat'))))
-    expect_that(12, equals(nrow(EvolEmailsSent('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Red Hat')))))
+    expect_that(12, equals(nrow(EvolEmailsSent('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))))
 }
 
 
 test.EvolMLSSenders.Week <- function()
 {
-    print(nrow(EvolMLSSenders('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(50, equals(nrow(EvolMLSSenders('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolMLSSenders.Month <- function()
 {
-    print(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(12, equals(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolMLSSenders.Company <- function()
 {
-    print(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace'))))
-    expect_that(12, equals(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
+    expect_that(12, equals(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
 
 test.EvolMLSSendersResponse.Week <- function()
 {
-    print(nrow(EvolMLSSendersResponse('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(50, equals(nrow(EvolMLSSendersResponse('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolMLSSendersResponse.Month <- function()
 {
-    print(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(12, equals(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolMLSSendersResponse.Company <- function()
 {
-    print(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace'))))
-    expect_that(12, equals(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
+    expect_that(12, equals(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
 
 test.EvolMLSSendersInit.Week <- function()
 {
-    print(nrow(EvolMLSSendersInit('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(50, equals(nrow(EvolMLSSendersInit('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolMLSSendersInit.Month <- function()
 {
-    print(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(12, equals(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolMLSSendersInit.Company <- function()
 {
-    print(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace'))))
-    expect_that(12, equals(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
+    expect_that(12, equals(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
 
 test.EvolThreads.Week <- function()
 {
-    print(nrow(EvolThreads('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(50, equals(nrow(EvolThreads('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolThreads.Month <- function()
 {
-    print(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA))))
     expect_that(12, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.EvolThreads.Company <- function()
 {
-    print(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace'))))
-    expect_that(12, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', 'Rackspace')))))
+    expect_that(12, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
+
+test.EvolMLSRepositories.Week <- function()
+{
+    expect_that(50, equals(nrow(EvolMLSRepositories('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('repository', 'http://lists.openstack.org/pipermail/community/')))))
+}
+
+test.EvolMLSRepositories.Month <- function()
+{
+    expect_that(12, equals(nrow(EvolMLSRepositories('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('repository', 'http://lists.openstack.org/pipermail/community/')))))
+}
+
+
 
