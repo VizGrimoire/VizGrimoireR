@@ -55,7 +55,7 @@ test.EvolMLSSenders.Month <- function()
 
 test.EvolMLSSenders.Company <- function()
 {
-    expect_that(12, equals(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+    expect_that(11, equals(nrow(EvolMLSSenders('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
 
@@ -71,7 +71,7 @@ test.EvolMLSSendersResponse.Month <- function()
 
 test.EvolMLSSendersResponse.Company <- function()
 {
-    expect_that(12, equals(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+    expect_that(11, equals(nrow(EvolMLSSendersResponse('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
 
@@ -87,7 +87,7 @@ test.EvolMLSSendersInit.Month <- function()
 
 test.EvolMLSSendersInit.Company <- function()
 {
-    expect_that(12, equals(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+    expect_that(7, equals(nrow(EvolMLSSendersInit('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
 
@@ -103,18 +103,9 @@ test.EvolThreads.Month <- function()
 
 test.EvolThreads.Company <- function()
 {
-    expect_that(12, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+    expect_that(11, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
-test.EvolMLSRepositories.Week <- function()
-{
-    expect_that(50, equals(nrow(EvolMLSRepositories('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('repository', 'http://lists.openstack.org/pipermail/community/')))))
-}
-
-test.EvolMLSRepositories.Month <- function()
-{
-    expect_that(12, equals(nrow(EvolMLSRepositories('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('repository', 'http://lists.openstack.org/pipermail/community/')))))
-}
 
 
 
