@@ -280,7 +280,7 @@ CountBacklogTickets <- function(samples, res, statuses){
 # Generic function to obtain the current photo of a given issue
 # This is based on the field "status" from the issues table
 
-GetCurrentStatus <- function(period, startdate, enddate, status){
+GetCurrentStatus <- function(period, startdate, enddate, identities_db, status, evolutionary){
     # This functions provides  of the status specified by 'status'
     # group by submitted date. Thus, as an example, for those issues 
     # in status = open, it is possible to know when they were submitted
@@ -295,7 +295,36 @@ GetCurrentStatus <- function(period, startdate, enddate, status){
     return (data)
 }
 
+#TODO: check the differences between function GetCurrentOpened and GetEvolClosed,
+# GetEvolOpened, etc... in some cases such as opened, openers, closed, closers, 
+# changed and changers is more than enough to just count changes in table changes
+# opened when the issue was submitted (and submitted by) and closers providing the
+# closed condition. Do we get whe same results if using the Backlog table?
 
+GetAggOpened <- function(period, startdate, enddate, identities_db, status){
+    # Returns aggregated number of opened issues
+    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, FALSE))
+}
+
+GetCurrentOpened <- function(period, startdate, enddate, identities_db, status){
+    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, TRUE))
+}
+
+GetEvolOpened <- function(period, startdate, enddate, identities_db, status, name.logtable, filter=""){
+    return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
+}
+
+GetAggclosed <- function(period, startdate, enddate, identities_db, status){
+    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, FALSE))
+}
+
+GetCurrentClosed <- function(period, startdate, enddate, identities_db, status){
+    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, TRUE))
+}
+
+GetEvolClosed <- function(period, startdate, enddate, identities_db, status, name.logtable, filter=""){
+    return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
+}
 
 
 ################
