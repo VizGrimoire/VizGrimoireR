@@ -192,7 +192,7 @@ GetCurrentStatus <- function(period, startdate, enddate, status){
     # group by submitted date. Thus, as an example, for those issues 
     # in status = open, it is possible to know when they were submitted
 
-    fields = paste(" count(distinct(id)) as current_", status, sep="")
+    fields = paste(" count(distinct(id)) as `current_", status, "`", sep="")
     tables = " issues "
     filters = paste(" status = '", status, "' ", sep="")
     q <- GetSQLPeriod(period,'submitted_on', fields, tables, filters,
