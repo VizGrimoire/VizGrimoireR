@@ -410,25 +410,24 @@ completeZeroPeriodIdsYears <- function (data, start, end) {
 }
 
 
-completeZeroPeriodIdsMonths <- function (data, start, end) {    
-    start_month = ((1900+start$year)*12)+start$mon+1
-    end_month =  ((1900+end$year)*12)+end$mon+1 
-    last = end_month - start_month + 1 
-    
-    samples <- list('id'=c(0:(last-1)))
-    new_date = start
-    new_date$mday = 1    
-    for (i in 1:last) {
-        # convert to Date to remove DST from start of month
-        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
-        samples$date[i]=format(new_date, "%b %Y")
-        samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
-        new_date$mon = new_date$mon + 1
-    }        
+completeZeroPeriodIdsMonths <- function (data, start, end) {
+    samples <- GetMonthsBetween(start, end)
     completedata <- merge (data, samples, all=TRUE)
     completedata[is.na(completedata)] <- 0        
     return(completedata)    
 }
+
+completeZeroPeriodIdsWeeks <- function(data, start, end) {
+  # this function fills with 0's those weeks with no data between
+  # start and end for data. An initial sample is filled with all
+  # information necessary and later merged with data.
+
+  samples <- GetWeeksBetween(start, end)
+  completedata <- merge(data, samples, all=TRUE)
+  completedata[is.na(completedata)] <- 0
+  return(completedata)
+}
+
 
 #######################
 # Code to count weeks as done by 
@@ -508,69 +507,6 @@ diffISOWeekTime <- function(initdate, enddate){
 
 
 
-completeZeroPeriodIdsWeeks <- function(data, start, end) {
-  # this function fills with 0's those weeks with no data between
-  # start and end for data. An initial sample is filled with all
-  # information necessary and later merged with data.
-
-  # number of total weeks (those are natural weeks starting on Monday)
-  # This should behave in the same way as the yearweek function in MYSQL does
-  # With this approach, periods of 9 days may imply up to three weeks 
-  # (Sunday plus full week plus Monday).
-  totalWeeks = diffISOWeekTime(start, end)
-    
-  inityear = as.numeric(getISOWEEKYear(start))
-  initweek = as.numeric(getISOWEEKWeek(start))
-  endyear = as.numeric(getISOWEEKYear(end))
-  endweek = as.numeric(getISOWEEKWeek(end))
-
-  samples <- list('id' = c(1:totalWeeks))
-  cont = 1
-  for (i in inityear:endyear){
-    #
-    for (j in 1:getMaxWeekYear(i)){
-      if (inityear == endyear) {
-        if ((j >= initweek) && (j <= endweek)){
-          year = as.character(i)
-          extra = ""
-          if (j<10) extra = "0"
-          week = paste(extra, as.character(j), sep="")
-          isoweekdate = paste(year, "-W", week, "-1", sep="")
-          normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
-
-          samples$unixtime[cont] = toString(as.numeric(normal_date))
-          samples$date[cont] = format(normal_date, "%b %Y")
-          samples$week[cont] = paste(year, week, sep="")
-          cont = cont + 1
-        }
-
-      } else { 
-        if ((i == inityear && j >= initweek) || (i == endyear && j <= endweek) || (i > inityear && i< endyear)){
-          # same code as above, to be refactored...
-          year = as.character(i)
-          extra = ""
-          if (j<10) extra = "0"
-          week = paste(extra, as.character(j), sep="")
-          isoweekdate = paste(year, "-W", week, "-1", sep="")
-          normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
-
-          samples$unixtime[cont] = toString(as.numeric(normal_date))
-          samples$date[cont] = format(normal_date, "%b %Y")
-          samples$week[cont] = paste(year, week, sep="")
-          cont = cont + 1
-        }
-      }
-    }  
-  }
-
-  completedata <- merge(data, samples, all=TRUE)
-  completedata[is.na(completedata)] <- 0
-  return(completedata)
-}
-
-
-
-
 # Work in seconds as a future investment
 completeZeroPeriodIdsDays <- function (data, start, end) {        
     # units should be one of “auto”, “secs”, “mins”, “hours”, “days”, “weeks”
@@ -632,6 +568,124 @@ completePeriodIds <- function (data, period, conf) {
     new_data[is.na(new_data)] <- 0
     new_data <- new_data[order(new_data$id), ]    
     return (new_data)
+}
+
+GetMonthsBetween <- function(start, end, extra=FALSE){
+    ## Returns a list of months with unixtime, string label and number of month
+    ## If extra is true, the last month returned is one month ahead!
+    ## From Jan13th to Feb26th it returns (Jan 1st, Feb 1st and March 1st),
+    ## unixtime and the label of month/year
+    start_month = ((1900+start$year)*12)+start$mon+1
+    end_month =  ((1900+end$year)*12)+end$mon+1
+    last = end_month - start_month + 1
+
+    if (extra == TRUE){
+        last <- last + 1 #simpler than adding a month to as.Date
+    }
+
+    samples <- list('id'=c(0:(last-1)))
+    new_date = start
+    new_date$mday = 1
+    for (i in 1:last) {
+        # convert to Date to remove DST from start of month
+        samples$unixtime[i] = toString(as.numeric(as.POSIXlt(as.Date(new_date))))
+        samples$date[i]=format(new_date, "%b %Y")
+        samples$month[i]=((1900+new_date$year)*12)+new_date$mon+1
+        new_date$mon = new_date$mon + 1
+    }
+    return(samples)
+}
+
+GetWeeksBetween <- function(start, end, extra=FALSE){
+    # number of total weeks (those are natural weeks starting on Monday)
+    # This should behave in the same way as the yearweek function in MYSQL does
+    # With this approach, periods of 9 days may imply up to three weeks
+    # (Sunday plus full week plus Monday).
+
+    if (extra == TRUE){
+        end <- as.Date(end) + 7
+    }
+
+    totalWeeks = diffISOWeekTime(start, end)
+
+    inityear = as.numeric(getISOWEEKYear(start))
+    initweek = as.numeric(getISOWEEKWeek(start))
+    endyear = as.numeric(getISOWEEKYear(end))
+    endweek = as.numeric(getISOWEEKWeek(end))
+
+    samples <- list('id' = c(1:totalWeeks))
+    cont = 1
+    for (i in inityear:endyear){
+        #
+        for (j in 1:getMaxWeekYear(i)){
+            if (inityear == endyear) {
+                if ((j >= initweek) && (j <= endweek)){
+                    year = as.character(i)
+                    extra = ""
+                    if (j<10) extra = "0"
+                    week = paste(extra, as.character(j), sep="")
+                    isoweekdate = paste(year, "-W", week, "-1", sep="")
+                    normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
+
+                    samples$unixtime[cont] = toString(as.numeric(normal_date))
+                    samples$date[cont] = format(normal_date, "%b %Y")
+                    samples$week[cont] = paste(year, week, sep="")
+                    cont = cont + 1
+                }
+
+            } else {
+                if ((i == inityear && j >= initweek) || (i == endyear && j <= endweek) || (i > inityear && i< endyear)){
+                    # same code as above, to be refactored...
+                    year = as.character(i)
+                    extra = ""
+                    if (j<10) extra = "0"
+                    week = paste(extra, as.character(j), sep="")
+                    isoweekdate = paste(year, "-W", week, "-1", sep="")
+                    normal_date = as.POSIXlt(as.Date(ISOweek2date(isoweekdate)))
+
+                    samples$unixtime[cont] = toString(as.numeric(normal_date))
+                    samples$date[cont] = format(normal_date, "%b %Y")
+                    samples$week[cont] = paste(year, week, sep="")
+                    cont = cont + 1
+                }
+            }
+        }
+    }
+    return(samples)
+}
+
+GetDates <- function(init_date, days) {
+    # This functions returns an array with three dates
+    # First: init_date
+    # Second: init_date - days
+    # Third: init_date - days - days
+    enddate = gsub("'", "", init_date)
+
+    enddate = as.Date(enddate)
+    startdate = enddate - days
+    prevdate = enddate - days - days
+
+    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
+                   paste("'", as.character(startdate), "'", sep=""),
+                   paste("'", as.character(prevdate), "'", sep=""))
+    return (chardates)
+}
+
+GetPercentageDiff <- function(value1, value2){
+    # This function returns whe % diff between value 1 and value 2.
+    # The difference could be positive or negative, but the returned value
+    # is always > 0
+
+    percentage = 0
+
+    if (value1 < value2){
+        diff = value2 - value1
+        percentage = as.integer((diff/value1) * 100)
+    }
+    if (value1 > value2){
+        percentage = as.integer((1-(value2/value1)) * 100)
+    }
+    return(percentage)
 }
 
 #

@@ -63,6 +63,11 @@ if (conf$backend == 'allura'){
 }
 if (conf$backend == 'bugzilla'){
     closed_condition <- "(new_value='RESOLVED' OR new_value='CLOSED')"
+    reopened_condition <- "new_value='NEW'"
+    name_log_table <- 'issues_log_bugzilla'
+    statuses = c("NEW", "ASSIGNED")
+    #Pretty specific states in Red Hat's Bugzilla
+    statuses = c("ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED")
 }
 if (conf$backend == 'github'){
     closed_condition <- "field='closed'"
@@ -85,6 +90,8 @@ if (conf$backend == 'redmine'){
                               " OR new_value='Won\\'t Fix' OR new_value='Can\\'t reproduce' OR new_value='Duplicate')")
 }
 
+
+
 # dates
 startdate <- conf$startdate
 enddate <- conf$enddate
@@ -103,16 +110,40 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
 open <- GetEvolOpened(period, startdate, enddate)
-reopened <- GetEvolReopened(period, startdate, enddate, reopened_condition)
 repos <- GetEvolReposITS(period, startdate, enddate)
 
 # only supports monthly so far
-pending_tickets <- GetEvolPendingTickets(open_status, reopened_status,
-                                         name_log_table, startdate, enddate)
+#pending_tickets <- GetEvolPendingTickets(open_status, reopened_status,
+#                                         name_log_table, startdate, enddate)
+
+
 evol <- merge (open, closed, all = TRUE)
-evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
-evol <- merge (evol, pending_tickets, all = TRUE)
+evol <- merge (evol, changed, all = TRUE)
+
+
+markov <- MarkovChain()
+createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
+
+
+
+for (status in statuses)
+{
+    #Evolution of the backlog
+    tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
+    colnames(tickets_status)[2] <- status
+
+    #Issues per status
+    current_status <- GetCurrentStatus(period, startdate, enddate, status)
+    
+    #Merging data
+    if (nrow(current_status)>0){
+        evol <- merge(evol, current_status, all=TRUE)
+    }
+    evol <- merge (evol, tickets_status, all = TRUE)
+}
+
+print(evol)
 
 if ('companies' %in% reports) {
     info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
@@ -144,12 +175,12 @@ if ('countries' %in% reports) {
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 
-closed_7 = GetDiffClosedDays(period, conf$enddate, 7, closed_condition)
-closed_30 = GetDiffClosedDays(period, conf$enddate, 30, closed_condition)
-closed_365 = GetDiffClosedDays(period, conf$enddate, 365, closed_condition)
-closers_7 = GetDiffClosersDays(period, conf$enddate, 7, closed_condition)
-closers_30 = GetDiffClosersDays(period, conf$enddate, 30, closed_condition)
-closers_365 = GetDiffClosersDays(period, conf$enddate, 365, closed_condition)
+closed_7 = GetDiffClosedDays(conf$enddate, 7, closed_condition)
+closed_30 = GetDiffClosedDays(conf$enddate, 30, closed_condition)
+closed_365 = GetDiffClosedDays(conf$enddate, 365, closed_condition)
+closers_7 = GetDiffClosersDays(conf$enddate, 7, closed_condition)
+closers_30 = GetDiffClosersDays(conf$enddate, 30, closed_condition)
+closers_365 = GetDiffClosersDays(conf$enddate, 365, closed_condition)
 all_static_info = merge(all_static_info, closers_7)
 all_static_info = merge(all_static_info, closers_30)
 all_static_info = merge(all_static_info, closers_365)
@@ -186,6 +217,8 @@ top_openers_data <- list()
 top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+
+
 
 all_top <- c(top_closers_data, top_openers_data)
 createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))

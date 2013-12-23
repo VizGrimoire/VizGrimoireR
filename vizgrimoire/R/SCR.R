@@ -157,6 +157,29 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
     return (data)
 }
 
+GetCountriesSCRName <- function (startdate, enddate, identities_db, limit = 0){
+    limit_sql=""
+    if (limit > 0) {
+        limit_sql = paste(" LIMIT ", limit)
+    }
+    q = paste("SELECT c.name as name, COUNT(DISTINCT(i.id)) AS issues
+               FROM  ",identities_db,".countries c,
+                    ",identities_db,".upeople_countries upc,
+                    people_upeople pup,
+                    issues i
+               WHERE i.submitted_by = pup.people_id AND
+                 upc.upeople_id = pup.upeople_id AND
+                 c.id = upc.country_id AND
+                 i.status = 'merged' AND
+                 i.submitted_on >=",  startdate, " AND
+                 i.submitted_on < ", enddate, "
+               GROUP BY c.name
+               ORDER BY issues DESC ",limit_sql,";", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
 #########
 #Functions about the status of the review
 #########
@@ -205,6 +228,21 @@ EvolReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA, N
     return (GetReviews(period, startdate, enddate, "new", type_analysis, TRUE, identities_db))
 }
 
+GetEvolChanges<- function(period, startdate, enddate, value) {
+    fields = paste("count(issue_id) as ", value, "_changes", sep = "")
+    tables = "changes"
+    filters = paste("new_value='",value,"'",sep="")
+    q <- GetSQLPeriod(period, " changed_on", fields, tables, filters,
+            startdate, enddate)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+EvolReviewsNewChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetEvolChanges(period, startdate, enddate, "new"))
+}
+
 EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, TRUE, identities_db))
 }
@@ -216,8 +254,34 @@ EvolReviewsClosed<- function(period, startdate, enddate, type_analysis = list(NA
 EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "merged", type_analysis, TRUE, identities_db))
 }
+
+EvolReviewsMergedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetEvolChanges(period, startdate, enddate, "merged"))
+}
+
 EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, TRUE, identities_db))
+}
+
+EvolReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetEvolChanges(period, startdate, enddate, "abandoned"))
+}
+
+# PENDING = NEW - MERGED - ABANDONED
+EvolReviewsPendingChanges<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
+    data = EvolReviewsNewChanges(period, startdate, enddate)
+    data <- completePeriodIds(data, conf$granularity, conf)
+    data1 = EvolReviewsMergedChanges(period, startdate, enddate)
+    data1 <- completePeriodIds(data1, conf$granularity, conf)
+    data2 = EvolReviewsAbandonedChanges(period, startdate, enddate)
+    data2 <- completePeriodIds(data2, conf$granularity, conf)
+    pending = merge(data, data1, all=TRUE)
+    pending = merge(pending, data2, all=TRUE)
+    pending$merged_changes = -pending$merged_changes
+    pending$abandoned_changes = -pending$abandoned_changes
+    sum <- rowSums(subset(pending, select = c("new_changes","merged_changes","abandoned_changes")))
+    pending <- data.frame(month=pending$month, pending=sum)
+    return (pending)
 }
 
 # STATIC META FUNCTIONS BASED ON REVIEWS
@@ -553,7 +617,6 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
 
 GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) {
     q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -561,7 +624,6 @@ GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) 
 
 GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
     q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -624,3 +686,41 @@ GetPeopleStaticSCR <- function(developer_id, startdate, enddate) {
     data <- run(query)
     return (data)
 }
+
+################
+# Time to review
+################
+
+GetTimeToReviewQuerySCR <- function(startdate, enddate) {
+    # Subquery to get the time to review for all reviews
+    fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on"
+    tables = "issues, changes"
+    filters = "issues.id = changes.issue_id AND field='status' "
+    filters = paste (filters, "AND new_value='MERGED'")
+    q = GetSQLGlobal('changed_on', fields, tables, filters,
+                    startdate, enddate)
+    return (q)
+}
+
+GetTimeToReviewEvolSCR <- function(period, startdate, enddate) {
+    q <- GetTimeToReviewQuerySCR (startdate, enddate)
+    # Evolution in time of AVG review time
+    fields = "SUM(revtime)/COUNT(revtime) AS review_time_days_avg"
+    tables = paste("(",q,") t")
+    filters = ""
+    q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
+            startdate, enddate)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+StaticTimeToReviewSCR <- function(startdate, enddate) {
+    q <- GetTimeToReviewQuerySCR (startdate, enddate)
+    # Total AVG review time
+    q = paste(" SELECT AVG(revtime) AS review_time_days_avg FROM (",q,") t")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+

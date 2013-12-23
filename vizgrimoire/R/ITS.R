@@ -95,72 +95,113 @@ GetEvolOpened<- function (period, startdate, enddate) {
 ## FIXME working on this
 ##
 
-GetEvolPendingTickets <- function (open_status, reopened_status, name_log_table, startdate, enddate) {
-    ## so far it only supports monthly analysis
-    
-    ## #filter <- "WHERE type = 'Bug' OR type = 'New Feature' OR type = 'Regression Bug' OR type = 'Improvement' OR type = 'Feature Request'"
-    ## liferay_type_filters <- GetLiferayTypeFilters()
-    ## filter <- paste("WHERE (",liferay_type_filters,") ")
-    
-    q <- paste("SELECT id, status, issue_id, date FROM ",name_log_table ," ", filter)
+BuildWeekDate <- function(date){
+   return(paste(getISOWEEKYear(date), getISOWEEKWeek(date), sep=""))
+}
+
+GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.logtable, filter="") {
+    # Return backlog of tickets in the statuses passed as parameter
+    q <- paste("SELECT DISTINCT issue_id, status, date FROM ",name.logtable," ", filter ," ORDER BY date ASC")
     query <- new("Query", sql = q)
     res <- run(query)
 
-    samples <- CalculateMonthPeriods(startdate, enddate)
-    pending_tickets <- count_pending_tickets(samples, res, open_status, reopened_status)
-    colnames(pending_tickets) <- c('month', 'pending_tickets')
-    return(pending_tickets)
+    pending.tickets <- data.frame()
+    start = as.POSIXlt(gsub("'", "", startdate))
+    end = as.POSIXlt(gsub("'", "", enddate))
+
+    if (period == "month") {
+        samples <- GetMonthsBetween(start, end, extra=TRUE)
+        pending.tickets <- CountBacklogTickets(samples, res, statuses)
+        colnames(pending.tickets) <- c('month', 'pending_tickets')
+        posixdates = as.POSIXlt(as.numeric(pending.tickets$month), origin="1970-01-01")
+        dates = as.Date(posixdates)
+        dates = as.numeric(format(dates, "%Y"))*12 + as.numeric(format(dates, "%m"))
+        pending.tickets$month = dates
+    }
+    else if (period == "week"){
+        samples <- GetWeeksBetween(start, end, extra=TRUE)
+        pending.tickets <- CountBacklogTickets(samples, res, statuses)
+        colnames(pending.tickets) <- c('week', 'pending_tickets')
+        posixdates = as.POSIXlt(as.numeric(pending.tickets$week), origin="1970-01-01")
+        dates = as.Date(posixdates)
+        #It's needed in this case to call a function to build the correct
+        #yearweek value according to how this is done in MySQL
+        dates = lapply(dates, BuildWeekDate)
+        dates = as.numeric(dates) 
+        pending.tickets$week = dates
+    }
+    
+    return(pending.tickets)
 }
 
-count_pending_tickets <- function(samples, res, open_status, reopened_status){
-    # res, samples
+
+CountBacklogTickets <- function(samples, res, statuses){
+    # return number of tickets in status = statuses per period of time
     #
-    # count_pending ( samples, res){
-    pending_tickets = data.frame()
+    # Warning: heavy algorithm, it could be improved if the backlog is
+    # calculated backwards and the data is reduced in every iteration
+    #
+    # Fixme: it is needed to check if there are more that a status for
+    # an issue at the same time
+    #
+    backlog_tickets = data.frame()
     periods <- length(samples$unixtime)
     for (p in (1:periods)){
-        
+
         if ( p == periods){
             break
         }
 
-        date_label <- samples$date[p]
         date_unixtime <- samples$unixtime[p]
-        date_month <- samples$month[p]
         next_unixtime_str <- samples$unixtime[p+1]
 
-        next_month <- as.POSIXlt(as.numeric(next_unixtime_str), origin="1970-01-01")
-        print(paste("date_label = ",date_label, " next_month = ", next_month))
-        
-        test <- subset(res,res$date < next_month)
+        next_date <- as.POSIXlt(as.numeric(next_unixtime_str), origin="1970-01-01")
+        #print(paste("[" , date() , "] date_unixtime = ",date_unixtime, " next_date = ", next_date)) # debug mode?
 
-        if (nrow(test) > 0){
-            maxs <- aggregate(id ~ issue_id, data = test, FUN = max)
-            resultado <- merge(maxs, test)
-            #open_rows <- nrow(subset(resultado, resultado$status=="Open"))
-            open_rows <- nrow(subset(resultado, resultado$status==open_status))
-            #reopened_rows <- nrow(subset(resultado, resultado$status=="Reopened"))
-            reopened_rows <- nrow(subset(resultado, resultado$status==reopened_status))
-            ##
-            open_tickets <- open_rows + reopened_rows
-            print(paste("open tickets:", open_tickets))
+        resfilter <- subset(res,res$date < next_date)
+
+        if (nrow(resfilter) > 0){
+            maxs <- aggregate(date ~ issue_id, data = resfilter, FUN = max)
+            resultado <- merge(maxs, resfilter)
+            # filtering by status
+            total <- 0
+            for (s in statuses){
+                aux <- nrow(subset(resultado, resultado$status==s))
+                total <- aux + total
+            }
+            ## print(paste("[" , date() , "] backlog tickets:", total)) # debug mode?
         }else{
-            open_tickets <- 0
+            total <- 0
         }
-        #aux_df = data.frame(unixtime=date_unixtime,date=date_label,tickets=open_tickets)
-        aux_df <- data.frame(month=date_month, pending_tickets = open_tickets)
-        if (nrow(pending_tickets)){
-            pending_tickets <- merge(pending_tickets,aux_df, all=TRUE)
+        aux_df <- data.frame(month=date_unixtime, backlog_tickets = total)
+        if (nrow(backlog_tickets)){
+            backlog_tickets <- merge(backlog_tickets,aux_df, all=TRUE)
         }else{
-            pending_tickets <- aux_df
-        }        
+            backlog_tickets <- aux_df
+        }
     }
-    return(pending_tickets)
+    return(backlog_tickets)
 }
 
 ##
 ## END working on it
 ##
+
+GetCurrentStatus <- function(period, startdate, enddate, status){
+    # This functions provides  of the status specified by 'status'
+    # group by submitted date. Thus, as an example, for those issues 
+    # in status = open, it is possible to know when they were submitted
+
+    fields = paste(" count(distinct(id)) as `current_", status, "`", sep="")
+    tables = " issues "
+    filters = paste(" status = '", status, "' ", sep="")
+    q <- GetSQLPeriod(period,'submitted_on', fields, tables, filters,
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
 
 
 GetEvolBMIIndex <- function(closed_condition, period, startdate, enddate){
@@ -314,44 +355,6 @@ GetStaticITS <- function (closed_condition, startdate, enddate) {
     return(agg_data)
 }
 
-GetDates <- function(init_date, days) {
-    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
-    # This functions returns an array with three dates
-    # First: init_date
-    # Second: init_date - days
-    # Third: init_date - days - days
-    enddate = gsub("'", "", init_date)
-
-    enddate = as.Date(enddate)
-    startdate = enddate - days
-    prevdate = enddate - days - days
-
-    chardates <- c(paste("'", as.character(enddate),"'", sep=""),
-                   paste("'", as.character(startdate), "'", sep=""),
-                   paste("'", as.character(prevdate), "'", sep=""))
-    return (chardates)
-}
-
-GetPercentageDiff <- function(value1, value2){
-    # WARNING: COPIED FROM SCM.R, THIS FUNCTION SHOULD BE REMOVED
-    # This function returns whe % diff between value 1 and value 2.
-    # The difference could be positive or negative, but the returned value
-    # is always > 0
-
-    percentage = 0
-    print(paste("prevcommits=", value1))
-    print(paste("lastcommits=",value2))
-
-    if (value1 < value2){
-        diff = value2 - value1
-        percentage = as.integer((diff/value1) * 100)
-    }
-    if (value1 > value2){
-        percentage = as.integer((1-(value2/value1)) * 100)
-    }
-    return(percentage)
-}
-
 StaticNumClosed <- function(closed_condition, startdate, enddate){
     fields = ' COUNT(DISTINCT(issue_id)) as closed'
     tables = GetTablesOwnUniqueIdsITS()
@@ -361,9 +364,21 @@ StaticNumClosed <- function(closed_condition, startdate, enddate){
     data1 <- run(query)
 }
 
-GetDiffClosedDays <- function(period, init_date, days, closed_condition){
+##
+## GetDiffClosedDays
+##
+## Get differences in number of closed tickets between two periods.
+##  - date: final date of the two periods.
+##  - days: number of days for each period.
+##  - closed_condition: SQL string to define the condition of "closed"
+##     for a ticket
+## Example of parameters, for analizing the difference during the last
+##  two weeks for the day 2013-11-25:
+##  (date="2013-11-25", days=7, closed_condition=...)
+##
+GetDiffClosedDays <- function(date, days, closed_condition){
     # This function provides the percentage in activity between two periods
-    chardates = GetDates(init_date, days)
+    chardates = GetDates(date, days)
     lastclosed = StaticNumClosed(closed_condition, chardates[2], chardates[1])
     lastclosed = as.numeric(lastclosed[1])
     prevclosed = StaticNumClosed(closed_condition, chardates[3], chardates[2])
@@ -389,10 +404,22 @@ StaticNumClosers <- function(closed_condition, startdate, enddate){
     return (data1)
 }
 
-GetDiffClosersDays <- function(period, init_date, days, closed_condition){
+##
+## GetDiffClosersDays
+##
+## Get differences in number of ticket closers between two periods.
+##  - date: final date of the two periods.
+##  - days: number of days for each period.
+##  - closed_condition: SQL string to define the condition of "closed"
+##     for a ticket
+## Example of parameters, for analizing the difference during the last
+##  two weeks for the day 2013-11-25:
+##  (date="2013-11-25", days=7, closed_condition=...)
+##
+GetDiffClosersDays <- function(date, days, closed_condition){
     # This function provides the percentage in activity between two periods
 
-    chardates = GetDates(init_date, days)
+    chardates = GetDates(date, days)
     lastclosers = StaticNumClosers(closed_condition, chardates[2], chardates[1])
     lastclosers = as.numeric(lastclosers[1])
     prevclosers = StaticNumClosers(closed_condition, chardates[3], chardates[2])
@@ -1067,6 +1094,8 @@ evol_closed_gerrit <- function (period, startdate, enddate) {
 
 MarkovChain<-function()
 {
+    #warning: this function needs some more attention...
+    # some variables at the end are not used
     q<-paste("select distinct(new_value) as value
               from changes 
               where field like '%status%'")
@@ -1074,15 +1103,17 @@ MarkovChain<-function()
     query <- new ("Query", sql = q)
     status <- run(query)  
 
+    print(status)
     T<-status[order(status$value),]
     T1<-gsub("'", "", T)
 
+    print(T1)
     new_value<-function(old)
     {        
         q<-paste("select old_value, new_value, count(*) as issue
                   from changes 
-                  where field like '%status%'
-                  and old_value like '%", old , "%' 
+                  where field like '%status%' and
+                        old_value like '%", old , "%' 
                   group by old_value, new_value;", sep="")
              
         query <- new ("Query", sql = q)
@@ -1093,45 +1124,42 @@ MarkovChain<-function()
         x[,2]<-x1
 
         i<-0
-	all<-0
-	end<-NULL
+        all<-0
+        end<-NULL
   
-     	for( i in 1:length(T1)){  
-
-    	     if(is.element(T1[i],x$new_value)){
-                        i<-i+1 }
-
-   	     else{  
-            		c<-data.frame(old_value=0,new_value=T1[i],issue=0,f=0)
-            		x<-rbind(x,c)
-            		i<-i+1}
-
-   		}
-
-
+        for( i in 1:length(T1)){  
+            if(is.element(T1[i],x$new_value)){
+                i<-i+1 
+            }
+            else{
+                c<-data.frame(old_value=0,new_value=T1[i],issue=0,f=0)
+                x<-rbind(x,c)
+                i<-i+1
+            }
+        }
         good<-x[order(x$new_value),]
-
         return(good)
+    }
 
-     }
+    j<-0
+    all<-c()
+    markov_result = list()
 
-  j<-0
-  all<-c()
-
-  for( j in 1:length(T1))
-  	{  v<-new_value(T1[j])
-    	   good<-v[order(v$new_value),]
-     	   g<-good$f
-           all<-c(all,g)
-           j<-j+1
-         }
-
-  MARKOV<-matrix(all,ncol=12,nrow=12,byrow=TRUE)
-  colnames(MARKOV)<-v$new_value
-  rownames(MARKOV)<-v$new_value
-
-  return(MARKOV)
-
+    for( j in 1:length(T1)) {  
+        v<-new_value(T1[j])
+        markov_result[[T1[j]]] <- v
+        good<-v[order(v$new_value),]
+     	g<-good$f
+        all<-c(all,g)
+        j<-j+1
+    }
+    #MARKOV<-matrix(all,ncol=12,nrow=12,byrow=TRUE)
+    
+    #print(MARKOV)
+    #colnames(MARKOV)<-v$new_value
+    #rownames(MARKOV)<-v$new_value
+    #return(MARKOV)
+    return(markov_result)
 }
 
 

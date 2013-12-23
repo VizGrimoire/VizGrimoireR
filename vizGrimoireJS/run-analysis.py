@@ -92,7 +92,7 @@ def get_vars():
     # if end_date is not present or is empty we set up today's date
     if not ('end_date' in v):
         v['end_date'] = time.strftime('%Y-%m-%d')
-        
+
     # FIXME this should be included in the main log file
     v['log_file'] = 'run-analysis.log'
     if (v['db_password'] == ""):
@@ -109,9 +109,21 @@ def execute_scm_script(myvars):
               (v['r_libs'], v['reports'], v['db_cvsanaly'], v['db_user'],
                v['db_password'], v['db_identities'], v['start_date'],
                v['end_date'], v['json_dir'], v['period'], v['log_file']))
-    
-
     print("SCM analysis finished")
+
+def execute_people_script(myvars):
+    # TODO: right now people script uses cvsanaly db 
+    if not 'db_cvsanaly' in myvars:
+        print("People analysis disabled")
+        return
+    v = myvars
+    print("Starting People analysis ..")
+    os.system("LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < people-analysis.R >> %s 2>&1" %
+              (v['r_libs'], v['reports'], v['db_cvsanaly'], v['db_user'],
+               v['db_password'], v['db_identities'], v['start_date'],
+               v['end_date'], v['json_dir'], v['period'], v['log_file']))
+    print("People analysis finished")
+
 
 def execute_its_script(myvars):
     if not 'db_bicho' in myvars:
@@ -188,6 +200,7 @@ if __name__ == '__main__':
     myvars = {}
     myvars = get_vars()
 
+    execute_people_script(myvars)
     execute_mediawiki_script(myvars)
     execute_scm_script(myvars)
     execute_its_script(myvars)

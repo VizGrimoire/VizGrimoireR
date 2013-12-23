@@ -89,7 +89,8 @@ test.EvolAvgFilesAuthor <- function()
 #Aggregated functions
 test.StaticNumCommits <- function()
 {
-    expect_that(20786, equals(as.numeric(StaticNumCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))[1])))
+    # 20786 before removing merge commits
+    expect_that(13725, equals(as.numeric(StaticNumCommits('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))[1])))
 }
 
 test.StaticNumAuthors <- function()
@@ -125,7 +126,8 @@ test.StaticNumActions <- function()
 
 test.StaticAvgCommitsPeriod <- function()
 {
-    expect_that(399.7308, equals(as.numeric(StaticAvgCommitsPeriod('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+    # 399.7308 before removing merge commits
+    expect_that(263.9423, equals(as.numeric(StaticAvgCommitsPeriod('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.StaticAvgFilesPeriod <- function()
@@ -135,7 +137,8 @@ test.StaticAvgFilesPeriod <- function()
 
 test.StaticAvgCommitsAuthor <- function()
 {
-    expect_that(36.8546, equals(as.numeric(StaticAvgCommitsAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+    # 36.8546 before removing merge commits
+    expect_that(24.3351, equals(as.numeric(StaticAvgCommitsAuthor('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
 
 test.StaticAvgAuthorPeriod <- function()
