@@ -157,6 +157,29 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
     return (data)
 }
 
+GetCountriesSCRName <- function (startdate, enddate, identities_db, limit = 0){
+    limit_sql=""
+    if (limit > 0) {
+        limit_sql = paste(" LIMIT ", limit)
+    }
+    q = paste("SELECT c.name as name, COUNT(DISTINCT(i.id)) AS issues
+               FROM  ",identities_db,".countries c,
+                    ",identities_db,".upeople_countries upc,
+                    people_upeople pup,
+                    issues i
+               WHERE i.submitted_by = pup.people_id AND
+                 upc.upeople_id = pup.upeople_id AND
+                 c.id = upc.country_id AND
+                 i.status = 'merged' AND
+                 i.submitted_on >=",  startdate, " AND
+                 i.submitted_on < ", enddate, "
+               GROUP BY c.name
+               ORDER BY issues DESC ",limit_sql,";", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
 #########
 #Functions about the status of the review
 #########
