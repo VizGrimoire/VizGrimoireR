@@ -157,19 +157,19 @@ all_static_info = merge(all_static_info, latest_activity730)
 createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 # Top closers
-top_closers_data <- list()
-top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## top_closers_data <- list()
+## top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 
-# Top openers
-top_openers_data <- list()
-top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## # Top openers
+## top_openers_data <- list()
+## top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 
-all_top <- c(top_closers_data, top_openers_data)
-createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
+## all_top <- c(top_closers_data, top_openers_data)
+## createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # People List for working in unique identites
 # people_list <- its_people()

@@ -152,10 +152,10 @@ createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 # Top authors
 
 top_authors_data <- top_authors(conf$startdate, conf$enddate)
-top_authors_data <- list()
-top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
-top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
-top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
+## top_authors_data <- list()
+## top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
+## top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
+## top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
 createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 
 # Top files
