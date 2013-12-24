@@ -24,6 +24,9 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 
 
+
+#Opened issues
+
 test.IssuesOpened.Agg.Week <- function(){
     expect_that(7809, equals(as.numeric(AggIssuesOpened('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
@@ -64,5 +67,55 @@ test.IssuesOpened.Evol.Month <- function(){
 test.IssuesOpened.Evol.Month.Company <- function(){
     print(nrow(EvolIssuesOpened('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'"))))
     expect_that(12, equals(nrow(EvolIssuesOpened('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))))
+}
+
+
+#People opening issues
+
+test.IssuesOpeners.Agg.Week <- function(){
+    print(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
+    expect_that(941, equals(as.numeric(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesOpeners.Agg.Week.Repository <- function(){
+    print(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))
+    expect_that(523, equals(as.numeric(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))))
+}
+
+test.IssuesOpeners.Agg.Week.Company <- function(){
+    print(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))
+    expect_that(14, equals(as.numeric(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
+}
+
+
+test.IssuesOpeners.Agg.Month <- function(){
+    print(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
+    expect_that(941, equals(as.numeric(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesOpeners.Agg.Month.Company <- function(){
+    print(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))
+    expect_that(14, equals(as.numeric(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))))
+}
+
+test.IssuesOpeners.Evol.Week <- function(){
+    print(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
+    expect_that(54, equals(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesOpeners.Evol.Week.Company <- function(){
+    print(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'"))))
+    expect_that(44, equals(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
+}
+
+
+test.IssuesOpeners.Evol.Month <- function(){
+    print(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
+    expect_that(12, equals(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesOpeners.Evol.Month.Company <- function(){
+    print(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'"))))
+    expect_that(12, equals(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))))
 }
 

@@ -320,14 +320,53 @@ AggIssuesOpened <- function(period, startdate, enddate, identities_db, type_anal
     return(GetOpened(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-CurrentIssuesOpened <- function(period, startdate, enddate, identities_db, status){
-    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, TRUE))
-}
 
 EvolIssuesOpened <- function(period, startdate, enddate, identities_db, type_analysis){
     #return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
     return(GetOpened(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
+
+
+GetOpeners <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary, closed_condition){
+    #This function returns the evolution or agg number of opened issues
+    #This function can be also reproduced using the Backlog function.
+    #However this function is less time expensive.
+    fields = " count(distinct(pup.upeople_id)) as openers "
+    tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
+    filters = GetITSSQLReportWhere(type_analysis)
+
+    if (is.na(type_analysis[1])) {
+        #Specific case for the basic option where people_upeople table is needed
+        #and not taken into account in the initial part of the query
+        tables <- paste(tables, ", people_upeople pup", sep="")
+        filters <- paste(filters, " and i.submitted_by = pup.people_id", sep="")
+    }
+
+    if (type_analysis[1] == "repository"){
+        #Adding people_upeople table
+        tables <- paste(tables, ", people_upeople pup", sep="")
+        filters <- paste(filters, " and i.submitted_by = pup.people_id ", sep="")
+    }
+
+    q <- BuildQuery(period, startdate, enddate, " submitted_on ", fields, tables, filters, evolutionary)
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+
+}
+
+AggIssuesOpeners <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Returns aggregated number of opened issues
+    return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+EvolIssuesOpeners <- function(period, startdate, enddate, identities_db, type_analysis){
+    #return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
+    return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
 
 
 ################
