@@ -535,6 +535,33 @@ EvolIssuesChangers <- function(period, startdate, enddate, identities_db, type_a
 ################
 
 
+
+
 ################
 # Top functions
 ################
+
+
+#################
+# Micro studies
+#################
+
+EvolBMIIndex <- function(period, startdate, enddate, identities_db, type_analysis, closed_condition){
+    #Metric based on chapter 4.3.1
+    #Metrics and Models in Software Quality Engineering by Stephen H. Kan
+
+    #This will fail if dataframes have different lenght (to be fixe)
+    closed = EvolIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+    print(closed)
+    opened = EvolIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
+    print(opened)
+    evol_bmi = (closed$closed / opened$opened) * 100
+
+    closed$closers <- NULL
+    opened$openers <- NULL
+
+    data = merge(closed, opened, ALL=TRUE)
+    data = data.frame(data, evol_bmi)
+    return (data)
+}
+
