@@ -28,7 +28,7 @@
 ## Usage:
 ##  R --vanilla --args -d dbname < scr-analysis.R
 ## or
-##  R CMD BATCH scm-analysis.R
+##  R CMD BATCH scr-analysis.R
 ##
 
 library("vizgrimoire")
@@ -226,6 +226,43 @@ if ('companies' %in% reports) {
         static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
         static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
         createJSON(static, paste(destdir, "/",company_file,"-scr-static.json", sep=''))
+    }
+}
+
+
+########
+#ANALYSIS PER COUNTRY
+########
+
+print("ANALYSIS PER COUNTRY BASIC")
+if ('countries' %in% reports) {
+    countries  <- GetCountriesSCRName(conf$startdate, conf$enddate, conf$identities_db)
+    countries <- countries$name
+    countries_file_names = gsub("/","_",countries)
+    createJSON(countries_file_names, paste(destdir,"/scr-countries.json", sep=''))
+
+    # missing information from the rest of type of reviews, patches and
+    # number of patches waiting for reviewer and submitter 
+    for (country in countries) {
+        print(country)
+        country_file = gsub("/","_",country)
+        type_analysis = list('country', country)
+        # Evol
+        submitted <- EvolReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        submitted <- completePeriodIds(submitted, conf$granularity, conf)
+        merged <- EvolReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        merged <- completePeriodIds(merged, conf$granularity, conf)
+        abandoned <- EvolReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        abandoned <- completePeriodIds(abandoned, conf$granularity, conf)
+        evol = merge(submitted, merged, all = TRUE)
+        evol = merge(evol, abandoned, all = TRUE)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        createJSON(evol, paste(destdir, "/",country_file,"-scr-evolutionary.json", sep=''))
+        # Static
+        static <- StaticReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
+        static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
+        static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
+        createJSON(static, paste(destdir, "/",country_file,"-scr-static.json", sep=''))
     }
 }
 
