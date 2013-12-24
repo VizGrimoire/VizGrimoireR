@@ -480,6 +480,55 @@ EvolIssuesChanged <- function(period, startdate, enddate, identities_db, type_an
     return(GetChanged(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
+GetChangers <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    #This function returns the evolution or agg number of changed issues
+    #This function can be also reproduced using the Backlog function.
+    #However this function is less time expensive.
+    fields = " count(distinct(pup.upeople_id)) as changers "
+    tables = paste(" issues i, changes ch ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
+
+    filters = " i.id = ch.issue_id "
+    filters_ext = GetITSSQLReportWhere(type_analysis)
+    if (filters_ext != ""){
+        filters = paste(filters, " and ", filters_ext, sep="")
+    }
+
+    #unique identities filters
+    if (is.na(type_analysis[1])) {
+        #Specific case for the basic option where people_upeople table is needed
+        #and not taken into account in the initial part of the query
+        tables <- paste(tables, ", people_upeople pup", sep="")
+        filters <- paste(filters, " and i.submitted_by = pup.people_id", sep="")
+    }
+
+    if (type_analysis[1] == "repository"){
+        #Adding people_upeople table
+        tables <- paste(tables, ", people_upeople pup", sep="")
+        filters <- paste(filters, " and i.submitted_by = pup.people_id ", sep="")
+    }
+
+
+    #Action needed to replace issues filters by changes one
+    filters = gsub("i.submitted", "ch.changed", filters)
+
+    q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+AggIssuesChangers <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Returns aggregated number of closed issues
+    return(GetChangers(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+EvolIssuesChangers <- function(period, startdate, enddate, identities_db, type_analysis){
+    return(GetChangers(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+
 
 ################
 # Last activity functions
