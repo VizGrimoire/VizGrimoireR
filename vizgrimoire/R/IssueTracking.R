@@ -309,7 +309,6 @@ GetOpened <- function(period, startdate, enddate, identities_db, type_analysis, 
     tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
     filters = GetITSSQLReportWhere(type_analysis) 
     q <- BuildQuery(period, startdate, enddate, " submitted_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -328,9 +327,7 @@ EvolIssuesOpened <- function(period, startdate, enddate, identities_db, type_ana
 
 
 GetOpeners <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary, closed_condition){
-    #This function returns the evolution or agg number of opened issues
-    #This function can be also reproduced using the Backlog function.
-    #However this function is less time expensive.
+    #This function returns the evolution or agg number of people opening issues
     fields = " count(distinct(pup.upeople_id)) as openers "
     tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
     filters = GetITSSQLReportWhere(type_analysis)
@@ -349,7 +346,6 @@ GetOpeners <- function(period, startdate, enddate, identities_db, type_analysis,
     }
 
     q <- BuildQuery(period, startdate, enddate, " submitted_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -367,6 +363,39 @@ EvolIssuesOpeners <- function(period, startdate, enddate, identities_db, type_an
     return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
+
+GetClosed <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary, closed_condition){
+    #This function returns the evolution or agg number of closed issues
+    #This function can be also reproduced using the Backlog function.
+    #However this function is less time expensive.
+    fields = " count(distinct(i.id)) as closed "
+    tables = paste(" issues i, changes ch ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
+
+    filters = paste(" i.id = ch.issue_id and ", closed_condition, sep="") 
+    filters_ext = GetITSSQLReportWhere(type_analysis)
+    if (filters_ext != ""){
+        filters = paste(filters, " and ", filters_ext, sep="")
+    }
+ 
+    #Action needed to replace issues filters by changes one
+    filters = gsub("i.submitted", "ch.changed", filters)
+    
+    q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+AggIssuesClosed <- function(period, startdate, enddate, identities_db, type_analysis, closed_condition){
+    # Returns aggregated number of closed issues
+    return(GetClosed(period, startdate, enddate, identities_db, type_analysis, FALSE, closed_condition))
+}
+
+
+EvolIssuesClosed <- function(period, startdate, enddate, identities_db, type_analysis, closed_condition){
+    #return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
+    return(GetClosed(period, startdate, enddate, identities_db, type_analysis, TRUE, closed_condition))
+}
 
 
 ################

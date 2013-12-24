@@ -49,23 +49,19 @@ test.IssuesOpened.Agg.Month.Company <- function(){
 }
 
 test.IssuesOpened.Evol.Week <- function(){
-    print(nrow(EvolIssuesOpened('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
     expect_that(54, equals(nrow(EvolIssuesOpened('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.IssuesOpened.Evol.Week.Company <- function(){
-    print(nrow(EvolIssuesOpened('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'"))))
     expect_that(44, equals(nrow(EvolIssuesOpened('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
 }
 
 
 test.IssuesOpened.Evol.Month <- function(){
-    print(nrow(EvolIssuesOpened('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
     expect_that(12, equals(nrow(EvolIssuesOpened('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.IssuesOpened.Evol.Month.Company <- function(){
-    print(nrow(EvolIssuesOpened('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'"))))
     expect_that(12, equals(nrow(EvolIssuesOpened('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))))
 }
 
@@ -73,49 +69,83 @@ test.IssuesOpened.Evol.Month.Company <- function(){
 #People opening issues
 
 test.IssuesOpeners.Agg.Week <- function(){
-    print(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
     expect_that(941, equals(as.numeric(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.IssuesOpeners.Agg.Week.Repository <- function(){
-    print(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))
     expect_that(523, equals(as.numeric(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))))
 }
 
 test.IssuesOpeners.Agg.Week.Company <- function(){
-    print(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))
     expect_that(14, equals(as.numeric(AggIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
 }
 
 
 test.IssuesOpeners.Agg.Month <- function(){
-    print(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
     expect_that(941, equals(as.numeric(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.IssuesOpeners.Agg.Month.Company <- function(){
-    print(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))
     expect_that(14, equals(as.numeric(AggIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))))
 }
 
 test.IssuesOpeners.Evol.Week <- function(){
-    print(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
     expect_that(54, equals(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.IssuesOpeners.Evol.Week.Company <- function(){
-    print(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'"))))
     expect_that(44, equals(nrow(EvolIssuesOpeners('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
 }
 
 
 test.IssuesOpeners.Evol.Month <- function(){
-    print(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA))))
     expect_that(12, equals(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
 test.IssuesOpeners.Evol.Month.Company <- function(){
-    print(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'"))))
     expect_that(12, equals(nrow(EvolIssuesOpeners('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Red Hat'")))))
+}
+
+#Closed issues
+
+test.IssuesClosed.Agg.Week <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(4716, equals(as.numeric(AggIssuesClosed('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
+}
+
+test.IssuesClosed.Agg.Week.Repository <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(1653, equals(as.numeric(AggIssuesClosed('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'"), closed_condition))))
+}
+
+test.IssuesClosed.Agg.Week.Company <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(5, equals(as.numeric(AggIssuesClosed('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'"), closed_condition))))
+}
+
+test.IssuesClosedAgg.Month <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(4716, equals(as.numeric(AggIssuesClosed('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
+}
+
+
+test.IssuesClosed.Evol.Week <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(52, equals(nrow(EvolIssuesClosed('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
+}
+
+test.IssuesClosed.Evol.Week.Repository <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(52, equals(nrow(EvolIssuesClosed('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'"), closed_condition))))
+}
+
+test.IssuesClosed.Evol.Week.Company <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(4, equals(nrow(EvolIssuesClosed('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'"), closed_condition))))
+}
+
+test.IssuesClosedEvol.Month <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    expect_that(12, equals(nrow(EvolIssuesClosed('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
 }
 
