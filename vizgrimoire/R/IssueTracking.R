@@ -41,11 +41,11 @@ GetITSSQLRepositoriesFrom <- function(){
 
 GetITSSQLRepositoriesWhere <- function(repository){
     # fields necessary to match info among tables
-    return (paste(" t.url = ",repository," "))
+    return (paste(" i.tracker_id = t.id and t.url = ",repository," "))
 }
 
 
-GetMLSSQLCompaniesFrom <- function(i_db){
+GetITSSQLCompaniesFrom <- function(i_db){
     # fields necessary for the companies analysis
 
     return(paste(" , people_upeople pup,
@@ -53,7 +53,7 @@ GetMLSSQLCompaniesFrom <- function(i_db){
                    ",i_db,".upeople_companies upc", sep=""))
 }
 
-GetMLSSQLCompaniesWhere <- function(name){
+GetITSSQLCompaniesWhere <- function(name){
     # filters for the companies analysis
     return(paste(" i.submitted_by = pup.people_id and
                    pup.upeople_id = upc.upeople_id and
@@ -63,7 +63,7 @@ GetMLSSQLCompaniesWhere <- function(name){
                    c.name = ",name, sep=""))
 }
 
-GetMLSSQLCountriesFrom <- function(i_db){
+GetITSSQLCountriesFrom <- function(i_db){
     # fields necessary for the companies analysis
 
     return(paste(" , people_upeople pup,
@@ -71,7 +71,7 @@ GetMLSSQLCountriesFrom <- function(i_db){
                    ",i_db,".upeople_companies upc", sep=""))
 }   
     
-GetMLSSQLCountriesWhere <- function(name){
+GetITSSQLCountriesWhere <- function(name){
     # filters for the companies analysis
     return(paste(" i.submitted_by = pup.people_id and
                    pup.upeople_id = upc.upeople_id and
@@ -128,9 +128,9 @@ GetITSSQLReportFrom <- function(identities_db, type_analysis){
     from = ""
 
     if (! is.na(analysis)){
-        from <- ifelse (analysis == 'repository', paste(from, GetMLSSQLRepositoriesFrom()),
-                ifelse (analysis == 'company', paste(from, GetMLSSQLCompaniesFrom(identities_db)),
-                ifelse (analysis == 'country', paste(from, GetMLSSQLCountriesFrom(identities_db)),
+        from <- ifelse (analysis == 'repository', paste(from, GetITSSQLRepositoriesFrom()),
+                ifelse (analysis == 'company', paste(from, GetITSSQLCompaniesFrom(identities_db)),
+                ifelse (analysis == 'country', paste(from, GetITSSQLCountriesFrom(identities_db)),
                 NA)))
     }
     return (from)
@@ -147,9 +147,9 @@ GetITSSQLReportWhere <- function(type_analysis){
     where = ""
 
     if (! is.na(analysis)){
-        where <- ifelse (analysis == 'repository', paste(where, GetMLSSQLRepositoriesWhere(value)),
-                ifelse (analysis == 'company', paste(where, GetMLSSQLCompaniesWhere(value)),
-                ifelse (analysis == 'country', paste(where, GetMLSSQLCountriesWhere(value)),
+        where <- ifelse (analysis == 'repository', paste(where, GetITSSQLRepositoriesWhere(value)),
+                ifelse (analysis == 'company', paste(where, GetITSSQLCompaniesWhere(value)),
+                ifelse (analysis == 'country', paste(where, GetITSSQLCountriesWhere(value)),
                 NA)))
     }
     return (where)
@@ -286,8 +286,8 @@ GetCurrentStatus <- function(period, startdate, enddate, identities_db, status, 
     # in status = open, it is possible to know when they were submitted
 
     fields = paste(" count(distinct(id)) as current_", status, sep="")
-    tables = " issues "
-    filters = paste(" status = '", status, "' ", sep="")
+    tables = paste(" issues ", GetITSReportFrom(identities_db, type_analysis), sep="")
+    filters = paste(" status = '", status, "' and ", GetITSSQLReportWhere(type_analysis) , sep="")
     q <- GetSQLPeriod(period,'submitted_on', fields, tables, filters,
             startdate, enddate)
     query <- new ("Query", sql = q)
@@ -301,29 +301,32 @@ GetCurrentStatus <- function(period, startdate, enddate, identities_db, status, 
 # opened when the issue was submitted (and submitted by) and closers providing the
 # closed condition. Do we get whe same results if using the Backlog table?
 
-GetAggOpened <- function(period, startdate, enddate, identities_db, status){
+GetOpened <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    #This function returns the evolution or agg number of opened issues
+    #This function can be also reproduced using the Backlog function.
+    #However this function is less time expensive.
+    fields = " count(distinct(i.id)) as opened "
+    tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
+    filters = GetITSSQLReportWhere(type_analysis) 
+    q <- BuildQuery(period, startdate, enddate, " submitted_on ", fields, tables, filters, evolutionary)
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+AggIssuesOpened <- function(period, startdate, enddate, identities_db, type_analysis){
     # Returns aggregated number of opened issues
-    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, FALSE))
+    return(GetOpened(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-GetCurrentOpened <- function(period, startdate, enddate, identities_db, status){
+CurrentIssuesOpened <- function(period, startdate, enddate, identities_db, status){
     return(GetCurrentStatus(period, startdate, enddate, identities_db, status, TRUE))
 }
 
-GetEvolOpened <- function(period, startdate, enddate, identities_db, status, name.logtable, filter=""){
-    return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
-}
-
-GetAggclosed <- function(period, startdate, enddate, identities_db, status){
-    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, FALSE))
-}
-
-GetCurrentClosed <- function(period, startdate, enddate, identities_db, status){
-    return(GetCurrentStatus(period, startdate, enddate, identities_db, status, TRUE))
-}
-
-GetEvolClosed <- function(period, startdate, enddate, identities_db, status, name.logtable, filter=""){
-    return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
+EvolIssuesOpened <- function(period, startdate, enddate, identities_db, type_analysis){
+    #return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
+    return(GetOpened(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 
