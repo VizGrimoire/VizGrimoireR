@@ -171,46 +171,6 @@ test.IssuesClosersAgg.Month <- function(){
     expect_that(172, equals(as.numeric(AggIssuesClosers('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
 }
 
-test.IssuesClosers.Agg.Week <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(172, equals(as.numeric(AggIssuesClosers('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
-}
-
-test.IssuesClosers.Agg.Week.Repository <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(77, equals(as.numeric(AggIssuesClosers('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'"), closed_condition))))
-}
-
-test.IssuesClosers.Agg.Week.Company <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(4, equals(as.numeric(AggIssuesClosers('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'"), closed_condition))))
-}
-
-test.IssuesClosersAgg.Month <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(172, equals(as.numeric(AggIssuesClosers('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
-}
-test.IssuesClosers.Agg.Week <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(172, equals(as.numeric(AggIssuesClosers('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
-}
-
-test.IssuesClosers.Agg.Week.Repository <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(77, equals(as.numeric(AggIssuesClosers('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'"), closed_condition))))
-}
-
-test.IssuesClosers.Agg.Week.Company <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(4, equals(as.numeric(AggIssuesClosers('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'"), closed_condition))))
-}
-
-test.IssuesClosersAgg.Month <- function(){
-    closed_condition = " (new_value='Fix Committed') "
-    expect_that(172, equals(as.numeric(AggIssuesClosers('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
-}
-
-
 test.IssuesClosers.Evol.Week <- function(){
     closed_condition = " (new_value='Fix Committed') "
     expect_that(52, equals(nrow(EvolIssuesClosers('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
@@ -229,5 +189,47 @@ test.IssuesClosers.Evol.Week.Company <- function(){
 test.IssuesClosersEvol.Month <- function(){
     closed_condition = " (new_value='Fix Committed') "
     expect_that(12, equals(nrow(EvolIssuesClosers('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA), closed_condition))))
+}
+
+
+#chnaged issues
+test.IssuesChanged.Agg.Week <- function(){
+    print(AggIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
+    expect_that(93253, equals(as.numeric(AggIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesChanged.Agg.Week.Repository <- function(){
+    print(AggIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))
+    expect_that(32183, equals(as.numeric(AggIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))))
+}
+
+test.IssuesChanged.Agg.Week.Company <- function(){
+    print(AggIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))
+    expect_that(563, equals(as.numeric(AggIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
+}
+
+test.IssuesChanged.Agg.Month <- function(){
+    print(AggIssuesChanged('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
+    expect_that(93253, equals(as.numeric(AggIssuesChanged('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesChanged.Evol.Week <- function(){
+    print(EvolIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
+    expect_that(54, equals(nrow(EvolIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesChanged.Evol.Week.Repository <- function(){
+    print(EvolIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))
+    expect_that(54, equals(nrow(EvolIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("repository", "'https://bugs.launchpad.net/nova'")))))
+}
+
+test.IssuesChanged.Evol.Week.Company <- function(){
+    print(EvolIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))
+    expect_that(48, equals(nrow(EvolIssuesChanged('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
+}
+
+test.IssuesChanged.Evol.Month <- function(){
+     print(EvolIssuesChanged('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))
+    expect_that(12, equals(nrow(EvolIssuesChanged('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 

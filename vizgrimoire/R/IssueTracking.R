@@ -76,8 +76,6 @@ GetITSSQLCountriesWhere <- function(name){
     return(paste(" i.submitted_by = pup.people_id and
                    pup.upeople_id = upc.upeople_id and
                    upc.company_id = c.id and
-                   i.submitted_on >= upc.init and
-                   i.submitted_on < upc.end and
                    c.name = ",name, sep=""))
 }
 
@@ -447,6 +445,41 @@ EvolIssuesClosers <- function(period, startdate, enddate, identities_db, type_an
     #return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
     return(GetClosers(period, startdate, enddate, identities_db, type_analysis, TRUE, closed_condition))
 }
+
+
+GetChanged <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    #This function returns the evolution or agg number of changed issues
+    #This function can be also reproduced using the Backlog function.
+    #However this function is less time expensive.
+    fields = " count(distinct(ch.id)) as changed "
+    tables = paste(" issues i, changes ch ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
+
+    filters = " i.id = ch.issue_id "
+    filters_ext = GetITSSQLReportWhere(type_analysis)
+    if (filters_ext != ""){
+        filters = paste(filters, " and ", filters_ext, sep="")
+    }
+
+    #Action needed to replace issues filters by changes one
+    filters = gsub("i.submitted", "ch.changed", filters)
+
+    q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+AggIssuesChanged <- function(period, startdate, enddate, identities_db, type_analysis){
+    # Returns aggregated number of closed issues
+    return(GetChanged(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
+EvolIssuesChanged <- function(period, startdate, enddate, identities_db, type_analysis){
+    return(GetChanged(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
 
 ################
 # Last activity functions
