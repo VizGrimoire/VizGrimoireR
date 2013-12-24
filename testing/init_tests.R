@@ -43,7 +43,7 @@ SetDBChannel (database = "jenkins_mls_vizr_1783", user = conf$dbuser, password =
 idb = conf$identities_db
 test.suite <- defineTestSuite("MailingLists",
                               dirs = file.path("tests"),
-                              testFileRegexp = 'mailinglists.R$')
+                              testFileRegexp = 'mls.R$')
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0) {q(status=1)}
 
