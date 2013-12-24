@@ -80,6 +80,8 @@ if args.dir:
     dir = args.dir
 else:
     dir = "/tmp"
+# JSON directory for browser
+JSONdir = dir + "/data/json"
 
 # Open database connection and get a cursor
 con = MySQLdb.connect(host='localhost', user=args.user, passwd=args.passwd) 
@@ -185,13 +187,23 @@ call ([rConf["ds2id"],
 call ([rConf["domains"], "-d", dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd])
 
+# Create the JSON data directory for the browser
+# R scripts will write JSON files into it
+try:
+    os.makedirs(JSONdir)
+except OSError as e:
+    if e.errno == errno.EEXIST and os.path.isdir(JSONdir):
+        pass
+    else: 
+        raise
+
 # Run the SCM (git) analysis script (ensure installed vizgrimoirer package
 # is in R lib path)
 os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
 call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd,
        "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
-       "--destination", dir])
+       "--destination", JSONdir])
 
 # Run the ITS (tickets) analysis script (ensure installed vizgrimoirer package
 # is in R lib path)
@@ -199,7 +211,7 @@ os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
 call ([rConf["its-analysis"], "-d", dbPrefix + "_" + "bicho",
        "-u", args.user, "-p", args.passwd,
        "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
-       "--destination", dir])
+       "--destination", JSONdir])
 
 # Now, let's produce an HTML dashboard for the JSON files produced in the
 # previous step
@@ -211,18 +223,21 @@ vgjsFiles = ["vizgrimoire.min.js",
              "browser/custom.css",
              "bootstrap/css/bootstrap.min.css",
              "bootstrap/css/bootstrap-responsive.min.css",
-             "browser/favicon.ico",
-             "browser/navbar.html",
-             "browser/footer.html",
-             "browser/refcard.html",
-             "browser/project-card.html"]
+             "browser/favicon.ico"]
 # Files specific to this GitHub example:
-ghBrowserfiles = ["index.html", "config.json", "viz_cfg.json", "custom.css"]
+ghBrowserfiles = ["index.html",
+                  "navbar.html", "footer.html", "refcard.html",
+                  "project-card.html",
+                  "viz_cfg.json", "custom.css"]
+# Files specific to this GitHub example that must go in data/json:
+ghJSONfiles = ["config.json"]
 
 for file in vgjsFiles:
     shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
 for file in ghBrowserfiles:
     shutil.copy(args.vgdir + "/VizGrimoireR/examples/github/" + file, dir)
+for file in ghJSONfiles:
+    shutil.copy(args.vgdir + "/VizGrimoireR/examples/github/" + file, JSONdir)
 
 # Note: missing files:
 # index.htmo, config.json
