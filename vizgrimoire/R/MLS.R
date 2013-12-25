@@ -361,7 +361,7 @@ GetStaticReposMLS <- function (rfield, repo, startdate, enddate) {
 }
 
 repoTopSenders <- function(repo, identities_db, startdate, enddate){
-    q <- paste("SELECT up.identifier as senders,
+    q <- paste("SELECT up.id as id, up.identifier as senders,
                 COUNT(m.message_id) as sent
                 FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up
                 WHERE ", GetFiltersOwnUniqueIdsMLS(), " AND
@@ -442,7 +442,7 @@ GetEvolCountriesMLS <- function (country, identities_db, period, startdate, endd
 }
 
 countryTopSenders <- function(country_name, identities_db, startdate, enddate){
-    q <- paste("SELECT up.identifier as senders, 
+    q <- paste("SELECT up.id as id, up.identifier as senders, 
                   COUNT(DISTINCT(m.message_id)) as sent 
                 FROM ", GetTablesCountries(identities_db), 
                   ", ",identities_db,".upeople up
@@ -518,7 +518,7 @@ GetEvolCompaniesMLS <- function(company_name, i_db, period, startdate, enddate) 
 }
 
 companyTopSenders <- function(company_name, identities_db, startdate, enddate){
-    q <- paste("SELECT up.identifier as senders, 
+    q <- paste("SELECT up.id as id, up.identifier as senders, 
                   COUNT(DISTINCT(m.message_id)) as sent 
                 FROM ", GetTablesCompanies(identities_db), 
                   ", ",identities_db,".upeople up
