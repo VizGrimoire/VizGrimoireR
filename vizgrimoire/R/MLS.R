@@ -565,6 +565,10 @@ countriesNames <- function (identities_db, startdate, enddate, filter=c()) {
                 GROUP BY c.name
                 ORDER BY COUNT((m.message_ID)) DESC LIMIT ",
                 countries_limit , sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return(data$name)
+}
 
 companiesNames <- function (i_db, startdate, enddate, filter=c()) {
     companies_limit = 30
@@ -588,10 +592,6 @@ companiesNames <- function (i_db, startdate, enddate, filter=c()) {
     query <- new("Query", sql = q)
     data <- run(query)
     return (data$name)
-}
-    query <- new ("Query", sql = q)
-    data <- run(query)
-    return(data$name)
 }
 
 
@@ -732,7 +732,7 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
 }
 
 repoTopSenders <- function(repo, identities_db, startdate, enddate){
-    q <- paste("SELECT up.identifier as senders,
+    q <- paste("SELECT up.id as id, up.identifier as senders,
                 COUNT(m.message_id) as sent
                 FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up
                 WHERE ", GetFiltersOwnUniqueIdsMLS(), " AND
@@ -751,7 +751,7 @@ repoTopSenders <- function(repo, identities_db, startdate, enddate){
 
 
 countryTopSenders <- function(country_name, identities_db, startdate, enddate){
-    q <- paste("SELECT up.identifier as senders,
+    q <- paste("SELECT up.id as id, up.identifier as senders,
                   COUNT(DISTINCT(m.message_id)) as sent
                 FROM ", GetTablesCountries(identities_db),
                   ", ",identities_db,".upeople up
@@ -769,7 +769,7 @@ countryTopSenders <- function(country_name, identities_db, startdate, enddate){
 
 
 companyTopSenders <- function(company_name, identities_db, startdate, enddate){
-    q <- paste("SELECT up.identifier as senders,
+    q <- paste("SELECT up.id as id, up.identifier as senders,
                   COUNT(DISTINCT(m.message_id)) as sent
                 FROM ", GetTablesCompanies(identities_db),
                   ", ",identities_db,".upeople up
