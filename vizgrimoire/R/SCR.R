@@ -665,11 +665,17 @@ GetPeopleListSCRChanges <- function(startdate, enddate) {
 	return (data)
 }
 
-GetPeopleListSCR <- function(startdate, enddate) {
-    q = "SELECT COUNT(i.id) as total, pup.upeople_id as id, name
-         FROM issues i, people p, people_upeople pup
-         WHERE i.submitted_by=p.id AND p.id = pup.people_id AND status='merged'
-         GROUP by pup.upeople_id ORDER by total desc"
+GetPeopleListSCR <- function(startdate, enddate, identities_db, bots) {
+    filter_bots = ''
+    for (bot in bots){
+        filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
+    }
+
+    q = paste("SELECT COUNT(i.id) as total, pup.upeople_id as id, name
+         FROM issues i, people p, people_upeople pup, ", identities_db,".upeople up
+         WHERE ", filter_bots, " pup.upeople_id = up.id
+            AND i.submitted_by=p.id AND p.id = pup.people_id AND status='merged'
+         GROUP by pup.upeople_id ORDER by total desc", sep="")
 	query <- new("Query", sql = q)
 	data <- run(query)
 	return (data)
@@ -750,11 +756,18 @@ GetCompaniesQuartersSCR <- function(year, quarter, identities_db, limit = 25) {
     return (data)
 }
 # PEOPLE
-GetPeopleQuartersSCR <- function(year, quarter, identities_db, limit = 25) {
+GetPeopleQuartersSCR <- function(year, quarter, identities_db, limit = 25, bots) {
+
+    filter_bots = ''
+    for (bot in bots){
+        filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
+    }
+
     q <- (paste("
            SELECT COUNT(i.id) AS total, p.name, pup.upeople_id as id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year
-           FROM issues i, people p , people_upeople pup
-           WHERE i.submitted_by=p.id AND pup.people_id=p.id
+           FROM issues i, people p , people_upeople pup, ", identities_db,".upeople up
+           WHERE ", filter_bots, "
+             i.submitted_by=p.id AND pup.people_id=p.id AND pup.upeople_id = up.id
              AND status='merged'
              AND QUARTER(submitted_on) = ",quarter," AND YEAR(submitted_on) = ",year,"
           GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC LIMIT ",limit))

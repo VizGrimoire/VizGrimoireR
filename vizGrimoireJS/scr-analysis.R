@@ -64,7 +64,7 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 # BOTS filtered
 # WARNING: info specific for the wikimedia case, this should be removed for other communities
 #          or in the case that bots are required to be in the analysis
-bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot')
+bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot','L10n-bot')
 
 # From this date the changes timestap are
 startok <- "'2013-04-30'"
@@ -278,7 +278,7 @@ if ('countries' %in% reports) {
 ########
 if ('people' %in% reports) {
     print("PEOPLE ANALYSIS")
-    people = GetPeopleListSCR(conf$startdate, conf$enddate)
+    people = GetPeopleListSCR(conf$startdate, conf$enddate, conf$identities_db, bots)
     createJSON(people, paste(destdir,"/scr-people-all.json",sep=''))
     people = people$id
     limit = 60
@@ -315,7 +315,7 @@ for (i in 0:quarters) {
     print (paste ("Analyzing for companies and people  quarter ",paste(year, quarter)))
     data <- GetCompaniesQuartersSCR(year, quarter, conf$identities_db)
     companies_quarters[[paste(year,quarter)]]<-data
-    data_people <- GetPeopleQuartersSCR(year, quarter, conf$identities_db)
+    data_people <- GetPeopleQuartersSCR(year, quarter, conf$identities_db, 25, bots)
     people_quarters[[paste(year,quarter)]]<-data_people
     start$mon = start$mon+3
     # hate doing this staff by hand
