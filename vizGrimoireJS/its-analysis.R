@@ -86,11 +86,15 @@ if (conf$backend == 'launchpad'){
     closed_condition <- "(new_value='Fix Committed')"
 }
 if (conf$backend == 'redmine'){
+    statuses = c("New", "Verified", "Need More Info", "In Progress", "Feedback",
+                 "Need Review", "Testing", "Pending Backport", "Pending Upstream",
+                 "Resolved", "Closed", "Rejected", "Won\\'t Fix", "Can\\'t reproduce",
+                 "Duplicate")
     closed_condition <- paste("(new_value='Resolved' OR new_value='Closed' OR new_value='Rejected'",
                               " OR new_value='Won\\'t Fix' OR new_value='Can\\'t reproduce' OR new_value='Duplicate')")
+    reopened_condition <- "new_value='Reopened'" # FIXME: fake condition
+    name_log_table <- 'issues_log_redmine'
 }
-
-
 
 # dates
 startdate <- conf$startdate
