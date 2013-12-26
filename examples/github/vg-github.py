@@ -178,7 +178,7 @@ call (["R", "CMD", "INSTALL", rConf["vgrpkg"]], env=env)
 call ([rConf["unifypeople"], "-d", dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd, "-i", "no"])
 call ([rConf["ds2id"],
-       "--data-source=its" + dbPrefix + "_" + "bicho",
+       "--data-source=its",
        "--db-name-ds=" + dbPrefix + "_" + "bicho",
        "--db-name-ids=" + dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd])
