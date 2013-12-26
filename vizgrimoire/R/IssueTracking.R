@@ -859,6 +859,53 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
     return (data)
 }
 
+#################
+# People information, to be refactored
+#################
+
+GetPeopleListITS <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as pid, count(c.id) as total"
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = GetFiltersOwnUniqueIdsITS()
+    filters = paste(filters,"GROUP BY pid ORDER BY total desc")
+    q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
+        query <- new("Query", sql = q)
+        data <- run(query)
+        return (data)
+}
+
+GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol) {
+    fields = "COUNT(c.id) AS closed"
+    tables = GetTablesOwnUniqueIdsITS()
+    filters = paste(GetFiltersOwnUniqueIdsITS(), "AND pup.upeople_id = ", developer_id)
+
+    if (evol) {
+        q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
+                            startdate, enddate)
+    } else {
+        fields = paste(fields,
+                ",DATE_FORMAT (min(changed_on),'%Y-%m-%d') as first_date,
+                  DATE_FORMAT (max(changed_on),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('changed_on', fields, tables, filters,
+                            startdate, enddate)
+    }
+    return (q)
+}
+
+
+GetPeopleEvolITS <- function(developer_id, period, startdate, enddate) {
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetPeopleStaticITS <- function(developer_id, startdate, enddate) {
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, FALSE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
 
 
 
