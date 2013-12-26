@@ -605,6 +605,117 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condit
 ################
 
 
+##
+## GetDiffClosedDays
+##
+## Get differences in number of closed tickets between two periods.
+##  - date: final date of the two periods.
+##  - days: number of days for each period.
+##  - closed_condition: SQL string to define the condition of "closed"
+##     for a ticket
+## Example of parameters, for analizing the difference during the last
+##  two weeks for the day 2013-11-25:
+##  (date="2013-11-25", days=7, closed_condition=...)
+##
+GetDiffClosedDays <- function(date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(date, days)
+    lastclosed = AggIssuesClosed(period, chardates[2], chardates[1], identities_db, closed_condition)
+    #lastclosed = StaticNumClosed(closed_condition, chardates[2], chardates[1])
+    lastclosed = as.numeric(lastclosed[1])
+    prevclosed = AggIssuesClosed(period, chardates[3], chardates[2], identities_db, closed_condition)
+    #prevclosed = StaticNumClosed(closed_condition, chardates[3], chardates[2])
+    prevclosed = as.numeric(prevclosed[1])
+    diffcloseddays = data.frame(diff_netclosed = numeric(1), percentage_closed = numeric(1))
+
+    diffcloseddays$diff_netclosed = lastclosed - prevclosed
+    diffcloseddays$percentage_closed = GetPercentageDiff(prevclosed, lastclosed)
+
+    colnames(diffcloseddays) <- c(paste("diff_netclosed","_",days, sep=""), paste("percentage_closed","_",days, sep=""))
+
+    return (diffcloseddays)
+}
+
+##
+## GetDiffClosersDays
+##
+## Get differences in number of ticket closers between two periods.
+##  - date: final date of the two periods.
+##  - days: number of days for each period.
+##  - closed_condition: SQL string to define the condition of "closed"
+##     for a ticket
+## Example of parameters, for analizing the difference during the last
+##  two weeks for the day 2013-11-25:
+##  (date="2013-11-25", days=7, closed_condition=...)
+##
+GetDiffClosersDays <- function(date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+
+    chardates = GetDates(date, days)
+    lastclosers = AggIssuesClosers(period, chardates[2], chardates[1], identities_db, closed_condition)
+    #lastclosers = StaticNumClosers(closed_condition, chardates[2], chardates[1])
+    lastclosers = as.numeric(lastclosers[1])
+    prevclosers = AggIssuesClosers(period, chardates[3], chardates[2], identities_db, closed_condition)
+    #prevclosers = StaticNumClosers(closed_condition, chardates[3], chardates[2])
+    prevclosers = as.numeric(prevclosers[1])
+    diffclosersdays = data.frame(diff_netclosers = numeric(1), percentage_closers = numeric(1))
+
+    diffclosersdays$diff_netclosers = lastclosers - prevclosers
+    diffclosersdays$percentage_closers = GetPercentageDiff(prevclosers, lastclosers)
+
+    colnames(diffclosersdays) <- c(paste("diff_netclosers","_",days, sep=""), paste("percentage_closers","_",days, sep=""))
+
+    return (diffclosersdays)
+}
+
+
+GetLastActivityITS <- function(days, closed_condition) {
+    # opened issues
+    q <- paste("select count(*) as opened_",days,"
+                from issues
+                where submitted_on >= (
+                      select (max(submitted_on) - INTERVAL ",days," day)
+                      from issues)", sep="");
+    query <- new("Query", sql = q)
+    data1 = run(query)
+
+    # closed issues
+    q <- paste("select count(distinct(issue_id)) as closed_",days,"
+                from changes
+                where  ", closed_condition,"
+                and changed_on >= (
+                      select (max(changed_on) - INTERVAL ",days," day)
+                      from changes)", sep="");
+    query <- new("Query", sql = q)
+    data2 = run(query)
+
+    # closers
+    q <- paste ("SELECT count(distinct(pup.upeople_id)) as closers_",days,"
+                 FROM changes, people_upeople pup
+                 WHERE pup.people_id = changes.changed_by and
+                 changed_on >= (
+                     select (max(changed_on) - INTERVAL ",days," day)
+                      from changes) AND ", closed_condition, sep="");
+
+    query <- new ("Query", sql = q)
+    data3 <- run(query)
+
+    # people_involved    
+    q <- paste ("SELECT count(distinct(pup.upeople_id)) as changers_",days,"
+                 FROM changes, people_upeople pup
+                 WHERE pup.people_id = changes.changed_by and
+                 changed_on >= (
+                     select (max(changed_on) - INTERVAL ",days," day)
+                      from changes)", sep="");
+    query <- new ("Query", sql = q)
+    data4 <- run(query)
+
+    agg_data = merge(data1, data2)
+    agg_data = merge(agg_data, data3)
+
+    return (agg_data)
+
+}
 
 
 ################
