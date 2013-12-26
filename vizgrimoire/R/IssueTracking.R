@@ -722,6 +722,145 @@ GetLastActivityITS <- function(days, closed_condition) {
 # Top functions
 ################
 
+GetTopClosersByAssignee <- function(days = 0, startdate, enddate, identities_db, filter = c("")) {
+
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
+    }
+
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+    }
+    q <- paste("SELECT up.id as id, 
+                       up.identifier as closers, 
+                       count(distinct(ill.issue_id)) as closed 
+                FROM people_upeople pup, 
+                     ", identities_db, ".upeople_companies upc, 
+                     ", identities_db, ".upeople up, 
+                     ", identities_db, ".companies com,
+                     issues_log_launchpad ill 
+                WHERE ill.assigned_to = pup.people_id and 
+                      pup.upeople_id = up.id and 
+                      up.id = upc.upeople_id and 
+                      upc.company_id = com.id and
+                      ", affiliations, "
+                      ill.date >= upc.init and 
+                      ill.date < upc.end and 
+                      ill.change_id  in ( 
+                                     select id 
+                                     from changes 
+                                     where new_value='Fix Committed' and 
+                                           changed_on>=", startdate, " and 
+                                           changed_on<", enddate, " ", date_limit,") 
+                GROUP BY up.identifier 
+                ORDER BY closed desc limit 10;", sep="")
+
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetCompanyTopClosers <- function(company_name, startdate, enddate,
+        identities_db, filter = c('')) {
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
+    }
+    q <- paste("SELECT up.id as id, up.identifier as closers,
+                       COUNT(DISTINCT(c.id)) as closed
+                FROM ", GetTablesCompaniesITS(identities_db),",
+                     ",identities_db,".companies com,
+                     ",identities_db,".upeople up
+                WHERE ", GetFiltersCompaniesITS()," AND ", closed_condition, "
+                      AND pup.people_id = up.id
+                      AND upc.company_id = com.id
+                      AND com.name = ",company_name,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,
+                      affiliations, "
+                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
+
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
+    }
+
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+    }
+    q <- paste("SELECT up.id as id, up.identifier as closers,
+                       count(distinct(c.id)) as closed
+                FROM ",GetTablesCompaniesITS(identities_db), ", ",
+                     identities_db,".companies com,
+                     ",identities_db,".upeople up
+                WHERE ",GetFiltersCompaniesITS() ," and
+                      ", affiliations, "
+                      upc.company_id = com.id and
+                      c.changed_by = pup.people_id and
+                      pup.upeople_id = up.id and
+                      c.changed_on >= ", startdate, " and
+                      c.changed_on < ", enddate, " and ",
+                      closed_condition, " ", date_limit, "
+                GROUP BY up.identifier
+                ORDER BY closed desc
+                LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {  
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
+    }
+
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(submitted_on) from issues limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, submitted_on)<",days)
+    }
+
+    q <- paste("SELECT up.id as id, up.identifier as openers,
+                    count(distinct(i.id)) as opened
+                FROM ",GetTablesCompaniesITS(identities_db,'issues'), ", ",
+                    identities_db,".companies com,
+                    ",identities_db,".upeople up
+                WHERE ",GetFiltersCompaniesITS('issues') ," and
+                    ", affiliations, "
+                    upc.company_id = com.id and
+                    pup.upeople_id = up.id and
+                    i.submitted_on >= ", startdate, " and
+                    i.submitted_on < ", enddate,
+                    date_limit, "
+                    GROUP BY up.identifier
+                    ORDER BY opened desc
+                    LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    print(q)
+    data <- run(query)
+    return (data)
+}
+
+
+
 
 #################
 # Micro studies
@@ -745,4 +884,6 @@ EvolBMIIndex <- function(period, startdate, enddate, identities_db, type_analysi
     data = data.frame(data, evol_bmi)
     return (data)
 }
+
+
 
