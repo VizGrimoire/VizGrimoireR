@@ -80,7 +80,24 @@ GetMLSSQLCountriesWhere <- function(name){
                    pup.upeople_id = upc.upeople_id and
                    upc.country_id = c.id and
                    c.name=",name, sep=""))
+}
 
+GetMLSSQLDomainsFrom <- function(i_db) {
+    return (paste(" , messages_people mp,
+                   people_upeople pup,
+                  ",i_db,".domains d,
+                  ",i_db,".upeople_domains upd",sep=""))
+}
+
+GetMLSSQLDomainsWhere <- function(name) {
+    return (paste(" m.message_ID = mp.message_id and
+                    mp.email_address = pup.people_id and
+                    mp.type_of_recipient=\'From\' and
+                    pup.upeople_id = upd.upeople_id AND
+                    upd.domain_id = d.id AND
+                    m.first_date >= upd.init AND
+                    m.first_date < upd.end and
+                    d.name=", name, sep=""))
 }
 
 # Using senders only here!
@@ -141,7 +158,8 @@ GetMLSSQLReportFrom <- function(identities_db, type_analysis){
         from <- ifelse (analysis == 'repository', paste(from, GetMLSSQLRepositoriesFrom()),
                 ifelse (analysis == 'company', paste(from, GetMLSSQLCompaniesFrom(identities_db)),
                 ifelse (analysis == 'country', paste(from, GetMLSSQLCountriesFrom(identities_db)),
-                NA)))
+                ifelse (analysis == 'domain', paste(from, GetMLSSQLDomainsFrom(identities_db)),
+                NA))))
     }
     return (from)
 }
@@ -149,7 +167,6 @@ GetMLSSQLReportFrom <- function(identities_db, type_analysis){
 
 GetMLSSQLReportWhere <- function(type_analysis){
     #generic function to generate 'where' clauses
-
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
     analysis = type_analysis[1]
@@ -160,7 +177,8 @@ GetMLSSQLReportWhere <- function(type_analysis){
         where <- ifelse (analysis == 'repository', paste(where, GetMLSSQLRepositoriesWhere(value)),
                 ifelse (analysis == 'company', paste(where, GetMLSSQLCompaniesWhere(value)),
                 ifelse (analysis == 'country', paste(where, GetMLSSQLCountriesWhere(value)),
-                NA)))
+                ifelse (analysis == 'domain', paste(where, GetMLSSQLDomainsWhere(value)),
+                NA))))
     }
     return (where)
 }
@@ -594,6 +612,30 @@ companiesNames <- function (i_db, startdate, enddate, filter=c()) {
     return (data$name)
 }
 
+domainsNames <- function (i_db, startdate, enddate, filter=c()) {
+    domains_limit = 30
+    filter_domains = ""
+
+    for (domain in filter){
+        filter_domains <- paste(filter_domains, " d.name<>'", domain,
+                "' AND ",sep="")
+    }
+
+    q <- paste("SELECT d.name as name, COUNT(DISTINCT(m.message_ID)) as sent
+                FROM ", GetTablesDomains(i_db), "
+                WHERE ", GetFiltersDomains(), " AND
+                ", filter_domains, "
+                m.first_date >= ",startdate," AND
+                m.first_date < ",enddate,"
+                GROUP BY d.name
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT ",
+                domains_limit, sep="")
+
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data$name)
+}
+
 
 ########################
 # People functions as in the old version, still to be refactored!
@@ -634,6 +676,20 @@ GetFiltersCompanies <- function() {
                   upc.company_id = c.id AND
                   m.first_date >= upc.init AND
                   m.first_date < upc.end'))
+}
+
+GetTablesDomains <- function(i_db) {
+    return (paste(GetTablesOwnUniqueIdsMLS(),',
+                  ',i_db,'.domains d,
+                  ',i_db,'.upeople_domains upd',sep=''))
+}
+
+GetFiltersDomains <- function() {
+    return (paste(GetFiltersOwnUniqueIdsMLS(),' AND
+                  pup.upeople_id = upd.upeople_id AND
+                  upd.domain_id = d.id AND
+                  m.first_date >= upd.init AND
+                  m.first_date < upd.end'))
 }
 
 GetFiltersInit <- function() {
@@ -785,7 +841,22 @@ companyTopSenders <- function(company_name, identities_db, startdate, enddate){
     return (data)
 }
 
-
+domainTopSenders <- function(domain_name, identities_db, startdate, enddate){
+    q <- paste("SELECT up.identifier as senders,
+                  COUNT(DISTINCT(m.message_id)) as sent
+                FROM ", GetTablesDomains(identities_db),
+                ", ",identities_db,".upeople up
+                WHERE ", GetFiltersDomains(), " AND
+                  up.id = upd.upeople_id AND
+                  m.first_date >= ",startdate," AND
+                  m.first_date < ",enddate," AND
+                  d.name = '",domain_name,"'
+                GROUP BY up.identifier
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
 
 
 #######################

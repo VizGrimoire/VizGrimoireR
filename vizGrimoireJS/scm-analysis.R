@@ -74,6 +74,10 @@ if ('countries' %in% reports) {
     countries <- EvolCountries(period, conf$startdate, conf$enddate)
     evol_data = merge(evol_data, countries, all = TRUE)
 }
+if ('domains' %in% reports) {
+    domains <- EvolDomains(period, conf$startdate, conf$enddate)
+    evol_data = merge(evol_data, domains, all = TRUE)
+}
 
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 evol_data <- evol_data[order(evol_data$id), ]
@@ -116,6 +120,10 @@ if ('companies' %in% reports){
 if ('countries' %in% reports){ 
 	static_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
         static_data = merge(static_data, static_data_countries)
+}
+if ('domains' %in% reports){
+    static_data_domains = evol_info_data_domains (conf$startdate, conf$enddate)
+    static_data = merge(static_data, static_data_domains)
 }
 # 2- Merging information
 static_data = merge(static_data, static_url)
@@ -250,6 +258,40 @@ if ('countries' %in% reports) {
         # data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
         static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("country", country_name))
         createJSON (static_data, paste(destdir, "/",country,"-scm-static.json",sep=''))
+    }
+}
+
+if ('domains' %in% reports) {
+    domains <- scm_domains_names(conf$identities_db,conf$startdate, conf$enddate)
+    domains <- domains$name
+    createJSON(domains, paste(destdir,"/scm-domains.json", sep=''))
+
+    for (domain in domains) {
+        domain_name = paste("'", domain, "'", sep='')
+        domain_aux = paste("", domain, "", sep='')
+        print (domain_name)
+
+        ###########
+        #EVOLUTIONARY DATA
+        ###########
+        #1- Retrieving data
+
+        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("domain", domain_name))
+        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+        evol_data <- evol_data[order(evol_data$id), ]
+        evol_data[is.na(evol_data)] <- 0
+
+        #3- Creating JSON
+        createJSON(evol_data, paste(destdir, "/", domain_aux,"-scm-evolutionary.json", sep=''))
+
+        ##########
+        #STATIC DATA
+        ##########
+        # 1- Retrieving information
+        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("domain", domain_name))
+
+        #3- Creating JSON
+        createJSON(static_data, paste(destdir, "/", domain_aux, "-scm-static.json", sep=''))
     }
 }
 

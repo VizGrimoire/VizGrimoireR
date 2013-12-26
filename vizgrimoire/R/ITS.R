@@ -244,6 +244,11 @@ GetTablesCountriesITS <- function (i_db,table='') {
     tables = paste(tables,',',i_db,'.upeople_countries upc',sep='')    
 }
 
+GetTablesDomainsITS <- function (i_db, table='') {
+    tables = GetTablesOwnUniqueIdsITS(table)
+    tables = paste(tables,',',i_db,'.upeople_domains upd',sep='')
+}
+
 GetFiltersCompaniesITS <- function (table='') {
     filters = GetFiltersOwnUniqueIdsITS(table)
     filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
@@ -257,6 +262,11 @@ GetFiltersCompaniesITS <- function (table='') {
 GetFiltersCountriesITS <- function (table='') {
     filters = GetFiltersOwnUniqueIdsITS(table)
     filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
+}
+
+GetFiltersDomainsITS <- function (table='') {
+    filters = GetFiltersOwnUniqueIdsITS(table)
+    filters = paste(filters,"AND pup.upeople_id = upd.upeople_id")
 }
 
 GetEvolCompaniesITS <- function(period, startdate, enddate, identities_db) {
@@ -277,6 +287,17 @@ GetEvolCountriesITS <- function(period, startdate, enddate, identities_db) {
     q <- GetSQLPeriod(period,'changed_on', fields, tables, filters, 
             startdate, enddate)    
     query <- new ("Query", sql = q)    
+    data <- run(query)
+    return (data)
+}
+
+GetEvolDomainsITS <- function(period, startdate, enddate, identities_db) {
+    fields = 'COUNT(DISTINCT(upd.domain_id)) AS domains'
+    tables = GetTablesDomainsITS(identities_db)
+    filters = GetFiltersDomainsITS()
+    q <- GetSQLPeriod(period,'changed_on', fields, tables, filters,
+            startdate, enddate)
+    query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
@@ -505,6 +526,17 @@ GetStaticCountriesITS  <- function(startdate, enddate, identities_db) {
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)               
+}
+
+GetStaticDomainsITS  <- function(startdate, enddate, identities_db) {
+    fields = 'COUNT(DISTINCT(upd.domain_id)) AS domains'
+    tables = GetTablesDomainsITS(identities_db)
+    filters = GetFiltersDomainsITS()
+    q <- GetSQLGlobal('changed_on', fields, tables, filters,
+            startdate, enddate)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
 }
 
 # Top
@@ -983,6 +1015,184 @@ GetCountriesStaticITS <- function(identities_db, country, startdate, enddate) {
     q <- GetCountriesITS(identities_db, country, period, startdate, enddate, FALSE)      
     query <- new("Query", sql = q)
     data <- run(query)	
+    return (data)
+}
+
+# Domains
+
+GetDomainsNameITS <- function(startdate, enddate, identities_db, closed_condition, filter=c()) {
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " dom.name<>'",aff,"' and ",sep="")
+    }
+    tables = GetTablesDomainsITS(identities_db)
+    tables = paste(tables,",",identities_db,".domains dom")
+
+    q <- paste ("SELECT dom.name
+                 FROM ", tables, "
+                 WHERE ", GetFiltersDomainsITS()," AND
+                 dom.id = upd.domain_id and
+                 ",affiliations,"
+                 c.changed_on >= ", startdate, " AND
+                 c.changed_on < ", enddate, " AND
+                 ", closed_condition,"
+                 GROUP BY dom.name
+                 ORDER BY COUNT(DISTINCT(c.issue_id)) DESC", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetDomainClosed <- function(domain_name, closed_condition, period,
+        startdate, enddate, identities_db, evol){
+
+    fields = "COUNT(DISTINCT(issue_id)) AS closed,
+              COUNT(DISTINCT(pup.upeople_id)) AS closers"
+    tables = GetTablesDomainsITS(identities_db)
+    tables = paste(tables,",",identities_db,".domains dom")
+    filters = paste(GetFiltersDomainsITS()," AND ",closed_condition,"
+                    AND upd.domain_id = dom.id
+                    AND dom.name = ",domain_name,"")
+    if (evol) {
+        q <- GetSQLPeriod(period,'changed_on', fields, tables, filters,
+                startdate, enddate)
+    } else {
+        q <- GetSQLGlobal('changed_on', fields, tables, filters,
+                startdate, enddate)
+    }
+    return (q)
+}
+
+GetDomainEvolClosed <- function(domain_name, closed_condition, period,
+        startdate, enddate, identities_db){
+    q <- GetDomainClosed (domain_name, closed_condition, period,
+            startdate, enddate, identities_db, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetDomainChanged <- function(domain_name, period, startdate, enddate, identities_db, evol){
+
+    fields = "COUNT(DISTINCT(issue_id)) AS changed,
+              COUNT(DISTINCT(pup.upeople_id)) AS changers"
+    tables = GetTablesDomainsITS(identities_db)
+    tables = paste(tables,",",identities_db,".domains dom")
+    filters = paste(GetFiltersDomainsITS(),
+             "AND upd.domain_id = dom.id AND dom.name = ",domain_name,"")
+    if (evol) {
+        q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
+                startdate, enddate)
+    } else {
+        q = GetSQLGlobal('changed_on', fields, tables, filters,
+                startdate, enddate)
+    }
+    return (q)
+}
+
+GetDomainEvolChanged <- function(domain_name, period, startdate, enddate, identities_db){
+    q <- GetDomainChanged(domain_name, period, startdate, enddate, identities_db, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetDomainOpened <- function(domain_name, period, startdate, enddate, identities_db, evol){
+    q=''
+    fields = "COUNT(submitted_by) AS opened,
+              COUNT(DISTINCT(pup.upeople_id)) AS openers"
+    tables = paste("issues, people_upeople pup,",
+             identities_db,".upeople_domains upd,",
+             identities_db,".domains dom")
+    filters = paste("pup.people_id = issues.submitted_by
+                     AND pup.upeople_id = upd.upeople_id
+                     AND upd.domain_id = dom.id
+                     AND submitted_on >= upd.init
+                     AND submitted_on < upd.end
+                     AND dom.name = ",domain_name)
+    if (evol) {
+        q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
+                startdate, enddate)
+    } else {
+        fields = paste(fields,
+                 ",DATE_FORMAT (min(submitted_on),'%Y-%m-%d') as first_date,
+                 DATE_FORMAT (max(submitted_on),'%Y-%m-%d') as last_date")
+        q = GetSQLGlobal('submitted_on', fields, tables, filters,
+                startdate, enddate)
+    }
+    return (q)
+}
+
+GetDomainEvolOpened <- function(domain_name, period, startdate, enddate, identities_db){
+    q <- GetDomainOpened (domain_name, period, startdate, enddate, identities_db, TRUE)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetDomainStaticITS <- function (domain_name, closed_condition, startdate,
+        enddate, identities_db) {
+
+    period = ''
+    q <- GetDomainOpened (domain_name, period, startdate, enddate, identities_db, FALSE)
+    query <- new ("Query", sql = q)
+    data0 <- run(query)
+
+    q <- GetDomainClosed (domain_name, closed_condition, period, startdate,
+            enddate, identities_db, FALSE)
+
+    query <- new ("Query", sql = q)
+    data1 <- run(query)
+
+    q <- GetDomainChanged (domain_name, period, startdate,
+            enddate, identities_db, FALSE)
+
+    query <- new ("Query", sql = q)
+    data2 <- run(query)
+
+    q <- paste ("SELECT count(distinct(tracker_id)) as trackers
+                    FROM issues,
+                    changes,
+                    people_upeople pup,
+                    ",identities_db,".upeople_domains upd,
+                    ",identities_db,".domains dom
+                    WHERE issues.id = changes.issue_id
+                    AND pup.people_id = changes.changed_by
+                    AND pup.upeople_id = upd.upeople_id
+                    AND upd.domain_id = dom.id
+                    AND dom.name = ",domain_name,"
+                    AND changed_on >= ",startdate," AND changed_on < ",enddate,"
+                    AND changed_on >= upd.init
+                    AND changed_on < upd.end")
+    query <- new ("Query", sql = q)
+    data3 <- run(query)
+
+    agg_data = merge(data0, data1)
+    agg_data = merge(agg_data, data2)
+    agg_data = merge(agg_data, data3)
+    return(agg_data)
+}
+
+GetDomainTopClosers <- function(domain_name, startdate, enddate,
+        identities_db, filter = c('')) {
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
+    }
+    q <- paste("SELECT up.id as id, up.identifier as closers,
+                    COUNT(DISTINCT(c.id)) as closed
+                    FROM ", GetTablesDomainsITS(identities_db),",
+                    ",identities_db,".domains dom,
+                    ",identities_db,".upeople up
+                    WHERE ", GetFiltersDomainsITS()," AND ", closed_condition, "
+                    AND pup.people_id = up.id
+                    AND upd.domain_id = dom.id
+                    AND dom.name = ",domain_name,"
+                    AND changed_on >= ",startdate," AND changed_on < ",enddate,
+            affiliations, "
+                    GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
+    query <- new ("Query", sql = q)
+    data <- run(query)
     return (data)
 }
 

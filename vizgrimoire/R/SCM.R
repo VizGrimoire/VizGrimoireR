@@ -138,6 +138,20 @@ GetSQLCountriesWhere <- function(country, role){
                   and c.name =", country, sep=""))
 }
 
+GetSQLDomainsFrom <- function(identities_db) {
+    #tables necessaries for domains
+    return (paste(" , ",identities_db,".people_upeople pup,
+                            ",identities_db,".upeople_domains upd,
+                            ",identities_db,".domains d", sep=""))
+}
+
+GetSQLDomainsWhere <- function(domain, role) {
+    #fields necessaries to match info among tables
+    return (paste("and s.",role,"_id = pup.people_id
+                            and pup.upeople_id = upd.upeople_id
+                            and upd.domain_id = d.id
+                            and d.name =", domain, sep=""))
+}
 
 ############
 #Generic functions to check evolutionary or static info and for the execution of the final query
@@ -186,7 +200,8 @@ GetSQLReportFrom <- function(identities_db, type_analysis){
         from <- ifelse (analysis == 'repository', paste(from, GetSQLRepositoriesFrom()),
                 ifelse (analysis == 'company', paste(from, GetSQLCompaniesFrom(identities_db)),
                 ifelse (analysis == 'country', paste(from, GetSQLCountriesFrom(identities_db)),
-                NA)))
+                ifelse (analysis == 'domain', paste(from, GetSQLDomainsFrom(identities_db)),
+                NA))))
     }
     return (from)
 }
@@ -204,9 +219,10 @@ GetSQLReportWhere <- function(type_analysis, role){
 
     if (! is.na(analysis)){
         where <- ifelse (analysis == 'repository', paste(where, GetSQLRepositoriesWhere(value)),
-                ifelse (analysis == 'company', paste(where, GetSQLCompaniesWhere(value, role)),
-                ifelse (analysis == 'country', paste(where, GetSQLCountriesWhere(value, role)),
-                NA)))
+                 ifelse (analysis == 'company', paste(where, GetSQLCompaniesWhere(value, role)),
+                 ifelse (analysis == 'country', paste(where, GetSQLCountriesWhere(value, role)),
+                 ifelse (analysis == 'domain', paste(where, GetSQLDomainsWhere(value, role)),
+                 NA))))
     }
     return (where)
 }
@@ -900,8 +916,19 @@ EvolCountries <- function(period, startdate, enddate){
 	return(countries)
 }
 
+EvolDomains <- function(period, startdate, enddate){
+    # Returns the evolution in the provided period of the number of total domains
 
-
+    fields = "COUNT(DISTINCT(upd.domain_id)) AS domains"
+    tables = "scmlog s, people_upeople pup, upeople_domains upd"
+    filters = "s.author_id = pup.people_id and
+               pup.upeople_id = upd.upeople_id"
+    q <- GetSQLPeriod(period,'s.date', fields, tables, filters,
+            startdate, enddate)
+    query <- new("Query", sql = q)
+    domains<- run(query)
+    return(domains)
+}
 
 last_activity <- function(days) {
     # Given a number of days, this function calculates the number of
@@ -1378,6 +1405,41 @@ scm_companies_countries_evol <- function(identities_db, company, country, period
     return (data)
 }
 
+# Domains
+evol_info_data_domains <- function(startdate, enddate) {
+    q <- paste ("SELECT COUNT(DISTINCT(upd.domain_id)) AS domains
+                    FROM upeople_domains upd,
+                    people_upeople pup,
+                    scmlog s
+                    WHERE upd.upeople_id = pup.upeople_id AND
+                    pup.people_id = s.author_id AND
+                    s.date >=", startdate, " AND
+                    s.date < ", enddate, ";", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+scm_domains_names <- function(identities_db, startdate, enddate) {
+
+    rol = "author" #committer
+
+    q <- paste("SELECT count(s.id) as commits, d.name as name
+                    FROM scmlog s,
+                    people_upeople pup,
+                    ",identities_db,".domains d,
+                    ",identities_db,".upeople_domains upd
+                    WHERE pup.people_id = s.",rol,"_id AND
+                    pup.upeople_id  = upd.upeople_id and
+                    upd.domain_id = d.id and
+                    s.date >=", startdate, " and
+                    s.date < ", enddate, "
+                    GROUP BY d.name
+                    ORDER BY commits desc", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
 
 ##############
 # Micro Studies
