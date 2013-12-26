@@ -528,6 +528,76 @@ EvolIssuesChangers <- function(period, startdate, enddate, identities_db, type_a
     return(GetChangers(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
+###############
+# Lists of repositories, companies, countries and other analysis
+###############
+
+GetReposNameITS <- function(startdate, enddate) {
+    # List the url of each of the repositories analyzed
+    # Those are order by the number of opened issues (dec order)
+    q <- paste (" SELECT t.url as name
+                  FROM issues i, 
+                       trackers t
+                  WHERE i.tracker_id=t.id and
+                        i.submitted_on >= ", startdate, " and
+                        i.submitted_on < ", enddate, "
+                  GROUP BY t.url 
+                  ORDER BY count(distinct(i.id)) DESC ", sep="")
+    print(q)
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetCountriesNamesITS <- function (startdate, enddate, identities_db, closed_condition) {
+    # List each of the countries analyzed
+    # Those are order by number of closed issues
+    q <- paste("select cou.name
+                    from issues i, 
+                         changes ch,
+                         people_upeople pup,
+                         ", identities_db, ".upeople_countries upc,
+                         ", identities_db, ".countries cou
+                    where i.id = ch.issue_id and
+                          ch.changed_by = pup.people_id and
+                          pup.upeople_id = upc.upeople_id and
+                          upc.country_id = cou.id and
+                          ch.changed_on >= ", startdate, " and
+                          ch.changed_on < ", enddate," and
+                          ", closed_condition, "
+                          group by cou.name 
+                          order by count(distinct(i.id)) desc", sep="") 
+    print(q)
+    query <- new("Query", sql = q)
+    data <- run(query)      
+    return (data)             
+}
+
+GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condition) {
+    # list each of the companies analyzed
+    # those are order by number of closed issues
+        q <- paste("select c.name
+                    from issues i, 
+                         changes ch,
+                         people_upeople pup,
+                         ", identities_db, ".upeople_companies upc,
+                         ", identities_db, ".companies c
+                    where i.id = ch.issue_id and
+                          ch.changed_by = pup.people_id and
+                          pup.upeople_id = upc.upeople_id and
+                          upc.company_id = c.id and
+                          ch.changed_on >= ", startdate, " and
+                          ch.changed_on < ", enddate," and
+                          ", closed_condition, "
+                          group by c.name 
+                          order by count(distinct(i.id)) desc", sep="")
+    print(q)
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
 
 
 ################

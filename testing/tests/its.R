@@ -260,8 +260,30 @@ test.IssuesChangers.Evol.Month <- function(){
 }
 
 
-##############################
+#############################
+# Test lists of countries, companies and repositories
 
+test.GetReposNameITS <- function(){
+    print(GetReposNameITS("'2012-01-01'", "'2013-01-01'"))
+    expect_that(34, equals(nrow(GetReposNameITS("'2012-01-01'", "'2013-01-01'"))))
+}
+
+#Not available in current testing dataset
+#test.GetCountriesNamesITS <- function(){
+#    closed_condition = " (new_value='Fix Committed') "
+#    print(GetCountriesNamesITS("'2012-01-01'", "'2013-01-01'", conf$identities_db, closed_condition))
+#}
+
+test.GetCompaniesNameITS <- function(){
+    closed_condition = " (new_value='Fix Committed') "
+    print(GetCompaniesNameITS("'2012-01-01'", "'2013-01-01'", conf$identities_db, closed_condition))
+    expect_that(23, equals(nrow(GetCompaniesNameITS("'2012-01-01'", "'2013-01-01'", conf$identities_db, closed_condition))))
+}
+
+
+
+
+##############################
 # Test micro studies
 
 test.EvolBMIIndex.Month <- function(){
