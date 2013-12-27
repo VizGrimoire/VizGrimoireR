@@ -70,10 +70,11 @@ parser.add_argument("--ghpasswd",
                     help="GitHub password")
 parser.add_argument("--vgdir",
                     help="Directory with vigGrimoireR, vizGrimoireJS and vizGrimoireUtils directories")
+parser.add_argument("--verbose",
+                    help="Print out some messages about what's happening",
+                    action="store_true")
 
 args = parser.parse_args()
-
-print args.project
 
 dbPrefix = args.project.replace('/', '_').lower()
 if args.dir:
@@ -115,10 +116,12 @@ rConf = {"libdir": dir + "/rlib",
 conf = {"cvsanaly": cvsanalyConf,
         "bicho":    bichoConf}
 
-def RunMGTool (tool):
+def RunMGTool (tool, project):
     """Run MetricsGrimoire tool
 
     tool: cvsanaly | bicho
+    project: GitHub project, such as VizGrimoire/VizGrimoireR
+
     Uses information in global dictionary conf for deciding
     about options for the tool.
     """
@@ -130,7 +133,6 @@ def RunMGTool (tool):
     cursor.execute('CREATE DATABASE ' + dbname +
                    ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
     # Prepare options to run the tool
-    print conf[tool]
     opts = [conf[tool]["bin"]]
     opts.extend (conf[tool]["opts"])
     if args.user:
@@ -140,24 +142,26 @@ def RunMGTool (tool):
     opts.extend ([conf[tool]["db"], dbname])
     # Specific code for cvsanaly
     if tool == "cvsanaly":
-        gitdir = args.project.split('/', 1)[1]
-        call(["git", "clone", "https://github.com/" + args.project + ".git",
+        gitdir = project.split('/', 1)[1]
+        call(["git", "clone", "https://github.com/" + project + ".git",
               dir + '/' + gitdir])
         opts.append ("--extensions=" + "CommitsLOC")
         opts.append (dir + '/' + gitdir)
     if tool == "bicho":
         opts.extend (["--url",
-                     "https://api.github.com/repos/" + args.project + "/issues",
+                     "https://api.github.com/repos/" + project + "/issues",
                       "--backend-user", args.ghuser,
                       "--backend-password", args.ghpasswd])
-    print opts
+    if args.verbose:
+        print "Running MetricsGrimoire tool as:"
+        print " ".join(opts)
     # Run the tool
     call(opts)
     
 # Now, actually run MetricsGrimoire tools
 if not args.nomg:
     for tool in ["cvsanaly", "bicho"]:
-        RunMGTool (tool)
+        RunMGTool (tool, args.project)
 
 # Let's go on, now with vizGrimoire
 
