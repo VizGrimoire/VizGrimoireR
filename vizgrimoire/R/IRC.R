@@ -230,7 +230,6 @@ GetStaticPeopleIRC <- function(developer_id, startdate, enddate) {
 ###############
 # Last Activity
 ###############
-# The same as MLS.R lastActivity
 lastActivityIRC <- function(init_date, days) {
     #commits
     q <- paste("select count(distinct(id)) as sent_",days,"
@@ -253,7 +252,6 @@ lastActivityIRC <- function(init_date, days) {
 
     return(agg_data)
 }
-
 
 
 ##############
