@@ -173,6 +173,26 @@ if ('companies' %in% reports){
     }
 }
 
+
+if ('domains' %in% reports){
+    domains = domainsNames(identities_db, startdate, enddate)
+    createJSON(domains, paste(destdir,"/mls-domains.json",sep=''))
+
+    for (domain in domains){
+        print (domain)
+        domain_name = paste("'", domain, "'", sep="")
+        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("domain", domain_name)))
+        data <- completePeriodIds(data, conf$granularity, conf)
+        createJSON(data, paste(destdir,"/",domain,"-mls-evolutionary.json", sep=''))
+
+        top_senders = domainTopSenders (domain, identities_db, startdate, enddate)
+        createJSON(top_senders, paste(destdir,"/",domain,"-mls-top-senders.json", sep=''))
+
+        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("domain", domain_name)))
+        createJSON(data, paste(destdir,"/",domain,"-mls-static.json", sep=''))
+    }
+}
+
 if ('people' %in% reports){
     people = GetListPeopleMLS(startdate, enddate)
     people = people$id

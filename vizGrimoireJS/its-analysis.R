@@ -86,11 +86,15 @@ if (conf$backend == 'launchpad'){
     closed_condition <- "(new_value='Fix Committed')"
 }
 if (conf$backend == 'redmine'){
+    statuses = c("New", "Verified", "Need More Info", "In Progress", "Feedback",
+                 "Need Review", "Testing", "Pending Backport", "Pending Upstream",
+                 "Resolved", "Closed", "Rejected", "Won\\'t Fix", "Can\\'t reproduce",
+                 "Duplicate")
     closed_condition <- paste("(new_value='Resolved' OR new_value='Closed' OR new_value='Rejected'",
                               " OR new_value='Won\\'t Fix' OR new_value='Can\\'t reproduce' OR new_value='Duplicate')")
+    reopened_condition <- "new_value='Reopened'" # FIXME: fake condition
+    name_log_table <- 'issues_log_redmine'
 }
-
-
 
 # dates
 startdate <- conf$startdate
@@ -157,6 +161,10 @@ if ('repositories' %in% reports) {
     data = GetEvolReposITS(period, startdate, enddate)
     evol = merge(evol, data, all = TRUE)
 }
+if ('domains' %in% reports) {
+    info_data_domains = GetEvolDomainsITS(period, startdate, enddate, identities_db)
+    evol = merge(evol, info_data_domains, all = TRUE)
+}
 
 evol <- completePeriodIds(evol, conf$granularity, conf)
 evol[is.na(evol)] <- 0
@@ -172,6 +180,10 @@ if ('companies' %in% reports) {
 }
 if ('countries' %in% reports) {
     info_com = GetStaticCountriesITS (startdate, enddate, identities_db)
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
+if ('domains' %in% reports) {
+    info_com = GetStaticDomainsITS (startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 
@@ -306,7 +318,34 @@ if ('countries' %in% reports) {
         createJSON (data, paste(c(destdir,"/",country,"-its-static.json",sep=''), collapse=''))
     }    
 }
+# Domains
+if ('domains' %in% reports) {
+    domains <- GetDomainsNameITS(startdate, enddate, identities_db, closed_condition, c("-Bot"))
+    domains <- domains$name
+    createJSON(domains, paste(c(destdir,"/its-domains.json"), collapse=''))
 
+    for (domain in domains){
+        domain_name = paste(c("'", domain, "'"), collapse='')
+        domain_aux = paste(c("", domain, ""), collapse='')
+        print (domain_name)
+
+        closed <- GetDomainEvolClosed(domain_name, closed_condition, period, startdate, enddate, identities_db)
+        changed <- GetDomainEvolChanged(domain_name, period, startdate, enddate, identities_db)
+        opened <- GetDomainEvolOpened(domain_name, period, startdate, enddate, identities_db)
+        evol = merge(closed, changed, all = TRUE)
+        evol = merge(evol, opened, all = TRUE)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        evol <- evol[order(evol$id),]
+        createJSON(evol, paste(c(destdir,"/",domain_aux,"-its-evolutionary.json"), collapse=''))
+
+        static_info <- GetDomainStaticITS(domain_name, closed_condition, startdate, enddate, identities_db)
+        createJSON(static_info, paste(c(destdir,"/",domain_aux,"-its-static.json"), collapse=''))
+
+        top_closers <- GetDomainTopClosers(domain_name, startdate, enddate, identities_db)
+        createJSON(top_closers, paste(c(destdir,"/",domain_aux,"-its-top-closers.json"), collapse=''))
+    }
+}
 # People
 if ('people' %in% reports) {
     people  <- GetPeopleListITS(conf$startdate, conf$enddate)
