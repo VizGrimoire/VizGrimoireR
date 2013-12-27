@@ -54,6 +54,44 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 # BOTS filtered
 bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 
+#############
+# STATIC DATA
+#############
+
+# Last Activity
+lastest_activity.7 <- lastActivityIRC(conf$enddate, 7)
+lastest_activity.30 <- lastActivityIRC(conf$enddate, 30)
+lastest_activity.365 <- lastActivityIRC(conf$enddate, 365)
+
+# Tendencies
+diffsent.365 = GetIRCDiffSentDays(period, conf$enddate, 365)
+diffsenders.365 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 365)
+diffsent.30 = GetIRCDiffSentDays(period, conf$enddate, 30)
+diffsenders.30 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 30)
+diffsent.7 = GetIRCDiffSentDays(period, conf$enddate, 7)
+diffsenders.7 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 7)
+
+static.data = GetStaticDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
+static.data = merge(static.data, lastest_activity.365)
+static.data = merge(static.data, lastest_activity.30)
+static.data = merge(static.data, lastest_activity.7)
+static.data = merge(static.data, diffsent.365)
+static.data = merge(static.data, diffsent.30)
+static.data = merge(static.data, diffsent.7)
+static.data = merge(static.data, diffsenders.365)
+static.data = merge(static.data, diffsenders.30)
+static.data = merge(static.data, diffsenders.7)
+
+createJSON (static.data, paste(destdir,"/irc-static.json", sep=''))
+
+###################
+# EVOLUTIONARY DATA
+###################
+
+evol_data = GetEvolDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
+evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
+
 ###################
 # PEOPLE
 ###################
@@ -104,21 +142,3 @@ top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, c
 top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, conf$identities_db, bots)
 top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, conf$identities_db, bots)
 createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))
-
-#############
-# STATIC DATA
-#############
-
-static_data = GetStaticDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
-createJSON (static_data, paste(destdir,"/irc-static.json", sep=''))
-
-###################
-# EVOLUTIONARY DATA
-###################
-
-evol_data = GetEvolDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
-evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
-createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
-
-
-
