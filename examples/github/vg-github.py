@@ -39,6 +39,8 @@ import os
 import shutil
 import errno
 from subprocess import call
+import urllib2
+import json
 
 # Parse command line options
 parser = argparse.ArgumentParser(description="""
@@ -50,8 +52,11 @@ refrains to do so if they already exist (projectname will have
 It assumes MetricsGrimoire tools are already installed.
 If you don't know how to install them, look at
 misc/metricsgrimoire-setup.py""")
-parser.add_argument("project",
-                    help="GitHub project name")
+parser.add_argument("name",
+                    help="GitHub project or user (if --isuser) name")
+parser.add_argument("--isuser",
+                    help="Name is the user who owns projects to analyze",
+                    action="store_true")
 parser.add_argument("--user",
                     help="MySQL user name")
 parser.add_argument("--passwd",
@@ -76,7 +81,10 @@ parser.add_argument("--verbose",
 
 args = parser.parse_args()
 
-dbPrefix = args.project.replace('/', '_').lower()
+if not args.isuser:
+    dbPrefix = args.name.replace('/', '_').lower()
+else:
+    dbPrefix = args.name.lower()
 if args.dir:
     dir = args.dir
 else:
@@ -116,7 +124,7 @@ rConf = {"libdir": dir + "/rlib",
 conf = {"cvsanaly": cvsanalyConf,
         "bicho":    bichoConf}
 
-def PrepareMGDB (tool, dbname):
+def prepare_db (tool, dbname):
     """Prepare MetricsGrimoire database
 
     tool: cvsanaly | bicho
@@ -132,7 +140,21 @@ def PrepareMGDB (tool, dbname):
     cursor.execute('CREATE DATABASE ' + dbname +
                    ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
 
-def RunMGTool (tool, project, dbname):
+def find_repos (user):
+    """Find the repos for a user.
+
+    - user: GitHub user
+
+    """
+
+    repos_url = 'https://api.github.com/users/' + user + '/repos'
+    res = urllib2.urlopen(repos_url)
+    repos_json = res.read()
+    repos = json.loads(repos_json)
+    repo_names = [repo['full_name'] for repo in repos]
+    return (repo_names)
+
+def run_tool (tool, project, dbname):
     """Run MetricsGrimoire tool
 
     tool: cvsanaly | bicho
@@ -171,13 +193,25 @@ def RunMGTool (tool, project, dbname):
         print " ".join(opts)
     # Run the tool
     call(opts)
-    
-# Now, actually run MetricsGrimoire tools
+
+
+# Now, if there is no --nomg flag, run MetricsGrimoire tools
+# If it is for a github user, get all the projects under the user name,
+# and run tools on each of the.
+# If it is for a single project, just run the tools on it
 if not args.nomg:
+    # Prepare databases
     for tool in ["cvsanaly", "bicho"]:
         dbname = dbPrefix + "_" + tool
-        PrepareMGDB (tool, dbname)
-        RunMGTool (tool, args.project, dbname)
+        prepare_db (tool, dbname)
+    if args.isuser:
+        repos = find_repos (args.name)
+    for tool in ["cvsanaly", "bicho"]:
+        if args.isuser:
+            for repo in repos:
+                run_tool (tool, repo, dbname)
+        else:
+            run_tool (tool, args.name, dbname)
 
 # Let's go on, now with vizGrimoire
 
