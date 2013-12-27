@@ -167,7 +167,6 @@ def RunMGTool (tool, project, dbname):
                       "--backend-user", args.ghuser,
                       "--backend-password", args.ghpasswd])
     print "Running MetricsGrimoire tool (" + tool + ")" 
-    print " ".join(opts)
     if args.verbose:
         print " ".join(opts)
     # Run the tool
