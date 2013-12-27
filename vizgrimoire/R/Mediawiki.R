@@ -218,3 +218,73 @@ GetStaticPeopleMediaWiki <- function(developer_id, startdate, enddate) {
     data <- run(query)
     return (data)
 }
+
+
+###############
+# Last Activity
+###############
+lastActivityMediaWiki <- function(init_date, days) {
+    #commits
+    q <- paste("select count(wiki_pages_revs.id) as reviews_",days,"
+                from wiki_pages_revs
+                where date >= (", init_date, " - INTERVAL ",days," day)",
+            sep="")
+
+    query <- new("Query", sql = q)
+    data1 = run(query)
+    q <- paste("select count(distinct(pup.upeople_id)) as authors_",days,"
+                from wiki_pages_revs, people_upeople pup
+                where pup.people_id = user  and
+                  date >= (", init_date, " - INTERVAL ",days," day)",
+            sep="")
+
+    query <- new("Query", sql = q)
+    data2 = run(query)
+
+    agg_data = merge(data1, data2)
+
+    return(agg_data)
+}
+
+##############
+# Microstudies
+##############
+
+GetMediaWikiDiffReviewsDays <- function(period, init_date, days){
+    # This function provides the percentage in activity between two periods.
+    #
+    # The netvalue indicates if this is an increment (positive value) or decrement (negative value)
+
+    chardates = GetDates(init_date, days)
+    lastreviews = StaticNumReviewsMediaWiki(period, chardates[2], chardates[1])
+    lastreviews = as.numeric(lastreviews[1])
+    prevreviews = StaticNumReviewsMediaWiki(period, chardates[3], chardates[2])
+    prevreviews = as.numeric(prevreviews[1])
+    diffreviewsdays = data.frame(diff_netreviews = numeric(1), percentage_reviews = numeric(1))
+
+    diffreviewsdays$diff_netreviews = lastreviews - prevreviews
+    diffreviewsdays$percentage_reviews = GetPercentageDiff(prevreviews, lastreviews)
+
+    colnames(diffreviewsdays) <- c(paste("diff_netreviews","_",days, sep=""), paste("percentage_reviews","_",days, sep=""))
+
+    return (diffreviewsdays)
+}
+
+
+GetMediaWikiDiffAuthorsDays <- function(period, init_date, identities_db=NA, days){
+    # This function provides the percentage in activity between two periods:
+    # Fixme: equal to GetDiffAuthorsDays
+
+    chardates = GetDates(init_date, days)
+    lastauthors = StaticNumAuthorsMediaWiki(period, chardates[2], chardates[1], identities_db)
+    lastauthors = as.numeric(lastauthors[1])
+    prevauthors = StaticNumAuthorsMediaWiki(period, chardates[3], chardates[2], identities_db)
+    prevauthors = as.numeric(prevauthors[1])
+    diffauthorsdays = data.frame(diff_netauthors = numeric(1), percentage_authors = numeric(1))
+    diffauthorsdays$diff_netauthors = lastauthors - prevauthors
+    diffauthorsdays$percentage_authors = GetPercentageDiff(prevauthors, lastauthors)
+
+    colnames(diffauthorsdays) <- c(paste("diff_netauthors","_",days, sep=""), paste("percentage_authors","_",days, sep=""))
+
+    return (diffauthorsdays)
+}
