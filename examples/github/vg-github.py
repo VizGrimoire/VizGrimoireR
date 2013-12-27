@@ -116,22 +116,33 @@ rConf = {"libdir": dir + "/rlib",
 conf = {"cvsanaly": cvsanalyConf,
         "bicho":    bichoConf}
 
-def RunMGTool (tool, project):
+def PrepareMGDB (tool, dbname):
+    """Prepare MetricsGrimoire database
+
+    tool: cvsanaly | bicho
+    dbname: name of the database
+
+    Prepares (and deletes, if args.removedb was specified) the database
+    for a MetricsGrimoire tool.
+    This is usually run once per tool, just before the calls to run the tools
+    """
+
+    if args.removedb:
+        cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
+    cursor.execute('CREATE DATABASE ' + dbname +
+                   ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+
+def RunMGTool (tool, project, dbname):
     """Run MetricsGrimoire tool
 
     tool: cvsanaly | bicho
     project: GitHub project, such as VizGrimoire/VizGrimoireR
+    dbname: name of the database
 
     Uses information in global dictionary conf for deciding
     about options for the tool.
     """
 
-    # Create (and maybe remove) the database
-    dbname = dbPrefix + "_" + tool
-    if args.removedb:
-        cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
-    cursor.execute('CREATE DATABASE ' + dbname +
-                   ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
     # Prepare options to run the tool
     opts = [conf[tool]["bin"]]
     opts.extend (conf[tool]["opts"])
@@ -140,20 +151,24 @@ def RunMGTool (tool, project):
     if args.passwd:
         opts.extend ([conf[tool]["dbpasswd"], args.passwd])
     opts.extend ([conf[tool]["db"], dbname])
-    # Specific code for cvsanaly
+    # Specific code for runnint cvsanaly
     if tool == "cvsanaly":
         gitdir = project.split('/', 1)[1]
         call(["git", "clone", "https://github.com/" + project + ".git",
               dir + '/' + gitdir])
         opts.append ("--extensions=" + "CommitsLOC")
         opts.append (dir + '/' + gitdir)
+        if not args.verbose:
+             opts.append ("--quiet")
+    # Specific code for running bicho
     if tool == "bicho":
         opts.extend (["--url",
                      "https://api.github.com/repos/" + project + "/issues",
                       "--backend-user", args.ghuser,
                       "--backend-password", args.ghpasswd])
+    print "Running MetricsGrimoire tool (" + tool + ")" 
+    print " ".join(opts)
     if args.verbose:
-        print "Running MetricsGrimoire tool as:"
         print " ".join(opts)
     # Run the tool
     call(opts)
@@ -161,7 +176,9 @@ def RunMGTool (tool, project):
 # Now, actually run MetricsGrimoire tools
 if not args.nomg:
     for tool in ["cvsanaly", "bicho"]:
-        RunMGTool (tool, args.project)
+        dbname = dbPrefix + "_" + tool
+        PrepareMGDB (tool, dbname)
+        RunMGTool (tool, args.project, dbname)
 
 # Let's go on, now with vizGrimoire
 
