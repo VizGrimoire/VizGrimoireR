@@ -45,8 +45,8 @@ import json
 # Parse command line options
 parser = argparse.ArgumentParser(description="""
 Simple script to retrieve data from GitHub repositories about a project.
-It creates MySQL databases named projectname_cvsanaly, projectname_bicho,
-projectname_mls (assummes permission to create databases), but
+It creates MySQL databases named projectname_cvsanaly, projectname_bicho
+(assummes permission to create databases), but
 refrains to do so if they already exist (projectname will have
 / changed to _).
 It assumes MetricsGrimoire tools are already installed.
