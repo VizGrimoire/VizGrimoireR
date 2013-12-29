@@ -158,7 +158,7 @@ def find_repos (user):
     repo_names = [repo['full_name'] for repo in repos]
     return (repo_names)
 
-def run_tool (tool, project, dbname):
+def run_mgtool (tool, project, dbname):
     """Run MetricsGrimoire tool
 
     tool: cvsanaly | bicho
@@ -214,24 +214,36 @@ if not args.nomg:
         dbname = dbPrefix + "_" + tool
         if args.isuser:
             for repo in repos:
-                run_tool (tool, repo, dbname)
+                run_mgtool (tool, repo, dbname)
         else:
-            run_tool (tool, args.name, dbname)
+            run_mgtool (tool, args.name, dbname)
 
 # Let's go on, now with vizGrimoire
 
-# Install the appropriate vizgrimorer R package in a specific location
-# to be used later (just in case it is not installed in standard R librdirs)
-try:
-    os.makedirs(rConf["libdir"])
-except OSError as e:
-    if e.errno == errno.EEXIST and os.path.isdir(rConf["libdir"]):
-        pass
-    else: 
-        raise
-env = os.environ.copy()
-env ["R_LIBS"] = rConf["libdir"]
-call (["R", "CMD", "INSTALL", rConf["vgrpkg"]], env=env)
+def install_vizgrimoirer (libdir, vizgrimoirer_pkgdir):
+    """Install the appropriate vizgrimorer R package in a specific location
+
+    - libdir: directory to install R libraries
+    - vizgrimoirer_pkgdir: directory with the source code for the
+        VizGrimoireR R package
+
+    Installing the package is to ensure it is properly installed,
+    even if it is not available from the standard R librdirs,
+    or the version there is not the right one.
+
+    """
+    try:
+        os.makedirs()
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(libdir):
+            pass
+        else: 
+            raise
+    env = os.environ.copy()
+    env ["R_LIBS"] = libdir
+    call (["R", "CMD", "INSTALL", vizgrimoirer_pkgdir], env=env)
+
+install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
 
 # Run unique identities stuff
 call ([rConf["unifypeople"], "-d", dbPrefix + "_" + "cvsanaly",
