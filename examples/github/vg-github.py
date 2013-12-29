@@ -86,15 +86,18 @@ args = parser.parse_args()
 if args.dbprefix:
     dbPrefix = args.dbprefix.lower()
 elif not args.isuser:
-    dbPrefix = args.name.replace('/', '_').lower()
+    dbPrefix = args.name.replace('/', '_').replace('-','_').lower()
 else:
-    dbPrefix = args.name.lower()
+    dbPrefix = args.name.replace('-','_').lower()
 if args.dir:
     dir = args.dir
 else:
     dir = "/tmp"
+
+# Root directory for the dashboard
+dashboarddir = dir + "/dashboard"
 # JSON directory for browser
-JSONdir = dir + "/data/json"
+JSONdir = dashboarddir + "/data/json"
 
 # Open database connection and get a cursor
 con = MySQLdb.connect(host='localhost', user=args.user, passwd=args.passwd) 
@@ -310,9 +313,10 @@ ghBrowserfiles = ["index.html",
 ghJSONfiles = ["config.json"]
 
 for file in vgjsFiles:
-    shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dir)
+    shutil.copy(args.vgdir + "/VizGrimoireJS/" + file, dashboarddir)
 for file in ghBrowserfiles:
-    shutil.copy(args.vgdir + "/VizGrimoireR/examples/github/" + file, dir)
+    shutil.copy(args.vgdir + "/VizGrimoireR/examples/github/" + file,
+                dashboarddir)
 for file in ghJSONfiles:
     shutil.copy(args.vgdir + "/VizGrimoireR/examples/github/" + file, JSONdir)
 
