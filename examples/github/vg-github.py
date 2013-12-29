@@ -57,6 +57,8 @@ parser.add_argument("name",
 parser.add_argument("--isuser",
                     help="Name is the user who owns projects to analyze",
                     action="store_true")
+parser.add_argument("--dbprefix",
+                    help="Prefix for MySQL database (default: name argument)")
 parser.add_argument("--user",
                     help="MySQL user name")
 parser.add_argument("--passwd",
@@ -81,7 +83,9 @@ parser.add_argument("--verbose",
 
 args = parser.parse_args()
 
-if not args.isuser:
+if args.dbprefix:
+    dbPrefix = args.dbprefix.lower()
+elif not args.isuser:
     dbPrefix = args.name.replace('/', '_').lower()
 else:
     dbPrefix = args.name.lower()
@@ -137,7 +141,7 @@ def prepare_db (tool, dbname):
 
     if args.removedb:
         cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
-    cursor.execute('CREATE DATABASE ' + dbname +
+    cursor.execute('CREATE DATABASE IF NOT EXISTS ' + dbname +
                    ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
 
 def find_repos (user):
@@ -207,6 +211,7 @@ if not args.nomg:
     if args.isuser:
         repos = find_repos (args.name)
     for tool in ["cvsanaly", "bicho"]:
+        dbname = dbPrefix + "_" + tool
         if args.isuser:
             for repo in repos:
                 run_tool (tool, repo, dbname)
@@ -254,18 +259,24 @@ except OSError as e:
 # Run the SCM (git) analysis script (ensure installed vizgrimoirer package
 # is in R lib path)
 os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
-call ([rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
+scm_call = [rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
        "-u", args.user, "-p", args.passwd,
        "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
-       "--destination", JSONdir])
+       "--destination", JSONdir]
+if not args.verbose:
+    print " ".join (scm_call)
+call (scm_call)
 
 # Run the ITS (tickets) analysis script (ensure installed vizgrimoirer package
 # is in R lib path)
 os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
-call ([rConf["its-analysis"], "-d", dbPrefix + "_" + "bicho",
+its_call = [rConf["its-analysis"], "-d", dbPrefix + "_" + "bicho",
        "-u", args.user, "-p", args.passwd,
        "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
-       "--destination", JSONdir])
+       "--destination", JSONdir]
+if not args.verbose:
+    print " ".join (its_call)
+call (its_call)
 
 # Now, let's produce an HTML dashboard for the JSON files produced in the
 # previous step
