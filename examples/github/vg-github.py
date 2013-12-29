@@ -233,7 +233,7 @@ def install_vizgrimoirer (libdir, vizgrimoirer_pkgdir):
 
     """
     try:
-        os.makedirs()
+        os.makedirs(libdir)
     except OSError as e:
         if e.errno == errno.EEXIST and os.path.isdir(libdir):
             pass
