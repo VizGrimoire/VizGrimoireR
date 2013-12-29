@@ -75,7 +75,8 @@ args = parser.parse_args()
 
 print args.project
 
-dbPrefix = args.project.replace('/', '_').lower()
+dbPrefix = args.project.replace('/', '_')
+dbPrefix = dbPrefix.replace('-', '_').lower()
 if args.dir:
     dir = args.dir
 else:
