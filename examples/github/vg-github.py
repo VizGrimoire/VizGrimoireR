@@ -285,6 +285,7 @@ def affiliation (dbprefix):
 
 unique_ids (dbPrefix)
 affiliation (dbPrefix)
+
 install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
 
 # Create the JSON data directory for the browser
@@ -297,27 +298,35 @@ except OSError as e:
     else: 
         raise
 
-# Run the SCM (git) analysis script (ensure installed vizgrimoirer package
-# is in R lib path)
-os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
-scm_call = [rConf["scm-analysis"], "-d", dbPrefix + "_" + "cvsanaly",
-       "-u", args.user, "-p", args.passwd,
-       "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
-       "--destination", JSONdir]
-if not args.verbose:
-    print " ".join (scm_call)
-call (scm_call)
+def run_analysis (scripts, base_dbs, id_dbs, outdir):
+    """Run analysis scripts
 
-# Run the ITS (tickets) analysis script (ensure installed vizgrimoirer package
-# is in R lib path)
-os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
-its_call = [rConf["its-analysis"], "-d", dbPrefix + "_" + "bicho",
-       "-u", args.user, "-p", args.passwd,
-       "-i", dbPrefix + "_" + "cvsanaly", "--granularity", "weeks",
-       "--destination", JSONdir]
-if not args.verbose:
-    print " ".join (its_call)
-call (its_call)
+    - scripts: scripts to run (list)
+    - base_dbs: base database for each script (list)
+    - id_dbs: identities database for each script (list)
+    - outdir: directory to write output (JSON) files
+
+    The vizgrimoirer R package has to be installed in the R path
+    (run install_vizgrimoirer in case of doubt)
+
+    """
+
+    os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
+    for script, base_db, id_db in zip (scripts, base_dbs, id_dbs):
+        call_list = [script, "-d", base_db,
+                     "-u", args.user, "-p", args.passwd,
+                     "-i", id_db,
+                     "--granularity", "weeks",
+                     "--destination", outdir]
+        if args.verbose:
+            print " ".join (call_list)
+        call (call_list)
+
+
+run_analysis ([rConf["scm-analysis"], rConf["its-analysis"]],
+              [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "bicho"],
+              [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "cvsanaly"],
+              JSONdir)
 
 # Now, let's produce an HTML dashboard for the JSON files produced in the
 # previous step
