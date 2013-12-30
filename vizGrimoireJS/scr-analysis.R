@@ -102,7 +102,6 @@ reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, con
 # For pending we need all data so accumulation is right
 data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-# It only works with gerrit dbs with new, merged, abandoned info in changes.
 data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 #Patches info
