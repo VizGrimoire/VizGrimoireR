@@ -214,6 +214,25 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
     return (data)
 }
 
+# Reviews status using changes table
+GetReviewsChanges<- function(period, startdate, enddate, type, evolutionary){
+    fields = paste("count(issue_id) as ", type, "_changes", sep = "")
+    tables = "changes"
+    filters = paste("new_value='",type,"'",sep="")
+
+    #Adding dates filters (and evolutionary or static analysis)
+    if (evolutionary){
+        q <- GetSQLPeriod(period, " changed_on", fields, tables, filters,
+                            startdate, enddate)
+    } else {
+        q = GetSQLGlobal(" changed_on ", fields, tables, filters, startdate, enddate)
+    }
+
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
 # EVOLUTIONARY META FUNCTIONS BASED ON REVIEWS
 
 EvolReviewsSubmitted <- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
@@ -240,7 +259,7 @@ GetEvolChanges<- function(period, startdate, enddate, value) {
 }
 
 EvolReviewsNewChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    return (GetEvolChanges(period, startdate, enddate, "new"))
+    return (GetReviewsChanges(period, startdate, enddate, "new", TRUE))
 }
 
 EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
@@ -256,7 +275,7 @@ EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA
 }
 
 EvolReviewsMergedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    return (GetEvolChanges(period, startdate, enddate, "merged"))
+    return (GetReviewsChanges(period, startdate, enddate, "merged", TRUE))
 }
 
 EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
@@ -264,7 +283,7 @@ EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list
 }
 
 EvolReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    return (GetEvolChanges(period, startdate, enddate, "abandoned"))
+    return (GetReviewsChanges(period, startdate, enddate, "abandoned", TRUE))
 }
 
 # PENDING = NEW - MERGED - ABANDONED
@@ -298,6 +317,10 @@ StaticReviewsNew<- function(period, startdate, enddate, type_analysis = list(NA,
     return (GetReviews(period, startdate, enddate, "new", type_analysis, FALSE, identities_db))
 }
 
+StaticReviewsNewChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviewsChanges(period, startdate, enddate, "new", FALSE))
+}
+
 StaticReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, FALSE, identities_db))
 }
@@ -310,9 +333,25 @@ StaticReviewsMerged<- function(period, startdate, enddate, type_analysis = list(
     return (GetReviews(period, startdate, enddate, "merged", type_analysis, FALSE, identities_db))
 }
 
+StaticReviewsMergedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviewsChanges(period, startdate, enddate, "merged", FALSE))
+}
+
 StaticReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, FALSE, identities_db))
 }
+
+StaticReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (GetReviewsChanges(period, startdate, enddate, "abandoned", FALSE))
+}
+
+# PENDING = NEW - MERGED - ABANDONED
+StaticReviewsPending<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    return (StaticReviewsNewChanges(period, startdate, enddate, type_analysis, identities_db) -
+            StaticReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db) -
+            StaticReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db))
+}
+
 
 #WORK ON PATCHES: ANY REVIEW MAY HAVE MORE THAN ONE PATCH
 GetEvaluations <- function(period, startdate, enddate, type, type_analysis, evolutionary){
@@ -724,3 +763,80 @@ StaticTimeToReviewSCR <- function(startdate, enddate) {
     return (data)
 }
 
+##############
+# Microstudies
+##############
+
+GetSCRDiffSubmittedDays <- function(period, init_date, days,
+        identities_db=NA, type_analysis = list(NA, NA)) {
+    chardates = GetDates(init_date, days)
+    lastsubmitted = StaticReviewsSubmitted(period, chardates[2], chardates[1])
+    lastsubmitted = as.numeric(lastsubmitted[1])
+    prevsubmitted = StaticReviewsSubmitted(period, chardates[3], chardates[2])
+    prevsubmitted = as.numeric(prevsubmitted[1])
+    diffsubmitteddays = data.frame(diff_netsubmitted = numeric(1), percentage_submitted = numeric(1))
+
+    diffsubmitteddays$diff_netsubmitted = lastsubmitted - prevsubmitted
+    diffsubmitteddays$percentage_submitted = GetPercentageDiff(prevsubmitted, lastsubmitted)
+    diffsubmitteddays$lastsubmitted = lastsubmitted
+
+    colnames(diffsubmitteddays) <- c(paste("diff_netsubmitted","_",days, sep=""),
+            paste("percentage_submitted","_",days, sep=""),
+            paste("submitted","_",days, sep=""))
+    return (diffsubmitteddays)
+}
+
+
+GetSCRDiffMergedDays <- function(period, init_date, days,
+        identities_db=NA, type_analysis = list(NA, NA)) {
+    chardates = GetDates(init_date, days)
+    lastmerged = StaticReviewsMerged(period, chardates[2], chardates[1], type_analysis, identities_db)
+    lastmerged = as.numeric(lastmerged[1])
+    prevmerged = StaticReviewsMerged(period, chardates[3], chardates[2], type_analysis, identities_db)
+    prevmerged = as.numeric(prevmerged[1])
+    diffmergeddays = data.frame(diff_netmerged = numeric(1), percentage_merged = numeric(1))
+    diffmergeddays$diff_netmerged = lastmerged - prevmerged
+    diffmergeddays$percentage_merged = GetPercentageDiff(prevmerged, lastmerged)
+    diffmergeddays$lastmerged = lastmerged
+
+    colnames(diffmergeddays) <- c(paste("diff_netmerged","_",days, sep=""),
+            paste("percentage_merged","_",days, sep=""),
+            paste("merged","_",days, sep=""))
+    return (diffmergeddays)
+}
+
+GetSCRDiffAbandonedDays <- function(period, init_date, days,
+        identities_db=NA, type_analysis = list(NA, NA)) {
+    chardates = GetDates(init_date, days)
+    lastabandoned = StaticReviewsAbandoned(period, chardates[2], chardates[1], type_analysis, identities_db)
+    lastabandoned = as.numeric(lastabandoned[1])
+    prevabandoned = StaticReviewsAbandoned(period, chardates[3], chardates[2], type_analysis, identities_db)
+    prevabandoned = as.numeric(prevabandoned[1])
+    diffabandoneddays = data.frame(diff_netabandoned = numeric(1), percentage_abandoned = numeric(1))
+    diffabandoneddays$diff_netabandoned = lastabandoned - prevabandoned
+    diffabandoneddays$percentage_abandoned = GetPercentageDiff(prevabandoned, lastabandoned)
+    diffabandoneddays$lastabandoned = lastabandoned
+
+    colnames(diffabandoneddays) <- c(paste("diff_netabandoned","_",days, sep=""),
+            paste("percentage_abandoned","_",days, sep=""),
+            paste("abandoned","_",days, sep=""))
+    return (diffabandoneddays)
+}
+
+GetSCRDiffPendingDays <- function(period, init_date, days,
+        identities_db=NA, type_analysis = list(NA, NA)) {
+    chardates = GetDates(init_date, days)
+    lastpending = StaticReviewsPending(period, chardates[2], chardates[1], list(NA, NA), identities_db)
+    lastpending = as.numeric(lastpending[1])
+    prevpending = StaticReviewsPending(period, chardates[3], chardates[2], list(NA, NA), identities_db)
+    prevpending = as.numeric(prevpending[1])
+    diffpendingdays = data.frame(diff_netpending = numeric(1), percentage_pending = numeric(1))
+    diffpendingdays$diff_netpending = lastpending - prevpending
+    diffpendingdays$percentage_pending = GetPercentageDiff(prevpending, lastpending)
+    diffpendingdays$lastpending = lastpending
+
+    colnames(diffpendingdays) <- c(paste("diff_netpending","_",days, sep=""),
+            paste("percentage_pending","_",days, sep=""),
+            paste("pending","_",days, sep=""))
+    return (diffpendingdays)
+}

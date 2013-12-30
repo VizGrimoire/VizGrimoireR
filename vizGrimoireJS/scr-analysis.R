@@ -151,6 +151,34 @@ reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, c
 # print(reviews.static)
 # Time to Review info
 reviews.static = merge(reviews.static, StaticTimeToReviewSCR(conf$startdate, conf$enddate))
+
+# Tendencies
+diffsubmitted.365 = GetSCRDiffSubmittedDays(period, conf$enddate, 365, conf$identities_db)
+diffmerged.365 = GetSCRDiffMergedDays(period, conf$enddate, 365, conf$identities_db)
+diffpending.365 = GetSCRDiffPendingDays(period, conf$enddate, 365, conf$identities_db)
+diffabandoned.365 = GetSCRDiffAbandonedDays(period, conf$enddate, 365, conf$identities_db)
+diffsubmitted.30 = GetSCRDiffSubmittedDays(period, conf$enddate, 30, conf$identities_db)
+diffmerged.30 = GetSCRDiffMergedDays(period, conf$enddate, 30, conf$identities_db)
+diffpending.30 = GetSCRDiffPendingDays(period, conf$enddate, 30, conf$identities_db)
+diffabandoned.30 = GetSCRDiffAbandonedDays(period, conf$enddate, 30, conf$identities_db)
+diffsubmitted.7 = GetSCRDiffSubmittedDays(period, conf$enddate, 7, conf$identities_db)
+diffmerged.7 = GetSCRDiffMergedDays(period, conf$enddate, 7, conf$identities_db)
+diffpending.7 = GetSCRDiffPendingDays(period, conf$enddate, 7, conf$identities_db)
+diffabandoned.7 = GetSCRDiffAbandonedDays(period, conf$enddate, 7, conf$identities_db)
+reviews.static = merge(reviews.static,diffsubmitted.365)
+reviews.static = merge(reviews.static,diffsubmitted.30)
+reviews.static = merge(reviews.static,diffsubmitted.7)
+reviews.static = merge(reviews.static,diffpending.365)
+reviews.static = merge(reviews.static,diffpending.30)
+reviews.static = merge(reviews.static,diffpending.7)
+reviews.static = merge(reviews.static,diffmerged.365)
+reviews.static = merge(reviews.static,diffmerged.30)
+reviews.static = merge(reviews.static,diffmerged.7)
+reviews.static = merge(reviews.static,diffabandoned.365)
+reviews.static = merge(reviews.static,diffabandoned.30)
+reviews.static = merge(reviews.static,diffabandoned.7)
+
+
 # Create JSON
 createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
 
