@@ -264,8 +264,11 @@ GetMediaWikiDiffReviewsDays <- function(period, init_date, days){
 
     diffreviewsdays$diff_netreviews = lastreviews - prevreviews
     diffreviewsdays$percentage_reviews = GetPercentageDiff(prevreviews, lastreviews)
+    diffreviewsdays$lastreviews = lastreviews
 
-    colnames(diffreviewsdays) <- c(paste("diff_netreviews","_",days, sep=""), paste("percentage_reviews","_",days, sep=""))
+    colnames(diffreviewsdays) <- c(paste("diff_netreviews","_",days, sep=""), 
+                                   paste("percentage_reviews","_",days, sep=""),
+                                   paste("reviews","_",days, sep=""))
 
     return (diffreviewsdays)
 }
@@ -283,8 +286,11 @@ GetMediaWikiDiffAuthorsDays <- function(period, init_date, identities_db=NA, day
     diffauthorsdays = data.frame(diff_netauthors = numeric(1), percentage_authors = numeric(1))
     diffauthorsdays$diff_netauthors = lastauthors - prevauthors
     diffauthorsdays$percentage_authors = GetPercentageDiff(prevauthors, lastauthors)
+    diffauthorsdays$lastauthors = lastauthors
 
-    colnames(diffauthorsdays) <- c(paste("diff_netauthors","_",days, sep=""), paste("percentage_authors","_",days, sep=""))
+    colnames(diffauthorsdays) <- c(paste("diff_netauthors","_",days, sep=""), 
+                                   paste("percentage_authors","_",days, sep=""),
+                                   paste("authors","_",days, sep=""))
 
     return (diffauthorsdays)
 }
