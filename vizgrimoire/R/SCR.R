@@ -296,8 +296,13 @@ EvolReviewsPendingChanges<- function(period, startdate, enddate, config = conf, 
     data2 <- completePeriodIds(data2, conf$granularity, conf)
     pending = merge(data, data1, all=TRUE)
     pending = merge(pending, data2, all=TRUE)
+
+    if (is.null(pending$merged_changes)) {return(pending)}
     pending$merged_changes = -pending$merged_changes
+    if (is.null(pending$abandoned_changes)) {return(pending)}
     pending$abandoned_changes = -pending$abandoned_changes
+    if (is.null(pending$new_changes)) {return(pending)}
+
     sum <- rowSums(subset(pending, select = c("new_changes","merged_changes","abandoned_changes")))
     pending <- data.frame(month=pending$month, pending=sum)
     return (pending)

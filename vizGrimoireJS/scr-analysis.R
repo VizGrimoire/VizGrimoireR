@@ -93,8 +93,8 @@ reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, con
 data = EvolReviewsAbandonedChanges(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # It only works with gerrit dbs with new, merged, abandoned info in changes.
-# data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
-# reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 #Patches info
 data = EvolPatchesVerified(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -135,7 +135,7 @@ reviews.static = merge(reviews.static, StaticReviewsInProgress(period, conf$star
 reviews.static = merge(reviews.static, StaticReviewsClosed(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsMerged(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate))
-# print(reviews.static)
+reviews.static = merge(reviews.static, StaticReviewsPending(period, conf$startdate, conf$enddate))
 #Patches info
 reviews.static = merge(reviews.static, StaticPatchesVerified(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticPatchesApproved(period, conf$startdate, conf$enddate))
@@ -148,7 +148,6 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 # print(reviews.static)
 #Reviewers info
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
-# print(reviews.static)
 # Time to Review info
 reviews.static = merge(reviews.static, StaticTimeToReviewSCR(conf$startdate, conf$enddate))
 
