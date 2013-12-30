@@ -164,9 +164,9 @@ def find_repos (user):
 def run_mgtool (tool, project, dbname):
     """Run MetricsGrimoire tool
 
-    tool: cvsanaly | bicho
-    project: GitHub project, such as VizGrimoire/VizGrimoireR
-    dbname: name of the database
+    - tool: cvsanaly | bicho
+    - project: GitHub project, such as VizGrimoire/VizGrimoireR
+    - dbname: name of the database
 
     Uses information in global dictionary conf for deciding
     about options for the tool.
@@ -201,27 +201,37 @@ def run_mgtool (tool, project, dbname):
     # Run the tool
     call(opts)
 
+def run_mgtools (tools, projects, dbprefix):
+    """Run MetricsGrimoire tools
+
+    - tools: [cvsanaly, bicho, ...] (list)
+    - project: GitHub project, such as VizGrimoire/VizGrimoireR
+    - dbname: name of the database
+
+    Run the specified MetricsGRimoire tools, preparing their
+    corresponding databases if needed
+
+    """
+
+    for tool in tools:
+        # Prepare databases
+        dbname = dbprefix + "_" + tool
+        prepare_db (tool, dbname)
+        # Run tools
+        for project in projects:
+            run_mgtool (tool, project, dbname)
 
 # Now, if there is no --nomg flag, run MetricsGrimoire tools
 # If it is for a github user, get all the projects under the user name,
-# and run tools on each of the.
+# and run tools on each of them.
 # If it is for a single project, just run the tools on it
 if not args.nomg:
-    # Prepare databases
-    for tool in ["cvsanaly", "bicho"]:
-        dbname = dbPrefix + "_" + tool
-        prepare_db (tool, dbname)
     if args.isuser:
         repos = find_repos (args.name)
-    for tool in ["cvsanaly", "bicho"]:
-        dbname = dbPrefix + "_" + tool
-        if args.isuser:
-            for repo in repos:
-                run_mgtool (tool, repo, dbname)
-        else:
-            run_mgtool (tool, args.name, dbname)
+    else:
+        repos = [args.name]
+    run_mgtools (["cvsanaly", "bicho"], repos, dbPrefix)
 
-# Let's go on, now with vizGrimoire
 
 def install_vizgrimoirer (libdir, vizgrimoirer_pkgdir):
     """Install the appropriate vizgrimorer R package in a specific location
@@ -246,20 +256,36 @@ def install_vizgrimoirer (libdir, vizgrimoirer_pkgdir):
     env ["R_LIBS"] = libdir
     call (["R", "CMD", "INSTALL", vizgrimoirer_pkgdir], env=env)
 
+
+def unique_ids (dbprefix):
+    """Run unique identities stuff
+
+    - dbprefix: prefix for the databases
+
+    """
+
+    call ([rConf["unifypeople"], "-d", dbprefix + "_" + "cvsanaly",
+           "-u", args.user, "-p", args.passwd, "-i", "no"])
+    call ([rConf["ds2id"],
+           "--data-source=its",
+           "--db-name-ds=" + dbprefix + "_" + "bicho",
+           "--db-name-ids=" + dbprefix + "_" + "cvsanaly",
+           "-u", args.user, "-p", args.passwd])
+
+def affiliation (dbprefix):
+    """Run affiliation stuff
+
+    - dbprefix: prefix for the databases
+
+    """
+
+    call ([rConf["domains"], "-d", dbprefix + "_" + "cvsanaly",
+           "-u", args.user, "-p", args.passwd])
+
+
+unique_ids (dbPrefix)
+affiliation (dbPrefix)
 install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
-
-# Run unique identities stuff
-call ([rConf["unifypeople"], "-d", dbPrefix + "_" + "cvsanaly",
-       "-u", args.user, "-p", args.passwd, "-i", "no"])
-call ([rConf["ds2id"],
-       "--data-source=its",
-       "--db-name-ds=" + dbPrefix + "_" + "bicho",
-       "--db-name-ids=" + dbPrefix + "_" + "cvsanaly",
-       "-u", args.user, "-p", args.passwd])
-
-# Run affiliation stuff
-call ([rConf["domains"], "-d", dbPrefix + "_" + "cvsanaly",
-       "-u", args.user, "-p", args.passwd])
 
 # Create the JSON data directory for the browser
 # R scripts will write JSON files into it
