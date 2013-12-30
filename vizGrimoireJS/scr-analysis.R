@@ -93,7 +93,6 @@ data = EvolReviewsMerged(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # Ok data after startok
 data = EvolReviewsMergedChanges(period, startok, conf$enddate)
-print(completePeriodIds(data, conf$granularity, conf))
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsAbandoned(period, startok, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -113,7 +112,6 @@ data = EvolPatchesCodeReview(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolPatchesSent(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-# print(reviews.evol)
 #Waiting for actions info
 data = EvolWaiting4Reviewer(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -156,14 +154,8 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 # print(reviews.static)
 #Reviewers info
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
-<<<<<<< HEAD
-# print(reviews.static)
 # Time to Review info: Wikimedia data ok after '2013-04-30'
 reviews.static = merge(reviews.static, StaticTimeToReviewSCR(startok, conf$enddate))
-=======
-# Time to Review info
-reviews.static = merge(reviews.static, StaticTimeToReviewSCR(conf$startdate, conf$enddate))
->>>>>>> 75b1b18... EvolReviewsPendingChanges returns no metrics if changes does not include new, merged, abandoned events.
 
 # Tendencies
 diffsubmitted.365 = GetSCRDiffSubmittedDays(period, conf$enddate, 365, conf$identities_db)
