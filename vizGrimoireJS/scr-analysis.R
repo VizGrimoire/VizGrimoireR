@@ -102,6 +102,9 @@ reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, con
 # For pending we need all data so accumulation is right
 data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+# It only works with gerrit dbs with new, merged, abandoned info in changes.
+data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 #Patches info
 data = EvolPatchesVerified(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -141,7 +144,7 @@ reviews.static = merge(reviews.static, StaticReviewsInProgress(period, conf$star
 reviews.static = merge(reviews.static, StaticReviewsClosed(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsMerged(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate))
-# print(reviews.static)
+reviews.static = merge(reviews.static, StaticReviewsPending(period, conf$startdate, conf$enddate))
 #Patches info
 reviews.static = merge(reviews.static, StaticPatchesVerified(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticPatchesApproved(period, conf$startdate, conf$enddate))
@@ -154,9 +157,14 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 # print(reviews.static)
 #Reviewers info
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
+<<<<<<< HEAD
 # print(reviews.static)
 # Time to Review info: Wikimedia data ok after '2013-04-30'
 reviews.static = merge(reviews.static, StaticTimeToReviewSCR(startok, conf$enddate))
+=======
+# Time to Review info
+reviews.static = merge(reviews.static, StaticTimeToReviewSCR(conf$startdate, conf$enddate))
+>>>>>>> 75b1b18... EvolReviewsPendingChanges returns no metrics if changes does not include new, merged, abandoned events.
 
 # Tendencies
 diffsubmitted.365 = GetSCRDiffSubmittedDays(period, conf$enddate, 365, conf$identities_db)
