@@ -39,6 +39,18 @@ conf <- ConfFromOptParse()
 idb = conf$identities_db
 error = FALSE
 
+SetDBChannel (database = "jenkins_its_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+idb = conf$identities_db
+test.suite <- defineTestSuite("IssueTracker",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'its.R$')
+test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0) {q(status=1)}
+
+printTextProtocol(test.result)
+
+
+
 SetDBChannel (database = "jenkins_mls_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
 test.suite <- defineTestSuite("MailingLists",
