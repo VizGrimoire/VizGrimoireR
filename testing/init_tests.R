@@ -57,6 +57,7 @@ test.suite <- defineTestSuite("SCM",
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0) {q(status=1)}
 
+printTextProtocol(test.result)
 
 
 SetDBChannel (database = "jenkins_scr_vizr_1783", user = conf$dbuser, password = conf$dbpassword)

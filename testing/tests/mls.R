@@ -106,6 +106,29 @@ test.EvolThreads.Company <- function()
     expect_that(11, equals(nrow(EvolThreads('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
 }
 
+#Uncomment tests when dataset is available in MySQL
+#test.EvolMLSDomains.Week <- function(){
+#    print(EvolMLSDomains('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('domain', "'Rackspace'")))
+#}
 
+#test.EvolMLSCountries.Week <- function(){
+#    print(EvolMLSCountries('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('country', "'Rackspace'")))
+#}
 
+test.EvolMLSCompanies.Month <- function(){
+    expect_that(12, equals(nrow(EvolMLSCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+}
+
+#Uncomment tests when dataset is available in MySQL
+#test.AggMLSDomains.Week <- function(){
+#    print(AggMLSDomains('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('domain', "'Rackspace'")))
+#}
+
+#test.AggMLSCountries.Week <- function(){
+#    print(AggMLSCountries('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('country', "'Rackspace'")))
+#}
+
+test.AggMLSCompanies.Month <- function(){
+     expect_that(24, equals(as.numeric(AggMLSCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+}
 

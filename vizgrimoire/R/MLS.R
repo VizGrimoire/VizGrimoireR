@@ -117,7 +117,6 @@ BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, f
     # Select the way to evolutionary or aggregated dataset
 
     q = ""
-
     if (evolutionary) {
          q <- GetMLSSQLPeriod(period, date_field, fields, tables, filters,
             startdate, enddate)
@@ -125,7 +124,6 @@ BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, f
          q <- GetMLSSQLGlobal(date_field, fields, tables, filters,
                            startdate, enddate)
     }
-
     return(q)
 }
 
@@ -530,7 +528,54 @@ AggMLSInit <- function(period, startdate, enddate, identities_db, type_analysis 
     return(GetMLSInit(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+GetMLSStudies <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary, study){
+    # Generic function that counts evolution/agg number of specific studies with similar
+    # database schema such as domains, companies and countries
 
+    fields = paste(' count(distinct(name)) as ', study, sep="")
+    tables = paste(" messages m ", GetMLSSQLReportFrom(identities_db, type_analysis))
+    filters = paste(GetMLSSQLReportWhere(type_analysis), " and m.is_response_of is null ", sep="")
+
+    #Filtering last part of the query, not used in this case
+    #filters = gsub("and\n( )+(d|c|cou|com).name =.*$", "", filters)
+
+    q <- BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
+    q = gsub("(d|c|cou|com).name.*and", "", q)
+
+    data <- ExecuteQuery(q)
+    return(data)
+}
+
+EvolMLSDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA,NA)){
+    # Evol number of domains used
+    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'domains'))
+}
+
+EvolMLSCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Evol number of countries
+    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'countries'))
+}
+
+EvolMLSCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Evol number of companies
+    data <- GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'companies')
+    return(data)
+}
+
+
+AggMLSDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Agg number of domains
+    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'domains'))
+}
+
+AggMLSCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Agg number of countries
+    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'countries'))
+}
+AggMLSCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Agg number of companies
+    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'companies'))
+}
 
 ####################
 # Lists of repositories, companies, countries, etc
