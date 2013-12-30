@@ -349,9 +349,12 @@ StaticReviewsAbandonedChanges<- function(period, startdate, enddate, type_analys
 
 # PENDING = NEW - MERGED - ABANDONED
 StaticReviewsPending<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    return (StaticReviewsNewChanges(period, startdate, enddate, type_analysis, identities_db) -
-            StaticReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db) -
-            StaticReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db))
+    new = StaticReviewsNewChanges(period, startdate, enddate, type_analysis, identities_db)
+    merged = StaticReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db)
+    abandoned = StaticReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db)
+    pending = new-merged-abandoned
+    colnames(pending) <- c("pending")
+    return (pending)
 }
 
 
