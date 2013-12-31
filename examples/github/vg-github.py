@@ -23,7 +23,8 @@
 #
 # vg-github.py
 #
-# Simple script to retrieve data from GitHub repositories about a project
+# Simple script to retrieve data from GitHub repositories about a project,
+# or all the projects owned by a user.
 # Assumes MetricsGrimoire tools are already installed.
 # If you don't know how to install them, look at
 # misc/metricsgrimoire-setup.py
@@ -330,7 +331,7 @@ misc/metricsgrimoire-setup.py""")
         args = parser.parse_args()
         return (args)
 
-    args = parse_args ()
+    args = parse_args()
     if args.dbprefix:
         dbPrefix = args.dbprefix.lower()
     elif not args.isuser:
