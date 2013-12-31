@@ -78,13 +78,16 @@ def prepare_db (tool, dbname):
     """
 
     # Open database connection and get a cursor
-    con = MySQLdb.connect(host='localhost', user=args.user, passwd=args.passwd) 
-    cursor = con.cursor()
-    # Create database and remove it in advance, if needed
-    if args.removedb:
-        cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
-    cursor.execute('CREATE DATABASE IF NOT EXISTS ' + dbname +
-                   ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+    conn = MySQLdb.connect(host='localhost', user=args.user, passwd=args.passwd)
+    # with clause ensures that connection is closed (and committed) even
+    # in the case of exceptions
+    with conn:
+        cursor = conn.cursor()
+        # Create database and remove it in advance, if needed
+        if args.removedb:
+            cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
+        cursor.execute('CREATE DATABASE IF NOT EXISTS ' + dbname +
+                       ' CHARACTER SET utf8 COLLATE utf8_unicode_ci')
 
 def find_repos (user):
     """Find the repos for a user.
