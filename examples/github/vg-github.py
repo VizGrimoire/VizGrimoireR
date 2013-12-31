@@ -42,7 +42,7 @@ import errno
 from subprocess import call
 import urllib2
 import json
-
+import string
 
 # Configuration for tools
 cvsanalyConf = {"bin": "cvsanaly2",
@@ -248,6 +248,31 @@ def run_analysis (scripts, base_dbs, id_dbs, outdir):
             print " ".join (call_list)
         call (call_list)
 
+def produce_config (config_template, config_file):
+    """Produce a config.json file by translating a template file.
+
+    - config_template: template for config.json (filename)
+    - config_file: config.json file to be produced (filename)
+
+    """
+
+    if args.verbose:
+        print ("Producing config file " + config_file + \
+                   " from template " + config_template + ".")
+    subst = dict (start_date = "2002-10-10",
+                  end_date = "2013-12-31",
+                  project_name = args.name,
+                  project_url = "http://github.com/" + args.name,
+                  scm_url = "",
+                  its_url = "")
+    template_str = ""
+    with open (config_template, "r") as template:
+        template_str = template.read()
+    template = string.Template(template_str)
+    config_str = template.safe_substitute (subst)
+    with open(config_file, "w") as config:
+        config.write(config_str)
+        config.close()
 
 def produce_dashboard (vizgrimoirejs_dir, example_dir,
                        dashboard_dir, json_dir):
@@ -281,12 +306,13 @@ def produce_dashboard (vizgrimoirejs_dir, example_dir,
     ghJSONfiles = ["config.json"]
 
     for file in vgjsFiles:
-        shutil.copy(vizgrimoirejs_dir + file, dashboard_dir)
+        shutil.copy(vizgrimoirejs_dir + "/" + file, dashboard_dir)
     for file in ghBrowserfiles:
-        shutil.copy(example_dir + file, dashboard_dir)
-    for file in ghJSONfiles:
-        shutil.copy(example_dir + file, json_dir)
-
+        shutil.copy(example_dir + "/" + file, dashboard_dir)
+#    for file in ghJSONfiles:
+#        shutil.copy(example_dir + file, json_dir)
+    produce_config (example_dir + "/config.json",
+                    json_dir + "/config.json")
 
 if __name__ == "__main__":
 
@@ -320,6 +346,18 @@ misc/metricsgrimoire-setup.py""")
                             action="store_true")
         parser.add_argument("--nomg",
                             help="Don't run MetricsGrimoire tools",
+                            action="store_true")
+        parser.add_argument("--nopeople",
+                            help="Don't run people stuff (unique ids, affiliation)",
+                            action="store_true")
+        parser.add_argument("--noinstvgr",
+                            help="Don't install vizgrimoire R package",
+                            action="store_true")
+        parser.add_argument("--noanalysis",
+                            help="Don't run vizGrimoireR analysis",
+                            action="store_true")
+        parser.add_argument("--nobrowser",
+                            help="Don't copy files for the browser",
                             action="store_true")
         parser.add_argument("--ghuser",
                             help="GitHub user name")
@@ -376,19 +414,24 @@ misc/metricsgrimoire-setup.py""")
             repos = [args.name]
         run_mgtools (["cvsanaly", "bicho"], repos, dbPrefix)
 
-    # Run unique_ids and affiliation stuff
-    unique_ids (dbPrefix)
-    affiliation (dbPrefix)
+    # Run unique_ids and affiliation (people stuff)
+    # except that --nopeople was specified
+    if not args.nopeople:
+        unique_ids (dbPrefix)
+        affiliation (dbPrefix)
 
     # Install vizgrimoire R package, just in case
-    install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
+    if not args.noinstvgr:
+        install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
 
 
-    run_analysis ([rConf["scm-analysis"], rConf["its-analysis"]],
-                  [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "bicho"],
-                  [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "cvsanaly"],
-                  JSONdir)
+    if not args.noanalysis:
+        run_analysis ([rConf["scm-analysis"], rConf["its-analysis"]],
+                      [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "bicho"],
+                      [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "cvsanaly"],
+                      JSONdir)
 
-    produce_dashboard (vizgrimoirejs_dir = args.vgdir + "/VizGrimoireJS/",
-                       example_dir = args.vgdir + "/VizGrimoireR/examples/github/",
-                       dashboard_dir = dashboard_dir, json_dir = JSONdir)
+    if not args.nobrowser:
+        produce_dashboard (vizgrimoirejs_dir = args.vgdir + "/VizGrimoireJS",
+                           example_dir = args.vgdir + "/VizGrimoireR/examples/github",
+                           dashboard_dir = dashboard_dir, json_dir = JSONdir)
