@@ -933,6 +933,10 @@ GetSCRDiffPendingDays <- function(period, init_date, days,
     diffpendingdays$percentage_pending = GetPercentageDiff(prevpending, lastpending)
     diffpendingdays$lastpending = lastpending
 
+    print(days)
+    print(lastpending)
+    print(prevpending)
+
     colnames(diffpendingdays) <- c(paste("diff_netpending","_",days, sep=""),
             paste("percentage_pending","_",days, sep=""),
             paste("pending","_",days, sep=""))

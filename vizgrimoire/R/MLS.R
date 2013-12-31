@@ -688,7 +688,7 @@ GetPercentageDiff <- function(value1, value2){
 
     if (value1 < value2){
         diff = value2 - value1
-        percentage = as.integer((diff/value1) * 100)
+        percentage = as.integer((diff/abs(value1)) * 100)
     }
     if (value1 > value2){
         percentage = as.integer((1-(value2/value1)) * 100)
