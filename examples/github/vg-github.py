@@ -42,66 +42,6 @@ from subprocess import call
 import urllib2
 import json
 
-# Parse command line options
-parser = argparse.ArgumentParser(description="""
-Simple script to retrieve data from GitHub repositories about a project.
-It creates MySQL databases named projectname_cvsanaly, projectname_bicho
-(assummes permission to create databases), but
-refrains to do so if they already exist (projectname will have
-/ changed to _).
-It assumes MetricsGrimoire tools are already installed.
-If you don't know how to install them, look at
-misc/metricsgrimoire-setup.py""")
-parser.add_argument("name",
-                    help="GitHub project or user (if --isuser) name")
-parser.add_argument("--isuser",
-                    help="Name is the user who owns projects to analyze",
-                    action="store_true")
-parser.add_argument("--dbprefix",
-                    help="Prefix for MySQL database (default: name argument)")
-parser.add_argument("--user",
-                    help="MySQL user name")
-parser.add_argument("--passwd",
-                    help="MySQL password")
-parser.add_argument("--dir",
-                    help="Extraction directory (must exist). Default: /tmp")
-parser.add_argument("--removedb",
-                    help="Remove all databases, if present, before creating them",
-                    action="store_true")
-parser.add_argument("--nomg",
-                    help="Don't run MetricsGrimoire tools",
-                    action="store_true")
-parser.add_argument("--ghuser",
-                    help="GitHub user name")
-parser.add_argument("--ghpasswd",
-                    help="GitHub password")
-parser.add_argument("--vgdir",
-                    help="Directory with vigGrimoireR, vizGrimoireJS and vizGrimoireUtils directories")
-parser.add_argument("--verbose",
-                    help="Print out some messages about what's happening",
-                    action="store_true")
-
-args = parser.parse_args()
-
-if args.dbprefix:
-    dbPrefix = args.dbprefix.lower()
-elif not args.isuser:
-    dbPrefix = args.name.replace('/', '_').replace('-','_').lower()
-else:
-    dbPrefix = args.name.replace('-','_').lower()
-if args.dir:
-    dir = args.dir
-else:
-    dir = "/tmp"
-
-# Root directory for the dashboard
-dashboard_dir = dir + "/dashboard"
-# JSON directory for browser
-JSONdir = dashboard_dir + "/data/json"
-
-# Open database connection and get a cursor
-con = MySQLdb.connect(host='localhost', user=args.user, passwd=args.passwd) 
-cursor = con.cursor()
 
 # Configuration for tools
 cvsanalyConf = {"bin": "cvsanaly2",
@@ -115,21 +55,15 @@ bichoConf = {"bin": "bicho",
              "dbpasswd": "--db-password-out",
              "db": "--db-database-out"}
 
-rConf = {"libdir": dir + "/rlib",
-         "vgrpkg": args.vgdir + "/VizGrimoireR/vizgrimoire",
-         "scm-analysis": args.vgdir + \
-             "/VizGrimoireR/examples/github/scm-analysis-github.R",
-         "its-analysis": args.vgdir + \
-             "/VizGrimoireR/examples/github/its-analysis-github.R",
-         "unifypeople": args.vgdir + \
-             "/VizGrimoireUtils/identities/unifypeople.py",
-         "ds2id": args.vgdir + \
-             "/VizGrimoireUtils/identities/datasource2identities.py",
-         "domains": args.vgdir + \
-             "/VizGrimoireUtils/identities/domains_analysis.py"}
-
 conf = {"cvsanaly": cvsanalyConf,
         "bicho":    bichoConf}
+
+rConf = {}
+args = None
+dbPrefix = ""
+dir = ""
+dashboard_dir = ""
+JSONdir = ""
 
 def prepare_db (tool, dbname):
     """Prepare MetricsGrimoire database
@@ -142,6 +76,10 @@ def prepare_db (tool, dbname):
     This is usually run once per tool, just before the calls to run the tools
     """
 
+    # Open database connection and get a cursor
+    con = MySQLdb.connect(host='localhost', user=args.user, passwd=args.passwd) 
+    cursor = con.cursor()
+    # Create database and remove it in advance, if needed
     if args.removedb:
         cursor.execute('DROP DATABASE IF EXISTS ' + dbname)
     cursor.execute('CREATE DATABASE IF NOT EXISTS ' + dbname +
@@ -221,17 +159,6 @@ def run_mgtools (tools, projects, dbprefix):
         for project in projects:
             run_mgtool (tool, project, dbname)
 
-# Now, if there is no --nomg flag, run MetricsGrimoire tools
-# If it is for a github user, get all the projects under the user name,
-# and run tools on each of them.
-# If it is for a single project, just run the tools on it
-if not args.nomg:
-    if args.isuser:
-        repos = find_repos (args.name)
-    else:
-        repos = [args.name]
-    run_mgtools (["cvsanaly", "bicho"], repos, dbPrefix)
-
 
 def install_vizgrimoirer (libdir, vizgrimoirer_pkgdir):
     """Install the appropriate vizgrimorer R package in a specific location
@@ -283,20 +210,6 @@ def affiliation (dbprefix):
            "-u", args.user, "-p", args.passwd])
 
 
-unique_ids (dbPrefix)
-affiliation (dbPrefix)
-
-install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
-
-# Create the JSON data directory for the browser
-# R scripts will write JSON files into it
-try:
-    os.makedirs(JSONdir)
-except OSError as e:
-    if e.errno == errno.EEXIST and os.path.isdir(JSONdir):
-        pass
-    else: 
-        raise
 
 def run_analysis (scripts, base_dbs, id_dbs, outdir):
     """Run analysis scripts
@@ -311,6 +224,15 @@ def run_analysis (scripts, base_dbs, id_dbs, outdir):
 
     """
 
+    # Create the JSON data directory for the scripts to write to
+    try:
+        os.makedirs(outdir)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(outdir):
+            pass
+        else: 
+            raise
+    # Run the analysis scripts
     os.environ["R_LIBS"] = rConf["libdir"] + ":" + os.environ.get("R_LIBS", "")
     for script, base_db, id_db in zip (scripts, base_dbs, id_dbs):
         call_list = [script, "-d", base_db,
@@ -322,11 +244,6 @@ def run_analysis (scripts, base_dbs, id_dbs, outdir):
             print " ".join (call_list)
         call (call_list)
 
-
-run_analysis ([rConf["scm-analysis"], rConf["its-analysis"]],
-              [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "bicho"],
-              [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "cvsanaly"],
-              JSONdir)
 
 def produce_dashboard (vizgrimoirejs_dir, example_dir,
                        dashboard_dir, json_dir):
@@ -367,6 +284,107 @@ def produce_dashboard (vizgrimoirejs_dir, example_dir,
         shutil.copy(example_dir + file, json_dir)
 
 
-produce_dashboard (vizgrimoirejs_dir = args.vgdir + "/VizGrimoireJS/",
-                   example_dir = args.vgdir + "/VizGrimoireR/examples/github/",
-                   dashboard_dir = dashboard_dir, json_dir = JSONdir)
+if __name__ == "__main__":
+
+    def parse_args ():
+        """Parse command line arguments"""
+
+        parser = argparse.ArgumentParser(description="""
+Simple script to retrieve data from GitHub repositories about a project.
+It creates MySQL databases named projectname_cvsanaly, projectname_bicho
+(assummes permission to create databases), but
+refrains to do so if they already exist (projectname will have
+/ changed to _).
+It assumes MetricsGrimoire tools are already installed.
+If you don't know how to install them, look at
+misc/metricsgrimoire-setup.py""")
+        parser.add_argument("name",
+                            help="GitHub project or user (if --isuser) name")
+        parser.add_argument("--isuser",
+                            help="Name is the user who owns projects to analyze",
+                            action="store_true")
+        parser.add_argument("--dbprefix",
+                            help="Prefix for MySQL database (default: name argument)")
+        parser.add_argument("--user",
+                            help="MySQL user name")
+        parser.add_argument("--passwd",
+                            help="MySQL password")
+        parser.add_argument("--dir",
+                            help="Extraction directory (must exist). Default: /tmp")
+        parser.add_argument("--removedb",
+                            help="Remove all databases, if present, before creating them",
+                            action="store_true")
+        parser.add_argument("--nomg",
+                            help="Don't run MetricsGrimoire tools",
+                            action="store_true")
+        parser.add_argument("--ghuser",
+                            help="GitHub user name")
+        parser.add_argument("--ghpasswd",
+                            help="GitHub password")
+        parser.add_argument("--vgdir",
+                            help="Directory with vigGrimoireR, vizGrimoireJS and vizGrimoireUtils directories")
+        parser.add_argument("--verbose",
+                            help="Print out some messages about what's happening",
+                            action="store_true")
+        
+        args = parser.parse_args()
+        return (args)
+
+    args = parse_args ()
+    if args.dbprefix:
+        dbPrefix = args.dbprefix.lower()
+    elif not args.isuser:
+        dbPrefix = args.name.replace('/', '_').replace('-','_').lower()
+    else:
+        dbPrefix = args.name.replace('-','_').lower()
+    if args.dir:
+        dir = args.dir
+    else:
+        dir = "/tmp"
+
+    # Root directory for the dashboard
+    dashboard_dir = dir + "/dashboard"
+    # JSON directory for browser
+    JSONdir = dashboard_dir + "/data/json"
+
+    # Configure R paths
+    rConf = {"libdir": dir + "/rlib",
+             "vgrpkg": args.vgdir + "/VizGrimoireR/vizgrimoire",
+             "scm-analysis": args.vgdir + \
+                 "/VizGrimoireR/examples/github/scm-analysis-github.R",
+             "its-analysis": args.vgdir + \
+                 "/VizGrimoireR/examples/github/its-analysis-github.R",
+             "unifypeople": args.vgdir + \
+                 "/VizGrimoireUtils/identities/unifypeople.py",
+             "ds2id": args.vgdir + \
+                 "/VizGrimoireUtils/identities/datasource2identities.py",
+             "domains": args.vgdir + \
+                 "/VizGrimoireUtils/identities/domains_analysis.py"
+             }
+    # Now, if there is no --nomg flag, run MetricsGrimoire tools
+    # If it is for a github user, get all the projects under the user name,
+    # and run tools on each of them.
+    # If it is for a single project, just run the tools on it
+    if not args.nomg:
+        if args.isuser:
+            repos = find_repos (args.name)
+        else:
+            repos = [args.name]
+        run_mgtools (["cvsanaly", "bicho"], repos, dbPrefix)
+
+    # Run unique_ids and affiliation stuff
+    unique_ids (dbPrefix)
+    affiliation (dbPrefix)
+
+    # Install vizgrimoire R package, just in case
+    install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
+
+
+    run_analysis ([rConf["scm-analysis"], rConf["its-analysis"]],
+                  [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "bicho"],
+                  [dbPrefix + "_" + "cvsanaly", dbPrefix + "_" + "cvsanaly"],
+                  JSONdir)
+
+    produce_dashboard (vizgrimoirejs_dir = args.vgdir + "/VizGrimoireJS/",
+                       example_dir = args.vgdir + "/VizGrimoireR/examples/github/",
+                       dashboard_dir = dashboard_dir, json_dir = JSONdir)
