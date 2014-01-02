@@ -21,6 +21,8 @@
 ##
 ## Queries for source code review data analysis
 ##
+## "*Changes" functions use changes table for more precisse results
+##
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
@@ -286,6 +288,27 @@ EvolReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis
     return (GetReviewsChanges(period, startdate, enddate, "abandoned", TRUE))
 }
 
+EvolReviewsPending<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
+    data = EvolReviewsNew(period, startdate, enddate)
+    data <- completePeriodIds(data, conf$granularity, conf)
+    data1 = EvolReviewsMerged(period, startdate, enddate)
+    data1 <- completePeriodIds(data1, conf$granularity, conf)
+    data2 = EvolReviewsAbandoned(period, startdate, enddate)
+    data2 <- completePeriodIds(data2, conf$granularity, conf)
+    pending = merge(data, data1, all=TRUE)
+    pending = merge(pending, data2, all=TRUE)
+
+    if (is.null(pending$merged)) {return(pending)}
+    pending$merged = -pending$merged
+    if (is.null(pending$abandoned)) {return(pending)}
+    pending$abandoned = -pending$abandoned
+    if (is.null(pending$new)) {return(pending)}
+
+    sum <- rowSums(subset(pending, select = c("new","merged","abandoned")))
+    pending <- data.frame(month=pending$month, pending=sum)
+    return (pending)
+}
+
 # PENDING = NEW - MERGED - ABANDONED
 EvolReviewsPendingChanges<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
     data = EvolReviewsNewChanges(period, startdate, enddate)
@@ -352,6 +375,15 @@ StaticReviewsAbandonedChanges<- function(period, startdate, enddate, type_analys
 
 # PENDING = NEW - MERGED - ABANDONED
 StaticReviewsPending<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
+    new = StaticReviewsNew(period, startdate, enddate, type_analysis, identities_db)
+    merged = StaticReviewsMerged(period, startdate, enddate, type_analysis, identities_db)
+    abandoned = StaticReviewsAbandoned(period, startdate, enddate, type_analysis, identities_db)
+    pending = new-merged-abandoned
+    colnames(pending) <- c("pending")
+    return (pending)
+}
+
+StaticReviewsPendingChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
     new = StaticReviewsNewChanges(period, startdate, enddate, type_analysis, identities_db)
     merged = StaticReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db)
     abandoned = StaticReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db)
@@ -738,19 +770,22 @@ GetPeopleStaticSCR <- function(developer_id, startdate, enddate) {
 # Time to review
 ################
 
-GetTimeToReviewQuerySCR <- function(startdate, enddate) {
+GetTimeToReviewQuerySCR <- function(startdate, enddate, identities_db = NA, type_analysis = list(NA, NA)) {
     # Subquery to get the time to review for all reviews
     fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on"
-    tables = "issues, changes"
-    filters = "issues.id = changes.issue_id AND field='status' "
+    tables = "issues i, changes"
+    tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
+    filters = "i.id = changes.issue_id AND field='status' "
+    filters = paste(filters, GetSQLReportWhereSCR(type_analysis), sep="")
     filters = paste (filters, "AND new_value='MERGED'")
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
+    print(q)
     return (q)
 }
 
-GetTimeToReviewEvolSCR <- function(period, startdate, enddate) {
-    q <- GetTimeToReviewQuerySCR (startdate, enddate)
+EvolTimeToReviewSCR <- function(period, startdate, enddate, identities_db = NA, type_analysis = list(NA, NA)) {
+    q <- GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     # Evolution in time of AVG review time
     fields = "SUM(revtime)/COUNT(revtime) AS review_time_days_avg"
     tables = paste("(",q,") t")
@@ -762,8 +797,8 @@ GetTimeToReviewEvolSCR <- function(period, startdate, enddate) {
     return (data)
 }
 
-StaticTimeToReviewSCR <- function(startdate, enddate) {
-    q <- GetTimeToReviewQuerySCR (startdate, enddate)
+StaticTimeToReviewSCR <- function(startdate, enddate, identities_db = NA, type_analysis = list(NA, NA)) {
+    q <- GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     # Total AVG review time
     q = paste(" SELECT AVG(revtime) AS review_time_days_avg FROM (",q,") t")
     query <- new("Query", sql = q)
