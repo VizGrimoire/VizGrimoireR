@@ -205,7 +205,7 @@ if ('repositories' %in% reports) {
         merged <- completePeriodIds(merged, conf$granularity, conf)
         abandoned <- EvolReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis)
         abandoned <- completePeriodIds(abandoned, conf$granularity, conf)
-        pending <- EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, type_analysis)
+        pending <- EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, conf, type_analysis)
         pending <- completePeriodIds(pending, conf$granularity, conf)
         avg_rev_time <- EvolTimeToReviewSCR(period, conf$startdate, conf$enddate, conf$identities_db, type_analysis)
         avg_rev_time <- completePeriodIds(avg_rev_time, conf$granularity, conf)
