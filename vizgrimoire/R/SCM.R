@@ -391,6 +391,23 @@ StaticNumFiles <- function(period, startdate, enddate, identities_db=NA, type_an
     return (GetFiles(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+GetDiffFilesDays <- function(period, init_date, identities_db=NA, days){
+    # This function provides the percentage in activity between two periods:
+
+    chardates = GetDates(init_date, days)
+    lastfiles = StaticNumFiles(period, chardates[2], chardates[1], identities_db)
+    lastfiles = as.numeric(lastfiles[1])
+    prevfiles = StaticNumFiles(period, chardates[3], chardates[2], identities_db)
+    prevfiles = as.numeric(prevfiles[1])
+    diff_files_days = data.frame(diff_netfiles = numeric(1), percentage_files = numeric(1))
+    diff_files_days$diff_netfiles = lastfiles - prevfiles
+    diff_files_days$percentage_files = GetPercentageDiff(prevfiles, lastfiles)
+
+    colnames(diff_files_days) <- c(paste("diff_netfiles","_",days, sep=""), paste("percentage_files","_",days, sep=""))
+
+    return (diff_files_days)
+}
+
 
 GetLines <- function (period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # This function contains basic parts of the query to count lines
