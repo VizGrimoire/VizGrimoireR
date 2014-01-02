@@ -142,7 +142,7 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
     limit_sql=""
     if (limit > 0) {
         limit_sql = paste(" LIMIT ", limit)
-    }    
+    }
     q = paste("SELECT c.id as id, c.name as name, COUNT(DISTINCT(i.id)) AS total
                FROM  ",identities_db,".companies c,
                      ",identities_db,".upeople_companies upc,
@@ -219,10 +219,12 @@ GetReviews <- function(period, startdate, enddate, type, type_analysis, evolutio
 }
 
 # Reviews status using changes table
-GetReviewsChanges<- function(period, startdate, enddate, type, evolutionary){
+GetReviewsChanges<- function(period, startdate, enddate, type, type_analysis, evolutionary, identities_db){
     fields = paste("count(issue_id) as ", type, "_changes", sep = "")
-    tables = "changes"
-    filters = paste("new_value='",type,"'",sep="")
+    tables = "changes c, issues i"
+    tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
+    filters = paste("c.issue_id = i.id AND new_value='",type,"'",sep="")
+    filters = paste(filters, GetSQLReportWhereSCR(type_analysis), sep="")
 
     #Adding dates filters (and evolutionary or static analysis)
     if (evolutionary){
@@ -263,7 +265,7 @@ GetEvolChanges<- function(period, startdate, enddate, value) {
 }
 
 EvolReviewsNewChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    return (GetReviewsChanges(period, startdate, enddate, "new", TRUE))
+    return (GetReviewsChanges(period, startdate, enddate, "new", type_analysis, TRUE, identities_db))
 }
 
 EvolReviewsInProgress<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
@@ -279,7 +281,7 @@ EvolReviewsMerged<- function(period, startdate, enddate, type_analysis = list(NA
 }
 
 EvolReviewsMergedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    return (GetReviewsChanges(period, startdate, enddate, "merged", TRUE))
+    return (GetReviewsChanges(period, startdate, enddate, "merged", type_analysis, TRUE, identities_db))
 }
 
 EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
@@ -287,15 +289,15 @@ EvolReviewsAbandoned<- function(period, startdate, enddate, type_analysis = list
 }
 
 EvolReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    return (GetReviewsChanges(period, startdate, enddate, "abandoned", TRUE))
+    return (GetReviewsChanges(period, startdate, enddate, "abandoned", type_analysis, TRUE, identities_db))
 }
 
 EvolReviewsPending<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
-    data = EvolReviewsNew(period, startdate, enddate)
+    data = EvolReviewsNew(period, startdate, enddate, type_analysis, identities_db)
     data <- completePeriodIds(data, conf$granularity, conf)
-    data1 = EvolReviewsMerged(period, startdate, enddate)
+    data1 = EvolReviewsMerged(period, startdate, enddate, type_analysis, identities_db)
     data1 <- completePeriodIds(data1, conf$granularity, conf)
-    data2 = EvolReviewsAbandoned(period, startdate, enddate)
+    data2 = EvolReviewsAbandoned(period, startdate, enddate, type_analysis, identities_db)
     data2 <- completePeriodIds(data2, conf$granularity, conf)
     pending = merge(data, data1, all=TRUE)
     pending = merge(pending, data2, all=TRUE)
@@ -313,11 +315,11 @@ EvolReviewsPending<- function(period, startdate, enddate, config = conf, type_an
 
 # PENDING = NEW - MERGED - ABANDONED
 EvolReviewsPendingChanges<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
-    data = EvolReviewsNewChanges(period, startdate, enddate)
+    data = EvolReviewsNewChanges(period, startdate, enddate, type_analysis, identities_db)
     data <- completePeriodIds(data, conf$granularity, conf)
-    data1 = EvolReviewsMergedChanges(period, startdate, enddate)
+    data1 = EvolReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db)
     data1 <- completePeriodIds(data1, conf$granularity, conf)
-    data2 = EvolReviewsAbandonedChanges(period, startdate, enddate)
+    data2 = EvolReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db)
     data2 <- completePeriodIds(data2, conf$granularity, conf)
     pending = merge(data, data1, all=TRUE)
     pending = merge(pending, data2, all=TRUE)
@@ -646,7 +648,7 @@ GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bo
         data <- run(query)
         date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
     }
-    
+
     q <- paste("SELECT up.id as id, up.identifier as reviewers,
                        count(distinct(c.id)) as reviewed
                 FROM people_upeople pup, changes c, ", identities_db,".upeople up
@@ -869,7 +871,6 @@ GetTimeToReviewQuerySCR <- function(startdate, enddate, identities_db = NA, type
     filters = paste (filters, "AND new_value='MERGED'")
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
-    print(q)
     return (q)
 }
 
@@ -966,10 +967,6 @@ GetSCRDiffPendingDays <- function(period, init_date, days,
     diffpendingdays$diff_netpending = lastpending - prevpending
     diffpendingdays$percentage_pending = GetPercentageDiff(prevpending, lastpending)
     diffpendingdays$lastpending = lastpending
-
-    print(days)
-    print(lastpending)
-    print(prevpending)
 
     colnames(diffpendingdays) <- c(paste("diff_netpending","_",days, sep=""),
             paste("percentage_pending","_",days, sep=""),
