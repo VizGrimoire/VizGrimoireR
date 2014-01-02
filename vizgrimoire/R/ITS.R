@@ -477,6 +477,26 @@ GetDiffClosersDays <- function(date, days, closed_condition){
     return (diffclosersdays)
 }
 
+StaticNumChangers <- function(closed_condition, startdate, enddate){
+    data = GetStaticITS(closed_condition, startdate, enddate)
+    changers = as.numeric(data$changers)
+    return (changers)
+}
+
+GetDiffChangersDays <- function(date, days, closed_condition){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(date, days)
+    last_changers = StaticNumChangers(closed_condition, chardates[2], chardates[1])
+    prev_changers = StaticNumChangers(closed_condition, chardates[3], chardates[2])
+
+    diff_changers_days = data.frame(diff_netchangers = numeric(1), percentage_changers = numeric(1))
+    diff_changers_days$diff_netchangers = last_changers - prev_changers
+    diff_changers_days$percentage_changers = GetPercentageDiff(prev_changers, last_changers)
+
+    colnames(diff_changers_days) <- c(paste("diff_netchangers","_",days, sep=""), paste("percentage_changers","_",days, sep=""))
+
+    return (diff_changers_days)
+}
 
 
 GetLastActivityITS <- function(days, closed_condition) {
