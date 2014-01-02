@@ -92,9 +92,8 @@ data = EvolReviewsAbandoned(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsAbandonedChanges(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-# It only works with gerrit dbs with new, merged, abandoned info in changes.
-# data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
-# reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
+reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 #Patches info
 data = EvolPatchesVerified(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -116,7 +115,7 @@ data = EvolReviewers(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # print(reviews.evol)
 # Time to Review info
-data = GetTimeToReviewEvolSCR (period, conf$startdate, conf$enddate)
+data = EvolTimeToReviewSCR (period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # Create JSON
 createJSON(reviews.evol, paste(destdir,"/scr-evolutionary.json", sep=''))
@@ -135,7 +134,7 @@ reviews.static = merge(reviews.static, StaticReviewsInProgress(period, conf$star
 reviews.static = merge(reviews.static, StaticReviewsClosed(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsMerged(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate))
-# print(reviews.static)
+reviews.static = merge(reviews.static, StaticReviewsPending(period, conf$startdate, conf$enddate))
 #Patches info
 reviews.static = merge(reviews.static, StaticPatchesVerified(period, conf$startdate, conf$enddate))
 reviews.static = merge(reviews.static, StaticPatchesApproved(period, conf$startdate, conf$enddate))
@@ -148,9 +147,36 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 # print(reviews.static)
 #Reviewers info
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
-# print(reviews.static)
 # Time to Review info
 reviews.static = merge(reviews.static, StaticTimeToReviewSCR(conf$startdate, conf$enddate))
+
+# Tendencies
+diffsubmitted.365 = GetSCRDiffSubmittedDays(period, conf$enddate, 365, conf$identities_db)
+diffmerged.365 = GetSCRDiffMergedDays(period, conf$enddate, 365, conf$identities_db)
+diffpending.365 = GetSCRDiffPendingDays(period, conf$enddate, 365, conf$identities_db)
+diffabandoned.365 = GetSCRDiffAbandonedDays(period, conf$enddate, 365, conf$identities_db)
+diffsubmitted.30 = GetSCRDiffSubmittedDays(period, conf$enddate, 30, conf$identities_db)
+diffmerged.30 = GetSCRDiffMergedDays(period, conf$enddate, 30, conf$identities_db)
+diffpending.30 = GetSCRDiffPendingDays(period, conf$enddate, 30, conf$identities_db)
+diffabandoned.30 = GetSCRDiffAbandonedDays(period, conf$enddate, 30, conf$identities_db)
+diffsubmitted.7 = GetSCRDiffSubmittedDays(period, conf$enddate, 7, conf$identities_db)
+diffmerged.7 = GetSCRDiffMergedDays(period, conf$enddate, 7, conf$identities_db)
+diffpending.7 = GetSCRDiffPendingDays(period, conf$enddate, 7, conf$identities_db)
+diffabandoned.7 = GetSCRDiffAbandonedDays(period, conf$enddate, 7, conf$identities_db)
+reviews.static = merge(reviews.static,diffsubmitted.365)
+reviews.static = merge(reviews.static,diffsubmitted.30)
+reviews.static = merge(reviews.static,diffsubmitted.7)
+reviews.static = merge(reviews.static,diffpending.365)
+reviews.static = merge(reviews.static,diffpending.30)
+reviews.static = merge(reviews.static,diffpending.7)
+reviews.static = merge(reviews.static,diffmerged.365)
+reviews.static = merge(reviews.static,diffmerged.30)
+reviews.static = merge(reviews.static,diffmerged.7)
+reviews.static = merge(reviews.static,diffabandoned.365)
+reviews.static = merge(reviews.static,diffabandoned.30)
+reviews.static = merge(reviews.static,diffabandoned.7)
+
+
 # Create JSON
 createJSON(reviews.static, paste(destdir,"/scr-static.json", sep=''))
 
@@ -179,8 +205,14 @@ if ('repositories' %in% reports) {
         merged <- completePeriodIds(merged, conf$granularity, conf)
         abandoned <- EvolReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis)
         abandoned <- completePeriodIds(abandoned, conf$granularity, conf)
+        pending <- EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, conf, type_analysis)
+        pending <- completePeriodIds(pending, conf$granularity, conf)
+        avg_rev_time <- EvolTimeToReviewSCR(period, conf$startdate, conf$enddate, conf$identities_db, type_analysis)
+        avg_rev_time <- completePeriodIds(avg_rev_time, conf$granularity, conf)
         evol = merge(submitted, merged, all = TRUE)
         evol = merge(evol, abandoned, all = TRUE)
+        evol = merge(evol, pending, all = TRUE)
+        evol = merge(evol, avg_rev_time, all = TRUE)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         createJSON(evol, paste(destdir, "/",repo_file,"-scr-evolutionary.json", sep=''))
 
@@ -188,6 +220,8 @@ if ('repositories' %in% reports) {
         static <- StaticReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis)
         static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis))
         static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis))
+        static <- merge(static, StaticReviewsPending(period, conf$startdate, conf$enddate, type_analysis))
+        static <- merge(static, StaticTimeToReviewSCR(conf$startdate, conf$enddate, conf$identities_db, type_analysis))
         createJSON(static, paste(destdir, "/",repo_file,"-scr-static.json", sep=''))
     }
 }
@@ -203,7 +237,7 @@ if ('companies' %in% reports) {
     companies <- companies$name
     companies_file_names = gsub("/","_",companies)
     createJSON(companies_file_names, paste(destdir,"/scr-companies.json", sep=''))
-    
+
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for (company in companies) {

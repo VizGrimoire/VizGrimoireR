@@ -58,11 +58,6 @@ bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 # STATIC DATA
 #############
 
-# Last Activity
-lastest_activity.7 <- lastActivityIRC(conf$enddate, 7)
-lastest_activity.30 <- lastActivityIRC(conf$enddate, 30)
-lastest_activity.365 <- lastActivityIRC(conf$enddate, 365)
-
 # Tendencies
 diffsent.365 = GetIRCDiffSentDays(period, conf$enddate, 365)
 diffsenders.365 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 365)
@@ -72,9 +67,6 @@ diffsent.7 = GetIRCDiffSentDays(period, conf$enddate, 7)
 diffsenders.7 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 7)
 
 static.data = GetStaticDataIRC(period, conf$startdate, conf$enddate, conf$identities_db)
-static.data = merge(static.data, lastest_activity.365)
-static.data = merge(static.data, lastest_activity.30)
-static.data = merge(static.data, lastest_activity.7)
 static.data = merge(static.data, diffsent.365)
 static.data = merge(static.data, diffsent.30)
 static.data = merge(static.data, diffsent.7)

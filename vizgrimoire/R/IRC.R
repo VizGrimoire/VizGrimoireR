@@ -229,33 +229,6 @@ GetStaticPeopleIRC <- function(developer_id, startdate, enddate) {
     return (data)
 }
 
-###############
-# Last Activity
-###############
-lastActivityIRC <- function(init_date, days) {
-    #commits
-    q <- paste("select count(distinct(id)) as sent_",days,"
-                from irclog
-                where date >= (", init_date, " - INTERVAL ",days," day)",
-               sep="")
-
-    query <- new("Query", sql = q)
-    data1 = run(query)
-    q <- paste("select count(distinct(pup.upeople_id)) as senders_",days,"
-                from irclog, people_upeople pup
-                where pup.people_id = nick  and
-                  date >= (", init_date, " - INTERVAL ",days," day)",
-               sep="")
-
-    query <- new("Query", sql = q)
-    data2 = run(query)
-
-    agg_data = merge(data1, data2)
-
-    return(agg_data)
-}
-
-
 ##############
 # Microstudies
 ##############
@@ -274,8 +247,11 @@ GetIRCDiffSentDays <- function(period, init_date, days){
 
     diffmessagesdays$diff_netmessages = lastmessages - prevmessages
     diffmessagesdays$percentage_messages = GetPercentageDiff(prevmessages, lastmessages)
+    diffmessagesdays$lastmessages = lastmessages
 
-    colnames(diffmessagesdays) <- c(paste("diff_netsent","_",days, sep=""), paste("percentage_sent","_",days, sep=""))
+    colnames(diffmessagesdays) <- c(paste("diff_netsent","_",days, sep=""), 
+                                    paste("percentage_sent","_",days, sep=""),
+                                    paste("sent","_",days, sep=""))
 
     return (diffmessagesdays)
 }
@@ -293,8 +269,10 @@ GetIRCDiffSendersDays <- function(period, init_date, identities_db=NA, days){
     diffsendersdays = data.frame(diff_netsenders = numeric(1), percentage_senders = numeric(1))
     diffsendersdays$diff_netsenders = lastsenders - prevsenders
     diffsendersdays$percentage_senders = GetPercentageDiff(prevsenders, lastsenders)
+    diffsendersdays$lastsenders = lastsenders
 
-    colnames(diffsendersdays) <- c(paste("diff_netsenders","_",days, sep=""), paste("percentage_senders","_",days, sep=""))
-
+    colnames(diffsendersdays) <- c(paste("diff_netsenders","_",days, sep=""), 
+                                   paste("percentage_senders","_",days, sep=""),
+                                   paste("senders","_",days, sep=""))
     return (diffsendersdays)
 }

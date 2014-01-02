@@ -58,11 +58,6 @@ bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 # STATIC DATA
 #############
 
-# Last Activity
-lastest_activity.7 <- lastActivityMediaWiki(conf$enddate, 7)
-lastest_activity.30 <- lastActivityMediaWiki(conf$enddate, 30)
-lastest_activity.365 <- lastActivityMediaWiki(conf$enddate, 365)
-
 # Tendencies
 diffsent.365 = GetMediaWikiDiffReviewsDays(period, conf$enddate, 365)
 diffsenders.365 = GetMediaWikiDiffAuthorsDays(period, conf$enddate, conf$identities_db, 365)
@@ -73,9 +68,6 @@ diffsenders.7 = GetMediaWikiDiffAuthorsDays(period, conf$enddate, conf$identitie
 
 
 static.data = GetStaticDataMediaWiki(period, conf$startdate, conf$enddate, conf$identities_db)
-static.data = merge(static.data, lastest_activity.365)
-static.data = merge(static.data, lastest_activity.30)
-static.data = merge(static.data, lastest_activity.7)
 static.data = merge(static.data, diffsent.365)
 static.data = merge(static.data, diffsent.30)
 static.data = merge(static.data, diffsent.7)
