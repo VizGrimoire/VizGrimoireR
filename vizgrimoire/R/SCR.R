@@ -153,7 +153,7 @@ GetCompaniesSCRName <- function (startdate, enddate, identities_db, limit = 0){
                  i.submitted_on >=",  startdate, " AND
                  i.submitted_on < ", enddate, "
                GROUP BY c.name
-               ORDER BY issues DESC ",limit_sql,";", sep="")
+               ORDER BY total DESC ",limit_sql,";", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
