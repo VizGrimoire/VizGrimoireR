@@ -441,6 +441,33 @@ StaticNumLines <- function (period, startdate, enddate, identities_db=NA, type_a
     return (GetLines(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+GetDiffLinesDays <- function(period, init_date, identities_db=NA, days){
+    # This function provides the percentage in activity between two periods:
+
+    chardates = GetDates(init_date, days)
+    lastlines = StaticNumLines(period, chardates[2], chardates[1], identities_db)
+    last_added_lines = as.numeric(lastlines$added_lines)
+    last_removed_lines = as.numeric(lastlines$removed_lines)
+
+    prevlines = StaticNumLines(period, chardates[3], chardates[2], identities_db)
+    prev_added_lines = as.numeric(prevlines$added_lines)
+    prev_removed_lines = as.numeric(prevlines$removed_lines)
+
+    diff_lines_days = data.frame(diff_netadded_lines = numeric(1), percentage_added_lines = numeric(1),
+                                 diff_netremoved_lines = numeric(1), percentage_removed_lines = numeric(1))
+    diff_lines_days$diff_netadded_lines = last_added_lines - prev_added_lines
+    diff_lines_days$percentage_added_lines = GetPercentageDiff(prev_added_lines, last_added_lines)
+    diff_lines_days$diff_netremoved_lines = last_removed_lines - prev_removed_lines
+    diff_lines_days$percentage_removed_lines = GetPercentageDiff(prev_removed_lines, last_removed_lines)
+
+    colnames(diff_lines_days) <- c(paste("diff_netadded_lines","_",days, sep=""),
+                                   paste("percentage_added_lines","_",days, sep=""),
+                                   paste("diff_netremoved_lines","_",days, sep=""),
+                                   paste("percentage_removed_lines","_",days, sep=""))
+
+    return (diff_lines_days)
+}
+
 
 GetBranches <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # This function contains basic parts of the query to count branches
