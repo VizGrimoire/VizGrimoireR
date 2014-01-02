@@ -92,23 +92,17 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 #EVOLUTIONARY DATA
 #########
 
-# 1- Retrieving and 2- merging data
-evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db)
+print ("Evolutionary")
 
-if ('companies' %in% reports) { 
-    companies <- EvolCompanies(period, conf$startdate, conf$enddate)
-    evol_data = merge(evol_data, companies, all = TRUE)
-}
-if ('countries' %in% reports) {
-    countries <- EvolCountries(period, conf$startdate, conf$enddate)
-    evol_data = merge(evol_data, countries, all = TRUE)
-}
+evol_data <- GetSCMEvolutionaryData(period, conf$startdate, conf$enddate,
+                                    conf$identities_db)
+domains <- EvolDomains(period, conf$startdate, conf$enddate)
+evol_data = merge(evol_data, domains, all = TRUE)
 
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 evol_data <- evol_data[order(evol_data$id), ]
 evol_data[is.na(evol_data)] <- 0
 
-# 3- Creating a JSON file 
 createJSON (evol_data, paste(destdir,"/scm-evolutionary.json", sep=''))
 
 #########
@@ -118,6 +112,7 @@ createJSON (evol_data, paste(destdir,"/scm-evolutionary.json", sep=''))
 # 1- Retrieving information
 static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db)
 static_url <- StaticURL()
+diffcommits <- GetDiffCommitsDays(period, conf$enddate, 365)
 latest_activity7 = last_activity(7)
 latest_activity14 = last_activity(14)
 latest_activity30 = last_activity(30)
@@ -126,26 +121,36 @@ latest_activity90 = last_activity(90)
 latest_activity365 = last_activity(365)
 latest_activity730 = last_activity(730)
 
-#Data for specific analysis
-if ('companies' %in% reports){
-	static_data_companies = evol_info_data_companies (conf$startdate, conf$enddate)
-        static_data = merge(static_data, static_data_companies)
-}
-if ('countries' %in% reports){ 
-	static_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
-        static_data = merge(static_data, static_data_countries)
-}
-# 2- Merging information
+diffcommits_365 = GetDiffCommitsDays(period, conf$enddate, 365)
+diffauthors_365 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 365)
+diffcommits_30 = GetDiffCommitsDays(period, conf$enddate, 30)
+diffauthors_30 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 30)
+diffcommits_7 = GetDiffCommitsDays(period, conf$enddate, 7)
+diffauthors_7 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 7)
+
+community_structure = GetCodeCommunityStructure(period, conf$startdate, conf$enddate, conf$identities_db)
+
+static_data_domains = evol_info_data_domains (conf$startdate, conf$enddate)
+static_data = merge(static_data, static_data_domains)
+
 static_data = merge(static_data, static_url)
+static_data = merge(static_data, diffcommits)
 static_data = merge(static_data, latest_activity7)
 static_data = merge(static_data, latest_activity14)
 static_data = merge(static_data, latest_activity30)
 static_data = merge(static_data, latest_activity60)
 static_data = merge(static_data, latest_activity90)
+static_data = merge(static_data, latest_activity180)
 static_data = merge(static_data, latest_activity365)
 static_data = merge(static_data, latest_activity730)
+static_data = merge(static_data, community_structure)
+static_data = merge(static_data, diffcommits_365)
+static_data = merge(static_data, diffcommits_30)
+static_data = merge(static_data, diffcommits_7)
+static_data = merge(static_data, diffauthors_365)
+static_data = merge(static_data, diffauthors_30)
+static_data = merge(static_data, diffauthors_7)
 
-# 3- Creating file with static data
 createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 
 
