@@ -302,17 +302,13 @@ def produce_dashboard (vizgrimoirejs_dir, example_dir,
                       "navbar.html", "footer.html", "refcard.html",
                       "project-card.html",
                       "viz_cfg.json", "custom.css"]
-    # Files specific to this GitHub example that must go in data/json:
-    ghJSONfiles = ["config.json"]
 
     for file in vgjsFiles:
         shutil.copy(vizgrimoirejs_dir + "/" + file, dashboard_dir)
     for file in ghBrowserfiles:
         shutil.copy(example_dir + "/" + file, dashboard_dir)
-#    for file in ghJSONfiles:
-#        shutil.copy(example_dir + file, json_dir)
     produce_config (example_dir + "/config.json",
-                    json_dir + "/config.json")
+                    dashboard_dir + "/config.json")
 
 if __name__ == "__main__":
 
