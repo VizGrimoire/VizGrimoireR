@@ -135,13 +135,13 @@ if ('countries' %in% reports) {
         print (country)
         data <- GetEvolCountriesMLS(country, identities_db, period, startdate, enddate)
         data <- completePeriodIds(data, conf$granularity, conf)        
-        createJSON (data, paste(destdir,"/",country,"-mls-evolutionary.json",sep=''))
+        createJSON (data, paste(destdir,"/",country,"-mls-cou-evolutionary.json",sep=''))
         
         top_senders = countryTopSenders (country, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir,"/",country,"-mls-top-senders.json", sep=''))        
+        createJSON(top_senders, paste(destdir,"/",country,"-mls-cou-top-senders.json", sep=''))        
         
         data <- GetStaticCountriesMLS(country, identities_db, startdate, enddate)
-        createJSON (data, paste(destdir,"/",country,"-mls-static.json",sep=''))
+        createJSON (data, paste(destdir,"/",country,"-mls-cou-static.json",sep=''))
     }
 }
 
@@ -154,13 +154,13 @@ if ('companies' %in% reports){
         sent.senders = GetEvolCompaniesMLS(company, identities_db, period, startdate, enddate)
         # sent.senders <- completePeriod(sent.senders, nperiod, conf): Nice unixtime!!!
         sent.senders <- completePeriodIds(sent.senders, conf$granularity, conf)
-        createJSON(sent.senders, paste(destdir,"/",company,"-mls-evolutionary.json", sep=''))
+        createJSON(sent.senders, paste(destdir,"/",company,"-mls-com-evolutionary.json", sep=''))
 
         top_senders = companyTopSenders (company, identities_db, startdate, enddate)
         createJSON(top_senders, paste(destdir,"/",company,"-mls-com-top-senders.json", sep=''))
 
         data = GetStaticCompaniesMLS(company, identities_db, startdate, enddate)
-        createJSON(data, paste(destdir,"/",company,"-mls-static.json", sep=''))
+        createJSON(data, paste(destdir,"/",company,"-mls-com-static.json", sep=''))
     }
 }
 
