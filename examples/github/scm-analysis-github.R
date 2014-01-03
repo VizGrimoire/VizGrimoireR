@@ -94,8 +94,6 @@ reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
 #EVOLUTIONARY DATA
 #########
 
-print ("Evolutionary")
-
 evol_data <- GetSCMEvolutionaryData(period, conf$startdate, conf$enddate,
                                     conf$identities_db)
 domains <- EvolDomains(period, conf$startdate, conf$enddate)
