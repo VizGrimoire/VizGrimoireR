@@ -110,19 +110,19 @@ if ('repositories' %in% reports) {
         listname_file = gsub(">","___",listname_file)
 
         # TODO: Multilist approach. We will obsolete it in future
-        createJSON (data, paste(destdir,"/mls-",listname_file,"-repo-evolutionary.json",sep=''))
+        createJSON (data, paste(destdir,"/mls-",listname_file,"-rep-evolutionary.json",sep=''))
         # Multirepos filename
-        createJSON (data, paste(destdir,"/",listname_file,"-mls-repo-evolutionary.json",sep=''))
+        createJSON (data, paste(destdir,"/",listname_file,"-mls-rep-evolutionary.json",sep=''))
 
         top_senders = repoTopSenders (repo, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-top-senders.json", sep=''))        
+        createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-rep-top-senders.json", sep=''))        
 
         # Static data
         data<-GetStaticReposMLS(rfield, repo, startdate, enddate)
         # TODO: Multilist approach. We will obsolete it in future
-    	createJSON (data, paste(destdir, "/",listname_file,"-repo-static.json",sep=''))
+    	createJSON (data, paste(destdir, "/",listname_file,"-rep-static.json",sep=''))
     	# Multirepos filename
-    	createJSON (data, paste(destdir, "/",listname_file,"-mls-repo-static.json",sep=''))    
+    	createJSON (data, paste(destdir, "/",listname_file,"-mls-rep-static.json",sep=''))    
     }
 }
 
@@ -157,7 +157,7 @@ if ('companies' %in% reports){
         createJSON(sent.senders, paste(destdir,"/",company,"-mls-evolutionary.json", sep=''))
 
         top_senders = companyTopSenders (company, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir,"/",company,"-mls-cou-top-senders.json", sep=''))
+        createJSON(top_senders, paste(destdir,"/",company,"-mls-com-top-senders.json", sep=''))
 
         data = GetStaticCompaniesMLS(company, identities_db, startdate, enddate)
         createJSON(data, paste(destdir,"/",company,"-mls-static.json", sep=''))
