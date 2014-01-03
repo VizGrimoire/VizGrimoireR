@@ -105,8 +105,8 @@ if ('repositories' %in% reports) {
     repos_file_names = gsub("<","__",repos_file_names)
     repos_file_names = gsub(">","___",repos_file_names)
     createJSON(repos_file_names, paste(destdir,"/mls-repos.json", sep=''))
-    
-    
+
+
     for (repo in repos) {    
         # Evol data   
         repo_name = paste("'", repo, "'", sep="")
@@ -115,61 +115,61 @@ if ('repositories' %in% reports) {
         listname_file = gsub("/","_",repo)
         listname_file = gsub("<","__",listname_file)
         listname_file = gsub(">","___",listname_file)
-        
+
         # TODO: Multilist approach. We will obsolete it in future
-        createJSON (data, paste(destdir,"/mls-",listname_file,"-evolutionary.json",sep=''))
+        createJSON (data, paste(destdir,"/mls-",listname_file,"-rep-evolutionary.json",sep=''))
         # Multirepos filename
-        createJSON (data, paste(destdir,"/",listname_file,"-mls-evolutionary.json",sep=''))
-        
+        createJSON (data, paste(destdir,"/",listname_file,"-mls-rep-evolutionary.json",sep=''))
+
         top_senders = repoTopSenders (repo, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-top-senders.json", sep=''))        
-        
+        createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-rep-top-senders.json", sep=''))        
+
         # Static data
         data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("repository", repo_name)))
         # TODO: Multilist approach. We will obsolete it in future
-    	createJSON (data, paste(destdir, "/",listname_file,"-static.json",sep=''))
+    	createJSON (data, paste(destdir, "/",listname_file,"-rep-static.json",sep=''))
     	# Multirepos filename
-    	createJSON (data, paste(destdir, "/",listname_file,"-mls-static.json",sep=''))    
+    	createJSON (data, paste(destdir, "/",listname_file,"-mls-rep-static.json",sep=''))    
     }
 }
 
 if ('countries' %in% reports) {
     countries <- countriesNames(identities_db, startdate, enddate) 
     createJSON (countries, paste(destdir, "/mls-countries.json",sep=''))
-    
+
     for (country in countries) {
         if (is.na(country)) next
         print (country)
         country_name = paste("'", country, "'", sep="")
         type_analysis = list("country", country_name)
         data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
-        data <- completePeriodIds(data, conf$granularity, conf)        
-        createJSON (data, paste(destdir,"/",country,"-mls-evolutionary.json",sep=''))
-        
+        data <- completePeriodIds(data, conf$granularity, conf)
+        createJSON (data, paste(destdir,"/",country,"-mls-cou-evolutionary.json",sep=''))
+
         top_senders = countryTopSenders (country, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir,"/",country,"-mls-top-senders.json", sep=''))        
-        
+        createJSON(top_senders, paste(destdir,"/",country,"-mls-cou-top-senders.json", sep=''))
+
         data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, list("country", country_name))
-        createJSON (data, paste(destdir,"/",country,"-mls-static.json",sep=''))
+        createJSON (data, paste(destdir,"/",country,"-mls-cou-static.json",sep=''))
     }
 }
 
 if ('companies' %in% reports){    
     companies = companiesNames(identities_db, startdate, enddate)
     createJSON(companies, paste(destdir,"/mls-companies.json",sep=''))
-   
-    for (company in companies){       
+
+    for (company in companies){
         print (company)
         company_name = paste("'", company, "'", sep="")
         data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", company_name)))
         data <- completePeriodIds(data, conf$granularity, conf)
-        createJSON(data, paste(destdir,"/",company,"-mls-evolutionary.json", sep=''))
+        createJSON(data, paste(destdir,"/",company,"-mls-com-evolutionary.json", sep=''))
 
         top_senders = companyTopSenders (company, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir,"/",company,"-mls-top-senders.json", sep=''))
+        createJSON(top_senders, paste(destdir,"/",company,"-mls-com-top-senders.json", sep=''))
 
         data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", company_name)))
-        createJSON(data, paste(destdir,"/",company,"-mls-static.json", sep=''))
+        createJSON(data, paste(destdir,"/",company,"-mls-com-static.json", sep=''))
     }
 }
 
@@ -183,13 +183,13 @@ if ('domains' %in% reports){
         domain_name = paste("'", domain, "'", sep="")
         data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("domain", domain_name)))
         data <- completePeriodIds(data, conf$granularity, conf)
-        createJSON(data, paste(destdir,"/",domain,"-mls-evolutionary.json", sep=''))
+        createJSON(data, paste(destdir,"/",domain,"-mls-dom-evolutionary.json", sep=''))
 
         top_senders = domainTopSenders (domain, identities_db, startdate, enddate)
-        createJSON(top_senders, paste(destdir,"/",domain,"-mls-top-senders.json", sep=''))
+        createJSON(top_senders, paste(destdir,"/",domain,"-mls-dom-top-senders.json", sep=''))
 
         data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("domain", domain_name)))
-        createJSON(data, paste(destdir,"/",domain,"-mls-static.json", sep=''))
+        createJSON(data, paste(destdir,"/",domain,"-mls-dom-static.json", sep=''))
     }
 }
 

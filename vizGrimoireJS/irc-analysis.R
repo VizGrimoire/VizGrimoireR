@@ -117,11 +117,11 @@ if ('repositories' %in% reports) {
     for (repo in repos) {
         # Static data
         data<-GetRepoStaticSentSendersIRC(repo, conf$startdate, conf$enddate)
-        createJSON (data, paste(destdir, "/",repo,"-irc-static.json",sep=''))                
+        createJSON (data, paste(destdir, "/",repo,"-irc-rep-static.json",sep=''))
         # Evol data
         data<-GetRepoEvolSentSendersIRC(repo, period, conf$startdate, conf$enddate)
-        data <-completePeriodIds(data, conf$granularity, conf)                
-        createJSON (data, paste(destdir,"/",repo,"-irc-evolutionary.json",sep=''))        
+        data <-completePeriodIds(data, conf$granularity, conf)
+        createJSON (data, paste(destdir,"/",repo,"-irc-rep-evolutionary.json",sep=''))
     }
 }
 

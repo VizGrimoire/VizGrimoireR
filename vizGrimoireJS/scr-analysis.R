@@ -214,7 +214,7 @@ if ('repositories' %in% reports) {
         evol = merge(evol, pending, all = TRUE)
         evol = merge(evol, avg_rev_time, all = TRUE)
         evol <- completePeriodIds(evol, conf$granularity, conf)
-        createJSON(evol, paste(destdir, "/",repo_file,"-scr-evolutionary.json", sep=''))
+        createJSON(evol, paste(destdir, "/",repo_file,"-scr-rep-evolutionary.json", sep=''))
 
         # Static
         static <- StaticReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis)
@@ -222,7 +222,7 @@ if ('repositories' %in% reports) {
         static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis))
         static <- merge(static, StaticReviewsPending(period, conf$startdate, conf$enddate, type_analysis))
         static <- merge(static, StaticTimeToReviewSCR(conf$startdate, conf$enddate, conf$identities_db, type_analysis))
-        createJSON(static, paste(destdir, "/",repo_file,"-scr-static.json", sep=''))
+        createJSON(static, paste(destdir, "/",repo_file,"-scr-rep-static.json", sep=''))
     }
 }
 
@@ -254,12 +254,12 @@ if ('companies' %in% reports) {
         evol = merge(submitted, merged, all = TRUE)
         evol = merge(evol, abandoned, all = TRUE)
         evol <- completePeriodIds(evol, conf$granularity, conf)
-        createJSON(evol, paste(destdir, "/",company_file,"-scr-evolutionary.json", sep=''))
+        createJSON(evol, paste(destdir, "/",company_file,"-scr-com-evolutionary.json", sep=''))
         # Static
         static <- StaticReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
         static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
         static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
-        createJSON(static, paste(destdir, "/",company_file,"-scr-static.json", sep=''))
+        createJSON(static, paste(destdir, "/",company_file,"-scr-com-static.json", sep=''))
     }
 }
 
@@ -291,12 +291,12 @@ if ('countries' %in% reports) {
         evol = merge(submitted, merged, all = TRUE)
         evol = merge(evol, abandoned, all = TRUE)
         evol <- completePeriodIds(evol, conf$granularity, conf)
-        createJSON(evol, paste(destdir, "/",country_file,"-scr-evolutionary.json", sep=''))
+        createJSON(evol, paste(destdir, "/",country_file,"-scr-cou-evolutionary.json", sep=''))
         # Static
         static <- StaticReviewsSubmitted(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db)
         static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
         static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
-        createJSON(static, paste(destdir, "/",country_file,"-scr-static.json", sep=''))
+        createJSON(static, paste(destdir, "/",country_file,"-scr-cou-static.json", sep=''))
     }
 }
 
@@ -342,4 +342,3 @@ top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$e
 top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
 
 createJSON (c(top_reviewers, top_openers, top_mergers), paste(destdir,"/scr-top.json", sep=''))
-
