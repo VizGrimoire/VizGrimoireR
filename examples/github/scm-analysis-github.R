@@ -109,7 +109,6 @@ createJSON (evol_data, paste(destdir,"/scm-evolutionary.json", sep=''))
 #STATIC DATA
 #########
 
-# 1- Retrieving information
 static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db)
 static_url <- StaticURL()
 diffcommits <- GetDiffCommitsDays(period, conf$enddate, 365)
@@ -124,10 +123,18 @@ latest_activity730 = last_activity(730)
 
 diffcommits_365 = GetDiffCommitsDays(period, conf$enddate, 365)
 diffauthors_365 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 365)
+diff_files_365 = GetDiffFilesDays(period, conf$enddate, conf$identities_db, 365)
+diff_lines_365 = GetDiffLinesDays(period, conf$enddate, conf$identities_db, 365)
+
 diffcommits_30 = GetDiffCommitsDays(period, conf$enddate, 30)
 diffauthors_30 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 30)
+diff_files_30 = GetDiffFilesDays(period, conf$enddate, conf$identities_db, 30)
+diff_lines_30 = GetDiffLinesDays(period, conf$enddate, conf$identities_db, 30)
+
 diffcommits_7 = GetDiffCommitsDays(period, conf$enddate, 7)
 diffauthors_7 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 7)
+diff_files_7 = GetDiffFilesDays(period, conf$enddate, conf$identities_db, 7)
+diff_lines_7 = GetDiffLinesDays(period, conf$enddate, conf$identities_db, 7)
 
 community_structure = GetCodeCommunityStructure(period, conf$startdate, conf$enddate, conf$identities_db)
 
@@ -151,6 +158,12 @@ static_data = merge(static_data, diffcommits_7)
 static_data = merge(static_data, diffauthors_365)
 static_data = merge(static_data, diffauthors_30)
 static_data = merge(static_data, diffauthors_7)
+static_data = merge(static_data, diff_files_365)
+static_data = merge(static_data, diff_files_30)
+static_data = merge(static_data, diff_files_7)
+static_data = merge(static_data, diff_lines_365)
+static_data = merge(static_data, diff_lines_30)
+static_data = merge(static_data, diff_lines_7)
 
 createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 
@@ -158,10 +171,10 @@ createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 # Top authors
 
 top_authors_data <- top_authors(conf$startdate, conf$enddate)
-## top_authors_data <- list()
-## top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
-## top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
-## top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
+#top_authors_data <- list()
+#top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
+#top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
+#top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
 createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 
 # Top files

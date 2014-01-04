@@ -43,8 +43,8 @@
         <!-- scm -->
         <div class="row-fluid invisible-box">
 	  
-          <!-- scm summary box -->
-          <div class="span3">
+          <div class="span2">
+            <!-- scm summary box -->
             <div class="wellmin">
               <div class="row-fluid thin-border">
                 <div class="span12">Code Developers</div>
@@ -87,7 +87,7 @@
 
                 <div class="span4">
                   <div class="row-fluid thin-border">
-                    <div class="span12">Occasional</div>
+                    <div class="span12">Casual</div>
                   </div>
                   <div class="row-fluid">
                     <div class="span12 medium-fp-number">
@@ -100,45 +100,45 @@
 			
               </div>
             </div>
-          <!-- end scm summary box -->
+            <!-- end scm summary box -->
 
-          <table class="table table-striped">
-            <tr>
-              <td><span class="GlobalData" data-data-source="scm"
-			data-field="scm_repositories"></span></td>
-              <td>repositories</td>
-            </tr>
-            <tr>
-              <td><span class="GlobalData" data-data-source="scm"
-			data-field="avg_commits_author"></span></td>
-              <td>commits/author</td>
-            </tr>
-            <tr>
-              <td><span class="GlobalData" data-data-source="scm"
-			data-field="scm_commits_7"></span></td>
-              <td>commits last week</td>
-            </tr>
-          </table>
-          <table class="table table-striped">
-            <tr>
-              <td><span class="GlobalData" data-data-source="scm"
-			data-field="scm_domains"></span></td>
-              <td>domains</td>
-            </tr>
-            <tr>
-              <td><span class="GlobalData" data-data-source="scm"
-			data-field="avg_files_author"></span></td>
-              <td>files/author</td>
-            </tr>
-            <tr>
-              <td><span class="GlobalData" data-data-source="scm"
-			data-field="scm_authors_7"></span></td>
-              <td>active authors last week</td>
-            </tr>
-          </table>
+            <table class="table table-striped">
+              <tr>
+		<td><span class="GlobalData" data-data-source="scm"
+			  data-field="scm_repositories"></span></td>
+		<td>repositories</td>
+              </tr>
+              <tr>
+		<td><span class="GlobalData" data-data-source="scm"
+			  data-field="scm_domains"></span></td>
+		<td>domains</td>
+              </tr>
+              <tr>
+		<td><span class="GlobalData" data-data-source="scm"
+			  data-field="avg_commits_author"></span></td>
+		<td>commits/author</td>
+              </tr>
+              <tr>
+		<td><span class="GlobalData" data-data-source="scm"
+			  data-field="avg_files_author"></span></td>
+		<td>files/author</td>
+              </tr>
+              <tr>
+		<td><span class="GlobalData" data-data-source="scm"
+			  data-field="scm_authors_7"></span></td>
+		<td>active authors last week</td>
+              </tr>
+              <tr>
+		<td><span class="GlobalData" data-data-source="scm"
+			  data-field="scm_commits_7"></span></td>
+		<td>commits last week</td>
+              </tr>
+            </table>
+	    <!-- end of details box -->
           </div>
 
-          <div class="span4">
+	  <!-- commits evol box -->
+          <div class="span5">
             <div class="well">
               <div class="MetricsEvol" data-data-source="scm" data-metrics="scm_commits"
                    data-min="true" style="height:45px;"></div>
@@ -147,8 +147,10 @@
               </a>
             </div>
           </div>
+	  <!-- end of commits evol box -->
 	  
-          <div class="span4">
+	  <!-- authors evol box -->
+          <div class="span5">
             <div class="well">
               <div class="MetricsEvol" data-data-source="scm" data-metrics="scm_authors"
                    data-min="true" style="height:45px;"></div>
@@ -157,7 +159,21 @@
               </a>
             </div>
           </div>
-	  
+	  <!-- end of authors evol box -->
+
+	  <!-- files evol box -->
+          <div class="span6">
+            <div class="well">
+              <div class="MetricsEvol" data-data-source="scm" data-metrics="scm_files"
+                   data-min="true" style="height:45px;"></div>
+              <a href="scm.html" style="color:black;">
+                <span class="MicrodashText" data-metric="scm_files"></span>
+              </a>
+            </div>
+          </div>
+	  <!-- end of files evol box -->
+
+	  <!-- repositories evol box -->
           <div class="span4">
             <div class="well">
               <div class="MetricsEvol" data-data-source="scm" data-metrics="scm_repositories"
@@ -167,17 +183,21 @@
               </a>
             </div>
           </div>
+	  <!-- end of repositories evol box -->
 	  
-          <div class="span4">
+	  <!-- lines evol box -->
+	  <div class="span6">
             <div class="well">
-              <div class="MetricsEvol" data-data-source="scm" data-metrics="scm_files"
-                   data-min="true" style="height:45px;"></div>
-              <a href="scm.html" style="color:black;">
-                <span class="MicrodashText" data-metric="scm_files"></span>
-              </a>
+              <div class="MetricsEvol" data-data-source="scm"
+		   data-metrics="scm_added_lines,scm_removed_lines" data-min="true"
+		   data-legend="true" style="height: 120px;"></div>
+              <div class="MicrodashText" data-metric="scm_added_lines"></div>
+              <div class="MicrodashText" data-metric="scm_removed_lines"></div>
             </div>
-          </div>
-	  
+	  </div>
+	  <!-- end of lines evol box -->
+
+	  <!-- domains evol box -->
           <div class="span4">
             <div class="well">
               <div class="MetricsEvol" data-data-source="scm" data-metrics="scm_domains"
@@ -187,8 +207,12 @@
               </a>
             </div>
           </div>
-	  
+	  <!-- end of domains evol box -->
+
+
         </div>
+
+
         <!-- end scm -->
 
         <!-- its -->
