@@ -29,12 +29,14 @@
 ##
 ## Usage:
 ## its-analysis-github.R -d dbname -u user -p passwd -i uids_dbname \
-##   [-r repositories,companies] --granularity days|weeks|months|years] \
+##   [-r repositories] --granularity days|weeks|months|years] \
 ##   --destination destdir
+##
+## (There are some more options, look at the source, Luke)
 ##
 ## Example:
 ##  LANG=en_US R_LIBS=rlib:$R_LIBS its-analysis-github.R -d proydb \
-##  -u jgb -p XXX -i uiddb -r repositories,companies --granularity weeks \
+##  -u jgb -p XXX -i uiddb -r repositories --granularity weeks \
 ##  --destination destdir
 
 library("vizgrimoire")
@@ -63,8 +65,8 @@ SetDBChannel (database = conf$database,
 	      user = conf$dbuser, password = conf$dbpassword)
 
 period <- ITSDatesPeriod()
-conf$startdate <- paste('"', as.character(period["startdate"]), '"', sep="")
-conf$enddate <- paste('"', as.character(period["enddate"]), '"', sep="")
+conf$startdate <- paste("'", as.character(period["startdate"]), "'", sep="")
+conf$enddate <- paste("'", as.character(period["enddate"]), "'", sep="")
 conf$str_startdate <- as.character(period["startdate"])
 conf$str_enddate <- as.character(period["enddate"])
 print(conf)

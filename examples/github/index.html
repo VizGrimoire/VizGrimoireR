@@ -265,6 +265,7 @@
           </div>
           <!-- end its summary box -->
 
+	  <!-- closed tickets evol box -->
           <div class="span5">
             <div class="well">
               <div class="MetricsEvol" data-data-source="its" data-metrics="its_closed"
@@ -274,7 +275,33 @@
               </a>
             </div>
           </div>
+	  <!-- end of closed tickets evol box -->
 	  
+	  <!-- opened tickets evol box -->
+          <div class="span4">
+            <div class="well">
+              <div class="MetricsEvol" data-data-source="its" data-metrics="its_opened"
+                   data-min="true" style="height:45px;"></div>
+              <a href="its.html" style="color:black;">
+                <span class="MicrodashText" data-metric="its_opened"></span>
+              </a>
+            </div>
+          </div>
+	  <!-- end of opened tickets evol box -->
+
+	  <!-- changed tickets evol box -->
+          <div class="span4">
+            <div class="well">
+              <div class="MetricsEvol" data-data-source="its" data-metrics="its_changed"
+                   data-min="true" style="height:45px;"></div>
+              <a href="its.html" style="color:black;">
+                <span class="MicrodashText" data-metric="its_changed"></span>
+              </a>
+            </div>
+          </div>
+	  <!-- end of changed tickets evol box -->
+
+	  <!-- closers of tickets evol box -->
           <div class="span4">
             <div class="well">
               <div class="MetricsEvol" data-data-source="its" data-metrics="its_closers"
@@ -284,8 +311,34 @@
               </a>
             </div>
           </div>
-        </div>
-        <!-- end its -->
+	  <!-- end of closers of tickets evol box -->
+
+	  <!-- openers of tickets evol box -->
+          <div class="span4">
+            <div class="well">
+              <div class="MetricsEvol" data-data-source="its" data-metrics="its_openers"
+                   data-min="true" style="height:45px;"></div>
+              <a href="its.html" style="color:black;">
+                <span class="MicrodashText" data-metric="its_openers"></span>
+              </a>
+            </div>
+          </div>
+	  <!-- end of openers of tickets evol box -->
+
+	  <!-- changers of tickets evol box -->
+          <div class="span4">
+            <div class="well">
+              <div class="MetricsEvol" data-data-source="its" data-metrics="its_changers"
+                   data-min="true" style="height:45px;"></div>
+              <a href="its.html" style="color:black;">
+                <span class="MicrodashText" data-metric="its_changers"></span>
+              </a>
+            </div>
+          </div>
+	  <!-- end of changers of tickets evol box -->
+
+	</div>        
+	<!-- end its -->
 	
       </div>
       <!-- end scm, its, mls -->
@@ -304,4 +357,5 @@
     <script type="text/javascript" src="jquery-1.7.1.min.js"></script>
     <script type="text/javascript" src="bootstrap.min.js"></script>
     <script type="text/javascript" src="vizgrimoire.min.js"></script>                    
-</body></html>
+  </body>
+</html>
