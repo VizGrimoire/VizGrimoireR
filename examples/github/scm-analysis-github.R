@@ -180,48 +180,6 @@ createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 # Top files
 top_files_modified_data = top_files_modified()
 
-if ('companies' %in% reports) {
-
-    companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
-    companies <- companies$name
-    createJSON(companies, paste(destdir,"/scm-companies.json", sep=''))
-	
-    for (company in companies){
-        company_name = paste("'", company, "'", sep='')
-        company_aux = paste("", company, "", sep='')
-        print (company_name)
-	
-        ######
-        #Evolutionary data per company
-        ######	
-        # 1- Retrieving and merging info  
-        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, NA, company_name, NA)
-        		
-        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
-        evol_data <- evol_data[order(evol_data$id), ]
-        evol_data[is.na(evol_data)] <- 0
-		
-        # 2- Creation of JSON file
-        createJSON(evol_data, paste(destdir,"/",company_aux,"-scm-evolutionary.json", sep=''))
-				
-        ########
-        #Static data per company
-        ########
-        static_data <- GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, NA, company_name, NA)
-
-        createJSON(static_data, paste(destdir,"/",company_aux,"-scm-static.json", sep=''))
-	
-        top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
-        createJSON(top_authors, paste(destdir,"/",company_aux,"-scm-top-authors.json", sep=''))
-        top_authors_2006 <- company_top_authors_year(company_name, 2006) 
-        createJSON(top_authors_2006, paste(destdir,"/",company_aux,"-scm-top-authors_2006.json", sep=''))
-        top_authors_2009 <- company_top_authors_year(company_name, 2009)
-        createJSON(top_authors_2009, paste(destdir,"/",company_aux,"-scm-top-authors_2009.json", sep=''))
-        top_authors_2012 <- company_top_authors_year(company_name, 2012)
-        createJSON(top_authors_2012, paste(destdir,"/",company_aux,"-scm-top-authors_2012.json", sep=''))	
-    }
-}
-
 if ('repositories' %in% reports) {
     repos  <- repos_name(conf$startdate, conf$enddate)
     repos <- repos$name
@@ -298,39 +256,6 @@ if ('people' %in% reports) {
     }        
 }
 
-if ('companies-countries' %in% reports){
-    companies  <- companies_name(conf$startdate, conf$enddate)
-    companies <- companies$name
-    for (company in companies){
-        countries  <- scm_countries_names(conf$identities_db,conf$startdate, conf$enddate)
-    countries <- countries$name
-    for (country in countries) {
-            company_name = paste(c("'", company, "'"), collapse='')
-            company_aux = paste(c("", company, ""), collapse='')
-
-            ###########
-            if (is.na(country)) next
-            print (paste(country, "<->", company))
-            data <- scm_companies_countries_evol(conf$identities_db, company, country, nperiod, conf$startdate, conf$enddate)
-            if (length(data) == 0) {
-                data <- data.frame(id=numeric(0),commits=numeric(0),authors=numeric(0))
-            }
-
-            data = completeZeroPeriod(data, nperiod, conf$str_startdate, conf$str_enddate)
-            data$week <- as.Date(conf$str_startdate) + data$id * nperiod
-            data$date  <- toTextDate(GetYear(data$week), GetMonth(data$week)+1)
-            data <- data[order(data$id), ]
-            createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-evolutionary.json",sep=''))
-
-            data <- scm_countries_static(conf$identities_db, country, conf$startdate, conf$enddate)
-            createJSON (data, paste("data/json/companycountry/",company,".",country,"-scm-static.json",sep=''))
-
-            #################
-
-
-        }
-    }
-}
 
 # Demographics
 d <- new ("Demographics","scm",6)
