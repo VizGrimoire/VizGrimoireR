@@ -110,14 +110,6 @@ evol <- merge (open, closed, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
 
-if ('companies' %in% reports) {
-    info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
-    evol = merge(evol, info_data_companies, all = TRUE)
-}
-if ('countries' %in% reports) {
-    info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
-    evol = merge(evol, info_data_countries, all = TRUE)
-}
 if ('repositories' %in% reports) {
     data = GetEvolReposITS(period, startdate, enddate)
     evol = merge(evol, data, all = TRUE)

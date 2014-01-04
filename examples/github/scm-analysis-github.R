@@ -31,12 +31,14 @@
 ##
 ## Usage:
 ## scm-analysis-github.R -d dbname -u user -p passwd -i uids_dbname \
-##   [-r repositories,companies] --granularity days|weeks|months|years] \
+##   [-r repositories] --granularity days|weeks|months|years] \
 ##   --destination destdir
+##
+## (There are some more options, look at the source, Luke)
 ##
 ## Example:
 ##  LANG=en_US R_LIBS=rlib:$R_LIBS scm-analysis-github.R -d proydb \
-##  -u jgb -p XXX -i uiddb -r repositories,companies --granularity weeks \
+##  -u jgb -p XXX -i uiddb -r repositories --granularity weeks \
 ##  --destination destdir
 
 library("vizgrimoire")
