@@ -85,17 +85,18 @@ if (conf$granularity == 'years') {
 } else {stop(paste("Incorrect period:",conf$granularity))}
 
 conf$backend <- 'github'
-# Closed condition for github
+
+## Closed condition for github
 closed_condition <- "field='closed'"
 
-# dates
+## Dates
 startdate <- conf$startdate
 enddate <- conf$enddate
-# database with unique identities
+# Database with unique identities
 identities_db <- conf$identities_db
-# multireport
+# Reports
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
-# destination directory
+# Destination directory
 destdir <- conf$destination
 
 #########
@@ -106,13 +107,18 @@ closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
 changed <- GetEvolChanged(period, startdate, enddate)
 open <- GetEvolOpened(period, startdate, enddate)
 repos <- GetEvolReposITS(period, startdate, enddate)
+
 evol <- merge (open, closed, all = TRUE)
-evol <- merge (evol, changed, all = TRUE)
 evol <- merge (evol, repos, all = TRUE)
+evol <- merge (evol, changed, all = TRUE)
 
 if ('repositories' %in% reports) {
     data = GetEvolReposITS(period, startdate, enddate)
     evol = merge(evol, data, all = TRUE)
+}
+if ('domains' %in% reports) {
+    info_data_domains = GetEvolDomainsITS(period, startdate, enddate, identities_db)
+    evol = merge(evol, info_data_domains, all = TRUE)
 }
 
 evol <- completePeriodIds(evol, conf$granularity, conf)
@@ -120,17 +126,44 @@ evol[is.na(evol)] <- 0
 evol <- evol[order(evol$id),]
 createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
+## markov <- MarkovChain()
+## createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
+
+##
+## Data in snapshots
+##
 
 all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
+if ('domains' %in% reports) {
+    info_com = GetStaticDomainsITS (startdate, enddate, identities_db)
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
 
-if ('companies' %in% reports) {
-    info_com = GetStaticCompaniesITS (startdate, enddate, identities_db)
-    all_static_info = merge(all_static_info, info_com, all = TRUE)
-}
-if ('countries' %in% reports) {
-    info_com = GetStaticCountriesITS (startdate, enddate, identities_db)
-    all_static_info = merge(all_static_info, info_com, all = TRUE)
-}
+closed_7 = GetDiffClosedDays(conf$enddate, 7, closed_condition)
+closed_30 = GetDiffClosedDays(conf$enddate, 30, closed_condition)
+closed_365 = GetDiffClosedDays(conf$enddate, 365, closed_condition)
+opened_7 = GetDiffOpenedDays(conf$enddate, 7, closed_condition)
+opened_30 = GetDiffOpenedDays(conf$enddate, 30, closed_condition)
+opened_365 = GetDiffOpenedDays(conf$enddate, 365, closed_condition)
+closers_7 = GetDiffClosersDays(conf$enddate, 7, closed_condition)
+closers_30 = GetDiffClosersDays(conf$enddate, 30, closed_condition)
+closers_365 = GetDiffClosersDays(conf$enddate, 365, closed_condition)
+changers_7 = GetDiffChangersDays(conf$enddate, 7, closed_condition)
+changers_30 = GetDiffChangersDays(conf$enddate, 30, closed_condition)
+changers_365 = GetDiffChangersDays(conf$enddate, 365, closed_condition)
+
+all_static_info = merge(all_static_info, closed_365)
+all_static_info = merge(all_static_info, closed_30)
+all_static_info = merge(all_static_info, closed_7)
+all_static_info = merge(all_static_info, opened_365)
+all_static_info = merge(all_static_info, opened_30)
+all_static_info = merge(all_static_info, opened_7)
+all_static_info = merge(all_static_info, closers_7)
+all_static_info = merge(all_static_info, closers_30)
+all_static_info = merge(all_static_info, closers_365)
+all_static_info = merge(all_static_info, changers_7)
+all_static_info = merge(all_static_info, changers_30)
+all_static_info = merge(all_static_info, changers_365)
 
 latest_activity7 = GetLastActivityITS(7, closed_condition)
 latest_activity14 = GetLastActivityITS(14, closed_condition)
@@ -150,11 +183,42 @@ all_static_info = merge(all_static_info, latest_activity365)
 all_static_info = merge(all_static_info, latest_activity730)
 createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
+GetTopClosersSimple <- function(days = 0, startdate, enddate, identites_db) {
+    
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+    }
+    q <- paste("SELECT up.id as id, up.identifier as closers,
+                       count(distinct(c.id)) as closed
+                FROM changes c, people_upeople pup, ",
+               identities_db, ".upeople up
+                WHERE pup.people_id = c.changed_by AND
+                      pup.upeople_id = up.id AND
+                      c.changed_on >= ", startdate, " AND
+                      c.changed_on < ", enddate, " AND ",
+                      closed_condition, " ", date_limit, "
+                GROUP BY up.identifier
+                ORDER BY closed desc
+                LIMIT 10", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
 # Top closers
-## top_closers_data <- list()
-## top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-## top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-## top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+top_closers_data <- list()
+top_closers_data[['closers.']]<-GetTopClosersSimple(0, conf$startdate,
+                                                    conf$enddate,identites_db)
+top_closers_data[['closers.last year']]<-GetTopClosersSimple(365, conf$startdate,
+                                                             conf$enddate,identites_db)
+top_closers_data[['closers.last month']]<-GetTopClosersSimple(31, conf$startdate,
+                                                              conf$enddate,identites_db)
+top_closers_data[['closers.last week']]<-GetTopClosersSimple(7, conf$startdate,
+                                                             conf$enddate,identites_db)
 
 ## # Top openers
 ## top_openers_data <- list()
@@ -162,8 +226,8 @@ createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 ## top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 ## top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 
-## all_top <- c(top_closers_data, top_openers_data)
-## createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
+all_top <- c(top_closers_data)
+createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # People List for working in unique identites
 # people_list <- its_people()
