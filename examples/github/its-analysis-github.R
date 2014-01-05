@@ -298,13 +298,19 @@ events.tofix.hours <- new ("TimedEvents",
 quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
 JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
     
-## Changed tickets: time ticket was attended, last move
+## Changed tickets: time ticket were attended, last move
 changed <- new ("ITSTicketsChangesTimes")
 ## Yearly quantiles of time to attention (minutes)
 events.toatt <- new ("TimedEvents",
                      changed$open, changed$toattention %/% 60)
-quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+quantiles <- QuantilizeYears (events.toatt, quantiles_spec)
 JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
+
+## Monthly quantiles of time to attention (hours)
+events.toatt.hours <- new ("TimedEvents",
+                           changed$open, changed$toattention %/% 3600)
+quantiles.month <- QuantilizeMonths (events.toatt.hours, quantiles_spec)
+JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_attention_hour.json'), collapse=''))
 
 
 # Demographics
