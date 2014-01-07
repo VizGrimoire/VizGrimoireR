@@ -144,23 +144,23 @@ for (status in statuses)
 }
 
 
-#TBD
-#if ('companies' %in% reports) {
-#    info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
-#    evol = merge(evol, info_data_companies, all = TRUE)
-#}
-#if ('countries' %in% reports) {
-#    info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
-#    evol = merge(evol, info_data_countries, all = TRUE)
-#}
-#if ('repositories' %in% reports) {
-#    data = GetEvolReposITS(period, startdate, enddate)
-#    evol = merge(evol, data, all = TRUE)
-#}
-#if ('domains' %in% reports) {
-#    info_data_domains = GetEvolDomainsITS(period, startdate, enddate, identities_db)
-#    evol = merge(evol, info_data_domains, all = TRUE)
-#}
+
+if ('companies' %in% reports) {
+    info_data_companies = EvolIssuesCompanies(period, startdate, enddate, identities_db, list(NA, NA))
+    evol = merge(evol, info_data_companies, all = TRUE)
+}
+if ('countries' %in% reports) {
+    info_data_countries = EvolIssuesCountries(period, startdate, enddate, identities_db, list(NA, NA))
+    evol = merge(evol, info_data_countries, all = TRUE)
+}
+if ('repositories' %in% reports) {
+    data = EvolIssuesRepositories(period, startdate, enddate, identities_db, list(NA, NA))
+    evol = merge(evol, data, all = TRUE)
+}
+if ('domains' %in% reports) {
+    info_data_companies = EvolIssuesDomains(period, startdate, enddate, identities_db, list(NA, NA))
+    evol = merge(evol, info_data_domains, all = TRUE)
+}
 
 evol <- completePeriodIds(evol, conf$granularity, conf)
 evol[is.na(evol)] <- 0
@@ -175,19 +175,19 @@ open <- EvolIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA)
 all_static_info = merge(closed, changed)
 all_static_info = merge(all_static_info, open)
 
-#TBD
-#if ('companies' %in% reports) {
-#    info_com = GetStaticCompaniesITS (startdate, enddate, identities_db)
-#    all_static_info = merge(all_static_info, info_com, all = TRUE)
-#}
-#if ('countries' %in% reports) {
-#    info_com = GetStaticCountriesITS (startdate, enddate, identities_db)
-#    all_static_info = merge(all_static_info, info_com, all = TRUE)
-#}
-#if ('domains' %in% reports) {
-#    info_com = GetStaticDomainsITS (startdate, enddate, identities_db)
-#    all_static_info = merge(all_static_info, info_com, all = TRUE)
-#}
+
+if ('companies' %in% reports) {
+    info_com = AggIssuesCompanies(period, startdate, enddate, identities_db, list(NA, NA))
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
+if ('countries' %in% reports) {
+    info_com = AggIssuesCountries(period, startdate, enddate, identities_db, list(NA, NA))
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
+if ('domains' %in% reports) {
+    info_com = AggIssuesDomains(period, startdate, enddate, identities_db, list(NA, NA))
+    all_static_info = merge(all_static_info, info_com, all = TRUE)
+}
 
 closed_7 = GetDiffClosedDays(conf$enddate, 7, closed_condition)
 closed_30 = GetDiffClosedDays(conf$enddate, 30, closed_condition)

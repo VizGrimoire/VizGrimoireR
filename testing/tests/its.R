@@ -259,6 +259,7 @@ test.IssuesChangers.Evol.Month <- function(){
     expect_that(12, equals(nrow(EvolIssuesChangers('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
+#Repositories
 test.IssuesRepositories.Evol.Month <- function(){
     expect_that(12, equals(nrow(EvolIssuesRepositories('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
@@ -266,6 +267,37 @@ test.IssuesRepositories.Evol.Month <- function(){
 test.IssuesRepositories.Evol.Week <- function(){
     expect_that(54, equals(nrow(EvolIssuesRepositories('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
 }
+
+#per type of study
+#Uncomment tests when dataset is available in MySQL
+#test.EvolIssuesDomains.Week <- function(){
+#    print(EvolIssuesDomains('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('domain', "'Rackspace'")))
+#}
+
+#test.EvolIssuesCountries.Week <- function(){
+#    print(EvolIssuesCountries('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('country', "'Rackspace'")))
+#}
+
+test.EvolIssuesCompanies.Month <- function(){
+    print(EvolIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))
+    expect_that(12, equals(nrow(EvolIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+}
+
+#Uncomment tests when dataset is available in MySQL
+#test.AggIssuesDomains.Week <- function(){
+#    print(AggIssuesDomains('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('domain', "'Rackspace'")))
+#}
+
+#test.AggIssuesCountries.Week <- function(){
+#    print(AggIssuesCountries('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('country', "'Rackspace'")))
+#}
+
+test.AggIssuesCompanies.Month <- function(){
+     print(AggIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', NA)))
+     expect_that(35, equals(as.numeric(AggIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+}
+
+
 
 #############################
 # Test lists of countries, companies and repositories

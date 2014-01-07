@@ -429,7 +429,6 @@ GetClosers <- function(period, startdate, enddate, identities_db, type_analysis,
 
 
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -464,7 +463,6 @@ GetChanged <- function(period, startdate, enddate, identities_db, type_analysis,
     filters = gsub("i.submitted", "ch.changed", filters)
 
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -512,7 +510,6 @@ GetChangers <- function(period, startdate, enddate, identities_db, type_analysis
     filters = gsub("i.submitted", "ch.changed", filters)
 
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -538,7 +535,6 @@ GetIssuesRepositories <- function(period, startdate, enddate, identities_db, typ
     filters = GetITSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(period, startdate, enddate, " i.submitted_on ", fields, tables, filters, evolutionary)
-    print(q)
     return(ExecuteQuery(q))
 }
 
@@ -552,6 +548,52 @@ AggIssuesRepositories <- function(period, startdate, enddate, identities_db, typ
     return(GetIssuesRepositories(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
+GetIssuesStudies <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary, study){
+    # Generic function that counts evolution/agg number of specific studies with similar
+    # database schema such as domains, companies and countries
+    fields = paste(' count(distinct(name)) as ', study, sep="")
+    tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis))
+    filters = GetITSSQLReportWhere(type_analysis)
+
+    #Filtering last part of the query, not used in this case
+    #filters = gsub("and\n( )+(d|c|cou|com).name =.*$", "", filters)
+    
+    q <- BuildQuery(period, startdate, enddate, " i.submitted_on ", fields, tables, filters, evolutionary)
+    q = gsub("and[[:space:]]*(d|c|cou|com).name[[:space:]]*=[[:space:]]*('.*'|NA)", "", q)
+    data <- ExecuteQuery(q)
+    return(data)
+}
+
+EvolIssuesDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA,NA)){
+    # Evol number of domains used
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'domains'))
+}
+
+EvolIssuesCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Evol number of countries
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'countries'))
+}
+
+EvolIssuesCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Evol number of companies
+    data <- GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'companies')
+    return(data)
+}
+
+
+AggIssuesDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Agg number of domains
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'domains'))
+}
+
+AggIssuesCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Agg number of countries
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'countries'))
+}
+AggIssuesCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+    # Agg number of companies
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'companies'))
+}
 
 
 ###############
@@ -569,7 +611,6 @@ GetReposNameITS <- function(startdate, enddate) {
                         i.submitted_on < ", enddate, "
                   GROUP BY t.url 
                   ORDER BY count(distinct(i.id)) DESC ", sep="")
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -593,7 +634,6 @@ GetCountriesNamesITS <- function (startdate, enddate, identities_db, closed_cond
                           ", closed_condition, "
                           group by cou.name 
                           order by count(distinct(i.id)) desc", sep="") 
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)      
     return (data)             
@@ -617,7 +657,6 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condit
                           ", closed_condition, "
                           group by c.name 
                           order by count(distinct(i.id)) desc", sep="")
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -880,7 +919,6 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
                     ORDER BY opened desc
                     LIMIT 10;", sep="")
     query <- new ("Query", sql = q)
-    print(q)
     data <- run(query)
     return (data)
 }
@@ -945,9 +983,7 @@ EvolBMIIndex <- function(period, startdate, enddate, identities_db, type_analysi
 
     #This will fail if dataframes have different lenght (to be fixe)
     closed = EvolIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
-    print(closed)
     opened = EvolIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
-    print(opened)
     evol_bmi = (closed$closed / opened$opened) * 100
 
     closed$closers <- NULL
@@ -1054,10 +1090,8 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
          ORDER BY com.name,
                   YEARWEEK( changed_on , 3 );", sep="")
          #",closed_condition,"  AND
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
-    print("Companies name")
     companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, c("-Bot", "-Individual", "-Unknown"))
     companies <- companies$name
 
@@ -1083,7 +1117,6 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
                 first_companies = company_data
             }
             first_companies = merge(first_companies, company_data, all=TRUE)
-            print(first_companies)
             colnames(first_companies)[colnames(first_companies)=="closed"] <- company
 
         } else {
