@@ -682,14 +682,12 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condit
 ##  two weeks for the day 2013-11-25:
 ##  (date="2013-11-25", days=7, closed_condition=...)
 ##
-GetDiffClosedDays <- function(date, days, closed_condition){
+GetDiffClosedDays <- function(period, identities_db, date, days, type_analysis=list(NA, NA), closed_condition){
     # This function provides the percentage in activity between two periods
     chardates = GetDates(date, days)
-    lastclosed = AggIssuesClosed(period, chardates[2], chardates[1], identities_db, closed_condition)
-    #lastclosed = StaticNumClosed(closed_condition, chardates[2], chardates[1])
+    lastclosed = AggIssuesClosed(period, chardates[2], chardates[1], identities_db, type_analysis, closed_condition)
     lastclosed = as.numeric(lastclosed[1])
-    prevclosed = AggIssuesClosed(period, chardates[3], chardates[2], identities_db, closed_condition)
-    #prevclosed = StaticNumClosed(closed_condition, chardates[3], chardates[2])
+    prevclosed = AggIssuesClosed(period, chardates[3], chardates[2], identities_db, type_analysis, closed_condition)
     prevclosed = as.numeric(prevclosed[1])
     diffcloseddays = data.frame(diff_netclosed = numeric(1), percentage_closed = numeric(1))
 
@@ -713,15 +711,13 @@ GetDiffClosedDays <- function(date, days, closed_condition){
 ##  two weeks for the day 2013-11-25:
 ##  (date="2013-11-25", days=7, closed_condition=...)
 ##
-GetDiffClosersDays <- function(date, days, closed_condition){
+GetDiffClosersDays <- function(period, identities_db, date, days, type_analysis=list(NA, NA), closed_condition){
     # This function provides the percentage in activity between two periods
 
     chardates = GetDates(date, days)
-    lastclosers = AggIssuesClosers(period, chardates[2], chardates[1], identities_db, closed_condition)
-    #lastclosers = StaticNumClosers(closed_condition, chardates[2], chardates[1])
+    lastclosers = AggIssuesClosers(period, chardates[2], chardates[1], identities_db, type_analysis, closed_condition)
     lastclosers = as.numeric(lastclosers[1])
-    prevclosers = AggIssuesClosers(period, chardates[3], chardates[2], identities_db, closed_condition)
-    #prevclosers = StaticNumClosers(closed_condition, chardates[3], chardates[2])
+    prevclosers = AggIssuesClosers(period, chardates[3], chardates[2], identities_db, type_analysis, closed_condition)
     prevclosers = as.numeric(prevclosers[1])
     diffclosersdays = data.frame(diff_netclosers = numeric(1), percentage_closers = numeric(1))
 
@@ -732,6 +728,37 @@ GetDiffClosersDays <- function(date, days, closed_condition){
 
     return (diffclosersdays)
 }
+
+GetDiffOpenedDays <- function(period, identities_db, date, days, type_analysis=list(NA, NA)){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(date, days)
+    last_opened = AggIssuesOpened(period, chardates[2], chardates[1], identities_db, type_anaylisis)
+    prev_opened = AggIssuesOpened(period, chardates[3], chardates[2], identities_db, type_analysis)
+
+    diff_opened_days = data.frame(diff_netopened = numeric(1), percentage_opened = numeric(1))
+    diff_opened_days$diff_netopened = last_opened - prev_opened
+    diff_opened_days$percentage_opened = GetPercentageDiff(prev_opened, last_opened)
+
+    colnames(diff_opened_days) <- c(paste("diff_netopened","_",days, sep=""), paste("percentage_opened","_",days, sep=""))
+
+    return (diff_opened_days)
+}
+
+GetDiffChangersDays <- function(period, identities_db, date, days, type_analysis=list(NA, NA)){
+    # This function provides the percentage in activity between two periods
+    chardates = GetDates(date, days)
+    last_changers = AggIssuesChangers(period, chardates[2], chardates[1], identities_db, type_analysis)
+    prev_changers = AggIssuesChangers(period, chardates[3], chardates[2], identities_db, type_analysis)
+
+    diff_changers_days = data.frame(diff_netchangers = numeric(1), percentage_changers = numeric(1))
+    diff_changers_days$diff_netchangers = last_changers - prev_changers
+    diff_changers_days$percentage_changers = GetPercentageDiff(prev_changers, last_changers)
+
+    colnames(diff_changers_days) <- c(paste("diff_netchangers","_",days, sep=""), paste("percentage_changers","_",days, sep=""))
+
+    return (diff_changers_days)
+}
+
 
 
 GetLastActivityITS <- function(days, closed_condition) {
