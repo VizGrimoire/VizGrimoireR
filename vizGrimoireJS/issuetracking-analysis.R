@@ -19,12 +19,13 @@
 ## Authors:
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
+##   Daniel Izquierdo-Cortazar <dizquierdo@bitergia.com>
 ##
 ##
 ## Usage:
 ##  R --vanilla --args -d dbname < its-analysis.R
 ## or
-##  R CMD BATCH scm-analysis.R
+##  R CMD BATCH its-analysis.R
 ##
 
 library("vizgrimoire")
@@ -114,11 +115,10 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 closed <- EvolIssuesClosed(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
 changed <- EvolIssuesChanged(period, startdate, enddate, identities_db, list(NA, NA))
 open <- EvolIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA))
-#TBD
-#repos <- GetEvolReposITS(period, startdate, enddate)
+repos <- EvolIssuesRepositories(period, startdate, enddate, identities_db, list(NA, NA))
 
 evol <- merge (open, closed, all = TRUE)
-#evol <- merge (evol, repos, all = TRUE)
+evol <- merge (evol, repos, all = TRUE)
 evol <- merge (evol, changed, all = TRUE)
 
 

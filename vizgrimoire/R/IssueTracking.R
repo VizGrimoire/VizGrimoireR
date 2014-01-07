@@ -278,7 +278,7 @@ CountBacklogTickets <- function(samples, res, statuses){
 # Generic function to obtain the current photo of a given issue
 # This is based on the field "status" from the issues table
 
-GetCurrentStatus <- function(period, startdate, enddate, identities_db, status, evolutionary){
+GetCurrentStatus <- function(period, startdate, enddate, identities_db, status){
     # This functions provides  of the status specified by 'status'
     # group by submitted date. Thus, as an example, for those issues 
     # in status = open, it is possible to know when they were submitted
@@ -527,6 +527,32 @@ AggIssuesChangers <- function(period, startdate, enddate, identities_db, type_an
 EvolIssuesChangers <- function(period, startdate, enddate, identities_db, type_analysis){
     return(GetChangers(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
+
+
+# Repositories
+GetIssuesRepositories <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    # Generic function that counts repositories
+
+    fields = paste(" COUNT(DISTINCT(tracker_id)) AS repositories  ", sep="")
+    tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis))
+    filters = GetITSSQLReportWhere(type_analysis)
+
+    q <- BuildQuery(period, startdate, enddate, " i.submitted_on ", fields, tables, filters, evolutionary)
+    print(q)
+    return(ExecuteQuery(q))
+}
+
+EvolIssuesRepositories <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    # Evolution of trackers
+    return(GetIssuesRepositories(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+AggIssuesRepositories <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA)){
+    # Evolution of trackers
+    return(GetIssuesRepositories(period, startdate, enddate, identities_db, type_analysis, FALSE))
+}
+
+
 
 ###############
 # Lists of repositories, companies, countries and other analysis

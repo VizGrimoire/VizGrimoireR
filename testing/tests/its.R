@@ -259,6 +259,13 @@ test.IssuesChangers.Evol.Month <- function(){
     expect_that(12, equals(nrow(EvolIssuesChangers('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
 }
 
+test.IssuesRepositories.Evol.Month <- function(){
+    expect_that(12, equals(nrow(EvolIssuesRepositories('month', "'2012-01-01'", "'2013-01-01'", NA, list(NA, NA)))))
+}
+
+test.IssuesRepositories.Evol.Week <- function(){
+    expect_that(54, equals(nrow(EvolIssuesRepositories('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list(NA, NA)))))
+}
 
 #############################
 # Test lists of countries, companies and repositories
