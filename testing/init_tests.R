@@ -31,6 +31,7 @@ library('RUnit')
 library('testthat')
 library('vizgrimoire')
 library('zoo')
+library('ISOweek')
 
 #R --vanilla --args -d fake -u root  -i jenkins_scm_vizr_1783 < init_tests.R
 

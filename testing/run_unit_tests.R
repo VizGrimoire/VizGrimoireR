@@ -39,12 +39,6 @@ test.suite <- defineTestSuite("AuxiliaryTest",
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0){q(status=1)}
 
-test.suite <- defineTestSuite("ITSTest",
-                              dirs = file.path("tests"),
-                              testFileRegexp = 'its.R$')
-
-test.result <- runTestSuite(test.suite)
-if (getErrors(test.result)[1]>0){q(status=1)}
 
 
 
