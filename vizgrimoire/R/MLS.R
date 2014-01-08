@@ -232,6 +232,7 @@ GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_a
             #used in the rest of cases, to be fixed...
             data = merge(data, sent_response, all=TRUE)
         }
+        data = merge(data, senders_response, all=TRUE)
         data = merge(data, senders_init, all=TRUE)
 
     } else {
@@ -247,6 +248,7 @@ GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_a
         data = merge(data, repositories, all=TRUE)
         data = merge(data, threads, all=TRUE)
         data = merge(data, sent_response, all=TRUE)
+        data = merge(data, senders_response, all=TRUE)
         data = merge(data, senders_init, all=TRUE)
     }
 
