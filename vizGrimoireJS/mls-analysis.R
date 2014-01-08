@@ -56,12 +56,41 @@ rfield = reposField()
 
 data <- EvolMLSInfo(period, startdate, enddate, identities_db, rfield)
 
+if ('companies' %in% reports) {
+    companies <- EvolMLSCompanies(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, companies, all = TRUE)
+}
+if ('countries' %in% reports) {
+    countries <- EvolMLSCountries(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, countries, all = TRUE)
+}
+if ('domains' %in% reports) {
+    domains <- EvolMLSDomains(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, domains, all = TRUE)
+}
+
+
 data <- completePeriodIds(data, conf$granularity, conf)
 
 createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
 
 static_data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
+
+if ('companies' %in% reports) {
+    companies <- AggMLSCompanies(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, companies, all = TRUE)
+}
+if ('countries' %in% reports) {
+    countries <- AggMLSCountries(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, countries, all = TRUE)
+}
+if ('domains' %in% reports) {
+    domains <- AggMLSDomains(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, domains, all = TRUE)
+}
+
+
 
 latest_activity7 <- lastActivity(7)
 latest_activity14 <- lastActivity(14)
