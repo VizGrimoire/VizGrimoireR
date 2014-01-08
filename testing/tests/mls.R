@@ -116,7 +116,7 @@ test.EvolThreads.Company <- function()
 #}
 
 test.EvolMLSCompanies.Month <- function(){
-    expect_that(12, equals(nrow(EvolMLSCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+    expect_that(12, equals(nrow(EvolMLSCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db))))
 }
 
 #Uncomment tests when dataset is available in MySQL
@@ -129,6 +129,6 @@ test.EvolMLSCompanies.Month <- function(){
 #}
 
 test.AggMLSCompanies.Month <- function(){
-     expect_that(24, equals(as.numeric(AggMLSCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+     expect_that(24, equals(as.numeric(AggMLSCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db))))
 }
 
