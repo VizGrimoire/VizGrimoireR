@@ -279,8 +279,7 @@ test.IssuesRepositories.Evol.Week <- function(){
 #}
 
 test.EvolIssuesCompanies.Month <- function(){
-    print(EvolIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))
-    expect_that(12, equals(nrow(EvolIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+    expect_that(12, equals(nrow(EvolIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db))))
 }
 
 #Uncomment tests when dataset is available in MySQL
@@ -293,8 +292,7 @@ test.EvolIssuesCompanies.Month <- function(){
 #}
 
 test.AggIssuesCompanies.Month <- function(){
-     print(AggIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', NA)))
-     expect_that(35, equals(as.numeric(AggIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list('company', "'Rackspace'")))))
+     expect_that(35, equals(as.numeric(AggIssuesCompanies('month', "'2012-01-01'", "'2013-01-01'", conf$identities_db))))
 }
 
 

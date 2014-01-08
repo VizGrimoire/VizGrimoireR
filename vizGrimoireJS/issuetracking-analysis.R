@@ -146,19 +146,19 @@ for (status in statuses)
 
 
 if ('companies' %in% reports) {
-    info_data_companies = EvolIssuesCompanies(period, startdate, enddate, identities_db, list(NA, NA))
+    info_data_companies = EvolIssuesCompanies(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_companies, all = TRUE)
 }
 if ('countries' %in% reports) {
-    info_data_countries = EvolIssuesCountries(period, startdate, enddate, identities_db, list(NA, NA))
+    info_data_countries = EvolIssuesCountries(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_countries, all = TRUE)
 }
 if ('repositories' %in% reports) {
-    data = EvolIssuesRepositories(period, startdate, enddate, identities_db, list(NA, NA))
+    data = EvolIssuesRepositories(period, startdate, enddate, identities_db)
     evol = merge(evol, data, all = TRUE)
 }
 if ('domains' %in% reports) {
-    info_data_companies = EvolIssuesDomains(period, startdate, enddate, identities_db, list(NA, NA))
+    info_data_companies = EvolIssuesDomains(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_domains, all = TRUE)
 }
 
@@ -177,15 +177,15 @@ all_static_info = merge(all_static_info, open)
 
 
 if ('companies' %in% reports) {
-    info_com = AggIssuesCompanies(period, startdate, enddate, identities_db, list(NA, NA))
+    info_com = AggIssuesCompanies(period, startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 if ('countries' %in% reports) {
-    info_com = AggIssuesCountries(period, startdate, enddate, identities_db, list(NA, NA))
+    info_com = AggIssuesCountries(period, startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 if ('domains' %in% reports) {
-    info_com = AggIssuesDomains(period, startdate, enddate, identities_db, list(NA, NA))
+    info_com = AggIssuesDomains(period, startdate, enddate, identities_db)
     all_static_info = merge(all_static_info, info_com, all = TRUE)
 }
 

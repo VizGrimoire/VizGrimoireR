@@ -17,7 +17,7 @@
 ## This file is a part of the vizGrimoire R package
 ##  (an R library for the MetricsGrimoire and vizGrimoire systems)
 ##
-## AuxiliaryITS.R
+## ITS.R
 ##
 ## Queries for ITS data analysis
 ##
@@ -26,8 +26,6 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Cañas-Díaz <lcanas@bitergia.com>
-## TODO
-# issues table queries should be converted as changes table is done
 
 
 ##############
@@ -564,35 +562,35 @@ GetIssuesStudies <- function(period, startdate, enddate, identities_db, type_ana
     return(data)
 }
 
-EvolIssuesDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA,NA)){
+EvolIssuesDomains <- function(period, startdate, enddate, identities_db){
     # Evol number of domains used
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'domains'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('domain', NA), TRUE, 'domains'))
 }
 
-EvolIssuesCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+EvolIssuesCountries <- function(period, startdate, enddate, identities_db){
     # Evol number of countries
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'countries'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('country', NA), TRUE, 'countries'))
 }
 
-EvolIssuesCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+EvolIssuesCompanies <- function(period, startdate, enddate, identities_db){
     # Evol number of companies
-    data <- GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'companies')
+    data <- GetIssuesStudies(period, startdate, enddate, identities_db, list('company', NA), TRUE, 'companies')
     return(data)
 }
 
 
-AggIssuesDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+AggIssuesDomains <- function(period, startdate, enddate, identities_db){
     # Agg number of domains
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'domains'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('domain', NA), FALSE, 'domains'))
 }
 
-AggIssuesCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+AggIssuesCountries <- function(period, startdate, enddate, identities_db){
     # Agg number of countries
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'countries'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('country', NA), FALSE, 'countries'))
 }
-AggIssuesCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+AggIssuesCompanies <- function(period, startdate, enddate, identities_db){
     # Agg number of companies
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'companies'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('company', NA), FALSE, 'companies'))
 }
 
 
