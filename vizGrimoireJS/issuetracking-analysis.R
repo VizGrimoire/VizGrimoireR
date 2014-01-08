@@ -134,7 +134,7 @@ for (status in statuses)
     colnames(tickets_status)[2] <- status
 
     #Issues per status
-    current_status <- GetCurrentStatus(period, startdate, enddate, status)
+    current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
     
     #Merging data
     if (nrow(current_status)>0){
