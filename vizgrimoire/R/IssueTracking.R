@@ -62,7 +62,7 @@ GetITSSQLCompaniesWhere <- function(name){
 }
 
 GetITSSQLCountriesFrom <- function(i_db){
-    # fields necessary for the companies analysis
+    # fields necessary for the countries analysis
 
     return(paste(" , people_upeople pup,
                    ",i_db,".countries c,
@@ -70,11 +70,27 @@ GetITSSQLCountriesFrom <- function(i_db){
 }   
     
 GetITSSQLCountriesWhere <- function(name){
-    # filters for the companies analysis
+    # filters for the countries analysis
     return(paste(" i.submitted_by = pup.people_id and
                    pup.upeople_id = upc.upeople_id and
                    upc.company_id = c.id and
                    c.name = ",name, sep=""))
+}
+
+GetITSSQLDomainsFrom <- function(i_db){
+    # fields necessary for the domains analysis
+
+    return(paste(" , people_upeople pup,
+                   ",i_db,".domains d,
+                   ",i_db,".upeople_domains upd", sep=""))
+}
+
+GetITSSQLDomainsWhere <- function(name){
+    # filters for the domains analysis
+    return(paste(" i.submitted_by = pup.people_id and
+                   pup.upeople_id = upd.upeople_id and
+                   upd.domain_id = d.id and
+                   d.name = ",name, sep=""))
 }
 
 
@@ -127,7 +143,8 @@ GetITSSQLReportFrom <- function(identities_db, type_analysis){
         from <- ifelse (analysis == 'repository', paste(from, GetITSSQLRepositoriesFrom()),
                 ifelse (analysis == 'company', paste(from, GetITSSQLCompaniesFrom(identities_db)),
                 ifelse (analysis == 'country', paste(from, GetITSSQLCountriesFrom(identities_db)),
-                NA)))
+                ifelse (analysis == 'domain', paste(from, GetITSSQLDomainsFrom(identities_db)),
+                NA))))
     }
     return (from)
 }
@@ -146,23 +163,11 @@ GetITSSQLReportWhere <- function(type_analysis){
         where <- ifelse (analysis == 'repository', paste(where, GetITSSQLRepositoriesWhere(value)),
                 ifelse (analysis == 'company', paste(where, GetITSSQLCompaniesWhere(value)),
                 ifelse (analysis == 'country', paste(where, GetITSSQLCountriesWhere(value)),
-                NA)))
+                ifelse (analysis == 'domain', paste(where, GetITSSQLCountriesWhere(value)),
+                NA))))
     }
     return (where)
 }
-
-
-#########
-# Other generic functions
-#########
-
-#TDB
-
-##########
-# Meta functions that aggregate all evolutionary or static data in one call
-##########
-
-#TBD
 
 
 #########
