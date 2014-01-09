@@ -282,7 +282,7 @@ GetCurrentStatus <- function(period, startdate, enddate, identities_db, status){
     # in status = open, it is possible to know when they were submitted
 
     fields = paste(" count(distinct(id)) as current_", status, sep="")
-    tables = paste(" issues ", GetITSReportFrom(identities_db, type_analysis), sep="")
+    tables = paste(" issues ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
     filters = paste(" status = '", status, "' and ", GetITSSQLReportWhere(type_analysis) , sep="")
     q <- GetSQLPeriod(period,'submitted_on', fields, tables, filters,
             startdate, enddate)
