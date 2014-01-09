@@ -163,7 +163,7 @@ GetITSSQLReportWhere <- function(type_analysis){
         where <- ifelse (analysis == 'repository', paste(where, GetITSSQLRepositoriesWhere(value)),
                 ifelse (analysis == 'company', paste(where, GetITSSQLCompaniesWhere(value)),
                 ifelse (analysis == 'country', paste(where, GetITSSQLCountriesWhere(value)),
-                ifelse (analysis == 'domain', paste(where, GetITSSQLCountriesWhere(value)),
+                ifelse (analysis == 'domain', paste(where, GetITSSQLDomainsWhere(value)),
                 NA))))
     }
     return (where)
