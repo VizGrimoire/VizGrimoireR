@@ -158,7 +158,7 @@ if ('repositories' %in% reports) {
     evol = merge(evol, data, all = TRUE)
 }
 if ('domains' %in% reports) {
-    info_data_companies = EvolIssuesDomains(period, startdate, enddate, identities_db)
+    info_data_domains = EvolIssuesDomains(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_domains, all = TRUE)
 }
 
