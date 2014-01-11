@@ -293,7 +293,7 @@ EvolReviewsAbandonedChanges<- function(period, startdate, enddate, type_analysis
 }
 
 EvolReviewsPending<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
-    data = EvolReviewsNew(period, startdate, enddate, type_analysis, identities_db)
+    data = EvolReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
     data <- completePeriodIds(data, conf$granularity, conf)
     data1 = EvolReviewsMerged(period, startdate, enddate, type_analysis, identities_db)
     data1 <- completePeriodIds(data1, conf$granularity, conf)
@@ -306,16 +306,16 @@ EvolReviewsPending<- function(period, startdate, enddate, config = conf, type_an
     pending$merged = -pending$merged
     if (is.null(pending$abandoned)) {return(pending)}
     pending$abandoned = -pending$abandoned
-    if (is.null(pending$new)) {return(pending)}
+    if (is.null(pending$submitted)) {return(pending)}
 
-    sum <- rowSums(subset(pending, select = c("new","merged","abandoned")))
+    sum <- rowSums(subset(pending, select = c("submitted","merged","abandoned")))
     pending <- data.frame(month=pending$month, pending=sum)
     return (pending)
 }
 
-# PENDING = NEW - MERGED - ABANDONED
+# PENDING = SUBMITTED - MERGED - ABANDONED
 EvolReviewsPendingChanges<- function(period, startdate, enddate, config = conf, type_analysis = list(NA, NA), identities_db=NA){
-    data = EvolReviewsNewChanges(period, startdate, enddate, type_analysis, identities_db)
+    data = EvolReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
     data <- completePeriodIds(data, conf$granularity, conf)
     data1 = EvolReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db)
     data1 <- completePeriodIds(data1, conf$granularity, conf)
@@ -328,9 +328,9 @@ EvolReviewsPendingChanges<- function(period, startdate, enddate, config = conf, 
     pending$merged_changes = -pending$merged_changes
     if (is.null(pending$abandoned_changes)) {return(pending)}
     pending$abandoned_changes = -pending$abandoned_changes
-    if (is.null(pending$new_changes)) {return(pending)}
+    if (is.null(pending$submitted)) {return(pending)}
 
-    sum <- rowSums(subset(pending, select = c("new_changes","merged_changes","abandoned_changes")))
+    sum <- rowSums(subset(pending, select = c("submitted","merged_changes","abandoned_changes")))
     pending <- data.frame(month=pending$month, pending=sum)
     return (pending)
 }
@@ -377,21 +377,21 @@ StaticReviewsAbandonedChanges<- function(period, startdate, enddate, type_analys
     return (GetReviewsChanges(period, startdate, enddate, "abandoned", FALSE))
 }
 
-# PENDING = NEW - MERGED - ABANDONED
+# PENDING = SUBMITTED - MERGED - ABANDONED
 StaticReviewsPending<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    new = StaticReviewsNew(period, startdate, enddate, type_analysis, identities_db)
+    submitted = StaticReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
     merged = StaticReviewsMerged(period, startdate, enddate, type_analysis, identities_db)
     abandoned = StaticReviewsAbandoned(period, startdate, enddate, type_analysis, identities_db)
-    pending = new-merged-abandoned
+    pending = submitted-merged-abandoned
     colnames(pending) <- c("pending")
     return (pending)
 }
 
 StaticReviewsPendingChanges<- function(period, startdate, enddate, type_analysis = list(NA, NA), identities_db=NA){
-    new = StaticReviewsNewChanges(period, startdate, enddate, type_analysis, identities_db)
+    submitted = StaticReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
     merged = StaticReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db)
     abandoned = StaticReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db)
-    pending = new-merged-abandoned
+    pending = submitted-merged-abandoned
     colnames(pending) <- c("pending")
     return (pending)
 }
