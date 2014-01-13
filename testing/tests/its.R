@@ -22,6 +22,7 @@
 ##
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
+##   Luis Cañas-Diaz <lcanas@bitergia.com>
 
 
 
@@ -37,6 +38,10 @@ test.IssuesOpened.Agg.Week.Repository <- function(){
 
 test.IssuesOpened.Agg.Week.Company <- function(){
     expect_that(151, equals(as.numeric(AggIssuesOpened('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("company", "'Red Hat'")))))
+}
+
+test.IssuesOpened.Agg.Week.Domain <- function(){
+    expect_that(162, equals(as.numeric(AggIssuesOpened('week', "'2012-01-01'", "'2013-01-01'", conf$identities_db, list("domain", "'redhat'")))))
 }
 
 
@@ -327,3 +332,40 @@ test.EvolBMIIndex.Month <- function(){
     closed_condition = " (new_value='Fix Committed') "    
     expect_that(12, equals(nrow(EvolBMIIndex('month', "'2012-01-01'", "'2013-01-01'", conf$identiites_db, list(NA, NA), closed_condition))))
 }
+
+
+############################
+# Test Backlog function
+test.CountBacklogTickets <- function()
+    {
+        start = as.POSIXlt("2006-09-11")
+        end = as.POSIXlt("2008-12-01")
+        
+        open_status = 'Open'
+        reopened_status = 'Reopened'
+        statuses = c(open_status, reopened_status)
+
+        res <- read.table("data/issues_log001.data", colClasses = c(date = "POSIXct"))
+        samples.week <- GetWeeksBetween(start, end, extra=TRUE)
+        samples.month <- GetMonthsBetween(start, end, extra=TRUE)
+
+        # real tests start here
+        weekly.pending <- CountBacklogTickets(samples.week,res, statuses)
+        colnames(weekly.pending) <- c('week', 'backlog.tickets')
+        number.rows <- nrow(weekly.pending)
+        expect_that(117, equals(number.rows))
+        unique.weeks <- length(unique(weekly.pending$week))
+        expect_that(117, equals(unique.weeks))
+        total.tickets <- sum(weekly.pending$backlog.tickets)
+        expect_that(1288, equals(total.tickets))
+
+        monthly.pending <- CountBacklogTickets(samples.month,res, statuses)
+        colnames(monthly.pending) <- c('month', 'backlog.tickets')
+        number.rows <- nrow(monthly.pending)
+        expect_that(28, equals(number.rows))
+        unique.weeks <- length(unique(monthly.pending$month))
+        expect_that(28, equals(unique.weeks))
+        total.tickets <- sum(monthly.pending$backlog.tickets)
+        expect_that(566, equals(total.tickets))
+}
+
