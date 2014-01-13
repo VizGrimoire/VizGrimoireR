@@ -43,11 +43,13 @@ GetStaticDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=
     # 1- Retrieving information
     sent <- StaticNumSentIRC(period, startdate, enddate, i_db, type_analysis)
     senders <- StaticNumSendersIRC(period, startdate, enddate, i_db, type_analysis)
+    repositories <- StaticNumRepositoriesIRC(period, startdate	, enddate, i_db, type_analysis)
 
     # 2- Merging information
     static_data = merge(sent, senders)
+    static_data = merge(static_data, repositories)
 
-    return (static_data)    
+    return (static_data)
 }
 
 GetEvolDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=list(NA, NA)){
@@ -55,9 +57,11 @@ GetEvolDataIRC <- function(period, startdate, enddate, i_db=NA, type_analysis=li
     # 1- Retrieving information
     sent <- EvolSentIRC(period, startdate, enddate, i_db, type_analysis)
     senders <- EvolSendersIRC(period, startdate, enddate, i_db, type_analysis)
+    repositories <- EvolRepositoriesIRC(period, startdate, enddate, i_db, type_analysis)
 
     # 2- Merging information
-    evol_data = merge(sent, senders, all = TRUE)
+    evol_data = merge(sent, senders, all=TRUE)
+    evol_data = merge(evol_data, repositories, all=TRUE)
 
     return (evol_data)
 }
@@ -82,7 +86,14 @@ StaticNumSendersIRC <- function(period, startdate, enddate, identities_db=NA, ty
     return(ExecuteQuery(q))
 }
 
-
+StaticNumRepositoriesIRC <- function(period, startdate, enddate, identities_db=NA, type_analysis=list(NA, NA)) {
+    select <- "SELECT COUNT(DISTINCT(channel_id)) AS repositories "
+    from <- "FROM irclog "
+    where <- paste("WHERE date >=", startdate, " AND
+                    date < ", enddate, sep="")
+    q <- paste(select, from, where)
+    return(ExecuteQuery(q))
+}
 
 GetSentIRC <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
     fields = " count(distinct(message)) as sent "
@@ -106,6 +117,18 @@ GetSendersIRC <- function(period, startdate, enddate, identities_db, type_analys
 
 EvolSendersIRC <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
     return(GetSendersIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
+}
+
+GetRepositoriesIRC <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
+    fields = " COUNT(DISTINCT(channel_id)) AS repositories "
+    tables = paste(" irclog ", GetSQLReportFrom(identities_db, type_analysis))
+    filters = GetSQLReportWhere(type_analysis, "author")
+    q <- BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)
+    return(ExecuteQuery(q))
+}
+
+EvolRepositoriesIRC <- function(period, startdate, enddate, identities_db=NA, type_analysis = list(NA, NA)){
+    return(GetRepositoriesIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
 GetTopSendersIRC <- function(days = 0, startdate, enddate, identities_db, bots) {
