@@ -543,6 +543,7 @@ GetLastActivityITS <- function(days, closed_condition) {
 
     agg_data = merge(data1, data2)
     agg_data = merge(agg_data, data3)
+    agg_data = merge(agg_data, data4)
 
     return (agg_data)
 
