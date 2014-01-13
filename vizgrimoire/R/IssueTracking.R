@@ -735,7 +735,7 @@ GetDiffClosersDays <- function(period, identities_db, date, days, type_analysis=
 GetDiffOpenedDays <- function(period, identities_db, date, days, type_analysis=list(NA, NA)){
     # This function provides the percentage in activity between two periods
     chardates = GetDates(date, days)
-    last_opened = AggIssuesOpened(period, chardates[2], chardates[1], identities_db, type_anaylisis)
+    last_opened = AggIssuesOpened(period, chardates[2], chardates[1], identities_db, type_analysis)
     prev_opened = AggIssuesOpened(period, chardates[3], chardates[2], identities_db, type_analysis)
 
     diff_opened_days = data.frame(diff_netopened = numeric(1), percentage_opened = numeric(1))
