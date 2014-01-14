@@ -382,6 +382,7 @@ GetClosed <- function(period, startdate, enddate, identities_db, type_analysis, 
     filters = gsub("i.submitted", "ch.changed", filters)
     
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
+    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -619,6 +620,42 @@ GetReposNameITS <- function(startdate, enddate) {
     return (data)
 }
 
+GetTablesDomainsITS <- function (i_db, table='') {
+    tables = GetTablesOwnUniqueIdsITS(table)
+    tables = paste(tables,',',i_db,'.upeople_domains upd',sep='')
+}
+
+GetFiltersDomainsITS <- function (table='') {
+    filters = GetFiltersOwnUniqueIdsITS(table)
+    filters = paste(filters,"AND pup.upeople_id = upd.upeople_id")
+}
+
+GetDomainsNameITS <- function(startdate, enddate, identities_db, closed_condition, filter=c()) {
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " dom.name<>'",aff,"' and ",sep="")
+    }
+    tables = GetTablesDomainsITS(identities_db)
+    tables = paste(tables,",",identities_db,".domains dom")
+
+    q <- paste ("SELECT dom.name
+                 FROM ", tables, "
+                 WHERE ", GetFiltersDomainsITS()," AND
+                       dom.id = upd.domain_id and
+                       ",affiliations,"
+                       c.changed_on >= ", startdate, " AND
+                       c.changed_on < ", enddate, " AND
+                       ", closed_condition,"
+                 GROUP BY dom.name
+                 ORDER BY COUNT(DISTINCT(c.issue_id)) DESC", sep="")
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+
+
+
 GetCountriesNamesITS <- function (startdate, enddate, identities_db, closed_condition) {
     # List each of the countries analyzed
     # Those are order by number of closed issues
@@ -642,7 +679,12 @@ GetCountriesNamesITS <- function (startdate, enddate, identities_db, closed_cond
     return (data)             
 }
 
-GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condition) {
+GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condition, filter) {
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " c.name<>'",aff,"' and ",sep="")
+    }
+
     # list each of the companies analyzed
     # those are order by number of closed issues
         q <- paste("select c.name
@@ -657,9 +699,11 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condit
                           upc.company_id = c.id and
                           ch.changed_on >= ", startdate, " and
                           ch.changed_on < ", enddate," and
-                          ", closed_condition, "
+                          ", affiliations, 
+                          closed_condition, "
                           group by c.name 
                           order by count(distinct(i.id)) desc", sep="")
+    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -860,6 +904,33 @@ GetTopClosersByAssignee <- function(days = 0, startdate, enddate, identities_db,
     return (data)
 }
 
+GetTablesOwnUniqueIdsITS <- function(table='') {
+    tables = 'changes c, people_upeople pup'
+    if (table == "issues") tables = 'issues i, people_upeople pup'
+    return (tables)
+}
+
+GetTablesCompaniesITS <- function (i_db, table='') {
+    tables = GetTablesOwnUniqueIdsITS(table)
+    tables = paste(tables,',',i_db,'.upeople_companies upc',sep='')
+}
+
+GetFiltersOwnUniqueIdsITS <- function (table='') {
+    filters = 'pup.people_id = c.changed_by'
+    if (table == "issues") filters = 'pup.people_id = i.submitted_by'
+    return (filters)
+}
+
+GetFiltersCompaniesITS <- function (table='') {
+    filters = GetFiltersOwnUniqueIdsITS(table)
+    filters = paste(filters,"AND pup.upeople_id = upc.upeople_id")
+    if (table == 'issues') {
+        filters = paste(filters,"AND submitted_on >= upc.init AND submitted_on < upc.end")
+    } else {
+         filters = paste(filters,"AND changed_on >= upc.init AND changed_on < upc.end")
+        }
+}
+
 GetCompanyTopClosers <- function(company_name, startdate, enddate,
         identities_db, filter = c('')) {
     affiliations = ""
@@ -914,6 +985,28 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                 GROUP BY up.identifier
                 ORDER BY closed desc
                 LIMIT 10;", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, filter = c('')) {
+    affiliations = ""
+    for (aff in filter){
+        affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
+    }
+    q <- paste("SELECT up.id as id, up.identifier as closers,
+                COUNT(DISTINCT(c.id)) as closed
+                FROM ", GetTablesDomainsITS(identities_db),",
+                     ",identities_db,".domains dom,
+                     ",identities_db,".upeople up
+                WHERE ", GetFiltersDomainsITS()," AND ", closed_condition, "
+                      AND pup.people_id = up.id
+                      AND upd.domain_id = dom.id
+                      AND dom.name = ",domain_name,"
+                      AND changed_on >= ",startdate," AND changed_on < ",enddate,
+                      affiliations, "
+                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
