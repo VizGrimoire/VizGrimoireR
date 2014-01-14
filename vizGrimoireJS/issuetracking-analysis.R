@@ -85,6 +85,7 @@ if (conf$backend == 'jira'){
 if (conf$backend == 'launchpad'){
     #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
     closed_condition <- "(new_value='Fix Committed')"
+    statuses = c("Fix Committed")
 }
 if (conf$backend == 'redmine'){
     statuses = c("New", "Verified", "Need More Info", "In Progress", "Feedback",
