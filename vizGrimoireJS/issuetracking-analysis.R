@@ -168,9 +168,9 @@ evol <- evol[order(evol$id),]
 createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
 #Missing some metrics here. TBD
-closed <- EvolIssuesClosed(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
-changed <- EvolIssuesChanged(period, startdate, enddate, identities_db, list(NA, NA))
-open <- EvolIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA))
+closed <- AggIssuesClosed(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
+changed <- AggIssuesChanged(period, startdate, enddate, identities_db, list(NA, NA))
+open <- AggIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA))
 
 all_static_info = merge(closed, changed)
 all_static_info = merge(all_static_info, open)
