@@ -335,7 +335,7 @@ if ('domains' %in% reports) {
         evol <- evol[order(evol$id),]
         createJSON(evol, paste(c(destdir,"/",domain_aux,"-its-dom-evolutionary.json"), collapse=''))
 
-        static_info = AggITSInfo(period, startdate, enddate, identities_db, list('country', country_name), closed_condition)
+        static_info = AggITSInfo(period, startdate, enddate, identities_db, list('domain', domain_name), closed_condition)
         createJSON(static_info, paste(c(destdir,"/",domain_aux,"-its-dom-static.json"), collapse=''))
 
         top_closers <- GetDomainTopClosers(domain_name, startdate, enddate, identities_db)

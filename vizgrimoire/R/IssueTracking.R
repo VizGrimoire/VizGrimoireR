@@ -180,13 +180,13 @@ GetITSInfo <- function(period, startdate, enddate, identities_db, type_analysis,
     data = data.frame()
 
     if (evolutionary){
-        closed <- EvolIssuesClosed(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
-        closers <- EvolIssuesClosers(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
-        changed <- EvolIssuesChanged(period, startdate, enddate, identities_db, list(NA, NA))
-        changers <- EvolIssuesChangers(period, startdate, enddate, identities_db, list(NA, NA))
-        open <- EvolIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA))
-        openers <- EvolIssuesOpeners(period, startdate, enddate, identities_db, list(NA, NA))
-        repos <- EvolIssuesRepositories(period, startdate, enddate, identities_db, list(NA, NA))
+        closed <- EvolIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        closers <- EvolIssuesClosers(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        changed <- EvolIssuesChanged(period, startdate, enddate, identities_db, type_analysis)
+        changers <- EvolIssuesChangers(period, startdate, enddate, identities_db, type_analysis)
+        open <- EvolIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
+        openers <- EvolIssuesOpeners(period, startdate, enddate, identities_db, type_analysis)
+        repos <- EvolIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
 
         data = merge(closed, changed, all = TRUE)
         data = merge(data, open, all = TRUE)
@@ -195,13 +195,13 @@ GetITSInfo <- function(period, startdate, enddate, identities_db, type_analysis,
         data = merge(data, closers, all = TRUE)
         data = merge(data, changers, all = TRUE)
     } else {
-        closed <- AggIssuesClosed(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
-        closers <- AggIssuesClosers(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
-        changed <- AggIssuesChanged(period, startdate, enddate, identities_db, list(NA, NA))
-        changers <- AggIssuesChangers(period, startdate, enddate, identities_db, list(NA, NA))
-        open <- AggIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA))
-        openers <- AggIssuesOpeners(period, startdate, enddate, identities_db, list(NA, NA))
-        repos <- AggIssuesRepositories(period, startdate, enddate, identities_db, list(NA, NA))
+        closed <- AggIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        closers <- AggIssuesClosers(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        changed <- AggIssuesChanged(period, startdate, enddate, identities_db, type_analysis)
+        changers <- AggIssuesChangers(period, startdate, enddate, identities_db, type_analysis)
+        open <- AggIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
+        openers <- AggIssuesOpeners(period, startdate, enddate, identities_db, type_analysis)
+        repos <- AggIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
        
         data = merge(closed, changed)
         data = merge(data, open)
@@ -510,7 +510,7 @@ GetChanged <- function(period, startdate, enddate, identities_db, type_analysis,
     #This function returns the evolution or agg number of changed issues
     #This function can be also reproduced using the Backlog function.
     #However this function is less time expensive.
-    fields = " count(distinct(ch.id)) as changed "
+    fields = " count(distinct(ch.issue_id)) as changed "
     tables = paste(" issues i, changes ch ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
 
     filters = " i.id = ch.issue_id "
