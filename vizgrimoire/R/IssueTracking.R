@@ -169,6 +169,63 @@ GetITSSQLReportWhere <- function(type_analysis){
     return (where)
 }
 
+##########
+# Meta functions to retrieve data
+##########
+
+GetITSInfo <- function(period, startdate, enddate, identities_db, type_analysis, closed_condition, evolutionary){
+    # Meta function to aggregate all of the evolutionary or
+    # aggregated functions
+
+    data = data.frame()
+
+    if (evolutionary){
+        closed <- EvolIssuesClosed(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
+        closers <- EvolIssuesClosers(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
+        changed <- EvolIssuesChanged(period, startdate, enddate, identities_db, list(NA, NA))
+        changers <- EvolIssuesChangers(period, startdate, enddate, identities_db, list(NA, NA))
+        open <- EvolIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA))
+        openers <- EvolIssuesOpeners(period, startdate, enddate, identities_db, list(NA, NA))
+        repos <- EvolIssuesRepositories(period, startdate, enddate, identities_db, list(NA, NA))
+
+        data = merge(closed, changed, all = TRUE)
+        data = merge(data, open, all = TRUE)
+        data = merge(data, repos, all = TRUE)
+        data = merge(data, openers, all = TRUE)
+        data = merge(data, closers, all = TRUE)
+        data = merge(data, changers, all = TRUE)
+    } else {
+        closed <- AggIssuesClosed(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
+        closers <- AggIssuesClosers(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
+        changed <- AggIssuesChanged(period, startdate, enddate, identities_db, list(NA, NA))
+        changers <- AggIssuesChangers(period, startdate, enddate, identities_db, list(NA, NA))
+        open <- AggIssuesOpened(period, startdate, enddate, identities_db, list(NA, NA))
+        openers <- AggIssuesOpeners(period, startdate, enddate, identities_db, list(NA, NA))
+        repos <- AggIssuesRepositories(period, startdate, enddate, identities_db, list(NA, NA))
+       
+        data = merge(closed, changed)
+        data = merge(data, open)
+        data = merge(data, repos)
+        data = merge(data, openers)
+        data = merge(data, closers)
+        data = merge(data, changers)
+    }
+
+    return(data)
+}
+
+EvolITSInfo <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA), closed_condition){
+    #Evolutionary info all merged in a dataframe
+    return(GetITSInfo(period, startdate, enddate, identities_db, type_analysis, closed_condition, TRUE))
+}
+
+
+AggITSInfo <- function(period, startdate, enddate, identities_db, type_analysis = list(NA, NA), closed_condition){
+    #Agg info all merged in a dataframe
+    return(GetITSInfo(period, startdate, enddate, identities_db, type_analysis, closed_condition, FALSE))
+}
+
+
 
 #########
 #Functions to obtain info per type of basic piece of data
