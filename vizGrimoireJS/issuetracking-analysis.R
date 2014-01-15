@@ -144,7 +144,9 @@ if ('companies' %in% reports) {
 }
 if ('countries' %in% reports) {
     info_data_countries = EvolIssuesCountries(period, startdate, enddate, identities_db)
-    evol = merge(evol, info_data_countries, all = TRUE)
+    if (nrow(info_data_countries) > 0){
+        evol = merge(evol, info_data_countries, all = TRUE)
+    }
 }
 if ('repositories' %in% reports) {
     data = EvolIssuesRepositories(period, startdate, enddate, identities_db)
@@ -154,7 +156,6 @@ if ('domains' %in% reports) {
     info_data_domains = EvolIssuesDomains(period, startdate, enddate, identities_db)
     evol = merge(evol, info_data_domains, all = TRUE)
 }
-
 evol <- completePeriodIds(evol, conf$granularity, conf)
 evol[is.na(evol)] <- 0
 evol <- evol[order(evol$id),]

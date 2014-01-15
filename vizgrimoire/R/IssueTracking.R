@@ -439,7 +439,6 @@ GetClosed <- function(period, startdate, enddate, identities_db, type_analysis, 
     filters = gsub("i.submitted", "ch.changed", filters)
     
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -760,7 +759,6 @@ GetCompaniesNameITS <- function(startdate, enddate, identities_db, closed_condit
                           closed_condition, "
                           group by c.name 
                           order by count(distinct(i.id)) desc", sep="")
-    print(q)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
