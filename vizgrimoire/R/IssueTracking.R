@@ -591,7 +591,7 @@ EvolIssuesChangers <- function(period, startdate, enddate, identities_db, type_a
 GetIssuesRepositories <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # Generic function that counts repositories
 
-    fields = paste(" COUNT(DISTINCT(tracker_id)) AS repositories  ", sep="")
+    fields = paste(" COUNT(DISTINCT(tracker_id)) AS trackers  ", sep="")
     tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis))
     filters = GetITSSQLReportWhere(type_analysis)
 
