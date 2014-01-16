@@ -657,6 +657,43 @@ AggIssuesCompanies <- function(period, startdate, enddate, identities_db){
 
 
 ###############
+# Others
+###############
+
+AggAllParticipants <- function(startdate, enddate){
+    # All participants from the whole history
+    q = "SELECT count(distinct(pup.upeople_id)) as allhistory_participants from people_upeople pup"
+    query <- new("Query", sql = q)
+    return(run(query))
+}
+
+InitDate <- function(startdate, enddate){
+    # Initial date of analysis, lower limit given by startdate
+    q = paste("select DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date
+         from issues
+         where submitted_on >= ", startdate, sep="")
+    query <- new("Query", sql = q)
+    return(run(query))
+}
+
+EndDate <- function(startdate, enddate){
+    # End date of analysis, upper limit given by enddate
+    q = paste("select DATE_FORMAT (max(changed_on), '%Y-%m-%d') as last_date
+               from changes
+               where changed_on <=", enddate, sep="")
+    query <- new("Query", sql = q)
+    return(run(query))
+}
+
+TrackerURL <- function(){
+    # URL of the analyzed tracker
+    q <- paste ("SELECT url, name as type FROM trackers t JOIN 
+                 supported_trackers s ON t.type = s.id limit 1")
+    query <- new ("Query", sql = q)
+    return(run(query))
+}
+
+###############
 # Lists of repositories, companies, countries and other analysis
 ###############
 
@@ -792,12 +829,10 @@ GetDiffClosedDays <- function(period, identities_db, date, days, type_analysis=l
     prevclosed = AggIssuesClosed(period, chardates[3], chardates[2], identities_db, type_analysis, closed_condition)
     prevclosed = as.numeric(prevclosed[1])
     diffcloseddays = data.frame(diff_netclosed = numeric(1), percentage_closed = numeric(1))
-
     diffcloseddays$diff_netclosed = lastclosed - prevclosed
     diffcloseddays$percentage_closed = GetPercentageDiff(prevclosed, lastclosed)
 
     colnames(diffcloseddays) <- c(paste("diff_netclosed","_",days, sep=""), paste("percentage_closed","_",days, sep=""))
-
     return (diffcloseddays)
 }
 
@@ -838,11 +873,10 @@ GetDiffOpenedDays <- function(period, identities_db, date, days, type_analysis=l
     prev_opened = AggIssuesOpened(period, chardates[3], chardates[2], identities_db, type_analysis)
 
     diff_opened_days = data.frame(diff_netopened = numeric(1), percentage_opened = numeric(1))
-    diff_opened_days$diff_netopened = last_opened - prev_opened
+    value = last_opened - prev_opened
+    diff_opened_days$diff_netopened = as.numeric(last_opened - prev_opened)
     diff_opened_days$percentage_opened = GetPercentageDiff(prev_opened, last_opened)
-
     colnames(diff_opened_days) <- c(paste("diff_netopened","_",days, sep=""), paste("percentage_opened","_",days, sep=""))
-
     return (diff_opened_days)
 }
 
@@ -853,7 +887,7 @@ GetDiffChangersDays <- function(period, identities_db, date, days, type_analysis
     prev_changers = AggIssuesChangers(period, chardates[3], chardates[2], identities_db, type_analysis)
 
     diff_changers_days = data.frame(diff_netchangers = numeric(1), percentage_changers = numeric(1))
-    diff_changers_days$diff_netchangers = last_changers - prev_changers
+    diff_changers_days$diff_netchangers = as.numeric(last_changers - prev_changers)
     diff_changers_days$percentage_changers = GetPercentageDiff(prev_changers, last_changers)
 
     colnames(diff_changers_days) <- c(paste("diff_netchangers","_",days, sep=""), paste("percentage_changers","_",days, sep=""))
