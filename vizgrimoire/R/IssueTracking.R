@@ -66,14 +66,14 @@ GetITSSQLCountriesFrom <- function(i_db){
 
     return(paste(" , people_upeople pup,
                    ",i_db,".countries c,
-                   ",i_db,".upeople_companies upc", sep=""))
+                   ",i_db,".upeople_countries upc", sep=""))
 }   
     
 GetITSSQLCountriesWhere <- function(name){
     # filters for the countries analysis
     return(paste(" i.submitted_by = pup.people_id and
                    pup.upeople_id = upc.upeople_id and
-                   upc.company_id = c.id and
+                   upc.country_id = c.id and
                    c.name = ",name, sep=""))
 }
 
@@ -439,6 +439,7 @@ GetClosed <- function(period, startdate, enddate, identities_db, type_analysis, 
     filters = gsub("i.submitted", "ch.changed", filters)
     
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
+    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
