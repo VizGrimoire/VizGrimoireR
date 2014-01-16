@@ -873,7 +873,6 @@ GetDiffOpenedDays <- function(period, identities_db, date, days, type_analysis=l
     prev_opened = AggIssuesOpened(period, chardates[3], chardates[2], identities_db, type_analysis)
 
     diff_opened_days = data.frame(diff_netopened = numeric(1), percentage_opened = numeric(1))
-    value = last_opened - prev_opened
     diff_opened_days$diff_netopened = as.numeric(last_opened - prev_opened)
     diff_opened_days$percentage_opened = GetPercentageDiff(prev_opened, last_opened)
     colnames(diff_opened_days) <- c(paste("diff_netopened","_",days, sep=""), paste("percentage_opened","_",days, sep=""))
