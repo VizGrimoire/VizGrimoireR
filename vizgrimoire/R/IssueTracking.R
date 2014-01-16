@@ -202,13 +202,20 @@ GetITSInfo <- function(period, startdate, enddate, identities_db, type_analysis,
         open <- AggIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
         openers <- AggIssuesOpeners(period, startdate, enddate, identities_db, type_analysis)
         repos <- AggIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
-       
+        init_date <- GetInitDate(startdate, enddate, identities_db, type_analysis)
+        end_date <- GetEndDate(startdate, enddate, identities_db, type_analysis)
+        print(init_date)
         data = merge(closed, changed)
         data = merge(data, open)
         data = merge(data, repos)
         data = merge(data, openers)
         data = merge(data, closers)
         data = merge(data, changers)
+        print(data)
+        data = merge(data, init_date)
+        print(data)
+        data = merge(data, end_date)
+        print(data)
     }
 
     return(data)
@@ -657,6 +664,34 @@ AggIssuesCompanies <- function(period, startdate, enddate, identities_db){
 }
 
 
+GetDate <- function(startdate, enddate, identities_db, type_analysis=list(NA, NA), type){
+    # date of submmitted issues (type= max or min)
+    if (type=="max"){
+        fields = paste(" DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date", sep="")
+    } else {
+        fields = paste(" DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date", sep="")
+    }
+    
+    tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis))
+    filters = GetITSSQLReportWhere(type_analysis)
+
+    q <- BuildQuery(NA, startdate, enddate, " i.submitted_on ", fields, tables, filters, "FALSE")
+    print(q) 
+    data <- ExecuteQuery(q)
+    return(data)    
+}
+
+GetInitDate <- function(startdate, enddate, identities_db, type_analysis){
+    #Initial date of submitted issues
+    return(GetDate(startdate, enddate, identities_db, type_analysis, "min"))
+}
+
+GetEndDate <- function(startdate, enddate, identities_db, type_analysis){
+    #End date of submitted issues
+    return(GetDate(startdate, enddate, identities_db, type_analysis, "max"))
+}
+
+
 ###############
 # Others
 ###############
@@ -664,24 +699,6 @@ AggIssuesCompanies <- function(period, startdate, enddate, identities_db){
 AggAllParticipants <- function(startdate, enddate){
     # All participants from the whole history
     q = "SELECT count(distinct(pup.upeople_id)) as allhistory_participants from people_upeople pup"
-    query <- new("Query", sql = q)
-    return(run(query))
-}
-
-InitDate <- function(startdate, enddate){
-    # Initial date of analysis, lower limit given by startdate
-    q = paste("select DATE_FORMAT (min(submitted_on), '%Y-%m-%d') as first_date
-         from issues
-         where submitted_on >= ", startdate, sep="")
-    query <- new("Query", sql = q)
-    return(run(query))
-}
-
-EndDate <- function(startdate, enddate){
-    # End date of analysis, upper limit given by enddate
-    q = paste("select DATE_FORMAT (max(changed_on), '%Y-%m-%d') as last_date
-               from changes
-               where changed_on <=", enddate, sep="")
     query <- new("Query", sql = q)
     return(run(query))
 }

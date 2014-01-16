@@ -164,12 +164,8 @@ createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 #Missing some metrics here. TBD
 all_static_info = AggITSInfo(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
 all_participants = AggAllParticipants(startdate, enddate)
-initial_date = InitDate(startdate, enddate)
-final_date = EndDate(startdate, enddate)
 url_analysis = TrackerURL()
 all_static_info = merge(all_static_info, all_participants)
-all_static_info = merge(all_static_info, initial_date)
-all_static_info = merge(all_static_info, final_date)
 all_static_info = merge(all_static_info, url_analysis)
 
 
