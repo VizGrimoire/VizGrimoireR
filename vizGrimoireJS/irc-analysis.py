@@ -73,12 +73,12 @@ def read_options():
     parser.add_option("-s", "--start",
                       action="store",
                       dest="startdate",
-                      default="1900-01-01",
+                      default="'1900-01-01'",
                       help="Start date for the report")
     parser.add_option("-e", "--end",
                       action="store",
                       dest="enddate",
-                      default="2100-01-01",
+                      default="'2100-01-01'",
                       help="End date for the report")
     parser.add_option("-i", "--identities",
                       action="store",
@@ -144,5 +144,5 @@ if __name__ == '__main__':
     bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','']
 
     static_data = vizr.GetStaticDataIRC(period, opts.startdate, opts.enddate, opts.identities_db)
-    
+
     pprint.pprint(dataFrame2Dict(static_data))
