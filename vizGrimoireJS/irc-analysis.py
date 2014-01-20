@@ -24,10 +24,13 @@
 #
 # Usage:
 #     irc-analysis.py -d dbname
+#
+# For migrating to Python3: z = dict(list(x.items()) + list(y.items()))
 
 from optparse import OptionParser
 import sys
 import pprint
+import json
 
 # R libraries called from python
 from rpy2.robjects.packages import importr
@@ -62,7 +65,7 @@ def read_options():
                       help="year,months,weeks granularity")
     parser.add_option("-o", "--destination",
                       action="store",
-                      dest="destination",
+                      dest="destdir",
                       default="data/json",
                       help="Destination directory for JSON files")
     parser.add_option("-r", "--reports",
@@ -101,7 +104,7 @@ def dataFrame2Dict(data):
     # R start from 1 in data frames
     for i in range(1,len(data)+1):
         # Get the columns data frame
-        col = static_data.rx(i)
+        col = data.rx(i)
         colname = col.names[0] 
         dict[colname] = [];
         for j in col:
@@ -129,13 +132,19 @@ def getPeriod(granularity):
         sys.exit(0)
     return period
 
+def createJSON(data, filepath):
+    jsonfile = open(filepath, 'w')
+    # jsonfile.write(json.dumps(data, indent=4, separators=(',', ': ')))
+    # jsonfile.write(json.dumps(data, indent=4, sort_keys=True))
+    jsonfile.write(json.dumps(data, sort_keys=True))
+    jsonfile.close()
+
 if __name__ == '__main__':
     opts = read_options()
 
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     period = getPeriod(opts.granularity)
-    print(period)
 
     # multireport
     reports = opts.reports.split(",")
@@ -143,6 +152,22 @@ if __name__ == '__main__':
     # BOTS filtered
     bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','']
 
-    static_data = vizr.GetStaticDataIRC(period, opts.startdate, opts.enddate, opts.identities_db)
+    #
+    # AGGREGATED DATA
+    #
+    agg_data = {}
 
-    pprint.pprint(dataFrame2Dict(static_data))
+    # Tendencies
+    for i in [7,30,365]:
+        period_data = dataFrame2Dict(vizr.GetIRCDiffSentDays(period, opts.enddate, i))
+        agg_data = dict(agg_data.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetIRCDiffSendersDays(period, opts.enddate, opts.identities_db, i))
+        agg_data = dict(agg_data.items() + period_data.items())
+
+    # Global aggregated data
+    static_data = vizr.GetStaticDataIRC(period, opts.startdate, opts.enddate, opts.identities_db)
+    agg_data = dict(agg_data.items() + dataFrame2Dict(static_data).items())
+    print(agg_data)
+
+    # Time to write it to a json file
+    createJSON (agg_data, opts.destdir+"/irc-static_py.json")
