@@ -76,12 +76,12 @@ def read_options():
     parser.add_option("-s", "--start",
                       action="store",
                       dest="startdate",
-                      default="'1900-01-01'",
+                      default="1900-01-01",
                       help="Start date for the report")
     parser.add_option("-e", "--end",
                       action="store",
                       dest="enddate",
-                      default="'2100-01-01'",
+                      default="2100-01-01",
                       help="End date for the report")
     parser.add_option("-i", "--identities",
                       action="store",
@@ -152,6 +152,10 @@ if __name__ == '__main__':
     # BOTS filtered
     bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','']
 
+    # TODO: hack because VizR library needs. Fix in lib in future
+    startdate = "'"+opts.startdate+"'"
+    enddate = "'"+opts.enddate+"'"
+
     #
     # AGGREGATED DATA
     #
@@ -159,13 +163,14 @@ if __name__ == '__main__':
 
     # Tendencies
     for i in [7,30,365]:
-        period_data = dataFrame2Dict(vizr.GetIRCDiffSentDays(period, opts.enddate, i))
+        period_data = dataFrame2Dict(vizr.GetIRCDiffSentDays(period, enddate, i))
         agg_data = dict(agg_data.items() + period_data.items())
-        period_data = dataFrame2Dict(vizr.GetIRCDiffSendersDays(period, opts.enddate, opts.identities_db, i))
+        period_data = dataFrame2Dict(vizr.GetIRCDiffSendersDays(period, enddate, opts.identities_db, i))
         agg_data = dict(agg_data.items() + period_data.items())
 
     # Global aggregated data
-    static_data = vizr.GetStaticDataIRC(period, opts.startdate, opts.enddate, opts.identities_db)
+    static_data = vizr.GetStaticDataIRC(period, startdate, enddate, opts.identities_db)
+    print(dataFrame2Dict(static_data))
     agg_data = dict(agg_data.items() + dataFrame2Dict(static_data).items())
     print(agg_data)
 
