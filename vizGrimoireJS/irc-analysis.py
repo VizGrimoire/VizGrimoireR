@@ -27,20 +27,19 @@
 #
 # For migrating to Python3: z = dict(list(x.items()) + list(y.items()))
 
-from optparse import OptionParser
-import sys
-import pprint
-import json
 
-# R libraries called from python
+
+import json
+from optparse import OptionParser
+import pprint
 from rpy2.robjects.packages import importr
 import rpy2.rinterface as rinterface
+import sys
 
 isoweek = importr("ISOweek")
 vizr = importr("vizgrimoire")
 
 # To be shared from VizPy.py
-
 def read_options():
     parser = OptionParser(usage="usage: %prog [options]",
                           version="%prog 0.1")
@@ -97,6 +96,13 @@ def read_options():
         parser.error("--database --db-user and --identities are needed")
     return opts
 
+def valRtoPython(val):
+    if val is rinterface.NA_Character: val = None
+    # Check for .0 and convert to int
+    elif isinstance(val, float):
+        if (val % 1 == 0): val = int(val)
+    return val
+
 # Convert a data frame to a python dictionary
 def dataFrame2Dict(data):
     dict = {}
@@ -107,10 +113,11 @@ def dataFrame2Dict(data):
         col = data.rx(i)
         colname = col.names[0] 
         dict[colname] = [];
-        for j in col:
-            val = j[0]
-            if val is rinterface.NA_Character: val = None
-            dict[colname].append(val);
+        if (len(col) == 1):
+            dict[colname] = valRtoPython(col[0][0])
+        else:
+            for j in col: 
+                dict[colname].append(valRtoPython(j[0]))
     return dict
 
 def getPeriod(granularity):
@@ -138,6 +145,20 @@ def createJSON(data, filepath):
     # jsonfile.write(json.dumps(data, indent=4, sort_keys=True))
     jsonfile.write(json.dumps(data, sort_keys=True))
     jsonfile.close()
+
+def compareJSON(file1, file2):
+    f1 = open(file1)
+    f2 = open(file2)
+    data1 = json.load(f1)
+    data2 = json.load(f2)
+
+    for name in data1:
+        if data1[name] != data2[name]:
+            print (name + " diffent in dicts " + str(data1[name]) + " " + str(data2[name]))
+            return False
+    f1.close()
+    f2.close()
+    return True
 
 if __name__ == '__main__':
     opts = read_options()
@@ -170,9 +191,9 @@ if __name__ == '__main__':
 
     # Global aggregated data
     static_data = vizr.GetStaticDataIRC(period, startdate, enddate, opts.identities_db)
-    print(dataFrame2Dict(static_data))
     agg_data = dict(agg_data.items() + dataFrame2Dict(static_data).items())
-    print(agg_data)
 
     # Time to write it to a json file
     createJSON (agg_data, opts.destdir+"/irc-static_py.json")
+
+    compareJSON(opts.destdir+"/irc-static_py.json",opts.destdir+"/irc-static.json")
