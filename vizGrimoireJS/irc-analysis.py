@@ -111,13 +111,15 @@ def dataFrame2Dict(data):
     for i in range(1,len(data)+1):
         # Get the columns data frame
         col = data.rx(i)
-        colname = col.names[0] 
+        colname = col.names[0]
+        colvalues = col[0]
         dict[colname] = [];
-        if (len(col) == 1):
-            dict[colname] = valRtoPython(col[0][0])
+
+        if (len(colvalues) == 1):
+            dict[colname] = valRtoPython(colvalues[0])
         else:
-            for j in col: 
-                dict[colname].append(valRtoPython(j[0]))
+            for j in colvalues: 
+                dict[colname].append(valRtoPython(j))
     return dict
 
 def getPeriod(granularity):
@@ -153,30 +155,18 @@ def compareJSON(file1, file2):
     data2 = json.load(f2)
 
     for name in data1:
-        if data1[name] != data2[name]:
+        if data2.has_key(name) is False:
+            print (name + " does not exists in " + file2)
+            return False
+        elif data1[name] != data2[name]:
             print (name + " diffent in dicts " + str(data1[name]) + " " + str(data2[name]))
             return False
+
     f1.close()
     f2.close()
     return True
 
-if __name__ == '__main__':
-    opts = read_options()
-
-    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-
-    period = getPeriod(opts.granularity)
-
-    # multireport
-    reports = opts.reports.split(",")
-
-    # BOTS filtered
-    bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','']
-
-    # TODO: hack because VizR library needs. Fix in lib in future
-    startdate = "'"+opts.startdate+"'"
-    enddate = "'"+opts.enddate+"'"
-
+def aggData(period, startdate, enddate, idb, destdir):
     #
     # AGGREGATED DATA
     #
@@ -186,14 +176,46 @@ if __name__ == '__main__':
     for i in [7,30,365]:
         period_data = dataFrame2Dict(vizr.GetIRCDiffSentDays(period, enddate, i))
         agg_data = dict(agg_data.items() + period_data.items())
-        period_data = dataFrame2Dict(vizr.GetIRCDiffSendersDays(period, enddate, opts.identities_db, i))
+        period_data = dataFrame2Dict(vizr.GetIRCDiffSendersDays(period, enddate, idb, i))
         agg_data = dict(agg_data.items() + period_data.items())
 
     # Global aggregated data
-    static_data = vizr.GetStaticDataIRC(period, startdate, enddate, opts.identities_db)
+    static_data = vizr.GetStaticDataIRC(period, startdate, enddate, idb)
     agg_data = dict(agg_data.items() + dataFrame2Dict(static_data).items())
 
-    # Time to write it to a json file
-    createJSON (agg_data, opts.destdir+"/irc-static_py.json")
+    createJSON (agg_data, destdir+"/irc-static_py.json")
 
-    compareJSON(opts.destdir+"/irc-static_py.json",opts.destdir+"/irc-static.json")
+    if compareJSON(destdir+"/irc-static.json", destdir+"/irc-static_py.json") is False:
+        print("Wrong aggregated data generated from Python")
+        sys.exit(1)
+
+def completePeriodIds(ts_data, period, startdate, enddate):
+    return ts_data
+
+def tsData(period, startdate, enddate, idb, destdir):
+    ts_data = {}
+    ts_data = dataFrame2Dict(vizr.GetEvolDataIRC(period, startdate, enddate, idb))
+    ts_data = completePeriodIds(ts_data, period, startdate, enddate)
+
+    # evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+    # createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
+    createJSON (ts_data, destdir+"/irc-evolutionary_py.json")
+
+    if compareJSON(destdir+"/irc-evolutionary.json", destdir+"/irc-evolutionary_py.json") is False:
+        print("Wrong time series data generated from Python")
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    opts = read_options()
+    period = getPeriod(opts.granularity)
+    reports = opts.reports.split(",")
+    # filtered bots
+    bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','']
+        # TODO: hack because VizR library needs. Fix in lib in future
+    startdate = "'"+opts.startdate+"'"
+    enddate = "'"+opts.enddate+"'"
+    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+
+    aggData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    tsData (period, startdate, enddate, opts.identities_db, opts.destdir)
