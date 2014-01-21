@@ -20,3 +20,39 @@
 #
 # Authors:
 #     Alvaro del Castillo <acs@bitergia.com>
+
+import GrimoireUtils
+
+def StaticNumSentIRC (period, startdate, enddate, identities_db=None, type_analysis=[]):
+    fields = "SELECT count(message) as sent, \
+              DATE_FORMAT (min(date), '%Y-%m-%d') as first_date, \
+              DATE_FORMAT (max(date), '%Y-%m-%d') as last_date "
+    tables = " FROM irclog "
+    filters = "WHERE date >=" + startdate + " and date < " + enddate
+    q = fields + tables + filters
+    return(GrimoireUtils.ExecuteQuery(q))
+
+def StaticNumSendersIRC (period, startdate, enddate, identities_db=None, type_analysis=[]):
+    fields = "SELECT count(distinct(nick)) as senders"
+    tables = " FROM irclog "
+    filters = "WHERE date >=" + startdate + " and date < " + enddate
+    q = fields + tables + filters
+    return(GrimoireUtils.ExecuteQuery(q))
+
+def StaticNumRepositoriesIRC (period, startdate, enddate, identities_db=None, type_analysis=[]):
+    fields = "SELECT COUNT(DISTINCT(channel_id)) AS repositories "
+    tables = "FROM irclog "
+    filters = "WHERE date >=" + startdate + " AND date < " + enddate
+    q = fields + tables + filters
+    return(GrimoireUtils.ExecuteQuery(q))
+
+
+def GetStaticDataIRC(period, startdate, enddate, idb = None, type_analysis=[]):
+    agg_data = "GetStaticDataIRC"
+
+    sent = StaticNumSentIRC(period, startdate, enddate, idb, type_analysis)
+    senders = StaticNumSendersIRC(period, startdate, enddate, idb, type_analysis)
+    repositories = StaticNumRepositoriesIRC(period, startdate, enddate, idb, type_analysis)
+    agg_data = dict(sent.items() + senders.items() + repositories.items())
+
+    return (agg_data)

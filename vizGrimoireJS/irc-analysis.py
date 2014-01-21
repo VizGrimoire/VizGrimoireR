@@ -45,7 +45,6 @@ isoweek = importr("ISOweek")
 vizr = importr("vizgrimoire")
 
 
-
 def aggData(period, startdate, enddate, idb, destdir):
     agg_data = {}
 
@@ -57,12 +56,11 @@ def aggData(period, startdate, enddate, idb, destdir):
         agg_data = dict(agg_data.items() + period_data.items())
 
     # Global aggregated data
-    static_data = vizr.GetStaticDataIRC(period, startdate, enddate, idb)
-    agg_data = dict(agg_data.items() + dataFrame2Dict(static_data).items())
+    # static_data = vizr.GetStaticDataIRC(period, startdate, enddate, idb)
+    static_data = IRC.GetStaticDataIRC(period, startdate, enddate, idb)
+    agg_data = dict(agg_data.items() + static_data.items())
 
     createJSON (agg_data, destdir+"/irc-static.json")
-
-
 
 def tsData(period, startdate, enddate, idb, destdir):
     ts_data = {}
@@ -130,12 +128,15 @@ if __name__ == '__main__':
         # TODO: hack because VizR library needs. Fix in lib in future
     startdate = "'"+opts.startdate+"'"
     enddate = "'"+opts.enddate+"'"
-    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    # Working at the same time with VizR and VizPy yet
+    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    GrimoireUtils.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+
     aggData (period, startdate, enddate, opts.identities_db, opts.destdir)
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
