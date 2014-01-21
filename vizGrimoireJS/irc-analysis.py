@@ -151,12 +151,17 @@ def getPeriod(granularity):
         sys.exit(1)
     return period
 
+# Until we use VizPy we will create JSON python files with _py
 def createJSON(data, filepath):
-    jsonfile = open(filepath, 'w')
-    # jsonfile.write(json.dumps(data, indent=4, separators=(',', ': ')))
-    # jsonfile.write(json.dumps(data, indent=4, sort_keys=True))
+    filepath_py = filepath.split(".json")
+    filepath_py = filepath_py[0]+"_py.json"
+    jsonfile = open(filepath_py, 'w')
     jsonfile.write(json.dumps(data, sort_keys=True))
     jsonfile.close()
+
+    if compareJSON(filepath, filepath_py) is False:
+        logging.error("Wrong data generated from Python "+ filepath_py)
+        sys.exit(1)
 
 def compareJSON(file1, file2):
     check = True
@@ -209,11 +214,8 @@ def aggData(period, startdate, enddate, idb, destdir):
     static_data = vizr.GetStaticDataIRC(period, startdate, enddate, idb)
     agg_data = dict(agg_data.items() + dataFrame2Dict(static_data).items())
 
-    createJSON (agg_data, destdir+"/irc-static_py.json")
+    createJSON (agg_data, destdir+"/irc-static.json")
 
-    if compareJSON(destdir+"/irc-static.json", destdir+"/irc-static_py.json") is False:
-        logging.error("Wrong aggregated data generated from Python")
-        sys.exit(1)
 
 def completePeriodIdsMonths(ts_data):
     # Always build a new dictionary completed
@@ -270,14 +272,9 @@ def tsData(period, startdate, enddate, idb, destdir):
     ts_data = {}
     ts_data = dataFrame2Dict(vizr.GetEvolDataIRC(period, startdate, enddate, idb))
     ts_data = completePeriodIds(ts_data)
+ 
+    createJSON (ts_data, destdir+"/irc-evolutionary.json")
 
-    ts_file = destdir+"/irc-evolutionary_py.json"
-    ts_file_old = destdir+"/irc-evolutionary.json"
-    createJSON (ts_data, ts_file)
-
-    if compareJSON(ts_file, ts_file_old) is False:
-        logging.error("Wrong time series data generated from Python " + ts_file)
-        sys.exit(1)
 
 def peopleData(period, startdate, enddate, idb, destdir):
     people_data = dataFrame2Dict(vizr.GetListPeopleIRC(startdate, enddate))
@@ -285,59 +282,35 @@ def peopleData(period, startdate, enddate, idb, destdir):
     limit = 30
     if (len(people)<limit): limit = len(people);
     people = people[0:limit]
-    people_file = destdir+"/irc-people_py.json"
-    people_file_old = destdir+"/irc-people.json"
+    people_file = destdir+"/irc-people.json"
     createJSON(people, people_file)
-    if compareJSON(people_file, people_file_old) is False:
-        logging.error("Wrong people data generated from Python " + people_file_old)
-        sys.exit(1)
 
     for upeople_id in people:
         evol = vizr.GetEvolPeopleIRC(upeople_id, period, startdate, enddate)
         evol = completePeriodIds(dataFrame2Dict(evol))
-        person_file = destdir+"/people-"+str(upeople_id)+"-irc-evolutionary_py.json"
-        person_file_old = destdir+"/people-"+str(upeople_id)+"-irc-evolutionary.json"
+        person_file = destdir+"/people-"+str(upeople_id)+"-irc-evolutionary.json"
         createJSON(evol, person_file)
-        if compareJSON(person_file_old, person_file) is False:
-            logging.error("Wrong time series data generated from Python for file " + person_file)
-            sys.exit(1)
 
-        person_file = destdir+"/people-"+str(upeople_id)+"-irc-static_py.json"
-        person_file_old = destdir+"/people-"+str(upeople_id)+"-irc-static.json"
+        person_file = destdir+"/people-"+str(upeople_id)+"-irc-static.json"
         aggdata = vizr.GetStaticPeopleIRC(upeople_id, startdate, enddate)
         createJSON(dataFrame2Dict(aggdata), person_file)
-        if compareJSON(person_file_old, person_file) is False:
-            logging.error("Wrong aggregated data generated from Python for file " + person_file)
-            sys.exit(1)
 
 # TODO: pretty similar to peopleData. Unify?
 def reposData(period, startdate, enddate, idb, destdir):
     # repos_data = dataFrame2Dict(vizr.GetReposNameIRC())
     repos = valRtoPython(vizr.GetReposNameIRC())
-    repos_file = destdir+"/irc-repos_py.json"
-    repos_file_old = destdir+"/irc-repos.json"
+    repos_file = destdir+"/irc-repos.json"
     createJSON(repos, repos_file)
-    if compareJSON(repos_file, repos_file_old) is False:
-        logging.error("Wrong repositories data generated from Python " + repos_file_old)
-        sys.exit(1)
 
     for repo in repos:
         evol = vizr.GetRepoEvolSentSendersIRC(repo, period, startdate, enddate)
         evol = completePeriodIds(dataFrame2Dict(evol))
-        repo_file = destdir+"/"+repo+"-irc-rep-evolutionary_py.json"
-        repo_file_old = destdir+"/"+repo+"-irc-rep-evolutionary.json"
+        repo_file = destdir+"/"+repo+"-irc-rep-evolutionary.json"
         createJSON(evol, repo_file)
-        if compareJSON(repo_file_old, repo_file) is False:
-            logging.error("Wrong time series data generated from Python for file " + repo_file)
-            sys.exit(1)
 
-        repo_file = destdir+"/"+repo+"-irc-rep-static_py.json"
-        repo_file_old = destdir+"/"+repo+"-irc-rep-static.json"
+        repo_file = destdir+"/"+repo+"-irc-rep-static.json"
         aggdata = vizr.GetRepoStaticSentSendersIRC(repo, startdate, enddate)
         createJSON(dataFrame2Dict(aggdata), repo_file)
-        if compareJSON(repo_file_old, repo_file) is False:
-            logging.error("Wrong aggregated data generated from Python for file " + repo_file)
-            sys.exit(1)
 
 def topData(period, startdate, enddate, idb, destdir, bots):
     top_senders = {}
@@ -347,13 +320,8 @@ def topData(period, startdate, enddate, idb, destdir, bots):
         dataFrame2Dict(vizr.GetTopSendersIRC(365, startdate, enddate, idb, bots))
     top_senders['senders.last month'] = \
         dataFrame2Dict(vizr.GetTopSendersIRC(31, startdate, enddate, idb, bots))
-    top_file = destdir+"/irc-top_py.json"
-    top_file_old = destdir+"/irc-top.json"
+    top_file = destdir+"/irc-top.json"
     createJSON (top_senders, top_file)
-    if compareJSON(top_file_old, top_file) is False:
-        logging.error("Wrong top data generated from Python for file " + top_file)
-        sys.exit(1)
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
