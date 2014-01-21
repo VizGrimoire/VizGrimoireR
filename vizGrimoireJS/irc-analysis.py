@@ -337,6 +337,22 @@ def reposData(period, startdate, enddate, idb, destdir):
             print("Wrong aggregated data generated from Python for file " + repo_file)
             sys.exit(1)
 
+def topData(period, startdate, enddate, idb, destdir, bots):
+    top_senders = {}
+    top_senders['senders.'] = \
+        dataFrame2Dict(vizr.GetTopSendersIRC(0, startdate, enddate, idb, bots))
+    top_senders['senders.last year'] = \
+        dataFrame2Dict(vizr.GetTopSendersIRC(365, startdate, enddate, idb, bots))
+    top_senders['senders.last month'] = \
+        dataFrame2Dict(vizr.GetTopSendersIRC(31, startdate, enddate, idb, bots))
+    top_file = destdir+"/irc-top_py.json"
+    top_file_old = destdir+"/irc-top.json"
+    createJSON (top_senders, top_file)
+    if compareJSON(top_file_old, top_file) is False:
+        print("Wrong top data generated from Python for file " + top_file)
+        sys.exit(1)
+
+
 if __name__ == '__main__':
     opts = read_options()
     period = getPeriod(opts.granularity)
@@ -348,6 +364,7 @@ if __name__ == '__main__':
     enddate = "'"+opts.enddate+"'"
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
+    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     aggData (period, startdate, enddate, opts.identities_db, opts.destdir)
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('people' in reports):
