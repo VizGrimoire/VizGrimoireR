@@ -35,6 +35,7 @@ import json
 from optparse import OptionParser
 import pprint
 from rpy2.robjects.packages import importr
+from rpy2.robjects.vectors import StrVector
 import rpy2.rinterface as rinterface
 import sys
 import time
@@ -104,6 +105,10 @@ def valRtoPython(val):
     # Check for .0 and convert to int
     elif isinstance(val, float):
         if (val % 1 == 0): val = int(val)
+    elif (type(val) == StrVector):
+        val2 = []
+        for item in val: val2.append(item)
+        val = val2
     return val
 
 # Convert a data frame to a python dictionary
@@ -264,12 +269,12 @@ def tsData(period, startdate, enddate, idb, destdir):
     ts_data = dataFrame2Dict(vizr.GetEvolDataIRC(period, startdate, enddate, idb))
     ts_data = completePeriodIds(ts_data)
 
-    # evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
-    # createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
-    createJSON (ts_data, destdir+"/irc-evolutionary_py.json")
+    ts_file = destdir+"/irc-evolutionary_py.json"
+    ts_file_old = destdir+"/irc-evolutionary.json"
+    createJSON (ts_data, ts_file)
 
-    if compareJSON(destdir+"/irc-evolutionary.json", destdir+"/irc-evolutionary_py.json") is False:
-        print("Wrong time series data generated from Python")
+    if compareJSON(ts_file, ts_file_old) is False:
+        print("Wrong time series data generated from Python " + ts_file)
         sys.exit(1)
 
 def peopleData(period, startdate, enddate, idb, destdir):
@@ -278,28 +283,59 @@ def peopleData(period, startdate, enddate, idb, destdir):
     limit = 30
     if (len(people)<limit): limit = len(people);
     people = people[0:limit]
-    createJSON(people, destdir+"/irc-people_py.json")
-    if compareJSON(destdir+"/irc-people.json", destdir+"/irc-people_py.json") is False:
-        print("Wrong people data generated from Python")
+    people_file = destdir+"/irc-people_py.json"
+    people_file_old = destdir+"/irc-people.json"
+    createJSON(people, people_file)
+    if compareJSON(people_file, people_file_old) is False:
+        print("Wrong people data generated from Python " + people_file_old)
         sys.exit(1)
 
-#    people = people$id
-#    limit = 30
-#    if (length(people)<limit) limit = length(people);
-#    people = people[1:limit]
-#    createJSON(people, paste(destdir,"/irc-people.json",sep=''))
-#
-#    for (upeople_id in people){
-#        evol = GetEvolPeopleIRC(upeople_id, period, conf$startdate, conf$enddate)
-#        evol <- completePeriodIds(evol, conf$granularity, conf)
-#        evol[is.na(evol)] <- 0
-#        createJSON(evol, paste(destdir,"/people-",upeople_id,"-irc-evolutionary.json", sep=''))
-#
-#        static <- GetStaticPeopleIRC(upeople_id, conf$startdate, conf$enddate)
-#        createJSON(static, paste(destdir,"/people-",upeople_id,"-irc-static.json", sep=''))
-#    }
+    for upeople_id in people:
+        evol = vizr.GetEvolPeopleIRC(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        person_file = destdir+"/people-"+str(upeople_id)+"-irc-evolutionary_py.json"
+        person_file_old = destdir+"/people-"+str(upeople_id)+"-irc-evolutionary.json"
+        createJSON(evol, person_file)
+        if compareJSON(person_file_old, person_file) is False:
+            print("Wrong time series data generated from Python for file " + person_file)
+            sys.exit(1)
 
+        person_file = destdir+"/people-"+str(upeople_id)+"-irc-static_py.json"
+        person_file_old = destdir+"/people-"+str(upeople_id)+"-irc-static.json"
+        aggdata = vizr.GetStaticPeopleIRC(upeople_id, startdate, enddate)
+        createJSON(dataFrame2Dict(aggdata), person_file)
+        if compareJSON(person_file_old, person_file) is False:
+            print("Wrong aggregated data generated from Python for file " + person_file)
+            sys.exit(1)
 
+# TODO: pretty similar to peopleData. Unify?
+def reposData(period, startdate, enddate, idb, destdir):
+    # repos_data = dataFrame2Dict(vizr.GetReposNameIRC())
+    repos = valRtoPython(vizr.GetReposNameIRC())
+    repos_file = destdir+"/irc-repos_py.json"
+    repos_file_old = destdir+"/irc-repos.json"
+    createJSON(repos, repos_file)
+    if compareJSON(repos_file, repos_file_old) is False:
+        print("Wrong repositories data generated from Python " + repos_file_old)
+        sys.exit(1)
+
+    for repo in repos:
+        evol = vizr.GetRepoEvolSentSendersIRC(repo, period, startdate, enddate)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        repo_file = destdir+"/"+repo+"-irc-rep-evolutionary_py.json"
+        repo_file_old = destdir+"/"+repo+"-irc-rep-evolutionary.json"
+        createJSON(evol, repo_file)
+        if compareJSON(repo_file_old, repo_file) is False:
+            print("Wrong time series data generated from Python for file " + repo_file)
+            sys.exit(1)
+
+        repo_file = destdir+"/"+repo+"-irc-rep-static_py.json"
+        repo_file_old = destdir+"/"+repo+"-irc-rep-static.json"
+        aggdata = vizr.GetRepoStaticSentSendersIRC(repo, startdate, enddate)
+        createJSON(dataFrame2Dict(aggdata), repo_file)
+        if compareJSON(repo_file_old, repo_file) is False:
+            print("Wrong aggregated data generated from Python for file " + repo_file)
+            sys.exit(1)
 
 if __name__ == '__main__':
     opts = read_options()
@@ -316,3 +352,5 @@ if __name__ == '__main__':
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('repositories' in reports):
+        reposData (period, startdate, enddate, opts.identities_db, opts.destdir)
