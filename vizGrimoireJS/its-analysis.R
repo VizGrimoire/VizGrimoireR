@@ -349,14 +349,13 @@ if ('domains' %in% reports) {
 }
 # People
 if ('people' %in% reports) {
-    people  <- GetPeopleListITS(conf$startdate, conf$enddate)
-    people = people$pid
-    limit = 30
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
+    all.top.submitters <- top_openers_data[['openers.']]$id
+    all.top.submitters <- append(all.top.submitters, top_openers_data[['openers.last year']]$id)
+    all.top.submitters <- append(all.top.submitters, top_openers_data[['openers.last month']]$id)
+    all.top.submitters <- unique(all.top.submitters)
+    createJSON(all.top.submitters, paste(c(destdir,"/its-people.json"), collapse=''))
 
-    for (upeople_id in people) {
+    for (upeople_id in all.top.submitters) {
         evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
