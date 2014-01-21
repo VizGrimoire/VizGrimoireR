@@ -105,7 +105,7 @@ def get_vars():
     return v
 
 def get_analysis_cmd(v, script, db):
-    cmd = "LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < %s >> %s 2>&1" % \
+    cmd = "LANG= R_LIBS=%s R --vanilla --slave --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s < %s >> %s 2>&1" % \
               (v['r_libs'], v['reports'], db , v['db_user'], v['db_password'], \
                v['db_identities'], v['start_date'], v['end_date'], v['json_dir'], \
                v['period'], script, v['log_file'])
