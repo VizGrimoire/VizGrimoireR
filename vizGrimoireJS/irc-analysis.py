@@ -152,27 +152,43 @@ def createJSON(data, filepath):
     jsonfile.close()
 
 def compareJSON(file1, file2):
+    check = True
     f1 = open(file1)
     f2 = open(file2)
     data1 = json.load(f1)
     data2 = json.load(f2)
 
-    for name in data1:
-        if data2.has_key(name) is False:
-            print (name + " does not exists in " + file2)
-            return False
-        elif data1[name] != data2[name]:
-            print ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
-            return False
+    if len(data1) != len(data2):
+        print (data1)
+        print ("is not")
+        print (data2)
+        check = False
+
+    elif isinstance(data1, list):
+        for i in range(0, len(data1)):
+            if (data1[i] != data2[i]):
+                print (data1)
+                print ("is not")
+                print (data2)
+                check = False
+                break
+
+    elif isinstance(data1, dict):
+        for name in data1:
+            if data2.has_key(name) is False:
+                print (name + " does not exists in " + file2)
+                check = False
+                break
+            elif data1[name] != data2[name]:
+                print ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
+                check = False
+                break
 
     f1.close()
     f2.close()
-    return True
+    return check
 
 def aggData(period, startdate, enddate, idb, destdir):
-    #
-    # AGGREGATED DATA
-    #
     agg_data = {}
 
     # Tendencies
@@ -256,6 +272,34 @@ def tsData(period, startdate, enddate, idb, destdir):
         print("Wrong time series data generated from Python")
         sys.exit(1)
 
+def peopleData(period, startdate, enddate, idb, destdir):
+    people_data = dataFrame2Dict(vizr.GetListPeopleIRC(startdate, enddate))
+    people = people_data['id']
+    limit = 30
+    if (len(people)<limit): limit = len(people);
+    people = people[0:limit]
+    createJSON(people, destdir+"/irc-people_py.json")
+    if compareJSON(destdir+"/irc-people.json", destdir+"/irc-people_py.json") is False:
+        print("Wrong people data generated from Python")
+        sys.exit(1)
+
+#    people = people$id
+#    limit = 30
+#    if (length(people)<limit) limit = length(people);
+#    people = people[1:limit]
+#    createJSON(people, paste(destdir,"/irc-people.json",sep=''))
+#
+#    for (upeople_id in people){
+#        evol = GetEvolPeopleIRC(upeople_id, period, conf$startdate, conf$enddate)
+#        evol <- completePeriodIds(evol, conf$granularity, conf)
+#        evol[is.na(evol)] <- 0
+#        createJSON(evol, paste(destdir,"/people-",upeople_id,"-irc-evolutionary.json", sep=''))
+#
+#        static <- GetStaticPeopleIRC(upeople_id, conf$startdate, conf$enddate)
+#        createJSON(static, paste(destdir,"/people-",upeople_id,"-irc-static.json", sep=''))
+#    }
+
+
 
 if __name__ == '__main__':
     opts = read_options()
@@ -270,3 +314,5 @@ if __name__ == '__main__':
 
     aggData (period, startdate, enddate, opts.identities_db, opts.destdir)
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('people' in reports):
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
