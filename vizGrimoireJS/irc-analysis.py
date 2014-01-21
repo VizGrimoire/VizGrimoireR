@@ -28,13 +28,16 @@
 # For migrating to Python3: z = dict(list(x.items()) + list(y.items()))
 
 
-
+import calendar
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import json
 from optparse import OptionParser
 import pprint
 from rpy2.robjects.packages import importr
 import rpy2.rinterface as rinterface
 import sys
+import time
 
 isoweek = importr("ISOweek")
 vizr = importr("vizgrimoire")
@@ -159,7 +162,7 @@ def compareJSON(file1, file2):
             print (name + " does not exists in " + file2)
             return False
         elif data1[name] != data2[name]:
-            print (name + " diffent in dicts " + str(data1[name]) + " " + str(data2[name]))
+            print ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
             return False
 
     f1.close()
@@ -189,13 +192,61 @@ def aggData(period, startdate, enddate, idb, destdir):
         print("Wrong aggregated data generated from Python")
         sys.exit(1)
 
-def completePeriodIds(ts_data, period, startdate, enddate):
-    return ts_data
+def completePeriodIdsMonths(ts_data):
+    # Always build a new dictionary completed
+    new_ts_data = {}
+    opts = read_options()
+    period = getPeriod(opts.granularity)
+    start = datetime.strptime(opts.startdate, "%Y-%m-%d")
+    end = datetime.strptime(opts.enddate, "%Y-%m-%d")
+
+    # TODO: old format from R JSON. To be simplified
+    new_ts_data['unixtime'] = []
+    new_ts_data['date'] = []
+    new_ts_data['id'] = []
+    # new_ts_data['month'] = []
+    data_vars = ts_data.keys()
+    for key in (data_vars):
+        new_ts_data[key] = []
+
+    start_month = start.year*12 + start.month
+    end_month = end.year*12 + end.month
+    months = end_month - start_month
+
+    for i in range(0, months+1):
+        if (start_month+i in ts_data['month']) is False:
+            # Add new time point with all vars to zero
+            for key in (data_vars):
+                new_ts_data[key].append(0)
+            new_ts_data['month'].pop()
+            new_ts_data['month'].append(start_month+i)
+        else:
+            # Add already existing data for the time point
+            index = ts_data['month'].index(start_month+i)
+            for key in (data_vars):
+                new_ts_data[key].append(ts_data[key][index])
+
+        current =  start + relativedelta(months=i)
+        timestamp = calendar.timegm(current.timetuple())
+        new_ts_data['unixtime'].append(unicode(timestamp))
+        new_ts_data['id'].append(i)
+        new_ts_data['date'].append(datetime.strftime(current, "%b %Y"))
+
+    return new_ts_data
+
+
+def completePeriodIds(ts_data):
+    new_ts_data = ts_data
+
+    if period == "month":
+        new_ts_data = completePeriodIdsMonths(ts_data)
+
+    return new_ts_data
 
 def tsData(period, startdate, enddate, idb, destdir):
     ts_data = {}
     ts_data = dataFrame2Dict(vizr.GetEvolDataIRC(period, startdate, enddate, idb))
-    ts_data = completePeriodIds(ts_data, period, startdate, enddate)
+    ts_data = completePeriodIds(ts_data)
 
     # evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
     # createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
