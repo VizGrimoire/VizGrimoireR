@@ -35,8 +35,9 @@
 
 import logging
 from rpy2.robjects.packages import importr
+import sys
 
-import GrimoireUtils
+import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
 import IRC
@@ -64,11 +65,10 @@ def aggData(period, startdate, enddate, idb, destdir):
 
 def tsData(period, startdate, enddate, idb, destdir):
     ts_data = {}
-    ts_data = dataFrame2Dict(vizr.GetEvolDataIRC(period, startdate, enddate, idb))
+    # ts_data = dataFrame2Dict(vizr.GetEvolDataIRC(period, startdate, enddate, idb))
+    ts_data = IRC.GetEvolDataIRC(period, startdate, enddate, idb)
     ts_data = completePeriodIds(ts_data)
- 
     createJSON (ts_data, destdir+"/irc-evolutionary.json")
-
 
 def peopleData(period, startdate, enddate, idb, destdir):
     people_data = dataFrame2Dict(vizr.GetListPeopleIRC(startdate, enddate))
@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
     # Working at the same time with VizR and VizPy yet
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    GrimoireUtils.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     aggData (period, startdate, enddate, opts.identities_db, opts.destdir)
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir)

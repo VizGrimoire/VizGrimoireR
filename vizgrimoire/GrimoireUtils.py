@@ -28,15 +28,10 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import json
-import MySQLdb
 from optparse import OptionParser
 import rpy2.rinterface as rinterface
 from rpy2.robjects.vectors import StrVector
 import sys
-
-# global vars to be moved to specific classes
-cursor = None
-
 
 def read_options():
     parser = OptionParser(usage="usage: %prog [options]",
@@ -246,34 +241,3 @@ def compareJSON(file1, file2):
     f1.close()
     f2.close()
     return check
-
-def SetDBChannel (user=None, password=None, database=None,
-                  host="127.0.0.1", port=3306, group=None):
-  global cursor
-  if (group == None):
-      db = MySQLdb.connect(user=user, passwd=password,
-                           db=database, host=host, port=port)
-  else:
-    db = MySQLdb.connect(read_default_group=group, db=database)
-
-  cursor = db.cursor()
-  cursor.execute("SET NAMES 'utf8'")
-
-def ExecuteQuery (sql):
-    result = {}
-    cursor.execute(sql)
-    rows = cursor.rowcount
-    columns = cursor.description
-
-    for column in columns:
-        result[column[0]] = []
-    if rows > 1:
-        for value in cursor.fetchall():
-            for (index,column) in enumerate(value):
-                result[columns[index][0]].append(column)
-    elif rows == 1:
-        value = cursor.fetchone()
-        for i in range (0, len(columns)):
-            result[columns[i][0]] = value[i]
-
-    return result
