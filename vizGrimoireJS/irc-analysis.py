@@ -23,7 +23,9 @@
 #
 #
 # Usage:
-#     irc-analysis.py -d dbname
+#     LANG= R_LIBS=../../r-lib ./irc-analysis.py -d acs_irc_automatortest_2388_2 -u root 
+#                                                -i acs_cvsanaly_automatortest_2388 
+#                                                -s 2010-01-01 -e 2014-01-20 -o ../../../json -r people,repositories
 #
 # For migrating to Python3: z = dict(list(x.items()) + list(y.items()))
 
@@ -32,8 +34,8 @@ import calendar
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import json
+import logging
 from optparse import OptionParser
-import pprint
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
 import rpy2.rinterface as rinterface
@@ -145,8 +147,8 @@ def getPeriod(granularity):
         period = 'day'
         nperiod = 1
     else: 
-        print("Incorrect period:",granularity)
-        sys.exit(0)
+        logging.error("Incorrect period:",granularity)
+        sys.exit(1)
     return period
 
 def createJSON(data, filepath):
@@ -164,28 +166,28 @@ def compareJSON(file1, file2):
     data2 = json.load(f2)
 
     if len(data1) != len(data2):
-        print (data1)
-        print ("is not")
-        print (data2)
+        logging.warn(data1)
+        logging.warn("is not")
+        logging.warn(data2)
         check = False
 
     elif isinstance(data1, list):
         for i in range(0, len(data1)):
             if (data1[i] != data2[i]):
-                print (data1)
-                print ("is not")
-                print (data2)
+                logging.warn(data1)
+                logging.warn("is not")
+                logging.warn(data2)
                 check = False
                 break
 
     elif isinstance(data1, dict):
         for name in data1:
             if data2.has_key(name) is False:
-                print (name + " does not exists in " + file2)
+                logging.warn (name + " does not exists in " + file2)
                 check = False
                 break
             elif data1[name] != data2[name]:
-                print ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
+                logging.warn ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
                 check = False
                 break
 
@@ -210,7 +212,7 @@ def aggData(period, startdate, enddate, idb, destdir):
     createJSON (agg_data, destdir+"/irc-static_py.json")
 
     if compareJSON(destdir+"/irc-static.json", destdir+"/irc-static_py.json") is False:
-        print("Wrong aggregated data generated from Python")
+        logging.error("Wrong aggregated data generated from Python")
         sys.exit(1)
 
 def completePeriodIdsMonths(ts_data):
@@ -274,7 +276,7 @@ def tsData(period, startdate, enddate, idb, destdir):
     createJSON (ts_data, ts_file)
 
     if compareJSON(ts_file, ts_file_old) is False:
-        print("Wrong time series data generated from Python " + ts_file)
+        logging.error("Wrong time series data generated from Python " + ts_file)
         sys.exit(1)
 
 def peopleData(period, startdate, enddate, idb, destdir):
@@ -287,7 +289,7 @@ def peopleData(period, startdate, enddate, idb, destdir):
     people_file_old = destdir+"/irc-people.json"
     createJSON(people, people_file)
     if compareJSON(people_file, people_file_old) is False:
-        print("Wrong people data generated from Python " + people_file_old)
+        logging.error("Wrong people data generated from Python " + people_file_old)
         sys.exit(1)
 
     for upeople_id in people:
@@ -297,7 +299,7 @@ def peopleData(period, startdate, enddate, idb, destdir):
         person_file_old = destdir+"/people-"+str(upeople_id)+"-irc-evolutionary.json"
         createJSON(evol, person_file)
         if compareJSON(person_file_old, person_file) is False:
-            print("Wrong time series data generated from Python for file " + person_file)
+            logging.error("Wrong time series data generated from Python for file " + person_file)
             sys.exit(1)
 
         person_file = destdir+"/people-"+str(upeople_id)+"-irc-static_py.json"
@@ -305,7 +307,7 @@ def peopleData(period, startdate, enddate, idb, destdir):
         aggdata = vizr.GetStaticPeopleIRC(upeople_id, startdate, enddate)
         createJSON(dataFrame2Dict(aggdata), person_file)
         if compareJSON(person_file_old, person_file) is False:
-            print("Wrong aggregated data generated from Python for file " + person_file)
+            logging.error("Wrong aggregated data generated from Python for file " + person_file)
             sys.exit(1)
 
 # TODO: pretty similar to peopleData. Unify?
@@ -316,7 +318,7 @@ def reposData(period, startdate, enddate, idb, destdir):
     repos_file_old = destdir+"/irc-repos.json"
     createJSON(repos, repos_file)
     if compareJSON(repos_file, repos_file_old) is False:
-        print("Wrong repositories data generated from Python " + repos_file_old)
+        logging.error("Wrong repositories data generated from Python " + repos_file_old)
         sys.exit(1)
 
     for repo in repos:
@@ -326,7 +328,7 @@ def reposData(period, startdate, enddate, idb, destdir):
         repo_file_old = destdir+"/"+repo+"-irc-rep-evolutionary.json"
         createJSON(evol, repo_file)
         if compareJSON(repo_file_old, repo_file) is False:
-            print("Wrong time series data generated from Python for file " + repo_file)
+            logging.error("Wrong time series data generated from Python for file " + repo_file)
             sys.exit(1)
 
         repo_file = destdir+"/"+repo+"-irc-rep-static_py.json"
@@ -334,7 +336,7 @@ def reposData(period, startdate, enddate, idb, destdir):
         aggdata = vizr.GetRepoStaticSentSendersIRC(repo, startdate, enddate)
         createJSON(dataFrame2Dict(aggdata), repo_file)
         if compareJSON(repo_file_old, repo_file) is False:
-            print("Wrong aggregated data generated from Python for file " + repo_file)
+            logging.error("Wrong aggregated data generated from Python for file " + repo_file)
             sys.exit(1)
 
 def topData(period, startdate, enddate, idb, destdir, bots):
@@ -349,11 +351,13 @@ def topData(period, startdate, enddate, idb, destdir, bots):
     top_file_old = destdir+"/irc-top.json"
     createJSON (top_senders, top_file)
     if compareJSON(top_file_old, top_file) is False:
-        print("Wrong top data generated from Python for file " + top_file)
+        logging.error("Wrong top data generated from Python for file " + top_file)
         sys.exit(1)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
+    logging.info("Starting IRC data source analysis")
     opts = read_options()
     period = getPeriod(opts.granularity)
     reports = opts.reports.split(",")
