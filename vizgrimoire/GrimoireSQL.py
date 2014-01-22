@@ -239,5 +239,4 @@ def ExecuteQuery (sql):
         value = cursor.fetchone()
         for i in range (0, len(columns)):
             result[columns[i][0]] = value[i]
-
     return result 

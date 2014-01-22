@@ -22,6 +22,7 @@
 #     Alvaro del Castillo <acs@bitergia.com>
 
 from GrimoireSQL import GetSQLPeriod, GetSQLReportFrom, GetSQLReportWhere, ExecuteQuery, BuildQuery
+from GrimoireUtils import GetPercentageDiff, GetDates
 import GrimoireUtils
 
 # SQL Metaqueries
@@ -122,3 +123,42 @@ def GetRepoEvolSentSendersIRC (repo, period, startdate, enddate):
     filters = GetFiltersReposIRC() + " AND c.name='"+repo+"'"
     q = GetSQLPeriod(period,'date', fields, tables, filters, startdate, enddate)
     return(ExecuteQuery(q))
+
+##############
+# Microstudies
+##############
+
+def GetIRCDiffSentDays (period, init_date, days):
+    # This function provides the percentage in activity between two periods.
+    #
+    # The netvalue indicates if this is an increment (positive value) or decrement (negative value)
+
+    chardates = GetDates(init_date, days)
+    lastmessages = StaticNumSentIRC(period, chardates[1], chardates[0])
+    lastmessages = int(lastmessages['sent'])
+    prevmessages = StaticNumSentIRC(period, chardates[2], chardates[1])
+    prevmessages = int(prevmessages['sent'])
+
+    data = {}
+    data['diff_netsent_'+str(days)] = lastmessages - prevmessages
+    data['percentage_sent_'+str(days)] = GetPercentageDiff(prevmessages, lastmessages)
+    data['sent_'+str(days)] = lastmessages
+
+    return data
+
+def GetIRCDiffSendersDays (period, init_date, identities_db=None, days = None):
+    # This function provides the percentage in activity between two periods:
+    # Fixme: equal to GetDiffAuthorsDays
+
+    chardates = GetDates(init_date, days)
+    lastsenders = StaticNumSendersIRC(period, chardates[1], chardates[0], identities_db)
+    lastsenders = int(lastsenders['senders'])
+    prevsenders = StaticNumSendersIRC(period, chardates[2], chardates[1], identities_db)
+    prevsenders = int(prevsenders['senders'])
+
+    data = {}
+    data['diff_netsenders_'+str(days)] = lastsenders - prevsenders
+    data['percentage_senders_'+str(days)] = GetPercentageDiff(prevsenders, lastsenders)
+    data['senders_'+str(days)] = lastsenders
+
+    return data

@@ -24,8 +24,9 @@
 # Misc utils to be distributed in specific modules
 
 import calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from dateutil import parser
 import logging
 import json
 from optparse import OptionParser
@@ -241,3 +242,35 @@ def compareJSON(file1, file2):
     f1.close()
     f2.close()
     return check
+
+def GetDates (last_date, days):
+    enddate = last_date.replace("'","")
+
+    enddate = parser.parse(enddate)
+    startdate = enddate - timedelta(days=days)
+    prevdate = startdate - timedelta(days=days)
+
+    chardates = ["'"+enddate.strftime('%Y-%m-%d')+"'"]
+    chardates.append("'"+startdate.strftime('%Y-%m-%d')+"'")
+    chardates.append("'"+prevdate.strftime('%Y-%m-%d')+"'")
+
+    return (chardates)
+
+def GetPercentageDiff (value1, value2):
+    # This function returns the % diff between value 1 and value 2.
+    # The difference could be positive or negative, but the returned value
+    # is always > 0
+
+    percentage = 0
+
+    if (value1 is None  or value2 is None): return (None)
+    value1 = float(value1)
+    value2 = float(value2)
+
+    if (value1 < value2):
+        diff = float(value2 - value1)
+        percentage = int((diff/abs(value1)) * 100)
+    if (value1 > value2):
+        percentage = int((1-(value2/value1)) * 100)
+
+    return(percentage)

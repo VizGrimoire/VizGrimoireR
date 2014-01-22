@@ -51,9 +51,11 @@ def aggData(period, startdate, enddate, idb, destdir):
 
     # Tendencies
     for i in [7,30,365]:
-        period_data = dataFrame2Dict(vizr.GetIRCDiffSentDays(period, enddate, i))
+        # period_data = dataFrame2Dict(vizr.GetIRCDiffSentDays(period, enddate, i))
+        period_data = IRC.GetIRCDiffSentDays(period, enddate, i)
         agg_data = dict(agg_data.items() + period_data.items())
-        period_data = dataFrame2Dict(vizr.GetIRCDiffSendersDays(period, enddate, idb, i))
+        # period_data = dataFrame2Dict(vizr.GetIRCDiffSendersDays(period, enddate, idb, i))
+        period_data = IRC.GetIRCDiffSendersDays(period, enddate, idb, i)
         agg_data = dict(agg_data.items() + period_data.items())
 
     # Global aggregated data
