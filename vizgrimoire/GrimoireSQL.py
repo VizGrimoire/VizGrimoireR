@@ -25,6 +25,7 @@
 
 import MySQLdb
 import logging
+import re
 
 
 # global vars to be moved to specific classes
@@ -85,8 +86,9 @@ def GetSQLGlobal(date, fields, tables, filters, start, end):
     sql = 'SELECT '+ fields
     sql += ' FROM'+ tables
     sql += ' WHERE'+date,'>='+start,' AND '+date+'<'+end
+    reg_and = re.compile("^[ ]*and", re.IGNORECASE)
     if (filters != ""):
-        if (regexpr("^[ ]*and", tolower(filters)) > 0 ): sql = paste(sql, filters)
+        if (reg_and.match (filters.lower())) is not None: sql += " " + filters
         else: sql += ' AND '+filters
     return(sql)
 
@@ -109,8 +111,10 @@ def GetSQLPeriod(period, date, fields, tables, filters, start, end):
     sql += fields
     sql += ' FROM ' + tables
     sql = sql + ' WHERE '+date+'>='+start+' AND '+date+'<'+end
+    reg_and = re.compile("^[ ]*and", re.IGNORECASE)
+
     if (filters != ""):
-        if (regexpr("^[ ]*and", tolower(filters)) > 0 ): sql = paste(sql, filters)
+        if (reg_and.match (filters.lower())) is not None: sql += " " + filters
         else: sql += ' AND ' + filters
 
     if (period == 'year'):

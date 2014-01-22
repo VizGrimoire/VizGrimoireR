@@ -97,8 +97,10 @@ def reposData(period, startdate, enddate, idb, destdir):
     createJSON(repos, repos_file)
 
     for repo in repos:
-        evol = vizr.GetRepoEvolSentSendersIRC(repo, period, startdate, enddate)
-        evol = completePeriodIds(dataFrame2Dict(evol))
+        # evol = vizr.GetRepoEvolSentSendersIRC(repo, period, startdate, enddate)
+        evol = IRC.GetRepoEvolSentSendersIRC(repo, period, startdate, enddate)
+        # evol = completePeriodIds(dataFrame2Dict(evol))
+        evol = completePeriodIds(evol)
         repo_file = destdir+"/"+repo+"-irc-rep-evolutionary.json"
         createJSON(evol, repo_file)
 

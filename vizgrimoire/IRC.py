@@ -21,8 +21,18 @@
 # Authors:
 #     Alvaro del Castillo <acs@bitergia.com>
 
-from GrimoireSQL import GetSQLReportFrom, GetSQLReportWhere, ExecuteQuery, BuildQuery
+from GrimoireSQL import GetSQLPeriod, GetSQLReportFrom, GetSQLReportWhere, ExecuteQuery, BuildQuery
 import GrimoireUtils
+
+# SQL Metaqueries
+def GetTablesOwnUniqueIdsIRC():
+    tables = 'irclog, people_upeople pup'
+    return (tables)
+
+
+def GetFiltersOwnUniqueIdsIRC():
+    filters = 'pup.people_id = irclog.nick'
+    return (filters)
 
 def StaticNumSentIRC (period, startdate, enddate, identities_db=None, type_analysis=[]):
     fields = "SELECT count(message) as sent, \
@@ -98,3 +108,17 @@ def GetEvolDataIRC(period, startdate, enddate, idb=None, type_analysis=[]):
     # 2- Merging information
     evol_data = dict(sent.items() + senders.items() + repositories.items())
     return (evol_data)
+
+def GetTablesReposIRC():
+    return(GetTablesOwnUniqueIdsIRC()+",channels c")
+
+def GetFiltersReposIRC():
+    return(GetFiltersOwnUniqueIdsIRC()+" AND c.id = irclog.channel_id ")
+
+# TODO: this function does not use the official procedure
+def GetRepoEvolSentSendersIRC (repo, period, startdate, enddate):
+    fields = 'COUNT(irclog.id) AS sent, COUNT(DISTINCT(pup.upeople_id)) AS senders'
+    tables= GetTablesReposIRC()
+    filters = GetFiltersReposIRC() + " AND c.name='"+repo+"'"
+    q = GetSQLPeriod(period,'date', fields, tables, filters, startdate, enddate)
+    return(ExecuteQuery(q))
