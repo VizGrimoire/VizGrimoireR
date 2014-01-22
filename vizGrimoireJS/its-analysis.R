@@ -349,13 +349,21 @@ if ('domains' %in% reports) {
 }
 # People
 if ('people' %in% reports) {
-    all.top.submitters <- top_openers_data[['openers.']]$id
-    all.top.submitters <- append(all.top.submitters, top_openers_data[['openers.last year']]$id)
-    all.top.submitters <- append(all.top.submitters, top_openers_data[['openers.last month']]$id)
-    all.top.submitters <- unique(all.top.submitters)
-    createJSON(all.top.submitters, paste(c(destdir,"/its-people.json"), collapse=''))
 
-    for (upeople_id in all.top.submitters) {
+    top_closers_data[['closers.']]
+
+    all.top.people <- top_closers_data[['closers.']]$id
+    all.top.people <- append(all.top.people, top_closers_data[['closers.last year']]$id)
+    all.top.people <- append(all.top.people, top_closers_data[['closers.last month']]$id)
+    
+    all.top.people <- append(all.top.people, top_openers_data[['openers.']]$id)
+    all.top.people <- append(all.top.people, top_openers_data[['openers.last year']]$id)
+    all.top.people <- append(all.top.people, top_openers_data[['openers.last month']]$id)
+    
+    all.top.people <- unique(all.top.people)
+    createJSON(all.top.people, paste(c(destdir,"/its-people.json"), collapse=''))
+
+    for (upeople_id in all.top.people) {
         evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
