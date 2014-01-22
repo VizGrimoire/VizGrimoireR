@@ -42,8 +42,8 @@ from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
 import IRC
 
-isoweek = importr("ISOweek")
-vizr = importr("vizgrimoire")
+# isoweek = importr("ISOweek")
+# vizr = importr("vizgrimoire")
 
 
 def aggData(period, startdate, enddate, idb, destdir):
@@ -96,8 +96,8 @@ def peopleData(period, startdate, enddate, idb, destdir):
 
 # TODO: pretty similar to peopleData. Unify?
 def reposData(period, startdate, enddate, idb, destdir):
-    # repos_data = dataFrame2Dict(vizr.GetReposNameIRC())
-    repos = valRtoPython(vizr.GetReposNameIRC())
+    # repos = valRtoPython(vizr.GetReposNameIRC())
+    repos = IRC.GetReposNameIRC()
     repos_file = destdir+"/irc-repos.json"
     createJSON(repos, repos_file)
 
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     enddate = "'"+opts.enddate+"'"
 
     # Working at the same time with VizR and VizPy yet
-    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     aggData (period, startdate, enddate, opts.identities_db, opts.destdir)

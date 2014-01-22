@@ -133,6 +133,13 @@ def GetRepoStaticSentSendersIRC (repo, startdate, enddate):
     q = GetSQLGlobal('date',fields, tables, filters, startdate, enddate)
     return(ExecuteQuery(q))
 
+def GetReposNameIRC ():
+    q = "SELECT name, count(i.id) AS total "+\
+        "  FROM irclog i, channels c "+\
+        "  WHERE i.channel_id=c.id "+\
+        "  GROUP BY name ORDER BY total DESC"
+    return(ExecuteQuery(q)['name'])
+
 ##############
 # Microstudies
 ##############
