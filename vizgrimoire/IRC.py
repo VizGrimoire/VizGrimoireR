@@ -172,6 +172,28 @@ def GetIRCDiffSendersDays (period, init_date, identities_db=None, days = None):
 
     return data
 
+def GetTopSendersIRC (days, startdate, enddate, identities_db, bots):
+    date_limit = ""
+    filter_bots = ''
+    for bot in bots:
+        filter_bots += " nick<>'"+bot+"' and "
+    if (days != 0 ):
+        sql = "SELECT @maxdate:=max(date) from irclog limit 1"
+        res = ExecuteQuery(sql)
+        date_limit = " AND DATEDIFF(@maxdate, date)<"+str(days)
+    q = "SELECT up.id as id, up.identifier as senders,"+\
+        "       COUNT(irclog.id) as sent "+\
+        " FROM irclog, people_upeople pup, "+identities_db+".upeople up "+\
+        " WHERE "+ filter_bots + \
+        "            irclog.nick = pup.people_id and "+\
+        "            pup.upeople_id = up.id and "+\
+        "            date >= "+ startdate+ " and "+\
+        "            date  < "+ enddate+ " "+ date_limit +\
+        "            GROUP BY senders "+\
+        "            ORDER BY sent desc "+\
+        "            LIMIT 10 "
+    return(ExecuteQuery(q))
+
 #########
 # PEOPLE
 #########

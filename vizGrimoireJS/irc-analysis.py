@@ -117,11 +117,14 @@ def reposData(period, startdate, enddate, idb, destdir):
 def topData(period, startdate, enddate, idb, destdir, bots):
     top_senders = {}
     top_senders['senders.'] = \
-        dataFrame2Dict(vizr.GetTopSendersIRC(0, startdate, enddate, idb, bots))
+        IRC.GetTopSendersIRC(0, startdate, enddate, idb, bots) 
+        # dataFrame2Dict(vizr.GetTopSendersIRC(0, startdate, enddate, idb, bots))
     top_senders['senders.last year'] = \
-        dataFrame2Dict(vizr.GetTopSendersIRC(365, startdate, enddate, idb, bots))
+        IRC.GetTopSendersIRC(365, startdate, enddate, idb, bots)
+        # dataFrame2Dict(vizr.GetTopSendersIRC(365, startdate, enddate, idb, bots))
     top_senders['senders.last month'] = \
-        dataFrame2Dict(vizr.GetTopSendersIRC(31, startdate, enddate, idb, bots))
+        IRC.GetTopSendersIRC(31, startdate, enddate, idb, bots)
+        # dataFrame2Dict(vizr.GetTopSendersIRC(31, startdate, enddate, idb, bots))
     top_file = destdir+"/irc-top.json"
     createJSON (top_senders, top_file)
 
