@@ -56,12 +56,41 @@ rfield = reposField()
 
 data <- EvolMLSInfo(period, startdate, enddate, identities_db, rfield)
 
+if ('companies' %in% reports) {
+    companies <- EvolMLSCompanies(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, companies, all = TRUE)
+}
+if ('countries' %in% reports) {
+    countries <- EvolMLSCountries(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, countries, all = TRUE)
+}
+if ('domains' %in% reports) {
+    domains <- EvolMLSDomains(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, domains, all = TRUE)
+}
+
+
 data <- completePeriodIds(data, conf$granularity, conf)
 
 createJSON (data, paste(destdir,"/mls-evolutionary.json", sep=''))
 
 
 static_data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
+
+if ('companies' %in% reports) {
+    companies <- AggMLSCompanies(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, companies, all = TRUE)
+}
+if ('countries' %in% reports) {
+    countries <- AggMLSCountries(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, countries, all = TRUE)
+}
+if ('domains' %in% reports) {
+    domains <- AggMLSDomains(period, conf$startdate, conf$enddate, identities_db)
+    data = merge(data, domains, all = TRUE)
+}
+
+
 
 latest_activity7 <- lastActivity(7)
 latest_activity14 <- lastActivity(14)
@@ -96,6 +125,13 @@ static_data = merge(static_data, senders_365)
 
 createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
+# Tops
+top_senders_data <- list()
+top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identities_db,c("-Bot"))
+top_senders_data[['senders.last year']]<-top_senders(365, conf$startdate, conf$enddate,identities_db,c("-Bot"))
+top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$enddate,identities_db,c("-Bot"))
+
+createJSON (top_senders_data, paste(destdir,"/mls-top.json",sep=''))
 
 if ('repositories' %in% reports) {
     repos <- reposNames(rfield, startdate, enddate)
@@ -194,14 +230,13 @@ if ('domains' %in% reports){
 }
 
 if ('people' %in% reports){
-    people = GetListPeopleMLS(startdate, enddate)
-    people = people$id
-    limit = 100
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(destdir,"/mls-people.json",sep=''))
+    all.top.senders <- top_senders_data[['senders.']]$id
+    all.top.senders <- append(all.top.senders, top_senders_data[['senders.last year']]$id)
+    all.top.senders <- append(all.top.senders, top_senders_data[['senders.last month']]$id)
+    all.top.senders <- unique(all.top.senders)
+    createJSON(all.top.senders, paste(destdir,"/mls-people.json",sep=''))
        
-    for (upeople_id in people){
+    for (upeople_id in all.top.senders){
         evol = GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
@@ -255,13 +290,6 @@ new[['date']] <- conf$str_enddate
 new[['persons']] <- aux
 createJSON (new, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
 
-# Tops
-top_senders_data <- list()
-top_senders_data[['senders.']]<-top_senders(0, conf$startdate, conf$enddate,identities_db,c("-Bot"))
-top_senders_data[['senders.last year']]<-top_senders(365, conf$startdate, conf$enddate,identities_db,c("-Bot"))
-top_senders_data[['senders.last month']]<-top_senders(31, conf$startdate, conf$enddate,identities_db,c("-Bot"))
-
-createJSON (top_senders_data, paste(destdir,"/mls-top.json",sep=''))
 
 # People list
 # query <- new ("Query", 

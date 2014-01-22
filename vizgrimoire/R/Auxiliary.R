@@ -678,6 +678,8 @@ GetPercentageDiff <- function(value1, value2){
 
     percentage = 0
 
+    if (is.na(value1) || is.na(value2)) return (NA)
+
     if (value1 < value2){
         diff = value2 - value1
         percentage = as.integer((diff/abs(value1)) * 100)

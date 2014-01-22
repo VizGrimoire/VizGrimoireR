@@ -310,15 +310,13 @@ if ('domains' %in% reports) {
 }
 
 if ('people' %in% reports) {
-    print ('Starting people analysis')
-    people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
-    people = people$pid
-    limit = 30
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(destdir,"/scm-people.json", sep=''))
+    all.top.authors <- top_authors_data[['authors.']]$id
+    all.top.authors <- append(all.top.authors, top_authors_data[['authors.last year']]$id)
+    all.top.authors <- append(all.top.authors, top_authors_data[['authors.last month']]$id)
+    all.top.authors <- unique(all.top.authors)
+    createJSON(all.top.authors, paste(destdir,"/scm-people.json", sep=''))
 	
-    for (upeople_id in people) {
+    for (upeople_id in all.top.authors) {
         evol_data <- GetEvolPeopleSCM(upeople_id, period, 
                 conf$startdate, conf$enddate)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)

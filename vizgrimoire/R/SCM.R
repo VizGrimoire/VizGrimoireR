@@ -45,12 +45,21 @@ GetSCMEvolutionaryData <- function(period, startdate, enddate, i_db=NA, type_ana
     repositories <- EvolRepositories(period, startdate, enddate, i_db, type_analysis)
 
     # 2- Merging information
-    evol_data = merge(commits, committers, all = TRUE)
-    evol_data = merge(evol_data, authors, all = TRUE)
+    evol_data = merge(commits, repositories, all = TRUE)
+    
+    # This workaround fixes the bug when committers or
+    # authors are empty data frames. Merging an empty
+    # with a non-empty frame returned a new data frame
+    # with NAs.
+    if (nrow(committers) > 0) {
+        evol_data = merge(evol_data, committers, all = TRUE)
+    }
+    if (nrow(authors) > 0) {
+        evol_data = merge(evol_data, authors, all = TRUE)
+    }
     evol_data = merge(evol_data, files, all = TRUE)
     evol_data = merge(evol_data, lines, all = TRUE)
     evol_data = merge(evol_data, branches, all = TRUE)
-    evol_data = merge(evol_data, repositories, all = TRUE)
 
     return (evol_data)
 }

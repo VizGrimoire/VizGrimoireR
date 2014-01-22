@@ -232,6 +232,7 @@ GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_a
             #used in the rest of cases, to be fixed...
             data = merge(data, sent_response, all=TRUE)
         }
+        data = merge(data, senders_response, all=TRUE)
         data = merge(data, senders_init, all=TRUE)
 
     } else {
@@ -247,6 +248,7 @@ GetMLSInfo <- function(period, startdate, enddate, identities_db, rfield, type_a
         data = merge(data, repositories, all=TRUE)
         data = merge(data, threads, all=TRUE)
         data = merge(data, sent_response, all=TRUE)
+        data = merge(data, senders_response, all=TRUE)
         data = merge(data, senders_init, all=TRUE)
     }
 
@@ -546,35 +548,35 @@ GetMLSStudies <- function(period, startdate, enddate, identities_db, type_analys
     return(data)
 }
 
-EvolMLSDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA,NA)){
+EvolMLSDomains <- function(period, startdate, enddate, identities_db){
     # Evol number of domains used
-    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'domains'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, list('domain', NA), TRUE, 'domains'))
 }
 
-EvolMLSCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+EvolMLSCountries <- function(period, startdate, enddate, identities_db){
     # Evol number of countries
-    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'countries'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, list('country', NA), TRUE, 'countries'))
 }
 
-EvolMLSCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+EvolMLSCompanies <- function(period, startdate, enddate, identities_db){
     # Evol number of companies
-    data <- GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, TRUE, 'companies')
+    data <- GetMLSStudies(period, startdate, enddate, identities_db, list('company', NA), TRUE, 'companies')
     return(data)
 }
 
 
-AggMLSDomains <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+AggMLSDomains <- function(period, startdate, enddate, identities_db){
     # Agg number of domains
-    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'domains'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, list('domain', NA), FALSE, 'domains'))
 }
 
-AggMLSCountries <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+AggMLSCountries <- function(period, startdate, enddate, identities_db){
     # Agg number of countries
-    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'countries'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, list('country', NA), FALSE, 'countries'))
 }
-AggMLSCompanies <- function(period, startdate, enddate, identities_db, type_analysis=list(NA, NA)){
+AggMLSCompanies <- function(period, startdate, enddate, identities_db){
     # Agg number of companies
-    return(GetMLSStudies(period, startdate, enddate, identities_db, type_analysis, FALSE, 'companies'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, list('company', NA), FALSE, 'companies'))
 }
 
 ####################
