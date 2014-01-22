@@ -21,7 +21,8 @@
 # Authors:
 #     Alvaro del Castillo <acs@bitergia.com>
 
-from GrimoireSQL import GetSQLPeriod, GetSQLReportFrom, GetSQLReportWhere, ExecuteQuery, BuildQuery
+from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
+from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates
 import GrimoireUtils
 
@@ -162,3 +163,38 @@ def GetIRCDiffSendersDays (period, init_date, identities_db=None, days = None):
     data['senders_'+str(days)] = lastsenders
 
     return data
+
+#########
+# PEOPLE
+#########
+def GetListPeopleIRC (startdate, enddate):
+    fields = "DISTINCT(pup.upeople_id) as id, count(irclog.id) total"
+    tables = GetTablesOwnUniqueIdsIRC()
+    filters = GetFiltersOwnUniqueIdsIRC()
+    filters += " GROUP BY nick ORDER BY total DESC"
+    q = GetSQLGlobal('date', fields, tables, filters, startdate, enddate)
+    return(ExecuteQuery(q))
+
+def GetQueryPeopleIRC (developer_id, period, startdate, enddate, evol):
+    fields = "COUNT(irclog.id) AS sent"
+    tables = GetTablesOwnUniqueIdsIRC()
+    filters = GetFiltersOwnUniqueIdsIRC() + " AND pup.upeople_id = " + str(developer_id)
+
+    if (evol) :
+        q = GetSQLPeriod(period,'date', fields, tables, filters,
+                startdate, enddate)
+    else:
+        fields = fields + \
+                ",DATE_FORMAT (min(date),'%Y-%m-%d') as first_date,"+\
+                " DATE_FORMAT (max(date),'%Y-%m-%d') as last_date"
+        q = GetSQLGlobal('date', fields, tables, filters,
+                startdate, enddate)
+    return (q)
+
+def GetEvolPeopleIRC (developer_id, period, startdate, enddate):
+    q = GetQueryPeopleIRC(developer_id, period, startdate, enddate, True)
+    return(ExecuteQuery(q))
+
+def GetStaticPeopleIRC (developer_id, startdate, enddate):
+    q = GetQueryPeopleIRC(developer_id, None, startdate, enddate, False)
+    return(ExecuteQuery(q))

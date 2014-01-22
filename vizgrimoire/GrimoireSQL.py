@@ -84,8 +84,8 @@ def GetSQLReportWhere (type_analysis, role):
 
 def GetSQLGlobal(date, fields, tables, filters, start, end):
     sql = 'SELECT '+ fields
-    sql += ' FROM'+ tables
-    sql += ' WHERE'+date,'>='+start,' AND '+date+'<'+end
+    sql += ' FROM '+ tables
+    sql += ' WHERE '+date+'>='+start+' AND '+date+'<'+end
     reg_and = re.compile("^[ ]*and", re.IGNORECASE)
     if (filters != ""):
         if (reg_and.match (filters.lower())) is not None: sql += " " + filters

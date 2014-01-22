@@ -73,7 +73,8 @@ def tsData(period, startdate, enddate, idb, destdir):
     createJSON (ts_data, destdir+"/irc-evolutionary.json")
 
 def peopleData(period, startdate, enddate, idb, destdir):
-    people_data = dataFrame2Dict(vizr.GetListPeopleIRC(startdate, enddate))
+    # people_data = dataFrame2Dict(vizr.GetListPeopleIRC(startdate, enddate))
+    people_data = IRC.GetListPeopleIRC(startdate, enddate)
     people = people_data['id']
     limit = 30
     if (len(people)<limit): limit = len(people);
@@ -82,14 +83,16 @@ def peopleData(period, startdate, enddate, idb, destdir):
     createJSON(people, people_file)
 
     for upeople_id in people:
-        evol = vizr.GetEvolPeopleIRC(upeople_id, period, startdate, enddate)
-        evol = completePeriodIds(dataFrame2Dict(evol))
+        # evol = dataFrame2Dict(vizr.GetEvolPeopleIRC(upeople_id, period, startdate, enddate))
+        evol = IRC.GetEvolPeopleIRC(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(evol)
         person_file = destdir+"/people-"+str(upeople_id)+"-irc-evolutionary.json"
         createJSON(evol, person_file)
 
         person_file = destdir+"/people-"+str(upeople_id)+"-irc-static.json"
-        aggdata = vizr.GetStaticPeopleIRC(upeople_id, startdate, enddate)
-        createJSON(dataFrame2Dict(aggdata), person_file)
+        # aggdata = dataFrame2Dict(vizr.GetStaticPeopleIRC(upeople_id, startdate, enddate))
+        aggdata = IRC.GetStaticPeopleIRC(upeople_id, startdate, enddate)
+        createJSON(aggdata, person_file)
 
 # TODO: pretty similar to peopleData. Unify?
 def reposData(period, startdate, enddate, idb, destdir):
