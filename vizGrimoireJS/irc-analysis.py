@@ -110,8 +110,9 @@ def reposData(period, startdate, enddate, idb, destdir):
         createJSON(evol, repo_file)
 
         repo_file = destdir+"/"+repo+"-irc-rep-static.json"
-        aggdata = vizr.GetRepoStaticSentSendersIRC(repo, startdate, enddate)
-        createJSON(dataFrame2Dict(aggdata), repo_file)
+        # aggdata = dataFrame2Dict(vizr.GetRepoStaticSentSendersIRC(repo, startdate, enddate))
+        aggdata = IRC.GetRepoStaticSentSendersIRC(repo, startdate, enddate)
+        createJSON(aggdata, repo_file)
 
 def topData(period, startdate, enddate, idb, destdir, bots):
     top_senders = {}

@@ -125,6 +125,14 @@ def GetRepoEvolSentSendersIRC (repo, period, startdate, enddate):
     q = GetSQLPeriod(period,'date', fields, tables, filters, startdate, enddate)
     return(ExecuteQuery(q))
 
+def GetRepoStaticSentSendersIRC (repo, startdate, enddate):
+    fields = 'COUNT(irclog.id) AS sent,'+\
+            'COUNT(DISTINCT(pup.upeople_id)) AS senders'
+    tables = GetTablesReposIRC()
+    filters = GetFiltersReposIRC()+" AND c.name='"+repo+"'"
+    q = GetSQLGlobal('date',fields, tables, filters, startdate, enddate)
+    return(ExecuteQuery(q))
+
 ##############
 # Microstudies
 ##############
