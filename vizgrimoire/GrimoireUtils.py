@@ -143,6 +143,59 @@ def completePeriodIdsMonths(ts_data, opts):
 
     return new_ts_data
 
+def date2Week(date):
+    # isocalendar: year weeknumber weekday
+    week   = str(date.isocalendar()[0])
+    week  += "%02d" % date.isocalendar()[1]
+    return week
+
+
+def completePeriodIdsWeeks(ts_data, opts):
+    # Always build a new dictionary completed
+    new_ts_data = {}
+    # opts = read_options()
+    period = getPeriod(opts.granularity)
+    start = datetime.strptime(opts.startdate, "%Y-%m-%d")
+    end = datetime.strptime(opts.enddate, "%Y-%m-%d")
+
+    # TODO: old format from R JSON. To be simplified
+    new_ts_data['unixtime'] = []
+    new_ts_data['date'] = []
+    new_ts_data['id'] = []
+    # new_ts_data['month'] = []
+    data_vars = ts_data.keys()
+    for key in (data_vars): new_ts_data[key] = []
+
+    # Start of the week
+    dayweek = start.isocalendar()[2]
+    new_week = start - relativedelta(days=dayweek-1)
+    i = 1 # for ids in time series
+
+    while (new_week <= end):
+        new_week_txt = date2Week(new_week)
+        if (int(new_week_txt) in ts_data['week']) is False:
+            # Add new time point with all vars to zero
+            for key in (data_vars):
+                new_ts_data[key].append(0)
+            new_ts_data['week'].pop()
+            new_ts_data['week'].append(new_week_txt)
+        else:
+            # Add already existing data for the time point
+            index = ts_data['week'].index(int(new_week_txt))
+            for key in (data_vars):
+                new_ts_data[key].append(ts_data[key][index])
+            new_ts_data['week'].pop()
+            new_ts_data['week'].append(str(ts_data['week'][index]))
+
+        timestamp = calendar.timegm(new_week.timetuple())
+        new_ts_data['unixtime'].append(unicode(timestamp))
+        new_ts_data['id'].append(i)
+        i += 1
+        new_ts_data['date'].append(datetime.strftime(new_week, "%b %Y"))
+        new_week = new_week + relativedelta(weeks=1)
+
+    return new_ts_data
+
 
 def completePeriodIds(ts_data):
     new_ts_data = ts_data
@@ -151,6 +204,8 @@ def completePeriodIds(ts_data):
 
     if period == "month":
         new_ts_data = completePeriodIdsMonths(ts_data, opts)
+    elif period == "week":
+        new_ts_data = completePeriodIdsWeeks(ts_data, opts)
 
     return new_ts_data
 
@@ -263,7 +318,7 @@ def GetPercentageDiff (value1, value2):
 
     percentage = 0
 
-    if (value1 is None  or value2 is None): return (None)
+    if (value1 == 0 or value1 is None  or value2 is None): return (0)
     value1 = float(value1)
     value2 = float(value2)
 

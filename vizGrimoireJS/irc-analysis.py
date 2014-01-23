@@ -71,6 +71,7 @@ def tsData(period, startdate, enddate, idb, destdir):
     ts_data = IRC.GetEvolDataIRC(period, startdate, enddate, idb)
     ts_data = completePeriodIds(ts_data)
     createJSON (ts_data, destdir+"/irc-evolutionary.json")
+    sys.exit()
 
 def peopleData(period, startdate, enddate, idb, destdir):
     # people_data = dataFrame2Dict(vizr.GetListPeopleIRC(startdate, enddate))

@@ -60,8 +60,6 @@ bots = c('wikibugs','gerrit-wm','wikibugs_','wm-bot','')
 
 # Tendencies
 diffsent.365 = GetIRCDiffSentDays(period, conf$enddate, 365)
-print(diffsent.365)
-stop()
 diffsenders.365 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 365)
 diffsent.30 = GetIRCDiffSentDays(period, conf$enddate, 30)
 diffsenders.30 = GetIRCDiffSendersDays(period, conf$enddate, conf$identities_db, 30)

@@ -99,7 +99,7 @@ def GetSQLPeriod(period, date, fields, tables, filters, start, end):
         # Remove time so unix timestamp is start of day    
         sql = 'SELECT UNIX_TIMESTAMP(DATE('+date+')) AS unixtime, '
     elif (period == 'week'):
-        sql = 'SELECT YEARWEEK('+date+','+iso_8601_mode+') AS week, '
+        sql = 'SELECT YEARWEEK('+date+','+str(iso_8601_mode)+') AS week, '
     elif (period == 'month'):
         sql = 'SELECT YEAR('+date+')*12+MONTH('+date+') AS month, '
     elif (period == 'year'):
@@ -124,8 +124,8 @@ def GetSQLPeriod(period, date, fields, tables, filters, start, end):
         sql += ' GROUP BY YEAR('+date+'),MONTH('+date+')'
         sql += ' ORDER BY YEAR('+date+'),MONTH('+date+')'
     elif (period == 'week'):
-        sql += ' GROUP BY YEARWEEK('+date+','+iso_8601_mode+')'
-        sql += ' ORDER BY YEARWEEK('+date+','+iso_8601_mode+')'
+        sql += ' GROUP BY YEARWEEK('+date+','+str(iso_8601_mode)+')'
+        sql += ' ORDER BY YEARWEEK('+date+','+str(iso_8601_mode)+')'
     elif (period == 'day'):
         sql += ' GROUP BY YEAR('+date+'),DAYOFYEAR('+date+')'
         sql += ' ORDER BY YEAR('+date+'),DAYOFYEAR('+date+')'
