@@ -101,11 +101,18 @@ def valRtoPython(val):
         val = val2
     return val
 
-def completePeriodIdsMonths(ts_data, opts):
+
+# Check that all list entries are arrays
+def checkListArray(data):
+    data_vars = data.keys()
+    for key in (data_vars):
+        if not isinstance(data[key], (list)):
+            data[key] = [data[key]]
+
+def completePeriodIdsYears(ts_data, opts):
     # Always build a new dictionary completed
     new_ts_data = {}
     # opts = read_options()
-    period = getPeriod(opts.granularity)
     start = datetime.strptime(opts.startdate, "%Y-%m-%d")
     end = datetime.strptime(opts.enddate, "%Y-%m-%d")
 
@@ -117,6 +124,51 @@ def completePeriodIdsMonths(ts_data, opts):
     data_vars = ts_data.keys()
     for key in (data_vars):
         new_ts_data[key] = []
+
+    checkListArray(ts_data)
+
+    start_year = start.year * 12
+    years = end.year - start.year
+
+
+    for i in range(0, years+1):
+        if (start_year+(i*12) in ts_data['year']) is False:
+            # Add new time point with all vars to zero
+            for key in (data_vars):
+                new_ts_data[key].append(0)
+            new_ts_data['year'].pop()
+            new_ts_data['year'].append(start_year+(i*12))
+        else:
+            # Add already existing data for the time point
+            index = ts_data['year'].index(start_year+(i*12))
+            for key in (data_vars):
+                new_ts_data[key].append(ts_data[key][index])
+
+        current =  start + relativedelta(years=i)
+        timestamp = calendar.timegm(current.timetuple())
+        new_ts_data['unixtime'].append(unicode(timestamp))
+        new_ts_data['id'].append(i)
+        new_ts_data['date'].append(datetime.strftime(current, "%b %Y"))
+
+    return new_ts_data
+
+
+def completePeriodIdsMonths(ts_data, opts):
+    # Always build a new dictionary completed
+    new_ts_data = {}
+    # opts = read_options()
+    start = datetime.strptime(opts.startdate, "%Y-%m-%d")
+    end = datetime.strptime(opts.enddate, "%Y-%m-%d")
+
+    # TODO: old format from R JSON. To be simplified
+    new_ts_data['unixtime'] = []
+    new_ts_data['date'] = []
+    new_ts_data['id'] = []
+    # new_ts_data['month'] = []
+    data_vars = ts_data.keys()
+    for key in (data_vars):
+        new_ts_data[key] = []
+    checkListArray(ts_data)
 
     start_month = start.year*12 + start.month
     end_month = end.year*12 + end.month
@@ -154,7 +206,6 @@ def completePeriodIdsWeeks(ts_data, opts):
     # Always build a new dictionary completed
     new_ts_data = {}
     # opts = read_options()
-    period = getPeriod(opts.granularity)
     start = datetime.strptime(opts.startdate, "%Y-%m-%d")
     end = datetime.strptime(opts.enddate, "%Y-%m-%d")
 
@@ -165,6 +216,7 @@ def completePeriodIdsWeeks(ts_data, opts):
     # new_ts_data['month'] = []
     data_vars = ts_data.keys()
     for key in (data_vars): new_ts_data[key] = []
+    checkListArray(ts_data)
 
     # Start of the week
     dayweek = start.isocalendar()[2]
@@ -202,14 +254,13 @@ def completePeriodIds(ts_data):
     opts = read_options()
     period = getPeriod(opts.granularity)
 
-    if period == "month":
-        new_ts_data = completePeriodIdsMonths(ts_data, opts)
-    elif period == "week":
+    if period == "week":
         new_ts_data = completePeriodIdsWeeks(ts_data, opts)
-
+    elif period == "month":
+        new_ts_data = completePeriodIdsMonths(ts_data, opts)
+    elif period == "year":
+        new_ts_data = completePeriodIdsYears(ts_data, opts)
     return new_ts_data
-
-
 
 # Convert a R data frame to a python dictionary
 def dataFrame2Dict(data):
