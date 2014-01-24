@@ -83,9 +83,11 @@ if (conf$backend == 'jira'){
     name_log_table <- 'issues_log_jira'
 }
 if (conf$backend == 'launchpad'){
-    #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+    #Specific closed condition for OpenStack project
     closed_condition <- "(new_value='Fix Committed')"
-    statuses = c("Fix Committed")
+    #Specific statuses from OpenStack project
+    statuses = c("Confirmed", "Fix Committed", "New", "In Progress", "Triaged", "Incomplete", "Invalid", "Won\\'t Fix", "Fix Released", "Opinion", "Unknown", "Expired")
+    name_log_table = "issues_log_launchpad"
 }
 if (conf$backend == 'redmine'){
     statuses = c("New", "Verified", "Need More Info", "In Progress", "Feedback",
