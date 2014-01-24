@@ -102,6 +102,18 @@ def valRtoPython(val):
     return val
 
 
+def createTimeSeries(ts_data):
+    new_ts_data = {}
+
+    # TODO: old format from R JSON. To be simplified
+    new_ts_data['unixtime'] = []
+    new_ts_data['date'] = []
+    new_ts_data['id'] = []
+    data_vars = ts_data.keys()
+    for key in (data_vars): new_ts_data[key] = []
+
+    return new_ts_data
+
 # Check that all list entries are arrays
 def checkListArray(data):
     data_vars = data.keys()
@@ -109,22 +121,9 @@ def checkListArray(data):
         if not isinstance(data[key], (list)):
             data[key] = [data[key]]
 
-def completePeriodIdsYears(ts_data, opts):
-    # Always build a new dictionary completed
-    new_ts_data = {}
-    # opts = read_options()
-    start = datetime.strptime(opts.startdate, "%Y-%m-%d")
-    end = datetime.strptime(opts.enddate, "%Y-%m-%d")
-
-    # TODO: old format from R JSON. To be simplified
-    new_ts_data['unixtime'] = []
-    new_ts_data['date'] = []
-    new_ts_data['id'] = []
-    # new_ts_data['month'] = []
+def completePeriodIdsYears(ts_data, start, end):
     data_vars = ts_data.keys()
-    for key in (data_vars):
-        new_ts_data[key] = []
-
+    new_ts_data =  createTimeSeries(ts_data)
     checkListArray(ts_data)
 
     start_year = start.year * 12
@@ -153,21 +152,9 @@ def completePeriodIdsYears(ts_data, opts):
     return new_ts_data
 
 
-def completePeriodIdsMonths(ts_data, opts):
-    # Always build a new dictionary completed
-    new_ts_data = {}
-    # opts = read_options()
-    start = datetime.strptime(opts.startdate, "%Y-%m-%d")
-    end = datetime.strptime(opts.enddate, "%Y-%m-%d")
-
-    # TODO: old format from R JSON. To be simplified
-    new_ts_data['unixtime'] = []
-    new_ts_data['date'] = []
-    new_ts_data['id'] = []
-    # new_ts_data['month'] = []
+def completePeriodIdsMonths(ts_data, start, end):
     data_vars = ts_data.keys()
-    for key in (data_vars):
-        new_ts_data[key] = []
+    new_ts_data =  createTimeSeries(ts_data)
     checkListArray(ts_data)
 
     start_month = start.year*12 + start.month
@@ -201,21 +188,9 @@ def date2Week(date):
     week  += "%02d" % date.isocalendar()[1]
     return week
 
-
-def completePeriodIdsWeeks(ts_data, opts):
-    # Always build a new dictionary completed
-    new_ts_data = {}
-    # opts = read_options()
-    start = datetime.strptime(opts.startdate, "%Y-%m-%d")
-    end = datetime.strptime(opts.enddate, "%Y-%m-%d")
-
-    # TODO: old format from R JSON. To be simplified
-    new_ts_data['unixtime'] = []
-    new_ts_data['date'] = []
-    new_ts_data['id'] = []
-    # new_ts_data['month'] = []
+def completePeriodIdsWeeks(ts_data, start, end):
     data_vars = ts_data.keys()
-    for key in (data_vars): new_ts_data[key] = []
+    new_ts_data =  createTimeSeries(ts_data)
     checkListArray(ts_data)
 
     # Start of the week
@@ -248,18 +223,19 @@ def completePeriodIdsWeeks(ts_data, opts):
 
     return new_ts_data
 
-
 def completePeriodIds(ts_data):
     new_ts_data = ts_data
     opts = read_options()
     period = getPeriod(opts.granularity)
+    start = datetime.strptime(opts.startdate, "%Y-%m-%d")
+    end = datetime.strptime(opts.enddate, "%Y-%m-%d")
 
     if period == "week":
-        new_ts_data = completePeriodIdsWeeks(ts_data, opts)
+        new_ts_data = completePeriodIdsWeeks(ts_data, start, end)
     elif period == "month":
-        new_ts_data = completePeriodIdsMonths(ts_data, opts)
+        new_ts_data = completePeriodIdsMonths(ts_data, start, end)
     elif period == "year":
-        new_ts_data = completePeriodIdsYears(ts_data, opts)
+        new_ts_data = completePeriodIdsYears(ts_data, start, end)
     return new_ts_data
 
 # Convert a R data frame to a python dictionary
