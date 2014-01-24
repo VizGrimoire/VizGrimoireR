@@ -72,7 +72,8 @@ StaticNumSentIRC <- function(period, startdate, enddate, identities_db=NA, type_
             DATE_FORMAT (max(date), '%Y-%m-%d') as last_date "
     from <- " FROM irclog "
     where <- paste(" where date >=", startdate, " and
-                     date < ", enddate, sep="")
+                     date < ", enddate, " and
+                     type='COMMENT' ", sep="")
     q <- paste(select, from, where)
     return(ExecuteQuery(q))
 }
@@ -81,7 +82,8 @@ StaticNumSendersIRC <- function(period, startdate, enddate, identities_db=NA, ty
     select <- "SELECT count(distinct(nick)) as senders"
     from <- " FROM irclog "
     where <- paste(" where date >=", startdate, " and
-                    date < ", enddate, sep="")
+                    date < ", enddate, " and
+                    type='COMMENT' ",sep="")
     q <- paste(select, from, where)
     return(ExecuteQuery(q))
 }
@@ -90,7 +92,8 @@ StaticNumRepositoriesIRC <- function(period, startdate, enddate, identities_db=N
     select <- "SELECT COUNT(DISTINCT(channel_id)) AS repositories "
     from <- "FROM irclog "
     where <- paste("WHERE date >=", startdate, " AND
-                    date < ", enddate, sep="")
+                    date < ", enddate, " and
+                    type='COMMENT' ", sep="")
     q <- paste(select, from, where)
     return(ExecuteQuery(q))
 }
@@ -98,7 +101,8 @@ StaticNumRepositoriesIRC <- function(period, startdate, enddate, identities_db=N
 GetSentIRC <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
     fields = " count(distinct(message)) as sent "
     tables = paste(" irclog ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = GetSQLReportWhere(type_analysis, "author")    
+    filters = GetSQLReportWhere(type_analysis, "author")
+    filters <- paste(filters, "and type='COMMENT' ", sep="")
     q <- BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)    
     return(ExecuteQuery(q))
 }
@@ -110,7 +114,8 @@ EvolSentIRC <- function(period, startdate, enddate, identities_db=NA, type_analy
 GetSendersIRC <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){    
     fields = " count(distinct(nick)) as senders "
     tables = paste(" irclog ", GetSQLReportFrom(identities_db, type_analysis))
-    filters = GetSQLReportWhere(type_analysis, "author")    
+    filters = GetSQLReportWhere(type_analysis, "author")
+    filters <- paste(filters, "and type='COMMENT' ", sep="")
     q <- BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)    
     return(ExecuteQuery(q))
 }
@@ -147,6 +152,7 @@ GetTopSendersIRC <- function(days = 0, startdate, enddate, identities_db, bots) 
                     count(irclog.id) as sent
                 FROM irclog, people_upeople pup, ",identities_db,".upeople up
                 WHERE ", filter_bots, "
+                    irclog.type = 'COMMENT' and
                     irclog.nick = pup.people_id and
                     pup.upeople_id = up.id and
                     date >= ", startdate, " and
@@ -187,7 +193,8 @@ GetRepoEvolSentSendersIRC <- function(repo, period, startdate, enddate){
     fields = 'COUNT(irclog.id) AS sent, 
               COUNT(DISTINCT(pup.upeople_id)) AS senders'
     tables= GetTablesReposIRC()
-    filters = paste(GetFiltersReposIRC()," AND c.name='",repo,"'",sep="")    
+    filters = paste(GetFiltersReposIRC()," AND c.name='",repo,"'",sep="")
+    filters <- paste(filters, "AND irclog.type='COMMENT' ", sep="")    
     q <- GetSQLPeriod(period,'date', fields, tables, filters, 
             startdate, enddate)
     query <- new ("Query", sql = q)
@@ -200,6 +207,7 @@ GetRepoStaticSentSendersIRC <- function (repo, startdate, enddate) {
               COUNT(DISTINCT(pup.upeople_id)) AS senders'
     tables = GetTablesReposIRC()
     filters = paste(GetFiltersReposIRC()," AND c.name='",repo,"'",sep="")
+    filters <- paste(filters, "AND irclog.type='COMMENT' ", sep="")
     q <- GetSQLGlobal('date',fields, tables, filters, startdate, enddate)
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -213,6 +221,7 @@ GetListPeopleIRC <- function(startdate, enddate) {
     fields = "DISTINCT(pup.upeople_id) as id, count(irclog.id) total"
     tables = GetTablesOwnUniqueIdsIRC()
     filters = GetFiltersOwnUniqueIdsIRC()
+    filters <- paste(filters, "AND irclog.type='COMMENT' ", sep="")
     filters = paste(filters,"GROUP BY nick ORDER BY total desc")
     q = GetSQLGlobal('date',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)
@@ -224,6 +233,7 @@ GetQueryPeopleIRC <- function(developer_id, period, startdate, enddate, evol) {
     fields = "COUNT(irclog.id) AS sent"
     tables = GetTablesOwnUniqueIdsIRC()
     filters = paste(GetFiltersOwnUniqueIdsIRC(), "AND pup.upeople_id = ", developer_id)
+    filters <- paste(filters, " AND irclog.type='COMMENT' ", sep="")
 
     if (evol) {
         q = GetSQLPeriod(period,'date', fields, tables, filters,
