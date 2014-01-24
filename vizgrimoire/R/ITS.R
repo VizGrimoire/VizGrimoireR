@@ -204,18 +204,14 @@ GetITSInfo <- function(period, startdate, enddate, identities_db, type_analysis,
         repos <- AggIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
         init_date <- GetInitDate(startdate, enddate, identities_db, type_analysis)
         end_date <- GetEndDate(startdate, enddate, identities_db, type_analysis)
-        print(init_date)
         data = merge(closed, changed)
         data = merge(data, open)
         data = merge(data, repos)
         data = merge(data, openers)
         data = merge(data, closers)
         data = merge(data, changers)
-        print(data)
         data = merge(data, init_date)
-        print(data)
         data = merge(data, end_date)
-        print(data)
     }
 
     return(data)
@@ -449,7 +445,6 @@ GetClosed <- function(period, startdate, enddate, identities_db, type_analysis, 
     filters = gsub("i.submitted", "ch.changed", filters)
     
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -679,7 +674,6 @@ GetDate <- function(startdate, enddate, identities_db, type_analysis=list(NA, NA
     filters = GetITSSQLReportWhere(type_analysis)
 
     q <- BuildQuery(NA, startdate, enddate, " i.submitted_on ", fields, tables, filters, "FALSE")
-    print(q) 
     data <- ExecuteQuery(q)
     return(data)    
 }
