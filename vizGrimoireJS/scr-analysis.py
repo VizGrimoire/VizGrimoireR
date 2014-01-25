@@ -43,7 +43,55 @@ from GrimoireUtils import valRtoPython, read_options, getPeriod
 import IRC
 
 def aggData(period, startdate, enddate, idb, destdir):
-    pass
+    data = vizr.StaticReviewsSubmitted(period, startdate, enddate)
+    agg = dataFrame2Dict(data)
+    data = vizr.StaticReviewsOpened(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticReviewsNew(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticReviewsInProgress(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticReviewsClosed(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticReviewsMerged(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticReviewsAbandoned(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticReviewsPending(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticPatchesVerified(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticPatchesApproved(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticPatchesCodeReview(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticPatchesSent(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticWaiting4Reviewer(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = vizr.StaticWaiting4Submitter(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    # print(agg)
+    #Reviewers info
+    data = vizr.StaticReviewers(period, startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    # Time to Review info
+    data = vizr.StaticTimeToReviewSCR(startdate, enddate)
+    agg = dict(agg.items() + dataFrame2Dict(data).items())
+
+    # Tendencies
+    for i in [7,30,365]:
+        period_data = dataFrame2Dict(vizr.GetSCRDiffSubmittedDays(period, enddate, i, idb))
+        agg = dict(agg.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetSCRDiffMergedDays(period, enddate, i, idb))
+        agg = dict(agg.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetSCRDiffPendingDays(period, enddate, i, idb))
+        agg = dict(agg.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetSCRDiffAbandonedDays(period, enddate, i, idb))
+        agg = dict(agg.items() + period_data.items())
+
+    # Create JSON
+    createJSON(agg, destdir+"/scr-static.json")
 
 def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     evol = {}
@@ -126,3 +174,4 @@ if __name__ == '__main__':
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
