@@ -278,12 +278,14 @@ def getPeriod(granularity):
     return period
 
 # Until we use VizPy we will create JSON python files with _py
-def createJSON(data, filepath):
+def createJSON(data, filepath, check=True):
     filepath_py = filepath.split(".json")
     filepath_py = filepath_py[0]+"_py.json"
     jsonfile = open(filepath_py, 'w')
     jsonfile.write(json.dumps(data, sort_keys=True))
     jsonfile.close()
+
+    if (check == False): return
 
     if compareJSON(filepath, filepath_py) is False:
         logging.error("Wrong data generated from Python "+ filepath_py)

@@ -141,7 +141,20 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
 def peopleData(period, startdate, enddate, idb, destdir):
-    pass
+    people = dataFrame2Dict(vizr.GetPeopleListSCR(startdate, enddate))
+    people = people["id"]
+    limit = 60
+    if (len(people)<limit): limit = len(people);
+    # The order of the list item change so we can not check it
+    createJSON(people, destdir+"/scr-people.json", False)
+
+    for upeople_id in people:
+        evol = vizr.GetPeopleEvolSCR(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        createJSON(evol, destdir+"/people-"+str(upeople_id)+"-scr-evolutionary.json")
+
+        agg = dataFrame2Dict(vizr.GetPeopleStaticSCR(upeople_id, startdate, enddate))
+        createJSON(agg, destdir+"/people-"+str(upeople_id)+"-scr-static.json")
 
 def reposData(period, startdate, enddate, idb, destdir):
     repos  = dataFrame2Dict(vizr.GetReposSCRName(startdate, enddate))
@@ -206,7 +219,8 @@ def topData(period, startdate, enddate, idb, destdir, bots):
     top_mergers['mergers.']=dataFrame2Dict(vizr.GetTopMergersSCR(0, startdate, enddate,idb, bots))
     top_mergers['mergers.last_month']=dataFrame2Dict(vizr.GetTopMergersSCR(31, startdate, enddate,idb, bots))
 
-    createJSON (dict(top_reviewers.items() +  top_openers.items() + top_mergers.items()), destdir+"/scr-top.json")
+    # The order of the list item change so we can not check it
+    createJSON (dict(top_reviewers.items() +  top_openers.items() + top_mergers.items()), destdir+"/scr-top.json",False)
 
 
 if __name__ == '__main__':
