@@ -144,7 +144,43 @@ def peopleData(period, startdate, enddate, idb, destdir):
     pass
 
 def reposData(period, startdate, enddate, idb, destdir):
-    pass
+    repos  = dataFrame2Dict(vizr.GetReposSCRName(startdate, enddate))
+    repos = repos["name"]
+    repos_files = [repo.replace('/', '_') for repo in repos]
+    createJSON(repos_files, destdir+"/scr-repos.json")
+
+    # missing information from the rest of type of reviews, patches and
+    # number of patches waiting for reviewer and submitter 
+    for repo in repos:
+        repo_file = repo.replace("/","_")
+        type_analysis = ['repository', repo]
+
+        evol = {}
+        data = vizr.EvolReviewsSubmitted(period, startdate, enddate, type_analysis)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = vizr.EvolReviewsMerged(period, startdate, enddate, type_analysis)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = vizr.EvolReviewsAbandoned(period, startdate, enddate, type_analysis)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        # data = vizr.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis)
+        # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = vizr.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
+
+        # Static
+        agg = {}
+        data = vizr.StaticReviewsSubmitted(period, startdate, enddate, type_analysis)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticReviewsMerged(period, startdate, enddate, type_analysis)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticReviewsAbandoned(period, startdate, enddate, type_analysis)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticReviewsPending(period, startdate, enddate, type_analysis)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticTimeToReviewSCR(startdate, enddate, idb, type_analysis)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
     pass
@@ -175,3 +211,15 @@ if __name__ == '__main__':
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+
+    if ('people' in reports):
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('repositories' in reports):
+        reposData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('countries' in reports):
+        countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('companies' in reports):
+        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+
+    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+
