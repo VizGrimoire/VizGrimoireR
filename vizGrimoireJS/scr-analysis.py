@@ -189,7 +189,24 @@ def countriesData(period, startdate, enddate, idb, destdir):
     pass
 
 def topData(period, startdate, enddate, idb, destdir, bots):
-    pass
+    top_reviewers = {}
+    top_reviewers['reviewers'] = dataFrame2Dict(vizr.GetTopReviewersSCR(0, startdate, enddate, idb, bots))
+    top_reviewers['reviewers.last year']= dataFrame2Dict(vizr.GetTopReviewersSCR(365, startdate, enddate, idb, bots))
+    top_reviewers['reviewers.last month']= dataFrame2Dict(vizr.GetTopReviewersSCR(31, startdate, enddate, idb, bots))
+
+    # Top openers
+    top_openers = {}
+    top_openers['openers.']=dataFrame2Dict(vizr.GetTopOpenersSCR(0, startdate, enddate,idb, bots))
+    top_openers['openers.last year']=dataFrame2Dict(vizr.GetTopOpenersSCR(365, startdate, enddate,idb, bots))
+    top_openers['openers.last_month']=dataFrame2Dict(vizr.GetTopOpenersSCR(31, startdate, enddate,idb, bots))
+
+    # Top mergers
+    top_mergers = {}
+    top_mergers['mergers.last year']=dataFrame2Dict(vizr.GetTopMergersSCR(365, startdate, enddate,idb, bots))
+    top_mergers['mergers.']=dataFrame2Dict(vizr.GetTopMergersSCR(0, startdate, enddate,idb, bots))
+    top_mergers['mergers.last_month']=dataFrame2Dict(vizr.GetTopMergersSCR(31, startdate, enddate,idb, bots))
+
+    createJSON (dict(top_reviewers.items() +  top_openers.items() + top_mergers.items()), destdir+"/scr-top.json")
 
 
 if __name__ == '__main__':
