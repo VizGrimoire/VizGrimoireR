@@ -196,10 +196,65 @@ def reposData(period, startdate, enddate, idb, destdir):
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
-    pass
+    companies  = dataFrame2Dict(vizr.GetCompaniesSCRName(startdate, enddate, idb))
+    companies = companies['name']
+    companies_files = [company.replace('/', '_') for company in companies]
+    createJSON(companies_files, destdir+"/scr-companies.json")
+
+    # missing information from the rest of type of reviews, patches and
+    # number of patches waiting for reviewer and submitter 
+    for company in companies:
+        company_file = company.replace("/","_")
+        type_analysis = ['company', company]
+        # Evol
+        evol = {}
+        data = vizr.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = vizr.EvolReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = vizr.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        createJSON(evol, destdir+ "/"+company_file+"-scr-com-evolutionary.json")
+        # Static
+        agg = {}
+        data = vizr.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        createJSON(agg, destdir+"/"+company_file+"-scr-com-static.json")
+
 
 def countriesData(period, startdate, enddate, idb, destdir):
-    pass
+    countries  = dataFrame2Dict(vizr.GetCountriesSCRName(startdate, enddate, idb))
+    countries = countries['name']
+    countries_files = [country.replace('/', '_') for country in countries]
+    createJSON(countries_files, destdir+"/scr-countries.json")
+
+    # missing information from the rest of type of reviews, patches and
+    # number of patches waiting for reviewer and submitter 
+    for country in countries:
+        country_file = country.replace("/","_")
+        type_analysis = ['country', country]
+        # Evol
+        evol = {}
+        data = vizr.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = vizr.EvolReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = vizr.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        createJSON(evol, destdir+ "/"+country_file+"-scr-cou-evolutionary.json")
+        # Static
+        agg = {}
+        data = vizr.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = vizr.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        createJSON(agg, destdir+"/"+country_file+"-scr-cou-static.json")
 
 def topData(period, startdate, enddate, idb, destdir, bots):
     top_reviewers = {}
