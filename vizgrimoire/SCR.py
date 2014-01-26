@@ -27,6 +27,11 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
 
+from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
+from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
+from GrimoireUtils import GetPercentageDiff, GetDates
+import GrimoireUtils
+
 ##########
 # Specific FROM and WHERE clauses per type of report
 ##########
@@ -81,10 +86,12 @@ def GetSQLReportFromSCR (identities_db, type_analysis):
     #"type" is a list of two values: type of analysis and value of
     #such analysis
 
+    From = ""
+
+    if (len(type_analysis) == 0): return From
+
     analysis = type_analysis[0]
     value = type_analysis[1]
-
-    From = ""
 
     if (analysis):
         if analysis == 'repository': From = GetSQLRepositoriesFromSCR()
@@ -100,9 +107,12 @@ def GetSQLReportWhereSCR (type_analysis):
     #"type" is a list of two values: type of analysis and value of
     #such analysis
 
+    where = ""
+    if (len(type_analysis) == 0): return where
+
     analysis = type_analysis[0]
     value = type_analysis[1]
-    where = ""
+
 
     if (analysis):
         if analysis == 'repository': From = GetSQLRepositoriesWhereSCR(value)
@@ -184,7 +194,7 @@ def GetReviews (period, startdate, enddate, type, type_analysis, evolutionary, i
     elif type == "closed": filters = " (i.status = 'MERGED' or i.status = 'ABANDONED') "
     elif type == "merged": filters = " i.status = 'MERGED' "
     elif type == "abandoned": filters = " i.status = 'ABANDONED' "
-    filters = filters + " " + GetSQLReportWhereSCR(type_analysis)
+    filters = filters + GetSQLReportWhereSCR(type_analysis)
 
     #Adding dates filters (and evolutionary or static analysis)
     if (evolutionary):
@@ -345,7 +355,7 @@ def StaticReviewsPending(period, startdate, enddate, type_analysis = [], identit
     submitted = StaticReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
     merged = StaticReviewsMerged(period, startdate, enddate, type_analysis, identities_db)
     abandoned = StaticReviewsAbandoned(period, startdate, enddate, type_analysis, identities_db)
-    pending = submitted-merged-abandoned
+    pending = submitted['submitted']-merged['merged']-abandoned['abandoned']
     return ({"pending":pending})
 
 
@@ -353,7 +363,7 @@ def StaticReviewsPendingChanges(period, startdate, enddate, type_analysis = [], 
     submitted = StaticReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
     merged = StaticReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db)
     abandoned = StaticReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db)
-    pending = submitted-merged-abandoned
+    pending = submitted['submitted']-merged['merged']-abandoned['abandoned']
     return ({"pending":pending})
 
 
@@ -419,7 +429,6 @@ def StaticPatchesSent (period, startdate, enddate, type_analysis = []):
 
 #PATCHES WAITING FOR REVIEW FROM REVIEWER
 def GetWaiting4Reviewer (period, startdate, enddate, identities_db, type_analysis, evolutionary):
-
      fields = " count(distinct(c.id)) as WaitingForReviewer "
      tables = " changes c, "+\
               "  issues i, "+\
@@ -431,7 +440,7 @@ def GetWaiting4Reviewer (period, startdate, enddate, identities_db, type_analysi
               "         where c.issue_id = i.id and "+\
               "               i.status='NEW' "+\
               "         group by c.issue_id, c.old_value) t1 "
-     tables = tables, GetSQLReportFromSCR(identities_db, type_analysis)
+     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
      filters =  " i.id = c.issue_id  "+\
                 "  and t1.id = c.id "+\
                 "  and (c.field='CRVW' or c.field='Code-Review' or c.field='Verified' or c.field='VRIF') "+\
@@ -469,12 +478,12 @@ def GetWaiting4Submitter (period, startdate, enddate, identities_db, type_analys
               "         where c.issue_id = i.id and "+\
               "               i.status='NEW' "+\
               "         group by c.issue_id, c.old_value) t1 "
-     tables = tables, GetSQLReportFromSCR(identities_db, type_analysis)
+     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
      filters = " i.id = c.issue_id "+\
                "  and t1.id = c.id "+\
 	           "  and (c.field='CRVW' or c.field='Code-Review' or c.field='Verified' or c.field='VRIF') "+\
                "  and (c.new_value=-1 or c.new_value=-2) "
-     filters = filters, GetSQLReportWhereSCR(type_analysis)
+     filters = filters + GetSQLReportWhereSCR(type_analysis)
 
      if (evolutionary):
          q = GetSQLPeriod(period, " c.changed_on", fields, tables, filters,
@@ -731,9 +740,9 @@ def GetSCRDiffSubmittedDays (period, init_date, days,
         identities_db=None, type_analysis = []):
     chardates = GetDates(init_date, days)
     last = StaticReviewsSubmitted(period, chardates[1], chardates[0])
-    last = int(last[0])
+    last = int(last['submitted'])
     prev = StaticReviewsSubmitted(period, chardates[2], chardates[1])
-    prev = int(prev[0])
+    prev = int(prev['submitted'])
 
     data = {}
     data['diff_netsubmitted_'+str(days)] = last - prev
@@ -746,9 +755,9 @@ def GetSCRDiffMergedDays (period, init_date, days,
 
     chardates = GetDates(init_date, days)
     last = StaticReviewsMerged(period, chardates[1], chardates[0])
-    last = int(last[0])
+    last = int(last['merged'])
     prev = StaticReviewsMerged(period, chardates[2], chardates[1])
-    prev = int(prev[0])
+    prev = int(prev['merged'])
 
     data = {}
     data['diff_netmerged_'+str(days)] = last - prev
@@ -761,9 +770,9 @@ def GetSCRDiffAbandonedDays (period, init_date, days,
 
     chardates = GetDates(init_date, days)
     last = StaticReviewsAbandoned(period, chardates[1], chardates[0])
-    last = int(last[0])
+    last = int(last['abandoned'])
     prev = StaticReviewsAbandoned(period, chardates[2], chardates[1])
-    prev = int(prev[0])
+    prev = int(prev['abandoned'])
 
     data = {}
     data['diff_netabandoned_'+str(days)] = last - prev
@@ -777,9 +786,9 @@ def GetSCRDiffPendingDays (period, init_date, days,
 
     chardates = GetDates(init_date, days)
     last = StaticReviewsPending(period, chardates[1], chardates[0])
-    last = int(last[0])
+    last = int(last['pending'])
     prev = StaticReviewsPending(period, chardates[2], chardates[1])
-    prev = int(prev[0])
+    prev = int(prev['pending'])
 
     data = {}
     data['diff_netpending_'+str(days)] = last - prev
