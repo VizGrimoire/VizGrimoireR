@@ -65,8 +65,8 @@ def GetSQLCompaniesWhereSCR (company):
 def GetSQLCountriesFromSCR (identities_db):
     #tables necessaries for companies
     return (" , people_upeople pup, "+\
-              +identities_db+".upeople_countries upc, "+\
-              +identities_db+".countries c ")
+              identities_db+".upeople_countries upc, "+\
+              identities_db+".countries c ")
 
 
 def GetSQLCountriesWhereSCR (country):
@@ -163,7 +163,7 @@ def GetCountriesSCRName  (startdate, enddate, identities_db, limit = 0):
 
     q = "SELECT c.name as name, COUNT(DISTINCT(i.id)) AS issues "+\
            "FROM  "+identities_db+".countries c, "+\
-                   +identities_db+".upeople_countries upc, "+\
+                   identities_db+".upeople_countries upc, "+\
             "    people_upeople pup, "+\
             "    issues i "+\
            "WHERE i.submitted_by = pup.people_id AND "+\
@@ -625,7 +625,7 @@ def GetTopSubmittersQuerySCR   (days, startdate, enddate, identities_db, bots, m
         "            i.submitted_on < "+ enddate+ " "+\
         "            "+date_limit+ merged_sql+ " "+\
         "        GROUP BY up.identifier "+\
-        "        ORDER BY ",action," desc "+\
+        "        ORDER BY "+action+" desc "+\
         "        LIMIT 10"
     return(q)
 

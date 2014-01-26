@@ -257,7 +257,8 @@ def companiesData(period, startdate, enddate, idb, destdir):
 
 
 def countriesData(period, startdate, enddate, idb, destdir):
-    countries  = dataFrame2Dict(vizr.GetCountriesSCRName(startdate, enddate, idb))
+    # countries  = dataFrame2Dict(vizr.GetCountriesSCRName(startdate, enddate, idb))
+    countries  = SCR.GetCountriesSCRName(startdate, enddate, idb)
     countries = countries['name']
     countries_files = [country.replace('/', '_') for country in countries]
     createJSON(countries_files, destdir+"/scr-countries.json")
@@ -269,40 +270,46 @@ def countriesData(period, startdate, enddate, idb, destdir):
         type_analysis = ['country', country]
         # Evol
         evol = {}
-        data = vizr.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        data = vizr.EvolReviewsMerged(period, startdate, enddate, type_analysis, idb)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        data = vizr.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        createJSON(evol, destdir+ "/"+country_file+"-scr-cou-evolutionary.json")
+#        data = vizr.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+#        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = SCR.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(data).items())
+        # TODO: when empty abandoned does not appeat at all in R JSON 
+        createJSON(evol, destdir+ "/"+country_file+"-scr-cou-evolutionary.json",False)
         # Static
         agg = {}
-        data = vizr.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
-        data = vizr.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
-        data = vizr.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
+#        data = vizr.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+#        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = SCR.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
         createJSON(agg, destdir+"/"+country_file+"-scr-cou-static.json")
 
 def topData(period, startdate, enddate, idb, destdir, bots):
     top_reviewers = {}
-    top_reviewers['reviewers'] = dataFrame2Dict(vizr.GetTopReviewersSCR(0, startdate, enddate, idb, bots))
-    top_reviewers['reviewers.last year']= dataFrame2Dict(vizr.GetTopReviewersSCR(365, startdate, enddate, idb, bots))
-    top_reviewers['reviewers.last month']= dataFrame2Dict(vizr.GetTopReviewersSCR(31, startdate, enddate, idb, bots))
+#    top_reviewers['reviewers'] = dataFrame2Dict(vizr.GetTopReviewersSCR(0, startdate, enddate, idb, bots))
+    top_reviewers['reviewers'] = SCR.GetTopReviewersSCR(0, startdate, enddate, idb, bots)
+    top_reviewers['reviewers.last year']= SCR.GetTopReviewersSCR(365, startdate, enddate, idb, bots)
+    top_reviewers['reviewers.last month']= SCR.GetTopReviewersSCR(31, startdate, enddate, idb, bots)
 
     # Top openers
     top_openers = {}
-    top_openers['openers.']=dataFrame2Dict(vizr.GetTopOpenersSCR(0, startdate, enddate,idb, bots))
-    top_openers['openers.last year']=dataFrame2Dict(vizr.GetTopOpenersSCR(365, startdate, enddate,idb, bots))
-    top_openers['openers.last_month']=dataFrame2Dict(vizr.GetTopOpenersSCR(31, startdate, enddate,idb, bots))
+    top_openers['openers.']=SCR.GetTopOpenersSCR(0, startdate, enddate,idb, bots)
+    top_openers['openers.last year']=SCR.GetTopOpenersSCR(365, startdate, enddate,idb, bots)
+    top_openers['openers.last_month']=SCR.GetTopOpenersSCR(31, startdate, enddate,idb, bots)
 
     # Top mergers
     top_mergers = {}
-    top_mergers['mergers.last year']=dataFrame2Dict(vizr.GetTopMergersSCR(365, startdate, enddate,idb, bots))
-    top_mergers['mergers.']=dataFrame2Dict(vizr.GetTopMergersSCR(0, startdate, enddate,idb, bots))
-    top_mergers['mergers.last_month']=dataFrame2Dict(vizr.GetTopMergersSCR(31, startdate, enddate,idb, bots))
+    top_mergers['mergers.last year']=SCR.GetTopMergersSCR(365, startdate, enddate,idb, bots)
+    top_mergers['mergers.']=SCR.GetTopMergersSCR(0, startdate, enddate,idb, bots)
+    top_mergers['mergers.last_month']=SCR.GetTopMergersSCR(31, startdate, enddate,idb, bots)
 
     # The order of the list item change so we can not check it
     createJSON (dict(top_reviewers.items() +  top_openers.items() + top_mergers.items()), destdir+"/scr-top.json",False)
