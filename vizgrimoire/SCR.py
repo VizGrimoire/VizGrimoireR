@@ -88,7 +88,7 @@ def GetSQLReportFromSCR (identities_db, type_analysis):
 
     From = ""
 
-    if (len(type_analysis) == 0): return From
+    if (len(type_analysis) != 2): return From
 
     analysis = type_analysis[0]
     value = type_analysis[1]
@@ -108,16 +108,15 @@ def GetSQLReportWhereSCR (type_analysis):
     #such analysis
 
     where = ""
-    if (len(type_analysis) == 0): return where
+    if (len(type_analysis) != 2): return where
 
     analysis = type_analysis[0]
     value = type_analysis[1]
 
-
     if (analysis):
-        if analysis == 'repository': From = GetSQLRepositoriesWhereSCR(value)
-        elif analysis == 'company': From = GetSQLCompaniesWhereSCR(value)
-        elif analysis == 'country': From = GetSQLCountriesWhereSCR(value)
+        if analysis == 'repository': where = GetSQLRepositoriesWhereSCR(value)
+        elif analysis == 'company': where = GetSQLCompaniesWhereSCR(value)
+        elif analysis == 'country': where = GetSQLCountriesWhereSCR(value)
 
     return (where)
 
@@ -136,7 +135,7 @@ def GetReposSCRName  (startdate, enddate, limit = 0):
            "  i.submitted_on >="+  startdate+ " AND "+\
            "  i.submitted_on < "+ enddate +\
            " GROUP BY t.url "+\
-           " ORDER BY issues DESC ",limit_sql,";"
+           " ORDER BY issues DESC "+limit_sql
     return(ExecuteQuery(q))
 
 def GetCompaniesSCRName  (startdate, enddate, identities_db, limit = 0):
@@ -229,14 +228,11 @@ def GetReviewsChanges(period, startdate, enddate, type, type_analysis, evolution
 def EvolReviewsSubmitted (period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviews(period, startdate, enddate, "submitted", type_analysis, True, identities_db))
 
-
 def EvolReviewsOpened (period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviews(period, startdate, enddate, "opened", type_analysis, True, identities_db))
 
-
 def EvolReviewsNew(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviews(period, startdate, enddate, "new", type_analysis, True, identities_db))
-
 
 def GetEvolChanges(period, startdate, enddate, value):
     fields = "count(issue_id) as "+ value+ "_changes"
@@ -246,26 +242,20 @@ def GetEvolChanges(period, startdate, enddate, value):
             startdate, enddate)
     return(ExecuteQuery(q))
 
-
 def EvolReviewsNewChanges(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviewsChanges(period, startdate, enddate, "new", type_analysis, True, identities_db))
-
 
 def EvolReviewsInProgress(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviews(period, startdate, enddate, "inprogress", type_analysis, True, identities_db))
 
-
 def EvolReviewsClosed(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviews(period, startdate, enddate, "closed", type_analysis, True, identities_db))
-
 
 def EvolReviewsMerged(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviews(period, startdate, enddate, "merged", type_analysis, True, identities_db))
 
-
 def EvolReviewsMergedChanges(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviewsChanges(period, startdate, enddate, "merged", type_analysis, True, identities_db))
-
 
 def EvolReviewsAbandoned(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviews(period, startdate, enddate, "abandoned", type_analysis, True, identities_db))
