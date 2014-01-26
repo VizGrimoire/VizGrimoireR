@@ -221,7 +221,8 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
-    companies  = dataFrame2Dict(vizr.GetCompaniesSCRName(startdate, enddate, idb))
+    # companies  = dataFrame2Dict(vizr.GetCompaniesSCRName(startdate, enddate, idb))
+    companies  = SCR.GetCompaniesSCRName(startdate, enddate, idb)
     companies = companies['name']
     companies_files = [company.replace('/', '_') for company in companies]
     createJSON(companies_files, destdir+"/scr-companies.json")
@@ -233,21 +234,25 @@ def companiesData(period, startdate, enddate, idb, destdir):
         type_analysis = ['company', company]
         # Evol
         evol = {}
-        data = vizr.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        data = vizr.EvolReviewsMerged(period, startdate, enddate, type_analysis, idb)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        data = vizr.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        # data = vizr.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = SCR.EvolReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        evol = dict(evol.items() + completePeriodIds(data).items())
         createJSON(evol, destdir+ "/"+company_file+"-scr-com-evolutionary.json")
         # Static
         agg = {}
-        data = vizr.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
-        data = vizr.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
-        data = vizr.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
+#        data = vizr.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+#        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = SCR.StaticReviewsSubmitted(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
         createJSON(agg, destdir+"/"+company_file+"-scr-com-static.json")
 
 

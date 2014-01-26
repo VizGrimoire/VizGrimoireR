@@ -48,8 +48,8 @@ def GetSQLRepositoriesWhereSCR (repository):
 def GetSQLCompaniesFromSCR (identities_db):
     #tables necessaries for companies
     return (" , people_upeople pup,"+\
-            identities_db,".upeople_companies upc,"+\
-            identities_db,".companies c")
+            identities_db+".upeople_companies upc,"+\
+            identities_db+".companies c")
 
 
 def GetSQLCompaniesWhereSCR (company):
@@ -144,7 +144,7 @@ def GetCompaniesSCRName  (startdate, enddate, identities_db, limit = 0):
 
     q = "SELECT c.id as id, c.name as name, COUNT(DISTINCT(i.id)) AS total "+\
                "FROM  "+identities_db+".companies c, "+\
-                       +identities_db+".upeople_companies upc, "+\
+                       identities_db+".upeople_companies upc, "+\
                 "     people_upeople pup, "+\
                 "     issues i "+\
                "WHERE i.submitted_by = pup.people_id AND "+\
@@ -154,7 +154,7 @@ def GetCompaniesSCRName  (startdate, enddate, identities_db, limit = 0):
                "  i.submitted_on >="+  startdate+ " AND "+\
                "  i.submitted_on < "+ enddate+ " "+\
                "GROUP BY c.name "+\
-               "ORDER BY total DESC "+limit_sql
+               "ORDER BY total DESC " + limit_sql
     return(ExecuteQuery(q))
 
 def GetCountriesSCRName  (startdate, enddate, identities_db, limit = 0):
