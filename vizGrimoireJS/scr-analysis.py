@@ -151,7 +151,8 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
 def peopleData(period, startdate, enddate, idb, destdir):
-    people = dataFrame2Dict(vizr.GetPeopleListSCR(startdate, enddate))
+    # people = dataFrame2Dict(vizr.GetPeopleListSCR(startdate, enddate))
+    people = SCR.GetPeopleListSCR(startdate, enddate)
     people = people["id"]
     limit = 60
     if (len(people)<limit): limit = len(people);
@@ -159,11 +160,14 @@ def peopleData(period, startdate, enddate, idb, destdir):
     createJSON(people, destdir+"/scr-people.json", False)
 
     for upeople_id in people:
-        evol = vizr.GetPeopleEvolSCR(upeople_id, period, startdate, enddate)
-        evol = completePeriodIds(dataFrame2Dict(evol))
+        # evol = vizr.GetPeopleEvolSCR(upeople_id, period, startdate, enddate)
+        # evol = completePeriodIds(dataFrame2Dict(evol))
+        evol = SCR.GetPeopleEvolSCR(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(evol)
         createJSON(evol, destdir+"/people-"+str(upeople_id)+"-scr-evolutionary.json")
 
-        agg = dataFrame2Dict(vizr.GetPeopleStaticSCR(upeople_id, startdate, enddate))
+        # agg = dataFrame2Dict(vizr.GetPeopleStaticSCR(upeople_id, startdate, enddate))
+        agg = SCR.GetPeopleStaticSCR(upeople_id, startdate, enddate)
         createJSON(agg, destdir+"/people-"+str(upeople_id)+"-scr-static.json")
 
 def reposData(period, startdate, enddate, idb, destdir, conf):

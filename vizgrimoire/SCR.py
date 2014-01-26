@@ -678,7 +678,6 @@ def GetPeopleQuerySCR (developer_id, period, startdate, enddate, evol):
                 "  DATE_FORMAT (max(changed_on),'%Y-%m-%d') as last_date"
         q = GetSQLGlobal('changed_on', fields, tables, filters,
                 startdate, enddate)
-
     return (q)
 
 
@@ -687,7 +686,7 @@ def GetPeopleEvolSCR (developer_id, period, startdate, enddate):
     return(ExecuteQuery(q))
 
 def GetPeopleStaticSCR (developer_id, startdate, enddate):
-    q = GetPeopleQuerySCR(developer_id, period, startdate, enddate, False)
+    q = GetPeopleQuerySCR(developer_id, None, startdate, enddate, False)
     return(ExecuteQuery(q))
 
 ################
