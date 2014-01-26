@@ -26,6 +26,65 @@
 
 # SQL Metaqueries
 
+GetIRCSQLRepositoriesFrom <- function(){
+    # tables necessary for repositories
+    return (", channels c")    
+}
+
+GetIRCSQLRepositoriesWhere <- function(repository){
+    # filters necessaries for repositories
+    return (paste(" i.channel_id = c.id and c.name=", repository, " ", sep=""))
+}
+
+GetIRCSQLCompaniesFrom <- function(i_db){
+    # tables necessary to companies analysis
+    return(paste(" , people_upeople pup,
+                   ",i_db,".companies c,
+                   ",i_db,".upeople_companies upc", sep=""))
+}
+
+GetIRCSQLCompaniesWhere <- function(name){
+    # filters necessary to companies analysis
+    return(paste(" i.nick = pup.people_id and
+                   pup.upeople_id = upc.upeople_id and
+                   upc.company_id = c.id and
+                   i.submitted_on >= upc.init and
+                   i.submitted_on < upc.end and
+                   c.name = ",name, sep=""))
+}
+
+GetIRCSQLCountriesFrom <- function(i_db){
+    # tables necessary to countries analysis
+    return(paste(" , people_upeople pup,
+                   ",i_db,".countries c,
+                   ",i_db,".upeople_countries upc", sep=""))
+}
+
+GetIRCSQLCcountriesWhere <- function(name){
+    # filters necessary to countries analysis
+    return(paste(" i.nick = pup.people_id and
+                   pup.upeople_id = upc.upeople_id and
+                   upc.country_id = c.id and
+                   c.name = ",name, sep=""))
+}
+
+GetIRCSQLDomainsFrom <- function(i_db){
+    # tables necessary to domains analysis
+    return(paste(" , people_upeople pup,
+                   ",i_db,".domains d,
+                   ",i_db,".upeople_domains upd", sep=""))
+
+}
+
+GetIRCSQLDomainsWhere <- function(){
+    # filters necessary to domains analysis
+    return(paste(" i.nick = pup.people_id and
+                   pup.upeople_id = upd.upeople_id and
+                   upd.domain_id = d.id and
+                   d.name = ",name, sep=""))
+}
+
+
 GetTablesOwnUniqueIdsIRC <- function() {
     tables = 'irclog, people_upeople pup'
     return (tables)
@@ -35,6 +94,83 @@ GetFiltersOwnUniqueIdsIRC <- function () {
     filters = 'pup.people_id = irclog.nick'
     return (filters) 
 }
+
+
+##############
+# Generic functions to check evolutionary or aggregated info
+# and for the execution of the final query
+##############
+
+BuildQuery <- function(period, startdate, enddate, date_field, fields, tables, filters, evolutionary){
+    # Select the way to evolutionary or aggregated dataset
+
+    q = ""
+
+    if (evolutionary) {
+         q <- GetSQLPeriod(period, date_field, fields, tables, filters,
+            startdate, enddate)
+    } else {
+         q <- GetSQLGlobal(date_field, fields, tables, filters,
+                           startdate, enddate)
+    }
+
+    return(q)
+}
+
+
+ExecuteQuery <- function(q){
+    # This function creates a new object Query and
+    # returns the result
+    query <- new("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
+
+##########
+#Generic functions to obtain FROM and WHERE clauses per type of report
+##########
+
+GetIRCSQLReportFrom <- function(identities_db, type_analysis){
+    #generic function to generate 'from' clauses
+    #"type" is a list of two values: type of analysis and value of 
+    #such analysis
+
+    analysis = type_analysis[1]
+    value = type_analysis[2]
+
+    from = ""
+
+    if (! is.na(analysis)){
+        from <- ifelse (analysis == 'repository', paste(from, GetIRCSQLRepositoriesFrom()),
+                ifelse (analysis == 'company', paste(from, GetIRCSQLCompaniesFrom(identities_db)),
+                ifelse (analysis == 'country', paste(from, GetIRCSQLCountriesFrom(identities_db)),
+                ifelse (analysis == 'domain', paste(from, GetIRCSQLDomainsFrom(identities_db)),
+                NA))))
+    }
+    return (from)
+}
+
+GetIRCSQLReportWhere <- function(type_analysis){
+    #generic function to generate 'where' clauses
+
+    #"type" is a list of two values: type of analysis and value of 
+    #such analysis
+    analysis = type_analysis[1]
+    value = type_analysis[2]
+    where = ""
+
+    if (! is.na(analysis)){
+        where <- ifelse (analysis == 'repository', paste(where, GetIRCSQLRepositoriesWhere(value)),
+                ifelse (analysis == 'company', paste(where, GetIRCSQLCompaniesWhere(value)),
+                ifelse (analysis == 'country', paste(where, GetIRCSQLCountriesWhere(value)),
+                ifelse (analysis == 'domain', paste(where, GetIRCSQLDomainsWhere(value)),
+                NA))))
+    }
+    return (where)
+}
+
+
+
 
 # GLOBAL
 
