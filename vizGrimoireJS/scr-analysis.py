@@ -40,7 +40,7 @@ vizr = importr("vizgrimoire")
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
-import IRC
+import SCR
 
 def aggData(period, startdate, enddate, idb, destdir):
     data = vizr.StaticReviewsSubmitted(period, startdate, enddate)
