@@ -29,7 +29,7 @@
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
-from GrimoireUtils import GetPercentageDiff, GetDates
+from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
 import GrimoireUtils
 
 ##########
@@ -210,9 +210,9 @@ def GetReviews (period, startdate, enddate, type, type_analysis, evolutionary, i
 def GetReviewsChanges(period, startdate, enddate, type, type_analysis, evolutionary, identities_db):
     fields = "count(issue_id) as "+ type+ "_changes"
     tables = "changes c, issues i"
-    tables = tables, GetSQLReportFromSCR(identities_db, type_analysis)
-    filters = "c.issue_id = i.id AND new_value='",type,"'"
-    filters = filters, GetSQLReportWhereSCR(type_analysis)
+    tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
+    filters = "c.issue_id = i.id AND new_value='"+type+"'"
+    filters = filters + GetSQLReportWhereSCR(type_analysis)
 
     #Adding dates filters (and evolutionary or static analysis)
     if (evolutionary):
@@ -294,17 +294,18 @@ def EvolReviewsPending(period, startdate, enddate, config, type_analysis = [], i
 # PENDING = SUBMITTED - MERGED - ABANDONED
 def EvolReviewsPendingChanges(period, startdate, enddate, config, type_analysis = [], identities_db=None):
     data = EvolReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
-    data = completePeriodIds(data, conf.granularity, conf)
+    data = completePeriodIds(data)
     data1 = EvolReviewsMergedChanges(period, startdate, enddate, type_analysis, identities_db)
-    data1 = completePeriodIds(data1, conf.granularity, conf)
+    data1 = completePeriodIds(data1)
     data2 = EvolReviewsAbandonedChanges(period, startdate, enddate, type_analysis, identities_db)
-    data2 = completePeriodIds(data2, conf.granularity, conf)
+    data2 = completePeriodIds(data2)
     evol = dict(data.items() + data1.items() + data2.items())
     pending = {"pending":[]}
 
-    for i in range(0,len(data['merged'])):
-        pending_val = evol["submitted"][i] - evol["merged"][i] - evol["abandoned"][i]
+    for i in range(0,len(evol['merged_changes'])):
+        pending_val = evol["submitted"][i] - evol["merged_changes"][i] - evol["abandoned_changes"][i]
         pending["pending"].append(pending_val)
+    pending["month"] = evol["month"]
     pending = completePeriodIds(pending)
     return pending
 

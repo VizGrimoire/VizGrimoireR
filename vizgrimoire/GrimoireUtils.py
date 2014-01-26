@@ -299,17 +299,15 @@ def compareJSON(file1, file2):
     data2 = json.load(f2)
 
     if len(data1) != len(data2):
-        logging.warn(data1)
-        logging.warn("is not")
-        logging.warn(data2)
+        logging.warn("Different len y data: " + str(len(data1)) + " " + str(len (data2)))
         check = False
 
-    elif isinstance(data1, list):
+    if isinstance(data1, list):
         for i in range(0, len(data1)):
             if (data1[i] != data2[i]):
-                logging.warn(data1)
+                logging.warn(data1[i])
                 logging.warn("is not")
-                logging.warn(data2)
+                logging.warn(data2[i])
                 check = False
                 break
 
@@ -318,11 +316,13 @@ def compareJSON(file1, file2):
             if data2.has_key(name) is False:
                 logging.warn (name + " does not exists in " + file2)
                 check = False
-                break
             elif data1[name] != data2[name]:
                 logging.warn ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
                 check = False
-                break
+        for name in data2:
+            if data1.has_key(name) is False:
+                logging.warn (name + " does not exists in " + file1)
+                check = False
 
     f1.close()
     f2.close()
