@@ -241,48 +241,22 @@ if ('people' %in% reports){
     }
 }
 
-## Quantiles
+##
+# TIME TO ATTEND
+## 
+
 ## Which quantiles we're interested in
 quantiles_spec = c(.99,.95,.5,.25)
-
-## Replied messages: time ticket was submitted, first replied
-replied <- new ("MLSTimes")
-# print(replied)
-
 ## Yearly quantiles of time to attention (minutes)
-events.toattend <- new ("TimedEvents",
-                        replied$submitted_on, replied$toattend %/% 60)
-# print(events.toattend)
-quantiles <- QuantilizeYears (events.toattend, quantiles_spec)
-JSON(quantiles, paste(c(destdir,'/mls-quantiles-year-time_to_attention_min.json'), collapse=''))
+ReportTimeToAttend(quantiles_spec)
 
-## Monthly quantiles of time to attention (hours)
-events.toattend.hours <- new ("TimedEvents",
-                              replied$submitted_on, replied$toattend %/% 3600)
-quantiles.month <- QuantilizeMonths (events.toattend.hours, quantiles_spec)
-JSON(quantiles.month, paste(c(destdir,'/mls-quantiles-month-time_to_attention_hour.json'), collapse=''))
-
-
-
-# Demographics
-d <- new ("Demographics","mls",6)
-people <- Aging(d)
-people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
-people$age[people$age < 0 ] <- 0
-aux <- data.frame(people["id"], people["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/mls-demographics-aging.json"), collapse=''))
-
-newcomers <- Birth(d)
-newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
-newcomers$age[newcomers$age < 0 ] <- 0
-aux <- data.frame(newcomers["id"], newcomers["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
+##
+# DEMOGRAPHICS
+## 
+data = GetDemographicsAgingMLS(conf$str_enddate)
+createJSON (data, paste(c(destdir, "/mls-demographics-aging.json"), collapse=''))
+data = GetDemographicsBirthMLS(conf$str_enddate)
+createJSON (data, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
 
 # Tops
 top_senders_data <- list()
