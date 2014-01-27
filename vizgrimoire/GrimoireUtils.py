@@ -29,6 +29,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil import parser
 import logging
 import json
+import math
 from optparse import OptionParser
 import rpy2.rinterface as rinterface
 from rpy2.robjects.vectors import StrVector
@@ -120,6 +121,16 @@ def checkListArray(data):
     for key in (data_vars):
         if not isinstance(data[key], (list)):
             data[key] = [data[key]]
+
+# NaN converted to 0
+def cleanNaN(ts_data):
+    data_vars = ts_data.keys()
+    for key in (data_vars):
+        for i in range(0,len(ts_data[key])):
+            val = ts_data[key][i]
+            if (isinstance(val, float) and math.isnan(val)): ts_data[key][i] = 0
+    return ts_data
+
 
 def completePeriodIdsYears(ts_data, start, end):
     data_vars = ts_data.keys()
@@ -237,7 +248,8 @@ def completePeriodIds(ts_data):
         new_ts_data = completePeriodIdsMonths(ts_data, start, end)
     elif period == "year":
         new_ts_data = completePeriodIdsYears(ts_data, start, end)
-    return new_ts_data
+
+    return cleanNaN(new_ts_data)
 
 # Convert a R data frame to a python dictionary
 def dataFrame2Dict(data):
