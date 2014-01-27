@@ -67,7 +67,7 @@ setMethod(f="initialize",
           signature="MLSTimes",
           definition=function(.Object){
             cat("~~~ MLSTimes: initializator ~~~ \n")
-            print (conf)
+            # print (conf)
             q0 <- new ("Query", sql = query.pre)
             run (q0)
             q <- new ("Query", sql = query.replied)
