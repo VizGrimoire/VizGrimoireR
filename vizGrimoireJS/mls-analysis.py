@@ -44,55 +44,35 @@ from GrimoireUtils import valRtoPython, read_options, getPeriod
 # import MLS
 
 def aggData(period, startdate, enddate, identities_db, destdir):
-    pass
-#    static_data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
-#
-#    if ('companies' in reports):
-#        companies = AggMLSCompanies(period, startdate, enddate, identities_db)
-#        data = merge(data, companies, all = TRUE)
-#
-#    if ('countries' in reports):
-#        countries = AggMLSCountries(period, startdate, enddate, identities_db)
-#        data = merge(data, countries, all = TRUE)
-#
-#    if ('domains' in reports):
-#        domains = AggMLSDomains(period, startdate, enddate, identities_db)
-#        data = merge(data, domains, all = TRUE)
-#
-#
-#    latest_activity7 = lastActivity(7)
-#    latest_activity14 = lastActivity(14)
-#    latest_activity30 = lastActivity(30)
-#    latest_activity60 = lastActivity(60)
-#    latest_activity90 = lastActivity(90)
-#    latest_activity180 = lastActivity(180)
-#    latest_activity365 = lastActivity(365)
-#    latest_activity730 = lastActivity(730)
-#    static_data = merge(static_data, latest_activity7)
-#    static_data = merge(static_data, latest_activity14)
-#    static_data = merge(static_data, latest_activity30)
-#    static_data = merge(static_data, latest_activity60)
-#    static_data = merge(static_data, latest_activity90)
-#    static_data = merge(static_data, latest_activity180)
-#    static_data = merge(static_data, latest_activity365)
-#    static_data = merge(static_data, latest_activity730)
-#    
-#    sent_7 = GetDiffSentDays(period, enddate, 7)
-#    sent_30 = GetDiffSentDays(period, enddate, 30)
-#    sent_365 = GetDiffSentDays(period, enddate, 365)
-#    senders_7 = GetDiffSendersDays(period, enddate, 7)
-#    senders_30 = GetDiffSendersDays(period, enddate, 30)
-#    senders_365 = GetDiffSendersDays(period, enddate, 365)
-#    static_data = merge(static_data, sent_7)
-#    static_data = merge(static_data, sent_30)
-#    static_data = merge(static_data, sent_365)
-#
-#    static_data = merge(static_data, senders_7)
-#    static_data = merge(static_data, senders_30)
-#    static_data = merge(static_data, senders_365)
-#
-#    createJSON (static_data, paste(destdir,"/mls-static.json",sep=''))
 
+    data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
+    agg = dataFrame2Dict(data)
+
+    if ('companies' in reports):
+        data = vizr.AggMLSCompanies(period, startdate, enddate, identities_db)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+
+    if ('countries' in reports):
+        data = vizr.AggMLSCountries(period, startdate, enddate, identities_db)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+
+    if ('domains' in reports):
+        data = vizr.AggMLSDomains(period, startdate, enddate, identities_db)
+        agg = dict(agg.items() + dataFrame2Dict(data).items())
+
+    # Tendencies
+    for i in [7,30,365]:
+        period_data = dataFrame2Dict(vizr.GetDiffSentDays(period, enddate, i))
+        agg = dict(agg.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetDiffSendersDays(period, enddate, i))
+        agg = dict(agg.items() + period_data.items())
+
+    # Last Activity: to be removed
+    for i in [7,14,30,60,90,180,365,730]:
+        period_activity = dataFrame2Dict(vizr.lastActivity(i))
+        agg = dict(agg.items() + period_activity.items())
+
+    createJSON (agg, destdir+"/mls-static.json")
 
 def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf):
 
@@ -239,7 +219,7 @@ def topData(period, startdate, enddate, identities_db, destdir, bots):
 #
 #    createJSON (top_senders_data, paste(destdir,"/mls-top.json",sep=''))
 
-def demographics():
+def demographics(enddate):
     pass
 #    d = new ("Demographics","mls",6)
 #    people = Aging(d)
@@ -303,8 +283,7 @@ if __name__ == '__main__':
     # GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
-    sys.exit()
-#    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
 #
 #    if ('people' in reports):
 #        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)

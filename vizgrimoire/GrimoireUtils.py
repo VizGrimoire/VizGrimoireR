@@ -303,15 +303,15 @@ def createJSON(data, filepath, check=True):
         logging.error("Wrong data generated from Python "+ filepath_py)
         sys.exit(1)
 
-def compareJSON(file1, file2):
+def compareJSON(orig_file, new_file):
     check = True
-    f1 = open(file1)
-    f2 = open(file2)
+    f1 = open(orig_file)
+    f2 = open(new_file)
     data1 = json.load(f1)
     data2 = json.load(f2)
 
-    if len(data1) != len(data2):
-        logging.warn("Different len y data: " + str(len(data1)) + " " + str(len (data2)))
+    if len(data1) > len(data2):
+        logging.warn("More data in orig file than in new: " + str(len(data1)) + " " + str(len (data2)))
         check = False
 
     if isinstance(data1, list):
@@ -326,15 +326,14 @@ def compareJSON(file1, file2):
     elif isinstance(data1, dict):
         for name in data1:
             if data2.has_key(name) is False:
-                logging.warn (name + " does not exists in " + file2)
+                logging.warn (name + " does not exists in " + new_file)
                 check = False
             elif data1[name] != data2[name]:
                 logging.warn ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
                 check = False
         for name in data2:
             if data1.has_key(name) is False:
-                logging.warn (name + " does not exists in " + file1)
-                check = False
+                logging.warn (name + " does not exists in " + orig_file)
 
     f1.close()
     f2.close()
