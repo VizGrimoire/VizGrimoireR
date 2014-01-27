@@ -210,51 +210,21 @@ def topData(period, startdate, enddate, identities_db, destdir, bots):
     top_senders_data['senders.last year']=dataFrame2Dict(vizr.top_senders(365, startdate, enddate,identities_db, bots))
     top_senders_data['senders.last month']=dataFrame2Dict(vizr.top_senders(31, startdate, enddate,identities_db,bots))
 
-    createJSON (top_senders_data, destdir+"/mls-top.json")
+    createJSON (top_senders_data, destdir+"/mls-top.json", False)
 
-def demographics(enddate):
-    pass
-#    d = new ("Demographics","mls",6)
-#    people = Aging(d)
-#    people$age = as.Date(conf$str_enddate) - as.Date(people$firstdate)
-#    people$age[people$age < 0 ] = 0
-#    aux = data.frame(people["id"], people["age"])
-#    new = list()
-#    new[['date']] = conf$str_enddate
-#    new[['persons']] = aux
-#    createJSON (new, paste(c(destdir, "/mls-demographics-aging.json"), collapse=''))
-#
-#    newcomers = Birth(d)
-#    newcomers$age = as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
-#    newcomers$age[newcomers$age < 0 ] = 0
-#    aux = data.frame(newcomers["id"], newcomers["age"])
-#    new = list()
-#    new[['date']] = conf$str_enddate
-#    new[['persons']] = aux
-#    createJSON (new, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
+def demographics(enddate, destdir):
+    vizr.ReportDemographicsAgingMLS(enddate, destdir)
+    vizr.ReportDemographicsBirthMLS(enddate, destdir)
 
-def timeToAttend():
-    pass
-#    ## Quantiles
-#    ## Which quantiles we're interested in
-#    quantiles_spec = c(.99,.95,.5,.25)
-#    
-#    ## Replied messages: time ticket was submitted, first replied
-#    replied = new ("MLSTimes")
-#    # print(replied)
-#    
-#    ## Yearly quantiles of time to attention (minutes)
-#    events.toattend = new ("TimedEvents",
-#                            replied$submitted_on, replied$toattend %/% 60)
-#    # print(events.toattend)
-#    quantiles = QuantilizeYears (events.toattend, quantiles_spec)
-#    JSON(quantiles, paste(c(destdir,'/mls-quantiles-year-time_to_attention_min.json'), collapse=''))
-#    
-#    ## Monthly quantiles of time to attention (hours)
-#    events.toattend.hours = new ("TimedEvents",
-#                                  replied$submitted_on, replied$toattend %/% 3600)
-#    quantiles.month = QuantilizeMonths (events.toattend.hours, quantiles_spec)
-#    JSON(quantiles.month, paste(c(destdir,'/mls-quantiles-month-time_to_attention_hour.json'), collapse=''))
+def timeToAttend(destdir):
+    ## Which quantiles we're interested in
+    quantiles_spec = [0.99,0.95,0.5,0.25]
+
+    ## Yearly quantiles of time to attention (minutes)
+    ## Monthly quantiles of time to attention (hours)
+    ## JSON files generated from VizR
+    vizr.ReportTimeToAttendMLS(destdir)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
@@ -290,5 +260,5 @@ if __name__ == '__main__':
         domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
 
     topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
-    demographics(enddate)
-    timeToAttend()
+    demographics(opts.enddate, opts.destdir)
+    timeToAttend(opts.destdir)

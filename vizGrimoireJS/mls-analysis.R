@@ -246,17 +246,15 @@ if ('people' %in% reports){
 ## 
 
 ## Which quantiles we're interested in
-quantiles_spec = c(.99,.95,.5,.25)
+# quantiles_spec = c(.99,.95,.5,.25)
 ## Yearly quantiles of time to attention (minutes)
-ReportTimeToAttend(quantiles_spec)
+ReportTimeToAttendMLS(destdir)
 
 ##
 # DEMOGRAPHICS
 ## 
-data = GetDemographicsAgingMLS(conf$str_enddate)
-createJSON (data, paste(c(destdir, "/mls-demographics-aging.json"), collapse=''))
-data = GetDemographicsBirthMLS(conf$str_enddate)
-createJSON (data, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
+ReportDemographicsAgingMLS(conf$str_enddate, destdir)
+ReportDemographicsBirthMLS(conf$str_enddate, destdir)
 
 # Tops
 top_senders_data <- list()
