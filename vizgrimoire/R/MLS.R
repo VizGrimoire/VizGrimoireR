@@ -834,7 +834,7 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
     return (data)
 }
 
-repoTopSenders <- function(repo, identities_db, startdate, enddate){
+repoTopSenders <- function(repo, identities_db, startdate, enddate, rfield){
     q <- paste("SELECT up.id as id, up.identifier as senders,
                 COUNT(m.message_id) as sent
                 FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up

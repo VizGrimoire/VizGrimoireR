@@ -150,7 +150,7 @@ if ('repositories' %in% reports) {
         # Multirepos filename
         createJSON (data, paste(destdir,"/",listname_file,"-mls-rep-evolutionary.json",sep=''))
 
-        top_senders = repoTopSenders (repo, identities_db, startdate, enddate)
+        top_senders = repoTopSenders (repo, identities_db, startdate, enddate, rfield)
         createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-rep-top-senders.json", sep=''))        
 
         # Static data
@@ -229,7 +229,7 @@ if ('people' %in% reports){
     if (length(people)<limit) limit = length(people);
     people = people[1:limit]
     createJSON(people, paste(destdir,"/mls-people.json",sep=''))
-       
+
     for (upeople_id in people){
         evol = GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)

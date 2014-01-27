@@ -96,66 +96,63 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf
 
 
 def peopleData(period, startdate, enddate, identities_db, destdir):
-    pass
-#    people = GetListPeopleMLS(startdate, enddate)
-#    people = people$id
-#    limit = 100
-#    if (length(people)<limit) limit = length(people);
-#    people = people[1:limit]
-#    createJSON(people, paste(destdir,"/mls-people.json",sep=''))
-#
-#    for (upeople_id in people){
-#        evol = GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
-#        evol = completePeriodIds(evol, conf$granularity, conf)
-#        evol[is.na(evol)] = 0
-#        createJSON(evol, paste(destdir,"/people-",upeople_id,"-mls-evolutionary.json", sep=''))
-#
-#        static = GetStaticPeopleMLS(upeople_id, startdate, enddate)
-#        createJSON(static, paste(destdir,"/people-",upeople_id,"-mls-static.json", sep=''))
-#
+    people =  dataFrame2Dict(vizr.GetListPeopleMLS(startdate, enddate))
+    people = people['id']
+    limit = 100
+    if (len(people)<limit): limit = len(people);
+    people = people[0:limit]
 
-def reposData(period, startdate, enddate, identities_db, destdir, conf):
-    pass
-#    repos = reposNames(rfield, startdate, enddate)
-#    createJSON (repos, paste(destdir,"/mls-lists.json", sep=''))
-#    repos = repos$mailing_list
-#    repos_file_names = gsub("/","_",repos)
-#    repos_file_names = gsub("<","__",repos_file_names)
-#    repos_file_names = gsub(">","___",repos_file_names)
-#    createJSON(repos_file_names, paste(destdir,"/mls-repos.json", sep=''))
-#
-#
-#    for (repo in repos):    
-#        # Evol data   
-#        repo_name = paste("'", repo, "'", sep="")
-#        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("repository", repo_name)))
-#        data = completePeriodIds(data, conf$granularity, conf)        
-#        listname_file = gsub("/","_",repo)
-#        listname_file = gsub("<","__",listname_file)
-#        listname_file = gsub(">","___",listname_file)
-#
-#        # TODO: Multilist approach. We will obsolete it in future
-#        createJSON (data, paste(destdir,"/mls-",listname_file,"-rep-evolutionary.json",sep=''))
-#        # Multirepos filename
-#        createJSON (data, paste(destdir,"/",listname_file,"-mls-rep-evolutionary.json",sep=''))
-#
-#        top_senders = repoTopSenders (repo, identities_db, startdate, enddate)
-#        createJSON(top_senders, paste(destdir, "/",listname_file,"-mls-rep-top-senders.json", sep=''))        
-#
-#        # Static data
-#        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("repository", repo_name)))
-#        # TODO: Multilist approach. We will obsolete it in future
-#        createJSON (data, paste(destdir, "/",listname_file,"-rep-static.json",sep=''))
-#        # Multirepos filename
-#        createJSON (data, paste(destdir, "/",listname_file,"-mls-rep-static.json",sep=''))    
-#
+    createJSON(people, destdir+"/mls-people.json")
+
+    for upeople_id in people:
+        evol = vizr.GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        createJSON(evol, destdir+"/people-"+str(upeople_id)+"-mls-evolutionary.json")
+
+        static = dataFrame2Dict(vizr.GetStaticPeopleMLS(upeople_id, startdate, enddate))
+        createJSON(static, destdir+"/people-"+str(upeople_id)+"-mls-static.json")
+
+
+def reposData(period, startdate, enddate, identities_db, destdir, conf, repofield):
+    repos = dataFrame2Dict(vizr.reposNames(rfield, startdate, enddate))
+    createJSON (repos, destdir+"/mls-lists.json")
+    repos = repos['mailing_list_url']
+    repos_files = [repo.replace('/', '_').replace("<","__").replace(">","___")
+                   for repo in repos]
+    createJSON(repos_files, destdir+"/mls-repos.json")
+
+    for repo in repos:
+        # Evol data   
+        repo_name = "'"+repo+"'"
+        data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["repository", repo_name])
+        data = completePeriodIds(dataFrame2Dict(data))
+        listname_file = repo.replace("/","_")
+        listname_file = listname_file.replace("<","__")
+        listname_file = listname_file.replace(">","___")
+
+        # TODO: Multilist approach. We will obsolete it in future
+        createJSON (data, destdir+"/mls-"+listname_file+"-rep-evolutionary.json")
+        # Multirepos filename
+        createJSON (data, destdir+"/"+listname_file+"-mls-rep-evolutionary.json")
+
+        top_senders = dataFrame2Dict(vizr.repoTopSenders (repo, identities_db, startdate, enddate, repofield))
+        createJSON(top_senders, destdir+ "/"+listname_file+"-mls-rep-top-senders.json")
+
+        # Static data
+        data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["repository", repo_name])
+        data = dataFrame2Dict(data)
+        # TODO: Multilist approach. We will obsolete it in future
+        createJSON (data, destdir+"/"+listname_file+"-rep-static.json")
+        # Multirepos filename
+        createJSON (data, destdir+ "/"+listname_file+"-mls-rep-static.json")
+
 
 def companiesData(period, startdate, enddate, identities_db, destdir):
     pass
 #    companies = companiesNames(identities_db, startdate, enddate)
 #    createJSON(companies, paste(destdir,"/mls-companies.json",sep=''))
 #
-#    for (company in companies){
+#    for company in companies:
 #        print (company)
 #        company_name = paste("'", company, "'", sep="")
 #        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", company_name)))
@@ -174,7 +171,7 @@ def countriesData(period, startdate, enddate, identities_db, destdir):
 #    countries = countriesNames(identities_db, startdate, enddate) 
 #    createJSON (countries, paste(destdir, "/mls-countries.json",sep=''))
 #
-#    for (country in countries):
+#    for country in countries:
 #        if (is.na(country)) next
 #        print (country)
 #        country_name = paste("'", country, "'", sep="")
@@ -195,7 +192,7 @@ def domainsData(period, startdate, enddate, identities_db, destdir):
 #    domains = domainsNames(identities_db, startdate, enddate)
 #    createJSON(domains, paste(destdir,"/mls-domains.json",sep=''))
 #
-#    for (domain in domains){
+#    for domain in domains:
 #        print (domain)
 #        domain_name = paste("'", domain, "'", sep="")
 #        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("domain", domain_name)))
@@ -284,15 +281,17 @@ if __name__ == '__main__':
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
-#
-#    if ('people' in reports):
-#        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
-#    if ('repositories' in reports):
-#        reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
-#    if ('countries' in reports):
-#        countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
-#    if ('companies' in reports):
-#        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+
+    if ('people' in reports):
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('repositories' in reports):
+        reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts, rfield)
+    if ('countries' in reports):
+        countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('companies' in reports):
+        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('domains' in reports):
+        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
 
     topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     demographics(enddate)
