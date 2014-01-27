@@ -166,25 +166,23 @@ def companiesData(period, startdate, enddate, identities_db, destdir):
 
 
 def countriesData(period, startdate, enddate, identities_db, destdir):
-    pass
-#    countries = countriesNames(identities_db, startdate, enddate) 
-#    createJSON (countries, paste(destdir, "/mls-countries.json",sep=''))
-#
-#    for country in countries:
-#        if (is.na(country)) next
-#        print (country)
-#        country_name = paste("'", country, "'", sep="")
-#        type_analysis = list("country", country_name)
-#        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
-#        data = completePeriodIds(data, conf$granularity, conf)
-#        createJSON (data, paste(destdir,"/",country,"-mls-cou-evolutionary.json",sep=''))
-#
-#        top_senders = countryTopSenders (country, identities_db, startdate, enddate)
-#        createJSON(top_senders, paste(destdir,"/",country,"-mls-cou-top-senders.json", sep=''))
-#
-#        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, list("country", country_name))
-#        createJSON (data, paste(destdir,"/",country,"-mls-cou-static.json",sep=''))
-#
+
+    countries = valRtoPython(vizr.countriesNames(identities_db, startdate, enddate)) 
+    createJSON (countries, destdir + "/mls-countries.json")
+
+    for country in countries:
+        country_name = "'" + country + "'"
+        type_analysis = ["country", country_name]
+        data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
+        data = completePeriodIds(dataFrame2Dict(data))
+        createJSON (data, destdir+"/"+country+"-mls-cou-evolutionary.json")
+
+        top_senders = dataFrame2Dict(vizr.countryTopSenders (country, identities_db, startdate, enddate))
+        createJSON(top_senders, destdir+"/"+country+"-mls-cou-top-senders.json")
+
+        data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
+        data = dataFrame2Dict(data)
+        createJSON (data, destdir+"/"+country+"-mls-cou-static.json")
 
 def domainsData(period, startdate, enddate, identities_db, destdir):
     pass
