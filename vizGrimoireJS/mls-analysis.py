@@ -148,23 +148,22 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, repofiel
 
 
 def companiesData(period, startdate, enddate, identities_db, destdir):
-    pass
-#    companies = companiesNames(identities_db, startdate, enddate)
-#    createJSON(companies, paste(destdir,"/mls-companies.json",sep=''))
-#
-#    for company in companies:
-#        print (company)
-#        company_name = paste("'", company, "'", sep="")
-#        data = EvolMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", company_name)))
-#        data = completePeriodIds(data, conf$granularity, conf)
-#        createJSON(data, paste(destdir,"/",company,"-mls-com-evolutionary.json", sep=''))
-#
-#        top_senders = companyTopSenders (company, identities_db, startdate, enddate)
-#        createJSON(top_senders, paste(destdir,"/",company,"-mls-com-top-senders.json", sep=''))
-#
-#        data = StaticMLSInfo(period, startdate, enddate, identities_db, rfield, (list("company", company_name)))
-#        createJSON(data, paste(destdir,"/",company,"-mls-com-static.json", sep=''))
-#
+    companies = valRtoPython(vizr.companiesNames(identities_db, startdate, enddate))
+    createJSON(companies, destdir+"/mls-companies.json")
+
+    for company in companies:
+        company_name = "'"+company+ "'"
+        data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
+        data = completePeriodIds(dataFrame2Dict(data))
+        createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json")
+
+        top_senders = dataFrame2Dict(vizr.companyTopSenders (company, identities_db, startdate, enddate))
+        createJSON(top_senders, destdir+"/"+company+"-mls-com-top-senders.json")
+
+        data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
+        data = dataFrame2Dict(data)
+        createJSON(data, destdir+"/"+company+"-mls-com-static.json")
+
 
 def countriesData(period, startdate, enddate, identities_db, destdir):
     pass
@@ -291,7 +290,7 @@ if __name__ == '__main__':
     if ('companies' in reports):
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('domains' in reports):
-        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
 
     topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     demographics(enddate)
