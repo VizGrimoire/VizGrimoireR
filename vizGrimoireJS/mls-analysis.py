@@ -205,13 +205,12 @@ def domainsData(period, startdate, enddate, identities_db, destdir):
         createJSON(data, destdir+"/"+domain+"-mls-dom-static.json")
 
 def topData(period, startdate, enddate, identities_db, destdir, bots):
-    pass
-#    top_senders_data = list()
-#    top_senders_data[['senders.']]=top_senders(0, startdate, enddate,identities_db,c("-Bot"))
-#    top_senders_data[['senders.last year']]=top_senders(365, startdate, enddate,identities_db,c("-Bot"))
-#    top_senders_data[['senders.last month']]=top_senders(31, startdate, enddate,identities_db,c("-Bot"))
-#
-#    createJSON (top_senders_data, paste(destdir,"/mls-top.json",sep=''))
+    top_senders_data = {}
+    top_senders_data['senders.']=dataFrame2Dict(vizr.top_senders(0, startdate, enddate,identities_db,bots))
+    top_senders_data['senders.last year']=dataFrame2Dict(vizr.top_senders(365, startdate, enddate,identities_db, bots))
+    top_senders_data['senders.last month']=dataFrame2Dict(vizr.top_senders(31, startdate, enddate,identities_db,bots))
+
+    createJSON (top_senders_data, destdir+"/mls-top.json")
 
 def demographics(enddate):
     pass

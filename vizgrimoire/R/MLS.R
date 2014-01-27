@@ -800,7 +800,7 @@ GetStaticPeopleMLS <- function(developer_id, startdate, enddate) {
 #########################
 
 
-top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
+top_senders <- function(days = 0, startdate, enddate, identities_db, filter = c("")) {
 
     limit = 30
     affiliations = ""
