@@ -1049,7 +1049,7 @@ GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, n
 }
 
 
-GetDemographicsAgingMLS <- function (enddate) {
+ReportDemographicsAgingMLS <- function (enddate, destdir) {
     d <- new ("Demographics","mls",6)
     people <- Aging(d)
     people$age <- as.Date(enddate) - as.Date(people$firstdate)
@@ -1058,10 +1058,10 @@ GetDemographicsAgingMLS <- function (enddate) {
     new <- list()
     new[['date']] <- enddate
     new[['persons']] <- aux
-    return (new)
+    createJSON (new, paste(c(destdir, "/mls-demographics-aging.json"), collapse=''))
 }
 
-GetDemographicsBirthMLS <- function (enddate) {
+ReportDemographicsBirthMLS <- function (enddate, destdir) {
     d <- new ("Demographics","mls",6)
     newcomers <- Birth(d)
     newcomers$age <- as.Date(enddate) - as.Date(newcomers$firstdate)
@@ -1070,13 +1070,13 @@ GetDemographicsBirthMLS <- function (enddate) {
     new <- list()
     new[['date']] <- enddate
     new[['persons']] <- aux
-    return (new)
+    createJSON (new, paste(c(destdir, "/mls-demographics-birth.json"), collapse=''))
 }
 
-ReportTimeToAttend <- function (quantiles_spec) {
+ReportTimeToAttendMLS <- function (destdir) {
+    quantiles_spec = c(.99,.95,.5,.25)
     ## Replied messages: time ticket was submitted, first replied
     replied <- new ("MLSTimes")
-
     ## Yearly quantiles of time to attention (minutes)
     events.toattend <- new ("TimedEvents",
             replied$submitted_on, replied$toattend %/% 60)
