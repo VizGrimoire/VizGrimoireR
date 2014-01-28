@@ -25,7 +25,7 @@
 ##   Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo <acs@bitergia.com>
-##   Luis Cañas-Díaz <lcanas@bitergia.com>
+##   Luis Canas-Diaz <lcanas@bitergia.com>
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
@@ -169,11 +169,11 @@ def GetITSInfo (period, startdate, enddate, identities_db, type_analysis, closed
 
     return(data)
 
-def EvolITSInfo (period, startdate, enddate, identities_db, type_analysis = [], closed_condition):
+def EvolITSInfo (period, startdate, enddate, identities_db, type_analysis, closed_condition):
     #Evolutionary info all merged in a dataframe
     return(GetITSInfo(period, startdate, enddate, identities_db, type_analysis, closed_condition, True))
 
-def AggITSInfo (period, startdate, enddate, identities_db, type_analysis = [], closed_condition):
+def AggITSInfo (period, startdate, enddate, identities_db, type_analysis, closed_condition):
     #Agg info all merged in a dataframe
     return(GetITSInfo(period, startdate, enddate, identities_db, type_analysis, closed_condition, False))
 
@@ -428,7 +428,7 @@ def AggIssuesCompanies (period, startdate, enddate, identities_db):
     # Agg number of companies
     return(GetIssuesStudies(period, startdate, enddate, identities_db, list('company', ''), False, 'companies'))
 
-def GetDate (startdate, enddate, identities_db, type_analysis=[], type):
+def GetDate (startdate, enddate, identities_db, type_analysis, type):
     # date of submmitted issues (type= max or min)
     if (type=="max"):
         fields = " DATE_FORMAT (max(submitted_on), '%Y-%m-%d') as last_date"
@@ -495,7 +495,7 @@ def GetFiltersDomainsITS (table='') :
     filters = GetFiltersOwnUniqueIdsITS(table)
     filters += "AND pup.upeople_id = upd.upeople_id"
 
-def GetDomainsNameITS (startdate, enddate, identities_db, closed_condition, filter=c()) :
+def GetDomainsNameITS (startdate, enddate, identities_db, closed_condition, filter) :
     affiliations = ""
     for aff in filter:
         affiliations += " dom.name<>'"+aff+"' and "
@@ -583,7 +583,7 @@ def GetCompaniesNameITS (startdate, enddate, identities_db, closed_condition, fi
 ##  two weeks for the day 2013-11-25:
 ##  (date="2013-11-25", days=7, closed_condition=...)
 ##
-def GetDiffClosedDays (period, identities_db, date, days, type_analysis=[], closed_condition):
+def GetDiffClosedDays (period, identities_db, date, days, type_analysis, closed_condition):
     chardates = GetDates(init_date, days)
     last = AggIssuesClosed(period, chardates[1], chardates[0], identities_db, type_analysis)
     last = int(last['closed'])
@@ -608,7 +608,7 @@ def GetDiffClosedDays (period, identities_db, date, days, type_analysis=[], clos
 ##  two weeks for the day 2013-11-25:
 ##  (date="2013-11-25", days=7, closed_condition=...)
 ##
-def GetDiffClosersDays (period, identities_db, date, days, type_analysis=[], closed_condition):
+def GetDiffClosersDays (period, identities_db, date, days, type_analysis, closed_condition):
     # This function provides the percentage in activity between two periods
     chardates = GetDates(init_date, days)
     last = AggIssuesClosers(period, chardates[1], chardates[0], identities_db, type_analysis)
@@ -622,7 +622,7 @@ def GetDiffClosersDays (period, identities_db, date, days, type_analysis=[], clo
     data['closers_'+str(days)] = last
     return (data)
 
-def GetDiffOpenedDays (period, identities_db, date, days, type_analysis=[]):
+def GetDiffOpenedDays (period, identities_db, date, days, type_analysis):
     # This function provides the percentage in activity between two periods
     chardates = GetDates(init_date, days)
     last = AggIssuesOpened(period, chardates[1], chardates[0], identities_db, type_analysis)
@@ -636,7 +636,7 @@ def GetDiffOpenedDays (period, identities_db, date, days, type_analysis=[]):
     data['openers'+str(days)] = last
     return (data)
 
-def GetDiffChangersDays (period, identities_db, date, days, type_analysis=[]):
+def GetDiffChangersDays (period, identities_db, date, days, type_analysis):
     # This function provides the percentage in activity between two periods
     chardates = GetDates(init_date, days)
     last = AggIssuesChangers(period, chardates[1], chardates[0], identities_db, type_analysis)
@@ -701,7 +701,7 @@ def GetLastActivityITS (days, closed_condition):
 # Top functions
 ################
 
-def GetTopClosersByAssignee (days = 0, startdate, enddate, identities_db, filter = c("")) :
+def GetTopClosersByAssignee (days, startdate, enddate, identities_db, filter) :
 
     affiliations = ""
     for aff in filter:
@@ -768,7 +768,7 @@ def GetFiltersCompaniesITS (table='') :
          filters += "AND changed_on >= upc.init AND changed_on < upc.end"
 
 def GetCompanyTopClosers (company_name, startdate, enddate,
-        identities_db, filter = c(''), closed_condition) :
+        identities_db, filter, closed_condition) :
     affiliations = ""
     for aff in filter:
         affiliations += " AND up.identifier<>'"+aff+"' "
@@ -789,8 +789,8 @@ def GetCompanyTopClosers (company_name, startdate, enddate,
     data = run(query)
     return (data)
 
-def GetTopClosers (days = 0, startdate, enddate,
-        identities_db, filter = c(""), closed_condition) :
+def GetTopClosers (days, startdate, enddate,
+        identities_db, filter, closed_condition) :
 
     affiliations = ""
     for aff in filter:
@@ -824,7 +824,7 @@ def GetTopClosers (days = 0, startdate, enddate,
 
 
 def GetDomainTopClosers (domain_name, startdate, enddate,
-        identities_db, filter = c(''), closed_condition) :
+        identities_db, filter, closed_condition) :
     affiliations = ""
     for aff in filter:
         affiliations += " AND up.identifier<>'"+aff+"' "
@@ -846,8 +846,8 @@ def GetDomainTopClosers (domain_name, startdate, enddate,
     return (data)
 
 
-def GetTopOpeners (days = 0, startdate, enddate,
-        identities_db, filter = c(""), closed_condition = closed_condition) :
+def GetTopOpeners (days, startdate, enddate,
+        identities_db, filter, closed_condition) :
     affiliations = ""
     for aff in filter:
         affiliations += " com.name<>'"+ aff +"' and "

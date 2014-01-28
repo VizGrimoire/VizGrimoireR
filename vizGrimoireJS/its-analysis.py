@@ -41,7 +41,7 @@ vizr = importr("vizgrimoire")
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
-# import MLS
+import ITS
 
 class Backend(object):
 
