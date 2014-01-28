@@ -94,40 +94,41 @@ class Backend(object):
 
 
 def aggData(period, startdate, enddate, identities_db, destdir, closed_condition):
-    data = dataFrame2Dict(vizr.AggITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition))
+#    data = dataFrame2Dict(vizr.AggITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition))
+    data = ITS.AggITSInfo(period, startdate, enddate, identities_db, [], closed_condition)
     agg = data
-    data = dataFrame2Dict(vizr.AggAllParticipants(startdate, enddate))
+    data = ITS.AggAllParticipants(startdate, enddate)
     agg = dict(agg.items() +  data.items())
-    data = dataFrame2Dict(vizr.TrackerURL())
+    data = ITS.TrackerURL()
     agg = dict(agg.items() +  data.items())
 
     if ('companies' in reports):
-        data = dataFrame2Dict(vizr.AggIssuesCompanies(period, startdate, enddate, identities_db))
+        data = ITS.AggIssuesCompanies(period, startdate, enddate, identities_db)
         agg = dict(agg.items() + data.items())
 
     if ('countries' in reports):
-        data = dataFrame2Dict(vizr.AggIssuesCountries(period, startdate, enddate, identities_db))
+        data = ITS.AggIssuesCountries(period, startdate, enddate, identities_db)
         agg = dict(agg.items() + data.items())
 
     if ('domains' in reports):
-        data = dataFrame2Dict(vizr.AggIssuesDomains(period, startdate, enddate, identities_db))
+        data = ITS.AggIssuesDomains(period, startdate, enddate, identities_db)
         agg = dict(agg.items() + data.items())
 
     # Tendencies
     for i in [7,30,365]:
         # period_data = dataFrame2Dict(vizr.GetDiffSentDays(period, enddate, i))
-        period_data = dataFrame2Dict(vizr.GetDiffClosedDays(period, identities_db, enddate, i, closed_condition = closed_condition))
+        period_data = ITS.GetDiffClosedDays(period, identities_db, enddate, i, [], closed_condition)
         agg = dict(agg.items() + period_data.items())
-        period_data = dataFrame2Dict(vizr.GetDiffOpenedDays(period, identities_db, enddate, i))
+        period_data = ITS.GetDiffOpenedDays(period, identities_db, enddate, i, [])
         agg = dict(agg.items() + period_data.items())
-        period_data = dataFrame2Dict(vizr.GetDiffClosersDays(period, identities_db, enddate, i, closed_condition = closed_condition))
+        period_data = ITS.GetDiffClosersDays(period, identities_db, enddate, i, [], closed_condition)
         agg = dict(agg.items() + period_data.items())
-        period_data = dataFrame2Dict(vizr.GetDiffChangersDays(period, identities_db, enddate, i))
+        period_data = ITS.GetDiffChangersDays(period, identities_db, enddate, i, [])
         agg = dict(agg.items() + period_data.items())
 
     # Last Activity: to be removed
     for i in [7,14,30,60,90,180,365,730]:
-        period_activity = dataFrame2Dict(vizr.GetLastActivityITS(i, closed_condition))
+        period_activity = ITS.GetLastActivityITS(i, closed_condition)
         agg = dict(agg.items() + period_activity.items())
 
     createJSON (agg, destdir+"/its-static.json")
@@ -139,20 +140,20 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
     data = ITS.EvolITSInfo(period, startdate, enddate, identities_db, [], closed_condition)
     evol = completePeriodIds(data)
     if ('companies' in reports) :
-        data = vizr.EvolIssuesCompanies(period, startdate, enddate, identities_db)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = ITS.EvolIssuesCompanies(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(data).items())
 
     if ('countries' in reports) :
-        data = vizr.EvolIssuesCountries(period, startdate, enddate, identities_db)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = ITS.EvolIssuesCountries(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(data).items())
 
     if ('repositories' in reports) :
-        data = vizr.EvolIssuesRepositories(period, startdate, enddate, identities_db)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = ITS.EvolIssuesRepositories(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(data).items())
 
     if ('domains' in reports) :
-        data = vizr.EvolIssuesDomains(period, startdate, enddate, identities_db)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = ITS.EvolIssuesDomains(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(data).items())
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 

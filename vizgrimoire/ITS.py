@@ -27,7 +27,7 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Canas-Diaz <lcanas@bitergia.com>
 
-import sys
+import re, sys
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
@@ -66,8 +66,8 @@ def GetITSSQLCountriesFrom (i_db):
     # fields necessary for the countries analysis
 
     return(" , people_upeople pup, "+\
-           i_db+"+countries c, "+\
-           i_db+"+upeople_countries upc")
+           i_db+".countries c, "+\
+           i_db+".upeople_countries upc")
 
 def GetITSSQLCountriesWhere (name):
     # filters for the countries analysis
@@ -81,8 +81,8 @@ def GetITSSQLDomainsFrom (i_db):
     # fields necessary for the domains analysis
 
     return(" , people_upeople pup, "+\
-           i_db,".domains d, "+\
-           i_db,".upeople_domains upd")
+           i_db+".domains d, "+\
+           i_db+".upeople_domains upd")
 
 
 def GetITSSQLDomainsWhere (name):
@@ -165,7 +165,7 @@ def GetITSInfo (period, startdate, enddate, identities_db, type_analysis, closed
         changed = AggIssuesChanged(period, startdate, enddate, identities_db, type_analysis)
         changers = AggIssuesChangers(period, startdate, enddate, identities_db, type_analysis)
         open = AggIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
-        openers = AggIssuesOpeners(period, startdate, enddate, identities_db, type_analysis)
+        openers = AggIssuesOpeners(period, startdate, enddate, identities_db, type_analysis, closed_condition)
         repos = AggIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
         init_date = GetInitDate(startdate, enddate, identities_db, type_analysis)
         end_date = GetEndDate(startdate, enddate, identities_db, type_analysis)
@@ -234,9 +234,9 @@ def GetOpeners (period, startdate, enddate, identities_db, type_analysis, evolut
     return (data)
 
 
-def AggIssuesOpeners (period, startdate, enddate, identities_db, type_analysis):
+def AggIssuesOpeners (period, startdate, enddate, identities_db, type_analysis, closed_condition):
     # Returns aggregated number of opened issues
-    return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, False))
+    return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, False, closed_condition))
 
 def EvolIssuesOpeners (period, startdate, enddate, identities_db, type_analysis, closed_condition):
     #return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
@@ -406,35 +406,35 @@ def GetIssuesStudies (period, startdate, enddate, identities_db, type_analysis, 
     #Filtering last part of the query, not used in this case
     #filters = gsub("and\n( )+(d|c|cou|com).name =.*$", "", filters)
 
-    q = BuildQuery(period, startdate, enddate, " i.submitted_on ", fields, tables, filters, evolutionary)    
-    q = re.sub("and[[:space:]]*(d|c|cou|com).name[[:space:]]*=[[:space:]]*('.*'|NA)", "", q)
+    q = BuildQuery(period, startdate, enddate, " i.submitted_on ", fields, tables, filters, evolutionary)
+    q = re.sub(r'and (d|c|cou|com).name.*=', "", q)
     data = ExecuteQuery(q)
     return(data)
 
 def EvolIssuesDomains (period, startdate, enddate, identities_db):
     # Evol number of domains used
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('domain', ''), True, 'domains'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, ['domain', ''], True, 'domains'))
 
 def EvolIssuesCountries (period, startdate, enddate, identities_db):
     # Evol number of countries
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('country', ''), True, 'countries'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, ['country', ''], True, 'countries'))
 
 def EvolIssuesCompanies (period, startdate, enddate, identities_db):
     # Evol number of companies
-    data = GetIssuesStudies(period, startdate, enddate, identities_db, list('company', ''), True, 'companies')
+    data = GetIssuesStudies(period, startdate, enddate, identities_db, ['company', ''], True, 'companies')
     return(data)
 
 def AggIssuesDomains (period, startdate, enddate, identities_db):
     # Agg number of domains
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('domain', ''), False, 'domains'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, ['domain', ''], False, 'domains'))
 
 def AggIssuesCountries (period, startdate, enddate, identities_db):
     # Agg number of countries
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('country', ''), False, 'countries'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, ['country', ''], False, 'countries'))
 
 def AggIssuesCompanies (period, startdate, enddate, identities_db):
     # Agg number of companies
-    return(GetIssuesStudies(period, startdate, enddate, identities_db, list('company', ''), False, 'companies'))
+    return(GetIssuesStudies(period, startdate, enddate, identities_db, ['company', ''], False, 'companies'))
 
 def GetDate (startdate, enddate, identities_db, type_analysis, type):
     # date of submmitted issues (type= max or min)
@@ -446,7 +446,7 @@ def GetDate (startdate, enddate, identities_db, type_analysis, type):
     tables = " issues i " + GetITSSQLReportFrom(identities_db, type_analysis)
     filters = GetITSSQLReportWhere(type_analysis)
 
-    q = BuildQuery(NA, startdate, enddate, " i.submitted_on ", fields, tables, filters, "False") 
+    q = BuildQuery(None, startdate, enddate, " i.submitted_on ", fields, tables, filters, False)
     data = ExecuteQuery(q)
     return(data)
 
@@ -592,10 +592,10 @@ def GetCompaniesNameITS (startdate, enddate, identities_db, closed_condition, fi
 ##  (date="2013-11-25", days=7, closed_condition=...)
 ##
 def GetDiffClosedDays (period, identities_db, date, days, type_analysis, closed_condition):
-    chardates = GetDates(init_date, days)
-    last = AggIssuesClosed(period, chardates[1], chardates[0], identities_db, type_analysis)
+    chardates = GetDates(date, days)
+    last = AggIssuesClosed(period, chardates[1], chardates[0], identities_db, type_analysis, closed_condition)
     last = int(last['closed'])
-    prev = AggIssuesClosed(period, chardates[2], chardates[1], identities_db, type_analysis)
+    prev = AggIssuesClosed(period, chardates[2], chardates[1], identities_db, type_analysis, closed_condition)
     prev = int(prev['closed'])
 
     data = {}
@@ -618,10 +618,10 @@ def GetDiffClosedDays (period, identities_db, date, days, type_analysis, closed_
 ##
 def GetDiffClosersDays (period, identities_db, date, days, type_analysis, closed_condition):
     # This function provides the percentage in activity between two periods
-    chardates = GetDates(init_date, days)
-    last = AggIssuesClosers(period, chardates[1], chardates[0], identities_db, type_analysis)
+    chardates = GetDates(date, days)
+    last = AggIssuesClosers(period, chardates[1], chardates[0], identities_db, type_analysis, closed_condition)
     last = int(last['closers'])
-    prev = AggIssuesClosers(period, chardates[2], chardates[1], identities_db, type_analysis)
+    prev = AggIssuesClosers(period, chardates[2], chardates[1], identities_db, type_analysis, closed_condition)
     prev = int(prev['closers'])
 
     data = {}
@@ -632,21 +632,21 @@ def GetDiffClosersDays (period, identities_db, date, days, type_analysis, closed
 
 def GetDiffOpenedDays (period, identities_db, date, days, type_analysis):
     # This function provides the percentage in activity between two periods
-    chardates = GetDates(init_date, days)
+    chardates = GetDates(date, days)
     last = AggIssuesOpened(period, chardates[1], chardates[0], identities_db, type_analysis)
     last = int(last['opened'])
     prev = AggIssuesOpened(period, chardates[2], chardates[1], identities_db, type_analysis)
-    prev = int(prev['openers'])
+    prev = int(prev['opened'])
 
     data = {}
-    data['diff_openers_'+str(days)] = last - prev
-    data['percentage_openers_'+str(days)] = GetPercentageDiff(prev, last)
-    data['openers'+str(days)] = last
+    data['diff_opened_'+str(days)] = last - prev
+    data['percentage_opened_'+str(days)] = GetPercentageDiff(prev, last)
+    data['opened'+str(days)] = last
     return (data)
 
 def GetDiffChangersDays (period, identities_db, date, days, type_analysis):
     # This function provides the percentage in activity between two periods
-    chardates = GetDates(init_date, days)
+    chardates = GetDates(date, days)
     last = AggIssuesChangers(period, chardates[1], chardates[0], identities_db, type_analysis)
     last = int(last['changers'])
     prev = AggIssuesChangers(period, chardates[2], chardates[1], identities_db, type_analysis)
@@ -660,13 +660,13 @@ def GetDiffChangersDays (period, identities_db, date, days, type_analysis):
 
 def GetLastActivityITS (days, closed_condition):
     # opened issues
-    dats = str(days)
+    days = str(days)
     q = "select count(*) as opened_"+days+" "+\
         "from issues "+\
         "where submitted_on >= ( "+\
         "      select (max(submitted_on) - INTERVAL "+days+" day) "+\
         "      from issues)"
-    
+
     data1 = ExecuteQuery(q)
 
     # closed issues
@@ -676,7 +676,7 @@ def GetLastActivityITS (days, closed_condition):
         "and changed_on >= ( "+\
         "      select (max(changed_on) - INTERVAL "+days+" day) "+\
         "      from changes)"
-    
+
     data2 = ExecuteQuery(q)
 
     # closers
