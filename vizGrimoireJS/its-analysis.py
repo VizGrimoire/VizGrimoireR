@@ -154,24 +154,37 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 
-def peopleData(period, startdate, enddate, idb, destdir):
+def peopleData(period, startdate, enddate, identities_db, destdir):
     pass
 
-def reposData(period, startdate, enddate, idb, destdir, conf):
+def reposData(period, startdate, enddate, identities_db, destdir, conf):
     pass
 
-def companiesData(period, startdate, enddate, idb, destdir):
+def companiesData(period, startdate, enddate, identities_db, destdir):
     pass
 
-def countriesData(period, startdate, enddate, idb, destdir):
+def countriesData(period, startdate, enddate, identities_db, destdir):
     pass
 
-def domainsData(period, startdate, enddate, idb, destdir):
+def domainsData(period, startdate, enddate, identities_db, destdir):
     pass
 
-def topData(period, startdate, enddate, idb, destdir, bots):
-    pass
+def topData(period, startdate, enddate, identities_db, destdir, bots, closed_condition):
 
+    # Top closers
+    top_closers_data = {}
+    top_closers_data['closers.']=dataFrame2Dict(vizr.GetTopClosers(0, startdate, enddate,identities_db, bots, closed_condition))
+    top_closers_data['closers.last year']=dataFrame2Dict(vizr.GetTopClosers(365, startdate, enddate,identities_db, bots, closed_condition))
+    top_closers_data['closers.last month']=dataFrame2Dict(vizr.GetTopClosers(31, startdate, enddate,identities_db, bots, closed_condition))
+
+    # Top openers
+    top_openers_data = {}
+    top_openers_data['openers.']=dataFrame2Dict(vizr.GetTopOpeners(0, startdate, enddate,identities_db, bots))
+    top_openers_data['openers.last year']=dataFrame2Dict(vizr.GetTopOpeners(365, startdate, enddate,identities_db, bots, closed_condition))
+    top_openers_data['openers.last_month']=dataFrame2Dict(vizr.GetTopOpeners(31, startdate, enddate,identities_db, bots, closed_condition))
+
+    all_top = dict(top_closers_data.items() + top_openers_data.items())
+    createJSON (all_top, destdir+"/its-top.json", False)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
@@ -181,7 +194,7 @@ if __name__ == '__main__':
     reports = opts.reports.split(",")
     # filtered bots
 
-    bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot']
+    bots = ['-Bot']
     # TODO: hack because VizR library needs. Fix in lib in future
     startdate = "'"+opts.startdate+"'"
     enddate = "'"+opts.enddate+"'"
@@ -195,7 +208,7 @@ if __name__ == '__main__':
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, 
             opts.granularity, opts, backend.closed_condition)
-    aggData(period, startdate, enddate, opts.identities_db, opts.destdir,backend.closed_condition)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
@@ -209,4 +222,4 @@ if __name__ == '__main__':
         domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
 
 
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
