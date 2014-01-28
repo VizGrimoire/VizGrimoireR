@@ -752,7 +752,7 @@ GetDomainsNameITS <- function(startdate, enddate, identities_db, closed_conditio
                        c.changed_on < ", enddate, " AND
                        ", closed_condition,"
                  GROUP BY dom.name
-                 ORDER BY COUNT(DISTINCT(c.issue_id)) DESC", sep="")
+                 ORDER BY COUNT(DISTINCT(c.issue_id)),dom.name DESC", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
