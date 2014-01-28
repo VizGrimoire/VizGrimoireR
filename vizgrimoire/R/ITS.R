@@ -345,7 +345,7 @@ GetCurrentStatus <- function(period, startdate, enddate, identities_db, status){
     # This functions provides  of the status specified by 'status'
     # group by submitted date. Thus, as an example, for those issues 
     # in status = open, it is possible to know when they were submitted
-    fields = paste(" count(distinct(id)) as current_", status, sep="")
+    fields = paste(" count(distinct(id)) as `current_", status, "`", sep="")
     # Fix commented lines in order to make generic this function to any
     # type of granularity (per company, repository, etc)
     #tables = paste(" issues ", GetITSSQLReportFrom(identities_db, list(NA, NA)), sep="")
