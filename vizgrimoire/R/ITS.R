@@ -1386,11 +1386,11 @@ ReportDemographicsBirthITS <- function (enddate, destdir) {
 }
 
 # Time to close
-ReportTimeToCloseITS <- function (destdir) {
-    if (conf$backend == 'bugzilla' || 
-            conf$backend == 'allura' || 
-            conf$backend == 'jira' ||
-            conf$backend == 'launchpad') { 
+ReportTimeToCloseITS <- function (backend, destdir) {
+    if (backend == 'bugzilla' ||
+        backend == 'allura' ||
+        backend == 'jira' ||
+        backend == 'launchpad') {
         ## Quantiles
         ## Which quantiles we're interested in
         quantiles_spec = c(.99,.95,.5,.25)
@@ -1419,3 +1419,9 @@ ReportTimeToCloseITS <- function (destdir) {
         JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
     }
 }
+
+ReportMarkovChain <- function(destdir) {
+    markov <- MarkovChain()
+    createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
+}
+
