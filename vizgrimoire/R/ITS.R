@@ -204,18 +204,14 @@ GetITSInfo <- function(period, startdate, enddate, identities_db, type_analysis,
         repos <- AggIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
         init_date <- GetInitDate(startdate, enddate, identities_db, type_analysis)
         end_date <- GetEndDate(startdate, enddate, identities_db, type_analysis)
-        print(init_date)
         data = merge(closed, changed)
         data = merge(data, open)
         data = merge(data, repos)
         data = merge(data, openers)
         data = merge(data, closers)
         data = merge(data, changers)
-        print(data)
         data = merge(data, init_date)
-        print(data)
         data = merge(data, end_date)
-        print(data)
     }
 
     return(data)
@@ -446,7 +442,6 @@ GetClosed <- function(period, startdate, enddate, identities_db, type_analysis, 
     filters = gsub("i.submitted", "ch.changed", filters)
     
     q <- BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    print(q)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -675,8 +670,7 @@ GetDate <- function(startdate, enddate, identities_db, type_analysis=list(NA, NA
     tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis))
     filters = GetITSSQLReportWhere(type_analysis)
 
-    q <- BuildQuery(NA, startdate, enddate, " i.submitted_on ", fields, tables, filters, "FALSE")
-    print(q) 
+    q <- BuildQuery(NA, startdate, enddate, " i.submitted_on ", fields, tables, filters, "FALSE") 
     data <- ExecuteQuery(q)
     return(data)    
 }
@@ -1235,11 +1229,9 @@ MarkovChain<-function()
     query <- new ("Query", sql = q)
     status <- run(query)
 
-    print(status)
     T<-status[order(status$value),]
     T1<-gsub("'", "", T)
 
-    print(T1)
     new_value<-function(old)
     {
         q<-paste("select old_value, new_value, count(*) as issue
@@ -1329,7 +1321,6 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
     first = TRUE
     for (company in companies){
         # Cleaning data
-        print(company)
         company_data = subset(data, data$name %in% company)
         company_data <- completePeriodIds(company_data, conf$granularity, conf)
         company_data <- company_data[order(company_data$id), ]
