@@ -114,7 +114,7 @@ def aggData(period, startdate, enddate, identities_db, destdir, closed_condition
         data = ITS.AggIssuesDomains(period, startdate, enddate, identities_db)
         agg = dict(agg.items() + data.items())
 
-    # Tendencies
+    # Tendencies    
     for i in [7,30,365]:
         # period_data = dataFrame2Dict(vizr.GetDiffSentDays(period, enddate, i))
         period_data = ITS.GetDiffClosedDays(period, identities_db, enddate, i, [], closed_condition)

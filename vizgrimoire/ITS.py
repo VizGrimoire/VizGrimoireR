@@ -599,9 +599,9 @@ def GetDiffClosedDays (period, identities_db, date, days, type_analysis, closed_
     prev = int(prev['closed'])
 
     data = {}
-    data['diff_closed_'+str(days)] = last - prev
+    data['diff_netclosed_'+str(days)] = last - prev
     data['percentage_closed_'+str(days)] = GetPercentageDiff(prev, last)
-    data['closed_'+str(days)] = last
+    # data['closed_'+str(days)] = last
     return (data)
 
 ##
@@ -625,9 +625,9 @@ def GetDiffClosersDays (period, identities_db, date, days, type_analysis, closed
     prev = int(prev['closers'])
 
     data = {}
-    data['diff_closers_'+str(days)] = last - prev
+    data['diff_netclosers_'+str(days)] = last - prev
     data['percentage_closers_'+str(days)] = GetPercentageDiff(prev, last)
-    data['closers_'+str(days)] = last
+    # data['closers_'+str(days)] = last
     return (data)
 
 def GetDiffOpenedDays (period, identities_db, date, days, type_analysis):
@@ -639,9 +639,9 @@ def GetDiffOpenedDays (period, identities_db, date, days, type_analysis):
     prev = int(prev['opened'])
 
     data = {}
-    data['diff_opened_'+str(days)] = last - prev
+    data['diff_netopened_'+str(days)] = last - prev
     data['percentage_opened_'+str(days)] = GetPercentageDiff(prev, last)
-    data['opened'+str(days)] = last
+    #data['opened_'+str(days)] = last
     return (data)
 
 def GetDiffChangersDays (period, identities_db, date, days, type_analysis):
@@ -653,9 +653,9 @@ def GetDiffChangersDays (period, identities_db, date, days, type_analysis):
     prev = int(prev['changers'])
 
     data = {}
-    data['diff_changers_'+str(days)] = last - prev
+    data['diff_netchangers_'+str(days)] = last - prev
     data['percentage_changers_'+str(days)] = GetPercentageDiff(prev, last)
-    data['changers'+str(days)] = last
+    # data['changers_'+str(days)] = last
     return (data)
 
 def GetLastActivityITS (days, closed_condition):
