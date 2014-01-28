@@ -1393,7 +1393,7 @@ repos_name <- function(startdate, enddate) {
 
     q <- paste ("select count(distinct(s.id)) as total, 
                         name
-                 from actions, 
+                 from actions a, 
                       scmlog s, 
                       repositories r
                  where s.id = a.commit_id and
