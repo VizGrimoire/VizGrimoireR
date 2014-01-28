@@ -103,7 +103,7 @@ def GetITSSQLReportFrom (identities_db, type_analysis):
 
     From = ""
 
-    if (type_analysis is None or type_analysis is None or len(type_analysis) != 2): return From
+    if (type_analysis is None or len(type_analysis) != 2): return From
 
     analysis = type_analysis[0]
     value = type_analysis[1]
@@ -122,7 +122,7 @@ def GetITSSQLReportWhere (type_analysis):
     #such analysis
     where = ""
 
-    if (type_analysis is None or type_analysis is None or len(type_analysis) != 2): return where
+    if (type_analysis is None or len(type_analysis) != 2): return where
 
     analysis = type_analysis[0]
     value = type_analysis[1]
@@ -223,7 +223,7 @@ def GetOpeners (period, startdate, enddate, identities_db, type_analysis, evolut
         #and not taken into account in the initial part of the query
         tables += ", people_upeople pup"
         filters += " and i.submitted_by = pup.people_id"
-    elif (type_analysis[1] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ", people_upeople pup"
         filters += " and i.submitted_by = pup.people_id "
@@ -286,7 +286,7 @@ def GetClosers (period, startdate, enddate, identities_db, type_analysis, evolut
         #and not taken into account in the initial part of the query
         tables += ", people_upeople pup"
         filters += " and i.submitted_by = pup.people_id"
-    elif (type_analysis[1] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ", people_upeople pup"
         filters += " and i.submitted_by = pup.people_id "
@@ -294,12 +294,9 @@ def GetClosers (period, startdate, enddate, identities_db, type_analysis, evolut
     #Action needed to replace issues filters by changes one
     filters = filters.replace("i.submitted", "ch.changed")
 
-
     q = BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-
     data = ExecuteQuery(q)
     return (data)
-
 
 def AggIssuesClosers (period, startdate, enddate, identities_db, type_analysis, closed_condition):
     # Returns aggregated number of closed issues
@@ -357,7 +354,7 @@ def GetChangers (period, startdate, enddate, identities_db, type_analysis, evolu
         tables += ", people_upeople pup"
         filters += " and i.submitted_by = pup.people_id"
 
-    elif (type_analysis[1] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ", people_upeople pup"
         filters += " and i.submitted_by = pup.people_id "
@@ -498,10 +495,12 @@ def GetReposNameITS (startdate, enddate) :
 def GetTablesDomainsITS (i_db, table='') :
     tables = GetTablesOwnUniqueIdsITS(table)
     tables += ','+i_db+'.upeople_domains upd'
+    return(tables)
 
 def GetFiltersDomainsITS (table='') :
     filters = GetFiltersOwnUniqueIdsITS(table)
-    filters += "AND pup.upeople_id = upd.upeople_id"
+    filters += " AND pup.upeople_id = upd.upeople_id"
+    return(filters)
 
 def GetDomainsNameITS (startdate, enddate, identities_db, closed_condition, filter) :
     affiliations = ""
@@ -520,7 +519,7 @@ def GetDomainsNameITS (startdate, enddate, identities_db, closed_condition, filt
         "       c.changed_on < "+ enddate+ " AND "+\
         "       "+ closed_condition+" "+\
         "GROUP BY dom.name "+\
-        "ORDER BY COUNT(DISTINCT(c.issue_id)) DESC"
+        "ORDER BY COUNT(DISTINCT(c.issue_id)),dom.name DESC"
 
     data = ExecuteQuery(q)
     return (data)
@@ -755,11 +754,10 @@ def GetTablesOwnUniqueIdsITS (table='') :
     if (table == "issues"): tables = 'issues i, people_upeople pup'
     return (tables)
 
-
 def GetTablesCompaniesITS (i_db, table='') :
     tables = GetTablesOwnUniqueIdsITS(table)
     tables += ','+i_db+'.upeople_companies upc'
-
+    return (tables)
 
 def GetFiltersOwnUniqueIdsITS (table='') :
     filters = 'pup.people_id = c.changed_by'
@@ -769,11 +767,12 @@ def GetFiltersOwnUniqueIdsITS (table='') :
 
 def GetFiltersCompaniesITS (table='') :
     filters = GetFiltersOwnUniqueIdsITS(table)
-    filters += "AND pup.upeople_id = upc.upeople_id"
+    filters += " AND pup.upeople_id = upc.upeople_id"
     if (table == 'issues') :
-        filters += "AND submitted_on >= upc.init AND submitted_on < upc.end"
+        filters += " AND submitted_on >= upc.init AND submitted_on < upc.end"
     else :
-         filters += "AND changed_on >= upc.init AND changed_on < upc.end"
+         filters += " AND changed_on >= upc.init AND changed_on < upc.end"
+    return (filters)
 
 def GetCompanyTopClosers (company_name, startdate, enddate,
         identities_db, filter, closed_condition) :
@@ -791,7 +790,7 @@ def GetCompanyTopClosers (company_name, startdate, enddate,
         "      AND upc.company_id = com.id "+\
         "      AND com.name = "+ company_name +" "+\
         "      AND changed_on >= "+startdate+" AND changed_on < "+enddate+\
-              affiliations+ " "+\
+            affiliations +\
         " GROUP BY changed_by ORDER BY closed DESC LIMIT 10"
 
     data = ExecuteQuery(q)
@@ -893,7 +892,7 @@ def GetPeopleListITS (startdate, enddate) :
     fields = "DISTINCT(pup.upeople_id) as pid, count(c.id) as total"
     tables = GetTablesOwnUniqueIdsITS()
     filters = GetFiltersOwnUniqueIdsITS()
-    filters += "GROUP BY pid ORDER BY total desc"
+    filters += " GROUP BY pid ORDER BY total desc"
     q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
 
     data = ExecuteQuery(q)
@@ -903,7 +902,7 @@ def GetPeopleListITS (startdate, enddate) :
 def GetPeopleQueryITS (developer_id, period, startdate, enddate, evol) :
     fields = "COUNT(c.id) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
-    filters = GetFiltersOwnUniqueIdsITS()+ "AND pup.upeople_id = "+ developer_id
+    filters = GetFiltersOwnUniqueIdsITS() + " AND pup.upeople_id = "+ str(developer_id)
 
     if (evol) :
         q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
@@ -923,7 +922,7 @@ def GetPeopleEvolITS (developer_id, period, startdate, enddate) :
     return (data)
 
 def GetPeopleStaticITS (developer_id, startdate, enddate) :
-    q = GetPeopleQueryITS(developer_id, period, startdate, enddate, False)
+    q = GetPeopleQueryITS(developer_id, None, startdate, enddate, False)
 
     data = ExecuteQuery(q)
     return (data)
