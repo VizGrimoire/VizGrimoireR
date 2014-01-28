@@ -235,6 +235,9 @@ def completePeriodIdsWeeks(ts_data, start, end):
     return new_ts_data
 
 def completePeriodIds(ts_data):
+    # If already complete, return
+    if "id" in ts_data: return ts_data
+
     if len(ts_data.keys()) == 0: return ts_data
     new_ts_data = ts_data
     opts = read_options()
