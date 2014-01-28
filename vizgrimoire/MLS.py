@@ -26,6 +26,8 @@
 #       evolution and agg values of countries and companies
 #############
 
+import re
+
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
@@ -142,10 +144,10 @@ def GetMLSSQLReportWhere (type_analysis):
 
     where = ""
 
+    if (len(type_analysis) != 2): return where
+
     analysis = type_analysis[0]
     value = type_analysis[1]
-
-    if (len(type_analysis) != 2): return where
 
     if analysis == 'repository': where = GetMLSSQLRepositoriesWhere(value)
     elif analysis == 'company': where = GetMLSSQLCompaniesWhere(value)
@@ -163,9 +165,9 @@ def reposField () :
     # Depending on the mailing list, the field to be
     # used is mailing_list or mailing_list_url
     rfield = 'mailing_list'
-    query = new ("Query", sql = "select count(distinct(mailing_list)) from messages")
-    mailing_lists = run(query)
-    if (mailing_lists == 0) :
+    sql = "select count(distinct(mailing_list)) from messages"
+    mailing_lists = ExecuteQuery(sql)
+    if (len(mailing_lists) == 0) :
         rfield = "mailing_list_url"
 
     return (rfield);
@@ -184,15 +186,19 @@ def GetMLSInfo (period, startdate, enddate, identities_db, rfield, type_analysis
 
     if (evolutionary == True):
         sent = EvolEmailsSent(period, startdate, enddate, identities_db, type_analysis)
+        sent = completePeriodIds(sent)
         senders = EvolMLSSenders(period, startdate, enddate, identities_db, type_analysis)
+        senders = completePeriodIds(senders)
         repositories = EvolMLSRepositories(rfield, period, startdate, enddate, identities_db, type_analysis)
+        repositories = completePeriodIds(repositories)
         threads = EvolThreads(period, startdate, enddate, identities_db, type_analysis)
+        threads = completePeriodIds(threads)
         sent_response = EvolMLSResponses(period, startdate, enddate, identities_db, type_analysis)
+        sent_response = completePeriodIds(sent_response)
         senders_response = EvolMLSSendersResponse(period, startdate, enddate, identities_db, type_analysis)
+        senders_response = completePeriodIds(senders_response)
         senders_init = EvolMLSSendersInit(period, startdate, enddate, identities_db, type_analysis)
-        #countries = 
-        #companies =
-
+        senders_init = completePeriodIds(senders_init)
     else:
         sent = AggEmailsSent(period, startdate, enddate, identities_db, type_analysis)
         senders = AggMLSSenders(period, startdate, enddate, identities_db, type_analysis)
@@ -263,7 +269,7 @@ def GetMLSSenders (period, startdate, enddate, identities_db, type_analysis, evo
 
     fields = " count(distinct(pup.upeople_id)) as senders "
     tables = " messages m " + GetMLSSQLReportFrom(identities_db, type_analysis)
-    if (tables == " messages m  "):
+    if (tables == " messages m "):
         # basic case: it's needed to add unique ids filters
         tables = tables + ", messages_people mp, people_upeople pup "
         filters = GetMLSFiltersOwnUniqueIdsMLS()
@@ -271,7 +277,7 @@ def GetMLSSenders (period, startdate, enddate, identities_db, type_analysis, evo
         #not sure if this line is useful anymore...
         filters = GetMLSSQLReportWhere(type_analysis)
 
-    if (type_analysis[0] == "repository"):
+    if (type_analysis and type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  messages_people mp, people_upeople pup "
         filters += " and m.message_ID = mp.message_id and "+\
@@ -297,14 +303,14 @@ def GetMLSSendersResponse (period, startdate, enddate, identities_db, type_analy
 
     fields = " count(distinct(pup.upeople_id)) as senders_response "
     tables = " messages m " + GetMLSSQLReportFrom(identities_db, type_analysis)
-    if (tables == " messages m  "):
+    if (tables == " messages m "):
         # basic case: it's needed to add unique ids filters
         tables += ", messages_people mp, people_upeople pup "
         filters = GetMLSFiltersOwnUniqueIdsMLS()
     else:
         filters = GetMLSSQLReportWhere(type_analysis)
 
-    if (type_analysis[0] == "repository"):
+    if (type_analysis and type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  messages_people mp, people_upeople pup "
         filters += " and m.message_ID = mp.message_id and "+\
@@ -333,14 +339,14 @@ def GetMLSSendersInit (period, startdate, enddate, identities_db, type_analysis,
 
     fields = " count(distinct(pup.upeople_id)) as senders_init "
     tables = " messages m " + GetMLSSQLReportFrom(identities_db, type_analysis)
-    if (tables == " messages m  "):
+    if (tables == " messages m "):
         # basic case: it's needed to add unique ids filters
         tables += ", messages_people mp, people_upeople pup "
         filters = GetMLSFiltersOwnUniqueIdsMLS()
     else:
         filters = GetMLSSQLReportWhere(type_analysis)
 
-    if (type_analysis[0] == "repository"):
+    if (type_analysis and type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  messages_people mp, people_upeople pup "
         filters += " and m.message_ID = mp.message_id and "+\
@@ -370,7 +376,6 @@ def GetThreads (period, startdate, enddate, identities_db, type_analysis, evolut
     filters = GetMLSSQLReportWhere(type_analysis)
 
     q = BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-
     return(ExecuteQuery(q))
 
 
@@ -455,7 +460,7 @@ def GetMLSStudies (period, startdate, enddate, identities_db, type_analysis, evo
     #filters = gsub("and\n( )+(d|c|cou|com).name =.*$", "", filters)
 
     q = BuildQuery(period, startdate, enddate, " m.first_date ", fields, tables, filters, evolutionary)
-    q = gsub("(d|c|cou|com).name.*and", "", q)
+    q = re.sub(r'(d|c|cou|com).name.*and', "", q)
 
     data = ExecuteQuery(q)
     return(data)
@@ -463,30 +468,30 @@ def GetMLSStudies (period, startdate, enddate, identities_db, type_analysis, evo
 
 def EvolMLSDomains (period, startdate, enddate, identities_db):
     # Evol number of domains used
-    return(GetMLSStudies(period, startdate, enddate, identities_db, ['domain', None], True, 'domains'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, ['domain', ''], True, 'domains'))
 
 
 def EvolMLSCountries (period, startdate, enddate, identities_db):
     # Evol number of countries
-    return(GetMLSStudies(period, startdate, enddate, identities_db, ['country', None], True, 'countries'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, ['country', ''], True, 'countries'))
 
 
 def EvolMLSCompanies (period, startdate, enddate, identities_db):
     # Evol number of companies
-    data = GetMLSStudies(period, startdate, enddate, identities_db, ['company', None], True, 'companies')
+    data = GetMLSStudies(period, startdate, enddate, identities_db, ['company', ''], True, 'companies')
     return(data)
 
 def AggMLSDomains (period, startdate, enddate, identities_db):
     # Agg number of domains
-    return(GetMLSStudies(period, startdate, enddate, identities_db, ['domain', None], False, 'domains'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, ['domain', ''], False, 'domains'))
 
 def AggMLSCountries (period, startdate, enddate, identities_db):
     # Agg number of countries
-    return(GetMLSStudies(period, startdate, enddate, identities_db, ['country', None], False, 'countries'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, ['country', ''], False, 'countries'))
 
 def AggMLSCompanies (period, startdate, enddate, identities_db):
     # Agg number of companies
-    return(GetMLSStudies(period, startdate, enddate, identities_db, ['company', None], False, 'companies'))
+    return(GetMLSStudies(period, startdate, enddate, identities_db, ['company', ''], False, 'companies'))
 
 
 ####################
@@ -506,21 +511,19 @@ def reposNames  (rfield, startdate, enddate) :
                "m.first_date >= "+startdate+" AND "+\
                "m.first_date < "+enddate+" "+\
                "GROUP BY ml.mailing_list_url ORDER by total desc"
-        query = new ("Query", sql = q)
-        mailing_lists = run(query)
-        mailing_lists_files = run(query)
+        mailing_lists = ExecuteQuery(q)
+        mailing_lists_files = ExecuteQuery(q)
         names = mailing_lists_files
     else:
         # TODO: not ordered yet by total messages
         q = "SELECT DISTINCT(mailing_list) FROM messages m "+\
-                "WHERE m.first_date >= "+startdate+" AND "+\
-                "m.first_date < "+enddate
-        query = new ("Query", sql = q)
-        mailing_lists = run(query)
+            "WHERE m.first_date >= "+startdate+" AND "+\
+            "m.first_date < "+enddate
+        mailing_lists = ExecuteQuery(q)
         names = mailing_lists
     return (names)
 
-def countriesNames  (identities_db, startdate, enddate, filter=c()) :
+def countriesNames  (identities_db, startdate, enddate, filter=[]) :
     countries_limit = 30
 
     filter_countries = ""
@@ -536,12 +539,11 @@ def countriesNames  (identities_db, startdate, enddate, filter=c()) :
             "GROUP BY c.name "+\
             "ORDER BY COUNT((m.message_ID)) DESC LIMIT "+\
             countries_limit
-    query = new ("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return(data['name'])
 
 
-def companiesNames  (i_db, startdate, enddate, filter=c()) :
+def companiesNames  (i_db, startdate, enddate, filter=[]) :
     companies_limit = 30
     filter_companies = ""
 
@@ -558,12 +560,11 @@ def companiesNames  (i_db, startdate, enddate, filter=c()) :
         "    ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT " +\
         companies_limit
 
-    query = new("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data['name'])
 
 
-def domainsNames  (i_db, startdate, enddate, filter=c()) :
+def domainsNames  (i_db, startdate, enddate, filter=[]) :
     domains_limit = 30
     filter_domains = ""
 
@@ -579,9 +580,7 @@ def domainsNames  (i_db, startdate, enddate, filter=c()) :
         "    GROUP BY d.name "+\
         "    ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT "+\
             domains_limit
-
-    query = new("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data['name'])
 
 ########################
@@ -652,8 +651,8 @@ def GetListPeopleMLS (startdate, enddate) :
     filters = GetFiltersOwnUniqueIdsMLS()
     filters += " GROUP BY id ORDER BY total desc"
     q = GetSQLGlobal('first_date',fields,tables, filters, startdate, enddate)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def GetQueryPeopleMLS (developer_id, period, startdate, enddate, evol) :
@@ -675,15 +674,15 @@ def GetQueryPeopleMLS (developer_id, period, startdate, enddate, evol) :
 
 def GetEvolPeopleMLS (developer_id, period, startdate, enddate) :
     q = GetQueryPeopleMLS(developer_id, period, startdate, enddate, True)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
 def GetStaticPeopleMLS (developer_id, startdate, enddate) :
     q = GetQueryPeopleMLS(developer_id, period, startdate, enddate, False)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -692,7 +691,7 @@ def GetStaticPeopleMLS (developer_id, startdate, enddate) :
 #########################
 
 
-def top_senders (days = 0, startdate, enddate, identities_db, filter = c("")) :
+def top_senders (days, startdate, enddate, identities_db, filter = []) :
 
     limit = 30
     affiliations = ""
@@ -703,7 +702,7 @@ def top_senders (days = 0, startdate, enddate, identities_db, filter = c("")) :
     if (days != 0 ) :
         query = new ("Query",
                 sql = "SELECT @maxdate:=max(first_date) from messages limit 1")
-        data = run(query)
+        ExecuteQuery(q)
         date_limit = " AND DATEDIFF(@maxdate,first_date)<"+days
 
     q = "SELECT up.id as id, up.identifier as senders, "+\
@@ -719,8 +718,7 @@ def top_senders (days = 0, startdate, enddate, identities_db, filter = c("")) :
             "GROUP BY up.identifier "+\
             "ORDER BY sent desc "+\
             "LIMIT ",limit
-    query = new ("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data)
 
 def repoTopSenders (repo, identities_db, startdate, enddate, rfield):
@@ -736,8 +734,7 @@ def repoTopSenders (repo, identities_db, startdate, enddate, rfield):
             "ORDER BY sent desc, "+\
             "LIMIT 10"
 
-    query = new ("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data)
 
 def countryTopSenders (country_name, identities_db, startdate, enddate):
@@ -752,8 +749,7 @@ def countryTopSenders (country_name, identities_db, startdate, enddate):
         "  c.name = '"+country_name+"' "+\
         "GROUP BY up.identifier "+\
         "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10"
-    query = new ("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data)
 
 def companyTopSenders (company_name, identities_db, startdate, enddate):
@@ -768,8 +764,7 @@ def companyTopSenders (company_name, identities_db, startdate, enddate):
         "  c.name = '"+company_name+"' "+\
         "GROUP BY up.identifier "+\
         "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10"
-    query = new ("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data)
 
 def domainTopSenders (domain_name, identities_db, startdate, enddate):
@@ -784,8 +779,7 @@ def domainTopSenders (domain_name, identities_db, startdate, enddate):
         "  d.name = '"+domain_name+"' "+\
         "GROUP BY up.identifier "+\
         "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10"
-    query = new ("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data)
 
 #######################
@@ -799,8 +793,8 @@ def lastActivity (days) :
         "    where first_date >= ( "+\
         "      select (max(first_date) - INTERVAL "+days+" day) "+\
         "      from messages)"
-    query = new("Query", sql = q)
-    data1 = run(query)
+
+    data1 = ExecuteQuery(q)
 
     q = "select count(distinct(pup.upeople_id)) as senders_"+days+" "+\
         "    from messages m, "+\
@@ -810,8 +804,8 @@ def lastActivity (days) :
         "      m.message_ID = mp.message_id and "+\
         "      m.first_date >= (select (max(first_date) - INTERVAL ",days," day) "+\
         "        from messages)"
-    query = new("Query", sql = q)
-    data2 = run(query)
+
+    data2 = ExecuteQuery(q)
 
     agg_data = dict(data1.keys() + data2.keys())
 
@@ -827,8 +821,7 @@ def StaticNumSent (startdate, enddate):
     filters = GetFiltersOwnUniqueIdsMLS()
     q = GetSQLGlobal('first_date', fields, tables, filters,
             startdate, enddate)
-    query = new ("Query", sql = q)
-    sent = run(query)
+    sent = ExecuteQuery(q)
     return(sent)
 
 
@@ -838,8 +831,7 @@ def StaticNumSenders (startdate, enddate):
     filters = GetFiltersOwnUniqueIdsMLS()
     q = GetSQLGlobal('first_date', fields, tables, filters,
             startdate, enddate)
-    query = new ("Query", sql = q)
-    senders = run(query)
+    senders = ExecuteQuery(q)
     return(senders)
 
 def GetDiffSentDays (period, init_date, days):

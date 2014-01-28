@@ -41,7 +41,7 @@ vizr = importr("vizgrimoire")
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
-# import MLS
+import MLS
 
 def aggData(period, startdate, enddate, identities_db, destdir):
 
@@ -77,20 +77,23 @@ def aggData(period, startdate, enddate, identities_db, destdir):
 def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf):
 
     evol = {}
-    data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield)
-    evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+#    data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield)
+#    evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+    data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield)
+    evol = dict(evol.items() + completePeriodIds(data).items())
+
 
     if ('companies' in reports):
-        data  = vizr.EvolMLSCompanies(period, startdate, enddate, identities_db)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data  = MLS.EvolMLSCompanies(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(data).items())
 
     if ('countries' in reports):
-        data = vizr.EvolMLSCountries(period, startdate, enddate, identities_db)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = MLS.EvolMLSCountries(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(data).items())
 
     if ('domains' in reports):
-        data = vizr.EvolMLSDomains(period, startdate, enddate, identities_db)
-        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = MLS.EvolMLSDomains(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(data).items())
 
     createJSON (evol, destdir+"/mls-evolutionary.json")
 
@@ -243,7 +246,7 @@ if __name__ == '__main__':
 
     # Working at the same time with VizR and VizPy yet
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    # GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
