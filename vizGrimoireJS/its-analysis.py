@@ -258,6 +258,19 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, closed_con
     all_top = dict(top_closers_data.items() + top_openers_data.items())
     createJSON (all_top, destdir+"/its-top.json", False)
 
+def microStudies(destdir):
+    # Studies implemented in R
+
+    # Time to Close: Other backends not yet supported
+    vizr.ReportTimeToCloseITS(opts.backend, opts.destdir)
+
+    # Demographics
+    vizr.ReportDemographicsAgingITS(opts.startdate, opts.destdir)
+    vizr.ReportDemographicsBirthITS(opts.startdate, opts.destdir)
+
+    # Markov
+    vizr.ReportMarkovChain(opts.destdir)
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
     logging.info("Starting ITS data source analysis")
@@ -282,6 +295,10 @@ if __name__ == '__main__':
             opts.granularity, opts, backend.closed_condition)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
+    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
+
+    microStudies(opts.destdir)
+
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
     if ('repositories' in reports):
@@ -293,4 +310,3 @@ if __name__ == '__main__':
     if ('domains' in reports):
         domainsData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots)
 
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)

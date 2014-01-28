@@ -355,9 +355,7 @@ ReportDemographicsAgingITS(conf$str_enddate, destdir)
 ReportDemographicsBirthITS(conf$str_enddate, destdir)
 
 # Markov
-markov <- MarkovChain()
-createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
-
+ReportMarkovChain(destdir)
 
 #for (status in statuses)
 #{
