@@ -862,7 +862,7 @@ def GetTopOpeners (days, startdate, enddate,
     if (days != 0 ) :
         sql = "SELECT @maxdate:=max(changed_on) from changes limit 1"
         ExecuteQuery(sql)
-        date_limit = " AND DATEDIFF(@maxdate, changed_on)<"+str(days)
+        date_limit = " AND DATEDIFF(@maxdate, submitted_on)<"+str(days)
 
     q = "SELECT up.id as id, up.identifier as openers, "+\
         "    count(distinct(i.id)) as opened "+\
@@ -882,7 +882,6 @@ def GetTopOpeners (days, startdate, enddate,
 
     data = ExecuteQuery(q)
     return (data)
-
 
 #################
 # People information, to be refactored
