@@ -44,32 +44,35 @@ from GrimoireUtils import valRtoPython, read_options, getPeriod
 import MLS
 
 def aggData(period, startdate, enddate, identities_db, destdir):
+#    data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
+#    agg = dataFrame2Dict(data)
+    data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
+    agg = data
 
-    data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield)
-    agg = dataFrame2Dict(data)
 
     if ('companies' in reports):
-        data = vizr.AggMLSCompanies(period, startdate, enddate, identities_db)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = MLS.AggMLSCompanies(period, startdate, enddate, identities_db)
+        agg = dict(agg.items() + data.items())
 
     if ('countries' in reports):
-        data = vizr.AggMLSCountries(period, startdate, enddate, identities_db)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = MLS.AggMLSCountries(period, startdate, enddate, identities_db)
+        agg = dict(agg.items() + data.items())
 
     if ('domains' in reports):
-        data = vizr.AggMLSDomains(period, startdate, enddate, identities_db)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
+        data = MLS.AggMLSDomains(period, startdate, enddate, identities_db)
+        agg = dict(agg.items() + data.items())
 
     # Tendencies
     for i in [7,30,365]:
-        period_data = dataFrame2Dict(vizr.GetDiffSentDays(period, enddate, i))
+        # period_data = dataFrame2Dict(vizr.GetDiffSentDays(period, enddate, i))
+        period_data = MLS.GetDiffSentDays(period, enddate, i)
         agg = dict(agg.items() + period_data.items())
-        period_data = dataFrame2Dict(vizr.GetDiffSendersDays(period, enddate, i))
+        period_data = MLS.GetDiffSendersDays(period, enddate, i)
         agg = dict(agg.items() + period_data.items())
 
     # Last Activity: to be removed
     for i in [7,14,30,60,90,180,365,730]:
-        period_activity = dataFrame2Dict(vizr.lastActivity(i))
+        period_activity = MLS.lastActivity(i)
         agg = dict(agg.items() + period_activity.items())
 
     createJSON (agg, destdir+"/mls-static.json")

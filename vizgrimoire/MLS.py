@@ -787,6 +787,7 @@ def domainTopSenders (domain_name, identities_db, startdate, enddate):
 #######################
 
 def lastActivity (days) :
+    days = str(days)
     #commits
     q = "select count(distinct(message_ID)) as sent_"+days+" "+\
         "    from messages "+\
@@ -802,13 +803,12 @@ def lastActivity (days) :
         "      messages_people mp "+\
         "    where pup.people_id = mp.email_address  and "+\
         "      m.message_ID = mp.message_id and "+\
-        "      m.first_date >= (select (max(first_date) - INTERVAL ",days," day) "+\
+        "      m.first_date >= (select (max(first_date) - INTERVAL "+days+" day) "+\
         "        from messages)"
 
     data2 = ExecuteQuery(q)
 
-    agg_data = dict(data1.keys() + data2.keys())
-
+    agg_data = dict(data1.items() + data2.items())
     return(agg_data)
 
 #####################
@@ -836,9 +836,9 @@ def StaticNumSenders (startdate, enddate):
 
 def GetDiffSentDays (period, init_date, days):
     chardates = GetDates(init_date, days)
-    last = StaticNumSent(period, chardates[1], chardates[0])
+    last = StaticNumSent(chardates[1], chardates[0])
     last = int(last['sent'])
-    prev = StaticNumSent(period, chardates[2], chardates[1])
+    prev = StaticNumSent(chardates[2], chardates[1])
     prev = int(prev['sent'])
 
     data = {}
@@ -851,9 +851,9 @@ def GetDiffSendersDays (period, init_date, days):
     # This function provides the percentage in activity between two periods
 
     chardates = GetDates(init_date, days)
-    last = StaticNumSenders(period, chardates[1], chardates[0])
+    last = StaticNumSenders(chardates[1], chardates[0])
     last = int(last['senders'])
-    prev = StaticNumSenders(period, chardates[2], chardates[1])
+    prev = StaticNumSenders(chardates[2], chardates[1])
     prev = int(prev['senders'])
 
     data = {}
