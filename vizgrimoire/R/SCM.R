@@ -1391,7 +1391,7 @@ evol_companies <- function(period, startdate, enddate){
 repos_name <- function(startdate, enddate) {
     # List of repositories name
 
-    q <- paste ("select count(*) as total, 
+    q <- paste ("select count(distinct(s.id)) as total, 
                         name
                  from actions, 
                       scmlog s, 
