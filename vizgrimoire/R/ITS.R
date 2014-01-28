@@ -1055,7 +1055,8 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
 }
 
 
-GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
+GetTopClosers <- function(days = 0, startdate, enddate,
+        identities_db, filter = c(""), closed_condition = closed_condition) {
 
     affiliations = ""
     for (aff in filter){
@@ -1112,7 +1113,8 @@ GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, 
     return (data)
 }
 
-GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {  
+GetTopOpeners <- function(days = 0, startdate, enddate,
+        identities_db, filter = c(""), closed_condition = closed_condition) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
