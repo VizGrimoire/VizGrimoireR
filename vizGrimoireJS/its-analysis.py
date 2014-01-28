@@ -154,20 +154,92 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 
-def peopleData(period, startdate, enddate, identities_db, destdir):
+def peopleData(period, startdate, enddate, identities_db, destdir, closed_condition):
+    people  = dataFrame2Dict(vizr.GetPeopleListITS(startdate, enddate))
+    people = people['pid']
+    limit = 30
+    if (len(people)<limit): limit = len(people);
+    people = people[0:limit]
+    createJSON(people, destdir+"/its-people.json")
+
+    for upeople_id in people :
+        evol = vizr.GetPeopleEvolITS(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        createJSON (evol, destdir+"/people-"+str(upeople_id)+"-its-evolutionary.json")
+
+        data = vizr.GetPeopleStaticITS(upeople_id, startdate, enddate)
+        createJSON (dataFrame2Dict(data), destdir+"/people-"+str(upeople_id)+"-its-static.json")
+
+def reposData(period, startdate, enddate, identities_db, destdir, conf, closed_condition):
+    repos  = dataFrame2Dict(vizr.GetReposNameITS(startdate, enddate))
+    repos = repos['name']
+    createJSON(repos, destdir+"/its-repos.json")
+
+    for repo in repos :
+        repo_name = "'"+ repo+ "'"
+        repo_file = repo.replace("/","_")
+        print (repo_name) 
+        evol = vizr.EvolITSInfo(period, startdate, enddate, identities_db, ['repository', repo_name], closed_condition)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        createJSON(evol, destdir+"/"+repo_file+"-its-rep-evolutionary.json")
+
+        agg = vizr.AggITSInfo(period, startdate, enddate, identities_db, ['repository', repo_name], closed_condition)
+        createJSON(dataFrame2Dict(agg), destdir+"/"+repo_file+"-its-rep-static.json")
     pass
 
-def reposData(period, startdate, enddate, identities_db, destdir, conf):
-    pass
+def companiesData(period, startdate, enddate, identities_db, destdir, closed_condition, bots):
+    companies  = dataFrame2Dict(vizr.GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, bots))
+    companies = companies['name']
+    createJSON(companies, destdir+"/its-companies.json")
 
-def companiesData(period, startdate, enddate, identities_db, destdir):
-    pass
+    for company in companies:
+        company_name = "'"+ company+ "'"
+        print (company_name)
 
-def countriesData(period, startdate, enddate, identities_db, destdir):
-    pass
+        evol = vizr.EvolITSInfo(period, startdate, enddate, identities_db, ['company', company_name], closed_condition)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        createJSON(evol, destdir+"/"+company+"-its-com-evolutionary.json")
 
-def domainsData(period, startdate, enddate, identities_db, destdir):
-    pass
+        agg = vizr.AggITSInfo(period, startdate, enddate, identities_db, ['company', company_name], closed_condition)
+        createJSON(dataFrame2Dict(agg), destdir+"/"+company+"-its-com-static.json")
+
+        top = vizr.GetCompanyTopClosers(company_name, startdate, enddate, identities_db, bots, closed_condition)
+        createJSON(dataFrame2Dict(top), destdir+"/"+company+"-its-com-top-closers.json", False)
+
+def countriesData(period, startdate, enddate, identities_db, destdir, closed_condition):
+    countries  = dataFrame2Dict(vizr.GetCountriesNamesITS(startdate, enddate, identities_db, closed_condition))
+    countries = countries['name']
+    createJSON(countries, destdir+"/its-countries.json")
+
+    for country in countries :
+        print (country)
+
+        country_name = "'" + country + "'"
+        evol = vizr.EvolITSInfo(period, startdate, enddate, identities_db, ['country', country_name], closed_condition)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        createJSON (evol, destdir+"/"+country+"-its-cou-evolutionary.json")
+
+        data = vizr.AggITSInfo(period, startdate, enddate, identities_db, ['country', country_name], closed_condition)
+        createJSON (dataFrame2Dict(data), destdir+"/"+country+"-its-cou-static.json")
+
+def domainsData(period, startdate, enddate, identities_db, destdir, closed_condition, bots):
+    domains = dataFrame2Dict(vizr.GetDomainsNameITS(startdate, enddate, identities_db, closed_condition, bots))
+    domains = domains['name']
+    createJSON(domains, destdir+"/its-domains.json")
+
+    for domain in domains:
+        domain_name = "'"+ domain + "'"
+        print (domain_name)
+
+        evol = vizr.EvolITSInfo(period, startdate, enddate, identities_db, ['domain', domain_name], closed_condition)
+        evol = completePeriodIds(dataFrame2Dict(evol))
+        createJSON(evol, destdir+"/"+domain+"-its-dom-evolutionary.json")
+
+        agg = vizr.AggITSInfo(period, startdate, enddate, identities_db, ['domain', domain_name], closed_condition)
+        createJSON(dataFrame2Dict(agg), destdir+"/"+domain+"-its-dom-static.json")
+
+        top = vizr.GetDomainTopClosers(domain_name, startdate, enddate, identities_db, bots, closed_condition)
+        createJSON(dataFrame2Dict(top), destdir+"/"+domain+"-its-dom-top-closers.json", False)
 
 def topData(period, startdate, enddate, identities_db, destdir, bots, closed_condition):
 
@@ -211,15 +283,14 @@ if __name__ == '__main__':
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
     if ('people' in reports):
-        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
     if ('repositories' in reports):
-        reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
+        reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts, backend.closed_condition)
     if ('countries' in reports):
-        countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        countriesData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
     if ('companies' in reports):
-        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots)
     if ('domains' in reports):
-        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
-
+        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots)
 
     topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
