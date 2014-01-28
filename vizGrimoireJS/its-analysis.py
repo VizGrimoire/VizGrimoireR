@@ -93,12 +93,48 @@ class Backend(object):
             Backend.name_log_table = 'issues_log_redmine'
 
 
-def aggData(period, startdate, enddate, idb, destdir):
-    pass
+def aggData(period, startdate, enddate, identities_db, destdir, closed_condition):
+    data = dataFrame2Dict(vizr.AggITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition))
+    agg = data
+    data = dataFrame2Dict(vizr.AggAllParticipants(startdate, enddate))
+    agg = dict(agg.items() +  data.items())
+    data = dataFrame2Dict(vizr.TrackerURL())
+    agg = dict(agg.items() +  data.items())
+
+    if ('companies' in reports):
+        data = dataFrame2Dict(vizr.AggIssuesCompanies(period, startdate, enddate, identities_db))
+        agg = dict(agg.items() + data.items())
+
+    if ('countries' in reports):
+        data = dataFrame2Dict(vizr.AggIssuesCountries(period, startdate, enddate, identities_db))
+        agg = dict(agg.items() + data.items())
+
+    if ('domains' in reports):
+        data = dataFrame2Dict(vizr.AggIssuesDomains(period, startdate, enddate, identities_db))
+        agg = dict(agg.items() + data.items())
+
+    # Tendencies
+    for i in [7,30,365]:
+        # period_data = dataFrame2Dict(vizr.GetDiffSentDays(period, enddate, i))
+        period_data = dataFrame2Dict(vizr.GetDiffClosedDays(period, identities_db, enddate, i, closed_condition = closed_condition))
+        agg = dict(agg.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetDiffOpenedDays(period, identities_db, enddate, i))
+        agg = dict(agg.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetDiffClosersDays(period, identities_db, enddate, i, closed_condition = closed_condition))
+        agg = dict(agg.items() + period_data.items())
+        period_data = dataFrame2Dict(vizr.GetDiffChangersDays(period, identities_db, enddate, i))
+        agg = dict(agg.items() + period_data.items())
+
+    # Last Activity: to be removed
+    for i in [7,14,30,60,90,180,365,730]:
+        period_activity = dataFrame2Dict(vizr.GetLastActivityITS(i, closed_condition))
+        agg = dict(agg.items() + period_activity.items())
+
+    createJSON (agg, destdir+"/its-static.json")
 
 def tsData(period, startdate, enddate, identities_db, destdir, granularity,
-           conf, backend):
-    data = vizr.EvolITSInfo(period, startdate, enddate, identities_db, closed_condition = backend.closed_condition)
+           conf, closed_condition):
+    data = vizr.EvolITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition)
     evol = completePeriodIds(dataFrame2Dict(data))
     if ('companies' in reports) :
         data = vizr.EvolIssuesCompanies(period, startdate, enddate, identities_db)
@@ -157,8 +193,9 @@ if __name__ == '__main__':
     # backends
     backend = Backend(opts.backend)
 
-    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts, backend)
-    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, 
+            opts.granularity, opts, backend.closed_condition)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir,backend.closed_condition)
 
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
