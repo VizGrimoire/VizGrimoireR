@@ -40,7 +40,7 @@ import GrimoireUtils
 def GetMLSSQLRepositoriesFrom ():
     # tables necessary for repositories
     #return (" messages m ") 
-    return ("")
+    return (" ")
 
 
 def GetMLSSQLRepositoriesWhere (repository):
@@ -538,7 +538,7 @@ def countriesNames  (identities_db, startdate, enddate, filter=[]) :
             "  m.first_date < "+enddate+" "+\
             "GROUP BY c.name "+\
             "ORDER BY COUNT((m.message_ID)) DESC LIMIT "+\
-            countries_limit
+            str(countries_limit)
     data = ExecuteQuery(q)
     return(data['name'])
 
@@ -558,7 +558,7 @@ def companiesNames  (i_db, startdate, enddate, filter=[]) :
         "      m.first_date < "+enddate+" "+\
         "    GROUP BY c.name "+\
         "    ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT " +\
-        companies_limit
+        str(companies_limit)
 
     data = ExecuteQuery(q)
     return (data['name'])
@@ -575,11 +575,11 @@ def domainsNames  (i_db, startdate, enddate, filter=[]) :
         "    FROM "+GetTablesDomains(i_db)+ " "+\
         "    WHERE "+ GetFiltersDomains()+ " AND "+\
         "    "+ filter_domains+ " "+\
-        "    m.first_date >= "+startdate," AND "+\
-        "    m.first_date < "+enddate," "+\
+        "    m.first_date >= "+startdate+" AND "+\
+        "    m.first_date < "+enddate+\
         "    GROUP BY d.name "+\
         "    ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT "+\
-            domains_limit
+            str(domains_limit)
     data = ExecuteQuery(q)
     return (data['name'])
 
@@ -599,25 +599,25 @@ def GetFiltersOwnUniqueIdsMLS  () :
 
 
 def GetTablesCountries (i_db) :
-    return (GetTablesOwnUniqueIdsMLS(),', '+\
+    return (GetTablesOwnUniqueIdsMLS()+', '+\
                   i_db+'.countries c, '+\
                   i_db+'.upeople_countries upc')
 
 
 def GetFiltersCountries () :
-    return (GetFiltersOwnUniqueIdsMLS(),' AND '+\
+    return (GetFiltersOwnUniqueIdsMLS()+' AND '+\
               "pup.upeople_id = upc.upeople_id AND "+\
               'upc.country_id = c.id')
 
 
 def GetTablesCompanies (i_db) :
-    return (GetTablesOwnUniqueIdsMLS(),', '+\
+    return (GetTablesOwnUniqueIdsMLS()+', '+\
                   i_db+'.companies c, '+\
                   i_db+'.upeople_companies upc')
 
 
 def GetFiltersCompanies () :
-    return (GetFiltersOwnUniqueIdsMLS(),' AND '+\
+    return (GetFiltersOwnUniqueIdsMLS()+' AND '+\
                   "pup.upeople_id = upc.upeople_id AND "+\
                   "upc.company_id = c.id AND "+\
                   "m.first_date >= upc.init AND "+\
@@ -625,13 +625,13 @@ def GetFiltersCompanies () :
 
 
 def GetTablesDomains (i_db) :
-    return (GetTablesOwnUniqueIdsMLS(),', '+\
+    return (GetTablesOwnUniqueIdsMLS()+', '+\
                   i_db+'.domains d, '+\
                   i_db+'.upeople_domains upd')
 
 
 def GetFiltersDomains () :
-    return (GetFiltersOwnUniqueIdsMLS(),' AND '+\
+    return (GetFiltersOwnUniqueIdsMLS()+' AND '+\
                   "pup.upeople_id = upd.upeople_id AND "+\
                   "upd.domain_id = d.id AND "+\
                   "m.first_date >= upd.init AND "+\
@@ -680,7 +680,7 @@ def GetEvolPeopleMLS (developer_id, period, startdate, enddate) :
 
 
 def GetStaticPeopleMLS (developer_id, startdate, enddate) :
-    q = GetQueryPeopleMLS(developer_id, period, startdate, enddate, False)
+    q = GetQueryPeopleMLS(developer_id, None, startdate, enddate, False)
 
     data = ExecuteQuery(q)
     return (data)
@@ -700,48 +700,46 @@ def top_senders (days, startdate, enddate, identities_db, filter = []) :
 
     date_limit = ""
     if (days != 0 ) :
-        query = new ("Query",
-                sql = "SELECT @maxdate:=max(first_date) from messages limit 1")
-        ExecuteQuery(q)
-        date_limit = " AND DATEDIFF(@maxdate,first_date)<"+days
+        sql = "SELECT @maxdate:=max(first_date) from messages limit 1"
+        ExecuteQuery(sql)
+        date_limit = " AND DATEDIFF(@maxdate,first_date)<"+str(days)
 
     q = "SELECT up.id as id, up.identifier as senders, "+\
             "COUNT(distinct(m.message_id)) as sent "+\
-            "FROM "+ GetTablesCompanies(identities_db)+ "+\
-            "     ","+identities_db+".upeople up "+\
+            "FROM "+ GetTablesCompanies(identities_db)+\
+            " ,"+identities_db+".upeople up "+\
             "WHERE "+ GetFiltersCompanies()+ " AND "+\
             "  pup.upeople_id = up.id AND "+\
             "  "+ affiliations + " "+\
             "  m.first_date >= "+startdate+" AND "+\
-            "  m.first_date < ",+enddate+ +\
+            "  m.first_date < "+enddate +\
             date_limit+ " "+\
             "GROUP BY up.identifier "+\
             "ORDER BY sent desc "+\
-            "LIMIT ",limit
+            "LIMIT " + str(limit)
     data = ExecuteQuery(q)
     return (data)
 
 def repoTopSenders (repo, identities_db, startdate, enddate, rfield):
     q = "SELECT up.id as id, up.identifier as senders, "+\
-            "COUNT(m.message_id) as sent, "+\
-            "FROM "+ GetTablesOwnUniqueIdsMLS()+ ","+identities_db+".upeople up, "+\
-            "WHERE "+ GetFiltersOwnUniqueIdsMLS()+ " AND, "+\
-            "  pup.upeople_id = up.id AND, "+\
-            "  m.first_date >= "+startdate+" AND, "+\
-            "  m.first_date < "+enddate+" AND, "+\
-            "  "+rfield+"='"+repo+"', "+\
-            "GROUP BY up.identifier, "+\
-            "ORDER BY sent desc, "+\
+            "COUNT(m.message_id) as sent "+\
+            "FROM "+ GetTablesOwnUniqueIdsMLS()+ ","+identities_db+".upeople up "+\
+            "WHERE "+ GetFiltersOwnUniqueIdsMLS()+ " AND "+\
+            "  pup.upeople_id = up.id AND "+\
+            "  m.first_date >= "+startdate+" AND "+\
+            "  m.first_date < "+enddate+" AND "+\
+            "  "+rfield+"='"+repo+"' "+\
+            "GROUP BY up.identifier "+\
+            "ORDER BY sent desc "+\
             "LIMIT 10"
-
     data = ExecuteQuery(q)
     return (data)
 
 def countryTopSenders (country_name, identities_db, startdate, enddate):
     q = "SELECT up.id as id, up.identifier as senders, "+\
         "COUNT(DISTINCT(m.message_id)) as sent "+\
-        "FROM "+ GetTablesCountries(identities_db)+ "+\
-        "  ", "+identities_db+".upeople up "+\
+        "FROM "+ GetTablesCountries(identities_db)+ \
+        "  , "+identities_db+".upeople up "+\
         "WHERE "+ GetFiltersCountries()+ " AND "+\
         "  up.id = upc.upeople_id AND "+\
         "  m.first_date >= "+startdate+" AND "+\
@@ -755,8 +753,8 @@ def countryTopSenders (country_name, identities_db, startdate, enddate):
 def companyTopSenders (company_name, identities_db, startdate, enddate):
     q = "SELECT up.id as id, up.identifier as senders, "+\
         "COUNT(DISTINCT(m.message_id)) as sent "+\
-        "FROM "+GetTablesCompanies(identities_db)+ "+\
-        "  ", "+identities_db+".upeople up "+\
+        "FROM "+GetTablesCompanies(identities_db)+\
+        ", "+identities_db+".upeople up "+\
         "WHERE "+GetFiltersCompanies()+" AND "+\
         "  up.id = upc.upeople_id AND "+\
         "  m.first_date >= "+startdate+" AND "+\
@@ -770,8 +768,8 @@ def companyTopSenders (company_name, identities_db, startdate, enddate):
 def domainTopSenders (domain_name, identities_db, startdate, enddate):
     q = "SELECT up.identifier as senders, "+\
         "COUNT(DISTINCT(m.message_id)) as sent "+\
-        "FROM "+GetTablesDomains(identities_db)+ "+\
-        " ", "+identities_db+".upeople up "+\
+        "FROM "+GetTablesDomains(identities_db) +\
+        " , "+identities_db+".upeople up "+\
         "WHERE "+GetFiltersDomains()+ " AND "+\
         "  up.id = upd.upeople_id AND "+\
         "  m.first_date >= "+startdate+" AND "+\

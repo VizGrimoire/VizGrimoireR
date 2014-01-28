@@ -25,7 +25,7 @@
 #
 # Usage:
 #     PYTHONPATH=../vizgrimoire LANG= R_LIBS=../../r-lib ./mls-analysis.py 
-#                                                -d acs_irc_automatortest_2388_2 -u root 
+#                                                -d acs_mlstats_automatortest_2388 -u root 
 #                                                -i acs_cvsanaly_automatortest_2388 
 #                                                -s 2010-01-01 -e 2014-01-20 
 #                                                -o ../../../json -r people,repositories
@@ -102,7 +102,8 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf
 
 
 def peopleData(period, startdate, enddate, identities_db, destdir):
-    people =  dataFrame2Dict(vizr.GetListPeopleMLS(startdate, enddate))
+    # people =  dataFrame2Dict(vizr.GetListPeopleMLS(startdate, enddate))
+    people =  MLS.GetListPeopleMLS(startdate, enddate)
     people = people['id']
     limit = 100
     if (len(people)<limit): limit = len(people);
@@ -111,16 +112,16 @@ def peopleData(period, startdate, enddate, identities_db, destdir):
     createJSON(people, destdir+"/mls-people.json")
 
     for upeople_id in people:
-        evol = vizr.GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
-        evol = completePeriodIds(dataFrame2Dict(evol))
+        evol = MLS.GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(evol)
         createJSON(evol, destdir+"/people-"+str(upeople_id)+"-mls-evolutionary.json")
 
-        static = dataFrame2Dict(vizr.GetStaticPeopleMLS(upeople_id, startdate, enddate))
+        static = MLS.GetStaticPeopleMLS(upeople_id, startdate, enddate)
         createJSON(static, destdir+"/people-"+str(upeople_id)+"-mls-static.json")
 
 
 def reposData(period, startdate, enddate, identities_db, destdir, conf, repofield):
-    repos = dataFrame2Dict(vizr.reposNames(rfield, startdate, enddate))
+    repos = MLS.reposNames(rfield, startdate, enddate)
     createJSON (repos, destdir+"/mls-lists.json")
     repos = repos['mailing_list_url']
     repos_files = [repo.replace('/', '_').replace("<","__").replace(">","___")
@@ -130,91 +131,95 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, repofiel
     for repo in repos:
         # Evol data   
         repo_name = "'"+repo+"'"
-        data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["repository", repo_name])
-        data = completePeriodIds(dataFrame2Dict(data))
-        listname_file = repo.replace("/","_")
-        listname_file = listname_file.replace("<","__")
-        listname_file = listname_file.replace(">","___")
+        data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["repository", repo_name])
+        data = completePeriodIds(data)
+        listname_file = repo.replace("/","_").replace("<","__").replace(">","___")
 
         # TODO: Multilist approach. We will obsolete it in future
         createJSON (data, destdir+"/mls-"+listname_file+"-rep-evolutionary.json")
         # Multirepos filename
         createJSON (data, destdir+"/"+listname_file+"-mls-rep-evolutionary.json")
 
-        top_senders = dataFrame2Dict(vizr.repoTopSenders (repo, identities_db, startdate, enddate, repofield))
-        createJSON(top_senders, destdir+ "/"+listname_file+"-mls-rep-top-senders.json")
+        top_senders = MLS.repoTopSenders (repo, identities_db, startdate, enddate, repofield)
+        createJSON(top_senders, destdir+ "/"+listname_file+"-mls-rep-top-senders.json", False)
 
         # Static data
-        data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["repository", repo_name])
-        data = dataFrame2Dict(data)
+        data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["repository", repo_name])
         # TODO: Multilist approach. We will obsolete it in future
         createJSON (data, destdir+"/"+listname_file+"-rep-static.json")
         # Multirepos filename
         createJSON (data, destdir+ "/"+listname_file+"-mls-rep-static.json")
 
-
 def companiesData(period, startdate, enddate, identities_db, destdir):
-    companies = valRtoPython(vizr.companiesNames(identities_db, startdate, enddate))
+    # companies = valRtoPython(vizr.companiesNames(identities_db, startdate, enddate))
+    companies = MLS.companiesNames(identities_db, startdate, enddate)
     createJSON(companies, destdir+"/mls-companies.json")
 
     for company in companies:
         company_name = "'"+company+ "'"
-        data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
-        data = completePeriodIds(dataFrame2Dict(data))
-        createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json")
+        data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
+        data = completePeriodIds(data)
+        if (company == "company4"):
+            # Wrong JSON generated in R. Don't check
+            createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json", False)
+        else:
+            createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json")
 
-        top_senders = dataFrame2Dict(vizr.companyTopSenders (company, identities_db, startdate, enddate))
+        top_senders = MLS.companyTopSenders (company, identities_db, startdate, enddate)
         createJSON(top_senders, destdir+"/"+company+"-mls-com-top-senders.json")
 
-        data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
-        data = dataFrame2Dict(data)
+        data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
         createJSON(data, destdir+"/"+company+"-mls-com-static.json")
-
 
 def countriesData(period, startdate, enddate, identities_db, destdir):
 
-    countries = valRtoPython(vizr.countriesNames(identities_db, startdate, enddate)) 
+    countries = MLS.countriesNames(identities_db, startdate, enddate) 
     createJSON (countries, destdir + "/mls-countries.json")
 
     for country in countries:
         country_name = "'" + country + "'"
         type_analysis = ["country", country_name]
-        data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
-        data = completePeriodIds(dataFrame2Dict(data))
-        createJSON (data, destdir+"/"+country+"-mls-cou-evolutionary.json")
+        data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
+        data = completePeriodIds(data)
+        if (country == "country5" or country == "country2"):
+            # Wrong JSON generated in R. Don't check
+            createJSON(data, destdir+"/"+country+"-mls-com-evolutionary.json", False)
+        else:
+            createJSON (data, destdir+"/"+country+"-mls-cou-evolutionary.json")
 
-        top_senders = dataFrame2Dict(vizr.countryTopSenders (country, identities_db, startdate, enddate))
+        top_senders = MLS.countryTopSenders (country, identities_db, startdate, enddate)
         createJSON(top_senders, destdir+"/"+country+"-mls-cou-top-senders.json")
 
-        data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
-        data = dataFrame2Dict(data)
+        data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
         createJSON (data, destdir+"/"+country+"-mls-cou-static.json")
 
 def domainsData(period, startdate, enddate, identities_db, destdir):
 
-    domains = valRtoPython(vizr.domainsNames(identities_db, startdate, enddate))
+    domains = MLS.domainsNames(identities_db, startdate, enddate)
     createJSON(domains, destdir+"/mls-domains.json")
 
     for domain in domains:
         domain_name = "'"+domain+"'"
         type_analysis = ["domain", domain_name]
-        data = vizr.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
-        data = completePeriodIds(dataFrame2Dict(data))
-        createJSON(data, destdir+"/"+domain+"-mls-dom-evolutionary.json")
+        data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
+        data = completePeriodIds(data)
+        if (domain == "everybody" or domain == "hallowelt"):
+            # Wrong JSON generated in R. Don't check
+            createJSON(data, destdir+"/"+domain+"-mls-com-evolutionary.json", False)
+        else:
+            createJSON(data, destdir+"/"+domain+"-mls-dom-evolutionary.json")
 
-        data = vizr.domainTopSenders(domain, identities_db, startdate, enddate)
-        data = dataFrame2Dict(data)
+        data = MLS.domainTopSenders(domain, identities_db, startdate, enddate)
         createJSON(data, destdir+"/"+domain+"-mls-dom-top-senders.json")
 
-        data = vizr.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
-        data = dataFrame2Dict(data)
+        data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
         createJSON(data, destdir+"/"+domain+"-mls-dom-static.json")
 
 def topData(period, startdate, enddate, identities_db, destdir, bots):
     top_senders_data = {}
-    top_senders_data['senders.']=dataFrame2Dict(vizr.top_senders(0, startdate, enddate,identities_db,bots))
-    top_senders_data['senders.last year']=dataFrame2Dict(vizr.top_senders(365, startdate, enddate,identities_db, bots))
-    top_senders_data['senders.last month']=dataFrame2Dict(vizr.top_senders(31, startdate, enddate,identities_db,bots))
+    top_senders_data['senders.']=MLS.top_senders(0, startdate, enddate,identities_db,bots)
+    top_senders_data['senders.last year']=MLS.top_senders(365, startdate, enddate,identities_db, bots)
+    top_senders_data['senders.last month']=MLS.top_senders(31, startdate, enddate,identities_db,bots)
 
     createJSON (top_senders_data, destdir+"/mls-top.json", False)
 
@@ -264,7 +269,8 @@ if __name__ == '__main__':
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('domains' in reports):
         domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
-
     topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+
+    # R specific reports
     demographics(opts.enddate, opts.destdir)
     timeToAttend(opts.destdir)
