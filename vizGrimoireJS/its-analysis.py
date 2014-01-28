@@ -134,8 +134,10 @@ def aggData(period, startdate, enddate, identities_db, destdir, closed_condition
 
 def tsData(period, startdate, enddate, identities_db, destdir, granularity,
            conf, closed_condition):
-    data = vizr.EvolITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition)
-    evol = completePeriodIds(dataFrame2Dict(data))
+#    data = vizr.EvolITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition)
+#    evol = completePeriodIds(dataFrame2Dict(data))
+    data = ITS.EvolITSInfo(period, startdate, enddate, identities_db, [], closed_condition)
+    evol = completePeriodIds(data)
     if ('companies' in reports) :
         data = vizr.EvolIssuesCompanies(period, startdate, enddate, identities_db)
         evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
@@ -286,7 +288,7 @@ if __name__ == '__main__':
 
     # Working at the same time with VizR and VizPy yet
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    # GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     # backends
     backend = Backend(opts.backend)

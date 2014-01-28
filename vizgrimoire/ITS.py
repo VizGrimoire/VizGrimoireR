@@ -27,6 +27,8 @@
 ##   Alvaro del Castillo <acs@bitergia.com>
 ##   Luis Canas-Diaz <lcanas@bitergia.com>
 
+import sys
+
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
@@ -101,7 +103,7 @@ def GetITSSQLReportFrom (identities_db, type_analysis):
 
     From = ""
 
-    if (len(type_analysis) != 2): return From
+    if (type_analysis is None or type_analysis is None or len(type_analysis) != 2): return From
 
     analysis = type_analysis[0]
     value = type_analysis[1]
@@ -120,7 +122,7 @@ def GetITSSQLReportWhere (type_analysis):
     #such analysis
     where = ""
 
-    if (len(type_analysis) != 2): return where
+    if (type_analysis is None or type_analysis is None or len(type_analysis) != 2): return where
 
     analysis = type_analysis[0]
     value = type_analysis[1]
@@ -144,12 +146,19 @@ def GetITSInfo (period, startdate, enddate, identities_db, type_analysis, closed
 
     if (evolutionary):
         closed = EvolIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        closed = completePeriodIds(closed)
         closers = EvolIssuesClosers(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        closers = completePeriodIds(closers)
         changed = EvolIssuesChanged(period, startdate, enddate, identities_db, type_analysis)
+        changed = completePeriodIds(changed)
         changers = EvolIssuesChangers(period, startdate, enddate, identities_db, type_analysis)
+        changers = completePeriodIds(changers)
         open = EvolIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
-        openers = EvolIssuesOpeners(period, startdate, enddate, identities_db, type_analysis)
+        open = completePeriodIds(open)
+        openers = EvolIssuesOpeners(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        openers = completePeriodIds(openers)
         repos = EvolIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
+        repos = completePeriodIds(repos)
     else :
         closed = AggIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
         closers = AggIssuesClosers(period, startdate, enddate, identities_db, type_analysis, closed_condition)
@@ -191,8 +200,8 @@ def GetOpened (period, startdate, enddate, identities_db, type_analysis, evoluti
     tables = " issues i "+ GetITSSQLReportFrom(identities_db, type_analysis)
     filters = GetITSSQLReportWhere(type_analysis)
     q = BuildQuery(period, startdate, enddate, " submitted_on ", fields, tables, filters, evolutionary)
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def AggIssuesOpened (period, startdate, enddate, identities_db, type_analysis):
@@ -209,7 +218,7 @@ def GetOpeners (period, startdate, enddate, identities_db, type_analysis, evolut
     tables = " issues i " + GetITSSQLReportFrom(identities_db, type_analysis)
     filters = GetITSSQLReportWhere(type_analysis)
 
-    if (len (type_analysis) != 2) :
+    if (type_analysis is None or len (type_analysis) != 2) :
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         tables += ", people_upeople pup"
@@ -220,8 +229,8 @@ def GetOpeners (period, startdate, enddate, identities_db, type_analysis, evolut
         filters += " and i.submitted_by = pup.people_id "
 
     q = BuildQuery(period, startdate, enddate, " submitted_on ", fields, tables, filters, evolutionary)
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -229,9 +238,9 @@ def AggIssuesOpeners (period, startdate, enddate, identities_db, type_analysis):
     # Returns aggregated number of opened issues
     return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, False))
 
-def EvolIssuesOpeners (period, startdate, enddate, identities_db, type_analysis):
+def EvolIssuesOpeners (period, startdate, enddate, identities_db, type_analysis, closed_condition):
     #return(GetEvolBacklogTickets(period, startdate, enddate, status, name.logtable, filter))
-    return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, True))
+    return(GetOpeners(period, startdate, enddate, identities_db, type_analysis, True, closed_condition))
 
 def GetClosed (period, startdate, enddate, identities_db, type_analysis, evolutionary, closed_condition):
     #This function returns the evolution or agg number of closed issues
@@ -245,11 +254,10 @@ def GetClosed (period, startdate, enddate, identities_db, type_analysis, evoluti
     if (filters_ext != ""):
         filters += " and " + filters_ext
     #Action needed to replace issues filters by changes one
-    filters = filter.replace("i.submitted", "ch.changed")
+    filters = filters.replace("i.submitted", "ch.changed")
 
     q = BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    query = new ("Query", sql = q)
-    data = run(query)
+    data = ExecuteQuery(q)
     return (data)
 
 def AggIssuesClosed (period, startdate, enddate, identities_db, type_analysis, closed_condition):
@@ -273,7 +281,7 @@ def GetClosers (period, startdate, enddate, identities_db, type_analysis, evolut
     if (filters_ext != ""):
         filters += " and " + filters_ext
     #unique identities filters
-    if (len(type_analysis) != 2) :
+    if (type_analysis is None or len(type_analysis) != 2) :
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         tables += ", people_upeople pup"
@@ -288,8 +296,8 @@ def GetClosers (period, startdate, enddate, identities_db, type_analysis, evolut
 
 
     q = BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -317,8 +325,8 @@ def GetChanged (period, startdate, enddate, identities_db, type_analysis, evolut
     filters = filters.replace("i.submitted", "ch.changed")
 
     q = BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -343,7 +351,7 @@ def GetChangers (period, startdate, enddate, identities_db, type_analysis, evolu
         filters += " and " + filters_ext
 
     #unique identities filters
-    if (len(type_analysis) != 2) :
+    if (type_analysis is None or len(type_analysis) != 2) :
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
         tables += ", people_upeople pup"
@@ -358,8 +366,8 @@ def GetChangers (period, startdate, enddate, identities_db, type_analysis, evolu
     filters = filters.replace("i.submitted", "ch.changed")
 
     q = BuildQuery(period, startdate, enddate, " ch.changed_on ", fields, tables, filters, evolutionary)
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def AggIssuesChangers (period, startdate, enddate, identities_db, type_analysis):
@@ -457,16 +465,16 @@ def GetEndDate (startdate, enddate, identities_db, type_analysis):
 def AggAllParticipants (startdate, enddate):
     # All participants from the whole history
     q = "SELECT count(distinct(pup.upeople_id)) as allhistory_participants from people_upeople pup"
-    query = new("Query", sql = q)
-    return(run(query))
+
+    return(ExecuteQuery(q))
 
 
 def TrackerURL ():
     # URL of the analyzed tracker
     q = "SELECT url, name as type FROM trackers t JOIN "+\
         "supported_trackers s ON t.type = s.id limit 1"
-    query = new ("Query", sql = q)
-    return(run(query))
+
+    return(ExecuteQuery(q))
 
 ###############
 # Lists of repositories, companies, countries and other analysis
@@ -483,8 +491,8 @@ def GetReposNameITS (startdate, enddate) :
                "         i.submitted_on < "+ enddate+\
                "   GROUP BY t.url  "+\
                "   ORDER BY count(distinct(i.id)) DESC "
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def GetTablesDomainsITS (i_db, table='') :
@@ -513,8 +521,8 @@ def GetDomainsNameITS (startdate, enddate, identities_db, closed_condition, filt
         "       "+ closed_condition+" "+\
         "GROUP BY dom.name "+\
         "ORDER BY COUNT(DISTINCT(c.issue_id)) DESC"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def GetCountriesNamesITS (startdate, enddate, identities_db, closed_condition) :
@@ -535,8 +543,8 @@ def GetCountriesNamesITS (startdate, enddate, identities_db, closed_condition) :
         "      "+ closed_condition+ " "+\
         "      group by cou.name  "+\
         "      order by count(distinct(i.id)) desc"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def GetCompaniesNameITS (startdate, enddate, identities_db, closed_condition, filter) :
@@ -562,8 +570,8 @@ def GetCompaniesNameITS (startdate, enddate, identities_db, closed_condition, fi
                closed_condition +\
         "      group by c.name  "+\
         "      order by count(distinct(i.id)) desc"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 ################
@@ -658,8 +666,8 @@ def GetLastActivityITS (days, closed_condition):
         "where submitted_on >= ( "+\
         "      select (max(submitted_on) - INTERVAL "+days+" day) "+\
         "      from issues)"
-    query = new("Query", sql = q)
-    data1 = run(query)
+    
+    data1 = ExecuteQuery(q)
 
     # closed issues
     q = "select count(distinct(issue_id)) as closed_"+days+" "+\
@@ -668,8 +676,8 @@ def GetLastActivityITS (days, closed_condition):
         "and changed_on >= ( "+\
         "      select (max(changed_on) - INTERVAL "+days+" day) "+\
         "      from changes)"
-    query = new("Query", sql = q)
-    data2 = run(query)
+    
+    data2 = ExecuteQuery(q)
 
     # closers
     q = "SELECT count(distinct(pup.upeople_id)) as closers_"+days+" "+\
@@ -679,8 +687,8 @@ def GetLastActivityITS (days, closed_condition):
          "    select (max(changed_on) - INTERVAL "+days+" day) "+\
          "     from changes) AND "+ closed_condition
 
-    query = new ("Query", sql = q)
-    data3 = run(query)
+
+    data3 = ExecuteQuery(q)
 
     # people_involved    
     q = "SELECT count(distinct(pup.upeople_id)) as changers_"+days+" "+\
@@ -689,8 +697,8 @@ def GetLastActivityITS (days, closed_condition):
          "changed_on >= ( "+\
          "    select (max(changed_on) - INTERVAL "+days+" day) "+\
          "     from changes)"
-    query = new ("Query", sql = q)
-    data4 = run(query)
+
+    data4 = ExecuteQuery(q)
 
     agg_data = dict(data1.items()+data2.items())
     agg_data = dict(agg_data.items()+data3.items())
@@ -737,8 +745,8 @@ def GetTopClosersByAssignee (days, startdate, enddate, identities_db, filter) :
         "GROUP BY up.identifier "+\
         "ORDER BY closed desc limit 10"
 
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -785,8 +793,8 @@ def GetCompanyTopClosers (company_name, startdate, enddate,
         "      AND changed_on >= "+startdate+" AND changed_on < "+enddate+\
               affiliations+ " "+\
         " GROUP BY changed_by ORDER BY closed DESC LIMIT 10"
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def GetTopClosers (days, startdate, enddate,
@@ -818,8 +826,8 @@ def GetTopClosers (days, startdate, enddate,
         "GROUP BY up.identifier "+\
         "ORDER BY closed desc "+\
         "LIMIT 10"
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -841,8 +849,8 @@ def GetDomainTopClosers (domain_name, startdate, enddate,
         "      AND changed_on >= "+startdate+" AND changed_on < " +enddate +\
               affiliations+ " "+\
         "GROUP BY changed_by ORDER BY closed DESC LIMIT 10"
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -872,8 +880,8 @@ def GetTopOpeners (days, startdate, enddate,
         "    GROUP BY up.identifier "+\
         "    ORDER BY opened desc "+\
         "    LIMIT 10"
-    query = new ("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -887,8 +895,8 @@ def GetPeopleListITS (startdate, enddate) :
     filters = GetFiltersOwnUniqueIdsITS()
     filters += "GROUP BY pid ORDER BY total desc"
     q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -910,12 +918,12 @@ def GetPeopleQueryITS (developer_id, period, startdate, enddate, evol) :
 
 def GetPeopleEvolITS (developer_id, period, startdate, enddate) :
     q = GetPeopleQueryITS(developer_id, period, startdate, enddate, True)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def GetPeopleStaticITS (developer_id, startdate, enddate) :
     q = GetPeopleQueryITS(developer_id, period, startdate, enddate, False)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
