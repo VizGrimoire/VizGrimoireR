@@ -19,7 +19,7 @@
 ##
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
-
+##   Alvaro del Castillo <acs@bitergia.com>
 
 #############
 # TODO: missing functions wrt 
