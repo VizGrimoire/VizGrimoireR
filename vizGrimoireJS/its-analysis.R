@@ -115,28 +115,6 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 
 evol = EvolITSInfo(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
 
-markov <- MarkovChain()
-createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
-
-
-
-#for (status in statuses)
-#{
-    #Evolution of the backlog
-    #tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
-    #colnames(tickets_status)[2] <- status
-
-    #Issues per status
-    #current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
-    
-    #Merging data
-    #if (nrow(current_status)>0){
-    #    evol <- merge(evol, current_status, all=TRUE)
-    #}
-    #evol <- merge (evol, tickets_status, all = TRUE)
-#}
-
-
 
 if ('companies' %in% reports) {
     info_data_companies = EvolIssuesCompanies(period, startdate, enddate, identities_db)
@@ -230,17 +208,15 @@ createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 # Top closers
 top_closers_data <- list()
-top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
+top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
+top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
 
 # Top openers
 top_openers_data <- list()
-top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-
-
+top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
+top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
+top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
 
 all_top <- c(top_closers_data, top_openers_data)
 createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
@@ -296,7 +272,7 @@ if ('companies' %in% reports) {
         static_info = AggITSInfo(period, startdate, enddate, identities_db, list('company', company_name), closed_condition)
         createJSON(static_info, paste(c(destdir,"/",company_aux,"-its-com-static.json"), collapse=''))
 		
-        top_closers <- GetCompanyTopClosers(company_name, startdate, enddate, identities_db)
+        top_closers <- GetCompanyTopClosers(company_name, startdate, enddate, identities_db, c("-Bot"), closed_condition)
         createJSON(top_closers, paste(c(destdir,"/",company_aux,"-its-com-top-closers.json"), collapse=''))
 
     }
@@ -343,7 +319,7 @@ if ('domains' %in% reports) {
         static_info = AggITSInfo(period, startdate, enddate, identities_db, list('domain', domain_name), closed_condition)
         createJSON(static_info, paste(c(destdir,"/",domain_aux,"-its-dom-static.json"), collapse=''))
 
-        top_closers <- GetDomainTopClosers(domain_name, startdate, enddate, identities_db)
+        top_closers <- GetDomainTopClosers(domain_name, startdate, enddate, identities_db, c("-Bot"), closed_condition)
         createJSON(top_closers, paste(c(destdir,"/",domain_aux,"-its-dom-top-closers.json"), collapse=''))
     }
 }
@@ -367,55 +343,34 @@ if ('people' %in% reports) {
     }
 }
 
+##
+# MICROSTUDIES
+##
+
 # Time to Close: Other backends not yet supported
-if (conf$backend == 'bugzilla' || 
-    conf$backend == 'allura' || 
-    conf$backend == 'jira' ||
-    conf$backend == 'launchpad') { 
-    ## Quantiles
-    ## Which quantiles we're interested in
-    quantiles_spec = c(.99,.95,.5,.25)
-
-    ## Closed tickets: time ticket was open, first closed, time-to-first-close
-    closed <- new ("ITSTicketsTimes")
-
-    ## Yearly quantiles of time to fix (minutes)
-    events.tofix <- new ("TimedEvents",
-                         closed$open, closed$tofix %/% 60)
-    quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-    JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
-
-    ## Monthly quantiles of time to fix (hours)
-    events.tofix.hours <- new ("TimedEvents",
-                               closed$open, closed$tofix %/% 3600)
-    quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
-    JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
-
-    ## Changed tickets: time ticket was attended, last move
-    changed <- new ("ITSTicketsChangesTimes")
-    ## Yearly quantiles of time to attention (minutes)
-    events.toatt <- new ("TimedEvents",
-                         changed$open, changed$toattention %/% 60)
-    quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-    JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
-}
+ReportTimeToCloseITS(destdir)
 
 # Demographics
-d <- new ("Demographics","its",6)
-people <- Aging(d)
-people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
-people$age[people$age < 0 ] <- 0
-aux <- data.frame(people["id"], people["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/its-demographics-aging.json"), collapse=''))
+ReportDemographicsAgingITS(conf$str_enddate, destdir)
+ReportDemographicsBirthITS(conf$str_enddate, destdir)
 
-newcomers <- Birth(d)
-newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
-newcomers$age[newcomers$age < 0 ] <- 0
-aux <- data.frame(newcomers["id"], newcomers["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/its-demographics-birth.json"), collapse=''))
+# Markov
+markov <- MarkovChain()
+createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
+
+
+#for (status in statuses)
+#{
+#Evolution of the backlog
+#tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
+#colnames(tickets_status)[2] <- status
+
+#Issues per status
+#current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
+
+#Merging data
+#if (nrow(current_status)>0){
+#    evol <- merge(evol, current_status, all=TRUE)
+#}
+#evol <- merge (evol, tickets_status, all = TRUE)
+#}
