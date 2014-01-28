@@ -81,6 +81,11 @@ def read_options():
                       action="store",
                       dest="identities_db",
                       help="Database with unique identities and affiliations")
+    parser.add_option("-t", "--type",
+                      action="store",
+                      dest="backend",
+                      default="bugzilla",
+                      help="Type of backend: bugzilla, allura, jira, github")
 
     (opts, args) = parser.parse_args()
 
