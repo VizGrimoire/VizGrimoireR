@@ -43,11 +43,80 @@ from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
 # import MLS
 
+class Backend(object):
+
+    closed_condition = ""
+    reopened_condition = ""
+    name_log_table = ""
+    statuses = ""
+    open_status = ""
+    reopened_status = ""
+    name_log_table = ""
+
+    def __init__(self, its_type):
+        if (its_type == 'allura'):
+            Backend.closed_condition = "new_value='CLOSED'"
+        if (its_type == 'bugzilla'):
+            Backend.closed_condition = "(new_value='RESOLVED' OR new_value='CLOSED')"
+            Backend.reopened_condition = "new_value='NEW'"
+            Backend.name_log_table = 'issues_log_bugzilla'
+            Backend.statuses = ["NEW", "ASSIGNED"]
+            #Pretty specific states in Red Hat's Bugzilla
+            Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
+                        "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
+
+        if (its_type == 'github'):
+            Backend.closed_condition = "field='closed'"
+
+        if (its_type == 'jira'):
+            Backend.closed_condition = "new_value='CLOSED'"
+            Backend.reopened_condition = "new_value='Reopened'"
+            #Backend.new_condition = "status='Open'"
+            #Backend.reopened_condition = "status='Reopened'"
+            Backend.open_status = 'Open'
+            Backend.reopened_status = 'Reopened'
+            Backend.name_log_table = 'issues_log_jira'
+
+        if (its_type == 'launchpad'):
+            #Backend.closed_condition = "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+            Backend.closed_condition = "(new_value='Fix Committed')"
+            Backend.statuses = ["Fix Committed"]
+
+        if (its_type == 'redmine'):
+            Backend.statuses = ["New", "Verified", "Need More Info", "In Progress", "Feedback",
+                         "Need Review", "Testing", "Pending Backport", "Pending Upstream",
+                         "Resolved", "Closed", "Rejected", "Won\\'t Fix", "Can\\'t reproduce",
+                         "Duplicate"]
+            Backend.closed_condition = "(new_value='Resolved' OR new_value='Closed' OR new_value='Rejected'" +\
+                                  " OR new_value='Won\\'t Fix' OR new_value='Can\\'t reproduce' OR new_value='Duplicate')"
+            Backend.reopened_condition = "new_value='Reopened'" # FIXME: fake condition
+            Backend.name_log_table = 'issues_log_redmine'
+
+
 def aggData(period, startdate, enddate, idb, destdir):
     pass
 
-def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
-    pass
+def tsData(period, startdate, enddate, identities_db, destdir, granularity,
+           conf, backend):
+    data = vizr.EvolITSInfo(period, startdate, enddate, identities_db, closed_condition = backend.closed_condition)
+    evol = completePeriodIds(dataFrame2Dict(data))
+    if ('companies' in reports) :
+        data = vizr.EvolIssuesCompanies(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+
+    if ('countries' in reports) :
+        data = vizr.EvolIssuesCountries(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+
+    if ('repositories' in reports) :
+        data = vizr.EvolIssuesRepositories(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+
+    if ('domains' in reports) :
+        data = vizr.EvolIssuesDomains(period, startdate, enddate, identities_db)
+        evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
+
+    createJSON (evol, destdir+"/its-evolutionary.json")
 
 def peopleData(period, startdate, enddate, idb, destdir):
     pass
@@ -59,6 +128,9 @@ def companiesData(period, startdate, enddate, idb, destdir):
     pass
 
 def countriesData(period, startdate, enddate, idb, destdir):
+    pass
+
+def domainsData(period, startdate, enddate, idb, destdir):
     pass
 
 def topData(period, startdate, enddate, idb, destdir, bots):
@@ -82,7 +154,10 @@ if __name__ == '__main__':
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     # GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
-    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
+    # backends
+    backend = Backend(opts.backend)
+
+    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts, backend)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
 
     if ('people' in reports):
@@ -93,5 +168,8 @@ if __name__ == '__main__':
         countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('companies' in reports):
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    if ('domains' in reports):
+        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
+
 
     topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
