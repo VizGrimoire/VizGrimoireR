@@ -72,15 +72,15 @@ GetSCMStaticData <- function(period, startdate, enddate, i_db=NA, type_analysis=
     static_commits <- StaticNumCommits(period, startdate, enddate, i_db, type_analysis)
     static_authors <- StaticNumAuthors(period, startdate, enddate, i_db, type_analysis)
     static_committers <- StaticNumCommitters(period, startdate, enddate, i_db, type_analysis)
-    static_files <- StaticNumFiles(period, conf$startdate, enddate, i_db, type_analysis)
+    static_files <- StaticNumFiles(period, startdate, enddate, i_db, type_analysis)
     static_branches <- StaticNumBranches(period, startdate, enddate, i_db, type_analysis)
     static_repositories <- StaticNumRepositories(period, startdate, enddate, i_db, type_analysis)
     static_actions <- StaticNumActions(period, startdate, enddate, i_db, type_analysis)
-    static_lines <- StaticNumLines(period, conf$startdate, enddate, i_db, type_analysis)
+    static_lines <- StaticNumLines(period, startdate, enddate, i_db, type_analysis)
     avg_commits_period <- StaticAvgCommitsPeriod(period, startdate, enddate, i_db, type_analysis)
     avg_files_period <- StaticAvgFilesPeriod(period, startdate, enddate, i_db, type_analysis)
     avg_commits_author <- StaticAvgCommitsAuthor(period, startdate, enddate, i_db, type_analysis)
-    avg_authors_period <- StaticAvgAuthorPeriod(period, startdate, conf$enddate, i_db, type_analysis)
+    avg_authors_period <- StaticAvgAuthorPeriod(period, startdate, enddate, i_db, type_analysis)
     avg_committer_period <- StaticAvgCommitterPeriod(period, startdate, enddate, i_db, type_analysis)
     avg_files_author <- StaticAvgFilesAuthor(period, startdate, enddate, i_db, type_analysis)
 
@@ -1594,7 +1594,7 @@ GetCommitsSummaryCompanies <- function(period, startdate, enddate, identities_db
     # The "companyX" fields are those that provide info about that company
     # The "Others" field is the aggregated value of the rest of the companies
 
-    companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), conf$startdate, conf$enddate)
+    companies  <- companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate)
     companies <- companies$name
 
     first = TRUE
@@ -1604,7 +1604,7 @@ GetCommitsSummaryCompanies <- function(period, startdate, enddate, identities_db
         company_name = paste("'", company, "'", sep='')
         company_aux = paste("", company, "", sep='')
 
-        commits = EvolCommits(period, conf$startdate, conf$enddate, conf$identities_db, list("company", company_name))
+        commits = EvolCommits(period, startdate, enddate, identities_db, list("company", company_name))
         commits <- completePeriodIds(commits, conf$granularity, conf)
         commits <- commits[order(commits$id), ]
         commits[is.na(commits)] <- 0

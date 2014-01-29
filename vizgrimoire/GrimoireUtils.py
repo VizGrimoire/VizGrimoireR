@@ -302,7 +302,9 @@ def createJSON(data, filepath, check=True):
     filepath_py = filepath.split(".json")
     filepath_py = filepath_py[0]+"_py.json"
     jsonfile = open(filepath_py, 'w')
-    jsonfile.write(json.dumps(data, sort_keys=True))
+    # NA as value is not decoded with Python JSON
+    # JSON R has "NA" and not NaN
+    jsonfile.write(json.dumps(data, sort_keys=True).replace('NA', '"NA"').replace('NaN','"NA"'))
     jsonfile.close()
 
     if (check == False): return
