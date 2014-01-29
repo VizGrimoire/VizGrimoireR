@@ -40,7 +40,8 @@ def GetSQLReportFrom (identities_db, type_analysis):
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
 
-    if len(type_analysis)<2: return ""
+
+    if (type_analysis is None or len(type_analysis) != 2): return ""
 
     analysis = type_analysis[0]
     value = type_analysis[1]
@@ -62,7 +63,7 @@ def GetSQLReportWhere (type_analysis, role):
     #"type" is a list of two values: type of analysis and value of 
     #such analysis
 
-    if len(type_analysis)<2: return ""
+    if (type_analysis is None or len(type_analysis) != 2): return ""
 
     analysis = type_analysis[0]
     value = type_analysis[1]

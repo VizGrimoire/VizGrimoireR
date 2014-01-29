@@ -41,23 +41,25 @@ def aggData(period, startdate, enddate, identities_db, destdir):
     # Tendencies
     agg = {}
     for i in [7,30,365]:
-        data = vizr.GetMediaWikiDiffReviewsDays(period, enddate, i)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
-        data = vizr.GetMediaWikiDiffAuthorsDays(period, enddate, identities_db, i)
-        agg = dict(agg.items() + dataFrame2Dict(data).items())
+#        data = vizr.GetMediaWikiDiffReviewsDays(period, enddate, i)
+#        agg = dict(agg.items() + data.items())
+        data = Mediawiki.GetMediaWikiDiffReviewsDays(period, enddate, identities_db, i)
+        agg = dict(agg.items() + data.items())
+        data = Mediawiki.GetMediaWikiDiffAuthorsDays(period, enddate, identities_db, i)
+        agg = dict(agg.items() + data.items())
 
-    data = vizr.GetStaticDataMediaWiki(period, startdate, enddate, identities_db)
-    agg = dict(agg.items() + dataFrame2Dict(data).items())
+    data = Mediawiki.GetStaticDataMediaWiki(period, startdate, enddate, identities_db, None)
+    agg = dict(agg.items() + data.items())
 
     createJSON (agg, destdir+"/mediawiki-static.json")
 
 def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf):
-    evol_data = vizr.GetEvolDataMediaWiki(period, startdate, enddate, identities_db)
-    evol_data = completePeriodIds(dataFrame2Dict(evol_data))
+    evol_data = Mediawiki.GetEvolDataMediaWiki(period, startdate, enddate, identities_db, None)
+    evol_data = completePeriodIds(evol_data)
     createJSON (evol_data, destdir+"/mediawiki-evolutionary.json")
 
 def peopleData(period, startdate, enddate, identities_db, destdir):
-    people = dataFrame2Dict(vizr.GetListPeopleMediaWiki(startdate, enddate))
+    people = Mediawiki.GetListPeopleMediaWiki(startdate, enddate)
     people = people['id']
     limit = 30
     if (len(people)<limit): limit = len(people);
@@ -65,12 +67,12 @@ def peopleData(period, startdate, enddate, identities_db, destdir):
     createJSON(people, destdir+"/mediawiki-people.json")
 
     for upeople_id in people:
-        evol = vizr.GetEvolPeopleMediaWiki(upeople_id, period, startdate, enddate)
-        evol = completePeriodIds(dataFrame2Dict(evol))
+        evol = Mediawiki.GetEvolPeopleMediaWiki(upeople_id, period, startdate, enddate)
+        evol = completePeriodIds(evol)
         createJSON(evol, destdir+"/people-"+str(upeople_id)+"-mediawiki-evolutionary.json")
 
-        static = vizr.GetStaticPeopleMediaWiki(upeople_id, startdate, enddate)
-        createJSON(dataFrame2Dict(static), destdir+"/people-"+str(upeople_id)+"-mediawiki-static.json")
+        static = Mediawiki.GetStaticPeopleMediaWiki(upeople_id, startdate, enddate)
+        createJSON(static, destdir+"/people-"+str(upeople_id)+"-mediawiki-static.json")
 
 def reposData(period, startdate, enddate, identities_db, destdir, conf):
     pass
@@ -83,9 +85,9 @@ def countriesData(period, startdate, enddate, identities_db, destdir):
 
 def topData(period, startdate, enddate, identities_db, destdir, bots):
     top_authors = {}
-    top_authors['authors.'] = dataFrame2Dict(vizr.GetTopAuthorsMediaWiki(0, startdate, enddate, identities_db, bots))
-    top_authors['authors.last year']= dataFrame2Dict(vizr.GetTopAuthorsMediaWiki(365, startdate, enddate, identities_db, bots))
-    top_authors['authors.last month']= dataFrame2Dict(vizr.GetTopAuthorsMediaWiki(31, startdate, enddate, identities_db, bots))
+    top_authors['authors.'] = Mediawiki.GetTopAuthorsMediaWiki(0, startdate, enddate, identities_db, bots)
+    top_authors['authors.last year']= Mediawiki.GetTopAuthorsMediaWiki(365, startdate, enddate, identities_db, bots)
+    top_authors['authors.last month']= Mediawiki.GetTopAuthorsMediaWiki(31, startdate, enddate, identities_db, bots)
     createJSON (top_authors, destdir+"/mediawiki-top.json")
 
 if __name__ == '__main__':
@@ -103,7 +105,7 @@ if __name__ == '__main__':
 
     # Working at the same time with VizR and VizPy yet
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    # GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
