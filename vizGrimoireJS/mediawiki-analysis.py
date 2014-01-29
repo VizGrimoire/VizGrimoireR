@@ -26,11 +26,11 @@
 
 
 import logging
-from rpy2.robjects.packages import importr
+# from rpy2.robjects.packages import importr
 import sys
 
-isoweek = importr("ISOweek")
-vizr = importr("vizgrimoire")
+# isoweek = importr("ISOweek")
+# vizr = importr("vizgrimoire")
 
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     enddate = "'"+opts.enddate+"'"
 
     # Working at the same time with VizR and VizPy yet
-    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
