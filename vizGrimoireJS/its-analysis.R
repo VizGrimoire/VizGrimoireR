@@ -83,9 +83,11 @@ if (conf$backend == 'jira'){
     name_log_table <- 'issues_log_jira'
 }
 if (conf$backend == 'launchpad'){
-    #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+    #Specific closed condition for OpenStack project
     closed_condition <- "(new_value='Fix Committed')"
-    statuses = c("Fix Committed")
+    #Specific statuses from OpenStack project
+    statuses = c("Confirmed", "Fix Committed", "New", "In Progress", "Triaged", "Incomplete", "Invalid", "Won\\'t Fix", "Fix Released", "Opinion", "Unknown", "Expired")
+    name_log_table = "issues_log_launchpad"
 }
 if (conf$backend == 'redmine'){
     statuses = c("New", "Verified", "Need More Info", "In Progress", "Feedback",
@@ -120,21 +122,19 @@ createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
 
 
 
-#for (status in statuses)
-#{
+for (status in statuses)
+{
     #Evolution of the backlog
-    #tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
-    #colnames(tickets_status)[2] <- status
-
+    tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
+    colnames(tickets_status)[2] <- status
     #Issues per status
-    #current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
-    
+    current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
     #Merging data
-    #if (nrow(current_status)>0){
-    #    evol <- merge(evol, current_status, all=TRUE)
-    #}
-    #evol <- merge (evol, tickets_status, all = TRUE)
-#}
+    if (nrow(current_status)>0){
+        evol <- merge(evol, current_status, all=TRUE)
+    }
+    evol <- merge (evol, tickets_status, all = TRUE)
+}
 
 
 
