@@ -103,23 +103,33 @@ destdir <- conf$destination
 #EVOLUTIONARY DATA
 #########
 
-closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
-changed <- GetEvolChanged(period, startdate, enddate)
-open <- GetEvolOpened(period, startdate, enddate)
-repos <- GetEvolReposITS(period, startdate, enddate)
+#closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
+## closed <- EvolIssuesClosed(period, startdate, enddate, NA, list(NA,NA), closed_condition)
+## changed <- EvolIssuesChanged(period, startdate, enddate, identities_db, type_analysis)
+## changers <- EvolIssuesChangers(period, startdate, enddate, identities_db, type_analysis)
+## open <- EvolIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
+## openers <- EvolIssuesOpeners(period, startdate, enddate, identities_db, type_analysis)
+## repos <- EvolIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
 
-evol <- merge (open, closed, all = TRUE)
-evol <- merge (evol, repos, all = TRUE)
-evol <- merge (evol, changed, all = TRUE)
+#changed <- GetEvolChanged(period, startdate, enddate)
+#open <- GetEvolOpened(period, startdate, enddate)
+#repos <- GetEvolReposITS(period, startdate, enddate)
 
-if ('repositories' %in% reports) {
-    data = GetEvolReposITS(period, startdate, enddate)
-    evol = merge(evol, data, all = TRUE)
-}
-if ('domains' %in% reports) {
-    info_data_domains = GetEvolDomainsITS(period, startdate, enddate, identities_db)
-    evol = merge(evol, info_data_domains, all = TRUE)
-}
+## evol <- merge (open, closed, all = TRUE)
+## evol <- merge (evol, repos, all = TRUE)
+## evol <- merge (evol, changed, all = TRUE)
+
+## if ('repositories' %in% reports) {
+##     data = GetEvolReposITS(period, startdate, enddate)
+##     evol = merge(evol, data, all = TRUE)
+## }
+## if ('domains' %in% reports) {
+##     info_data_domains = GetEvolDomainsITS(period, startdate, enddate, identities_db)
+##     evol = merge(evol, info_data_domains, all = TRUE)
+##}
+
+evol <- EvolITSInfo(period, startdate, enddate, identities_db,
+                    list(NA, NA), closed_condition)
 
 evol <- completePeriodIds(evol, conf$granularity, conf)
 evol[is.na(evol)] <- 0
@@ -133,24 +143,38 @@ createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 ## Data in snapshots
 ##
 
-all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
-if ('domains' %in% reports) {
-    info_com = GetStaticDomainsITS (startdate, enddate, identities_db)
-    all_static_info = merge(all_static_info, info_com, all = TRUE)
-}
+#all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
+all_static_info <- AggITSInfo (period, startdate, enddate, identities_db,
+                               list(NA, NA), closed_condition)
+## if ('domains' %in% reports) {
+##     info_com = GetStaticDomainsITS (startdate, enddate, identities_db)
+##     all_static_info = merge(all_static_info, info_com, all = TRUE)
+## }
 
-closed_7 = GetDiffClosedDays(conf$enddate, 7, closed_condition)
-closed_30 = GetDiffClosedDays(conf$enddate, 30, closed_condition)
-closed_365 = GetDiffClosedDays(conf$enddate, 365, closed_condition)
-opened_7 = GetDiffOpenedDays(conf$enddate, 7, closed_condition)
-opened_30 = GetDiffOpenedDays(conf$enddate, 30, closed_condition)
-opened_365 = GetDiffOpenedDays(conf$enddate, 365, closed_condition)
-closers_7 = GetDiffClosersDays(conf$enddate, 7, closed_condition)
-closers_30 = GetDiffClosersDays(conf$enddate, 30, closed_condition)
-closers_365 = GetDiffClosersDays(conf$enddate, 365, closed_condition)
-changers_7 = GetDiffChangersDays(conf$enddate, 7, closed_condition)
-changers_30 = GetDiffChangersDays(conf$enddate, 30, closed_condition)
-changers_365 = GetDiffChangersDays(conf$enddate, 365, closed_condition)
+closed_7 = GetDiffClosedDays(period, identities_db, conf$enddate,
+    7, list(NA, NA), closed_condition)
+closed_30 = GetDiffClosedDays(period, identities_db, conf$enddate,
+    30, list(NA, NA), closed_condition)
+closed_365 = GetDiffClosedDays(period, identities_db, conf$enddate,
+    365, list(NA, NA), closed_condition)
+opened_7 = GetDiffOpenedDays(period, identities_db, conf$enddate,
+    7, list(NA, NA))
+opened_30 = GetDiffOpenedDays(period, identities_db, conf$enddate,
+    30, list(NA, NA))
+opened_365 = GetDiffOpenedDays(period, identities_db, conf$enddate,
+    365, list(NA, NA))
+closers_7 = GetDiffClosersDays(period, identities_db, conf$enddate,
+    7, list(NA, NA), closed_condition)
+closers_30 = GetDiffClosersDays(period, identities_db, conf$enddate,
+    30, list(NA, NA), closed_condition)
+closers_365 = GetDiffClosersDays(period, identities_db, conf$enddate,
+    365, list(NA, NA), closed_condition)
+changers_7 = GetDiffChangersDays(period, identities_db, conf$enddate,
+    7, list(NA, NA))
+changers_30 = GetDiffChangersDays(period, identities_db, conf$enddate,
+    30, list(NA, NA))
+changers_365 = GetDiffChangersDays(period, identities_db, conf$enddate,
+    365, list(NA, NA))
 
 all_static_info = merge(all_static_info, closed_365)
 all_static_info = merge(all_static_info, closed_30)
