@@ -35,7 +35,7 @@ vizr = importr("vizgrimoire")
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
-# import Mediawiki
+import Mediawiki
 
 def aggData(period, startdate, enddate, identities_db, destdir):
     # Tendencies
