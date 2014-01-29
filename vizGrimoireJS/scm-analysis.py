@@ -41,7 +41,7 @@ vizr = importr("vizgrimoire")
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod
-# import MLS
+import SCM
 
 def aggData(period, startdate, enddate, identities_db, destdir):
     data = dataFrame2Dict(vizr.GetSCMStaticData(period, startdate, enddate, identities_db))
@@ -87,20 +87,22 @@ def aggData(period, startdate, enddate, identities_db, destdir):
     createJSON (agg, destdir+"/scm-static.json")
 
 def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf):
-    data = vizr.GetSCMEvolutionaryData(period, startdate, enddate, identities_db)
-    evol_data = completePeriodIds(dataFrame2Dict(data))
+#    data = vizr.GetSCMEvolutionaryData(period, startdate, enddate, identities_db)
+#    evol_data = completePeriodIds(dataFrame2Dict(data))
+    data = SCM.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, None)
+    evol_data = completePeriodIds(data)
 
     if ('companies' in reports) :
-        data = vizr.EvolCompanies(period, startdate, enddate)
-        evol_data = dict(evol_data.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = SCM.EvolCompanies(period, startdate, enddate)
+        evol_data = dict(evol_data.items() + completePeriodIds(data).items())
 
     if ('countries' in reports) :
-        data = vizr.EvolCountries(period, startdate, enddate)
-        evol_data = dict(evol_data.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = SCM.EvolCountries(period, startdate, enddate)
+        evol_data = dict(evol_data.items() + completePeriodIds(data).items())
 
     if ('domains' in reports) :
-        data = vizr.EvolDomains(period, startdate, enddate)
-        evol_data = dict(evol_data.items() + completePeriodIds(dataFrame2Dict(data)).items())
+        data = SCM.EvolDomains(period, startdate, enddate)
+        evol_data = dict(evol_data.items() + completePeriodIds(data).items())
  
     createJSON (evol_data, destdir+"/scm-evolutionary.json")
 
@@ -250,10 +252,12 @@ if __name__ == '__main__':
 
     # Working at the same time with VizR and VizPy yet
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    # GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+
+    sys.exit()
 
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)

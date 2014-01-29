@@ -246,7 +246,7 @@ def GetAuthors (period, startdate, enddate, identities_db, type_analysis, evolut
         tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id"
 
-    if (type_analysis[0] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id "
@@ -297,7 +297,7 @@ def GetCommitters (period, startdate, enddate, identities_db, type_analysis, evo
         tables += " ,  "+identities_db+".people_upeople pup "
         filters += " and s.committer_id = pup.people_id"
 
-    if (type_analysis[0] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.committer_id = pup.people_id "
@@ -381,7 +381,10 @@ def GetLines (period, startdate, enddate, identities_db, type_analysis, evolutio
     q = BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     data = ExecuteQuery(q)
+    data['removed_lines'] = [float(lines)  for lines in data['removed_lines']]
+    data['added_lines'] = [float(lines)  for lines in data['added_lines']]
     # TODO: not used so we don't need it - acs
+    data['negative_removed_lines'] = [-float(removed) for removed in data['removed_lines']]
     # data$negative_removed_lines = -data$removed_lines
     return (data)
 
@@ -632,7 +635,7 @@ def GetAvgCommitsAuthor (period, startdate, enddate, identities_db, type_analysi
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.author_id = pup.people_id"
 
-    if (type_analysis[0] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.author_id = pup.people_id "
@@ -673,7 +676,7 @@ def GetAvgAuthorPeriod (period, startdate, enddate, identities_db, type_analysis
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.author_id = pup.people_id"
 
-    if (type_analysis[0] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.author_id = pup.people_id "
@@ -714,7 +717,7 @@ def GetAvgCommitterPeriod (period, startdate, enddate, identities_db, type_analy
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.committer_id = pup.people_id"
 
-    if (type_analysis[0] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.committer_id = pup.people_id "
@@ -755,11 +758,10 @@ def GetAvgFilesAuthor (period, startdate, enddate, identities_db, type_analysis,
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.author_id = pup.people_id"
 
-    if (type_analysis[0] == "repository"):
+    elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
         tables += ",  ",identities_db,".people_upeople pup"
         filters += " and s.author_id = pup.people_id "
-    
 
     q = BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
@@ -800,8 +802,8 @@ def GetPeopleListSCM (startdate, enddate) :
     filters = GetFiltersOwnUniqueIdsSCM()
     filters +="GROUP BY pid ORDER BY total desc"
     q = GetSQLGlobal('s.date',fields,tables, filters, startdate, enddate)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def GetPeopleQuerySCM (developer_id, period, startdate, enddate, evol) :
@@ -823,15 +825,15 @@ def GetPeopleQuerySCM (developer_id, period, startdate, enddate, evol) :
 
 def GetEvolPeopleSCM (developer_id, period, startdate, enddate) :
     q = GetPeopleQuerySCM (developer_id, period, startdate, enddate, True)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
 def GetStaticPeopleSCM (developer_id, startdate, enddate) :
     q = GetPeopleQuerySCM (developer_id, None, startdate, enddate, False)
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -850,9 +852,8 @@ def EvolCompanies (period, startdate, enddate):
                "s.date < upc.end"
     q = GetSQLPeriod(period,'s.date', fields, tables, filters,
                      startdate, enddate)
-    query = new("Query", sql = q)
-    companies= run(query)
-    return(companies)
+
+    return(ExecuteQuery(q))
 
 
 def EvolCountries (period, startdate, enddate):	
@@ -863,8 +864,8 @@ def EvolCountries (period, startdate, enddate):
     filters = "s.author_id = pup.people_id and pup.upeople_id = upc.upeople_id"
     q = GetSQLPeriod(period,'s.date', fields, tables, filters, 
                startdate, enddate)
-    query = new("Query", sql = q)
-    countries= run(query)
+
+    countries= ExecuteQuery(q)
     return(countries)
 
 
@@ -876,8 +877,8 @@ def EvolDomains (period, startdate, enddate):
     filters = "s.author_id = pup.people_id and pup.upeople_id = upd.upeople_id"
     q = GetSQLPeriod(period,'s.date', fields, tables, filters,
             startdate, enddate)
-    query = new("Query", sql = q)
-    domains= run(query)
+
+    domains= ExecuteQuery(q)
     return(domains)
 
 
@@ -894,8 +895,8 @@ def last_activity (days) :
         "where date >= ( "+\
         "      select (max(date) - INTERVAL "+days+" day) "+\
         "      from scmlog)";
-    query = new("Query", sql = q)
-    data1 = run(query)
+
+    data1 = ExecuteQuery(q)
 
     #authors
     q = "select count(distinct(pup.upeople_id)) as authors_"+days+" "+\
@@ -903,8 +904,8 @@ def last_activity (days) :
         "     people_upeople pup "+\
         "where pup.people_id = s.author_id and "+\
         "      s.date >= (select (max(date) - INTERVAL "+days+" day) from scmlog)";
-    query = new("Query", sql = q)
-    data2 = run(query)
+
+    data2 = ExecuteQuery(q)
 
 
     #files
@@ -913,8 +914,8 @@ def last_activity (days) :
         "     actions a "+\
         "where a.commit_id = s.id and "+\
         "      s.date >= (select (max(date) - INTERVAL "+days+" day) from scmlog)"
-    query = new("Query", sql = q)
-    data3 = run(query)
+
+    data3 = ExecuteQuery(q)
 
     #added_removed lines
     q = " select sum(cl.added) as added_lines_"+days+", "+\
@@ -923,8 +924,8 @@ def last_activity (days) :
         "      commits_lines cl "+\
         " where cl.commit_id = s.id and "+\
         "       s.date >= (select (max(date) - INTERVAL "+days+" day) from scmlog)"
-    query = new("Query", sql = q)
-    data4 = run(query)
+
+    data4 = ExecuteQuery(q)
 
     agg_data = dict(data1.items() +  data2.items() + data3.items() +data4.items())
 
@@ -965,8 +966,8 @@ def top_people (days, startdate, enddate, role, filters="") :
         " GROUP BY u.identifier "+\
         " ORDER BY commits desc "+\
         " LIMIT 10"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)	
 
 
@@ -979,8 +980,7 @@ def top_files_modified () :
           "where action_type='M'  "+\
           "group by f.id  "+\
           "order by modifications desc limit 10; "	
-      query = new("Query", sql = q)
-      data = run(query)
+      data = ExecuteQuery(q)
       return (data)	
 
 
@@ -1002,8 +1002,8 @@ def top_authors (startdate, enddate) :
         "group by u.identifier "+\
         "order by commits desc "+\
         "LIMIT 10;"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -1034,8 +1034,8 @@ def top_authors_wo_affiliations (list_affs, startdate, enddate) :
         "group by u.identifier "+\
         "order by commits desc "+\
         "LIMIT 10;"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -1053,8 +1053,8 @@ def top_authors_year (year) :
         "group by u.identifier "+\
         "order by commits desc "+\
         "LIMIT 10;"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -1062,8 +1062,8 @@ def people () :
     # List of people participating in the source code development
  
     q = "select id,identifier from upeople"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data);
 
 def companies_name_wo_affs (affs_list, startdate, enddate) :
@@ -1089,8 +1089,8 @@ def companies_name_wo_affs (affs_list, startdate, enddate) :
                "        s.date < "+ enddate+ " "+\
                "  group by c.name "+\
                "  order by count(distinct(s.id)) desc"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -1112,8 +1112,8 @@ def companies_name (startdate, enddate) :
          "group by c.name "+\
          "order by count(distinct(s.id)) desc"
          # order by count(distinct(s.id)) desc LIMIT ", companies_limit
-    query = new("Query", sql = q)
-    data = run(query)	
+
+    data = ExecuteQuery(q)	
     return (data)
 
 
@@ -1132,7 +1132,7 @@ def evol_info_data_companies (startdate, enddate) :
          "      s.date >="+ startdate+ " and "+\
          "      s.date < "+ enddate
 	query = new("Query", sql = q)
-	data13 = run(query)
+	data13 = ExecuteQuery(q)
 	
 	q = "select count(distinct(c.id)) as companies_2006 "+\
         "from scmlog s, "+\
@@ -1146,7 +1146,7 @@ def evol_info_data_companies (startdate, enddate) :
         "  upc.company_id = c.id and "+\
         "  year(s.date) = 2006"
 	query = new("Query", sql = q)
-	data14 = run(query)
+	data14 = ExecuteQuery(q)
 	
 	q = "select count(distinct(c.id)) as companies_2009 "+\
         "from scmlog s, "+\
@@ -1160,7 +1160,7 @@ def evol_info_data_companies (startdate, enddate) :
         "  upc.company_id = c.id and "+\
         "  year(s.date) = 2009"
 	query = new("Query", sql = q)
-	data15 = run(query)
+	data15 = ExecuteQuery(q)
 	
 	q = "select count(distinct(c.id)) as companies_2012 "+\
         "from scmlog s, "+\
@@ -1174,7 +1174,7 @@ def evol_info_data_companies (startdate, enddate) :
         "  upc.company_id = c.id and "+\
         "  year(s.date) = 2012"
 	query = new("Query", sql = q)
-	data16 = run(query)
+	data16 = ExecuteQuery(q)
 	
 	
 	agg_data = dict(data13.items() + data14.items() + data15.items() + data16.items())
@@ -1191,8 +1191,8 @@ def evol_info_data_countries (startdate, enddate) :
          "      pup.people_id = s.author_id and "+\
          "      s.date >="+ startdate+ " and "+\
          "      s.date < "+ enddate
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def company_top_authors (company_name, startdate, enddate) :
@@ -1221,8 +1221,8 @@ def company_top_authors (company_name, startdate, enddate) :
         "group by u.id "+\
         "order by count(distinct(s.id)) desc "+\
         "limit 10"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 def company_top_authors_year (company_name, year):
@@ -1248,8 +1248,8 @@ def company_top_authors_year (company_name, year):
         " group by u.id "+\
         " order by count(distinct(s.id)) desc "+\
         " limit 10;"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -1268,8 +1268,8 @@ def evol_companies (period, startdate, enddate):
         "       s.date >="+ startdate+ " and "+\
         "       s.date < "+ enddate+ " "+\
         "group by ((to_days(s.date) - to_days("+startdate+")) div "+period+")"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)	
 
 
@@ -1287,8 +1287,8 @@ def repos_name (startdate, enddate) :
         "       s.date <= "+enddate+ " "+\
         " group by repository_id  "+\
         " order by total desc";
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)	
 
 
@@ -1312,8 +1312,8 @@ def scm_countries_names (identities_db, startdate, enddate) :
         "      s.date < "+enddate+ " "+\
         "group by c.name "+\
         "order by commits desc LIMIT "+ countries_limit
-    query = new("Query", sql = q)
-    data = run(query)	
+
+    data = ExecuteQuery(q)	
     return (data)
 
 # Companies / Countries support
@@ -1341,8 +1341,8 @@ def scm_companies_countries_evol (identities_db, company, country, period, start
         "      ct.name = '"+ country+ "' AND "+\
         "      com.name ='"+company+"' "+\
         "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")"
-    query = new("Query", sql = q)
-    data = run(query)	
+
+    data = ExecuteQuery(q)	
     return (data)
 
 
@@ -1356,8 +1356,8 @@ def evol_info_data_domains (startdate, enddate) :
         "  pup.people_id = s.author_id AND "+\
         "  s.date >="+ startdate+ " AND "+\
         "  s.date < "+ enddate
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -1377,8 +1377,8 @@ def scm_domains_names (identities_db, startdate, enddate) :
         "  s.date < "+ enddate+ " "+\
         "GROUP BY d.name "+\
         "ORDER BY commits desc"
-    query = new("Query", sql = q)
-    data = run(query)
+
+    data = ExecuteQuery(q)
     return (data)
 
 
@@ -1408,7 +1408,7 @@ def GetCodeCommunityStructure (period, startdate, enddate, identities_db):
        "      s.date>="+startdate+" and "+\
        "      s.date<="+enddate+";"
   query = new("Query", sql=q)
-  total = run(query)
+  total = ExecuteQuery(q)
   total_commits = int(total)
 
   # Database access: developer, %commits
@@ -1429,10 +1429,10 @@ def GetCodeCommunityStructure (period, startdate, enddate, identities_db):
       " order by commits desc; "
 
   query = new("Query", sql=q)
-  people = run(query)
+  people = ExecuteQuery(q)
   # this is a list. Operate over the list
   people['commits'] = [((commits / total_commits) * 100) for commits in people['commits']]
-  people['commits'] = (people['commits'] / total_commits) * 100
+  # people['commits'] = (people['commits'] / total_commits) * 100
 
   # Calculating number of core, regular and occasional developers
   cont = 0
