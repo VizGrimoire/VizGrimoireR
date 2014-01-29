@@ -278,8 +278,9 @@ def dataFrame2Dict(data):
                 dict[colname].append(valRtoPython(j))
     return dict
 
-def getPeriod(granularity):
+def getPeriod(granularity, number = None):
     period = None
+    nperiod = None
     if (granularity == 'years'):
         period = 'year'
         nperiod = 365
@@ -295,6 +296,7 @@ def getPeriod(granularity):
     else: 
         logging.error("Incorrect period:",granularity)
         sys.exit(1)
+    if (number): return nperiod
     return period
 
 # Until we use VizPy we will create JSON python files with _py
@@ -302,9 +304,12 @@ def createJSON(data, filepath, check=True):
     filepath_py = filepath.split(".json")
     filepath_py = filepath_py[0]+"_py.json"
     jsonfile = open(filepath_py, 'w')
+    json_data = json.dumps(data, sort_keys=True)
     # NA as value is not decoded with Python JSON
     # JSON R has "NA" and not NaN
-    jsonfile.write(json.dumps(data, sort_keys=True).replace('NA', '"NA"').replace('NaN','"NA"'))
+    # JSON R has "NA" and not null
+    json_data = json_data.replace('NA','"NA"').replace('NaN','"NA"').replace('null','"NA"')
+    jsonfile.write(json_data)
     jsonfile.close()
 
     if (check == False): return
