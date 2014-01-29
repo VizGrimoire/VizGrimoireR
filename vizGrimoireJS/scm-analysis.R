@@ -310,15 +310,13 @@ if ('domains' %in% reports) {
 }
 
 if ('people' %in% reports) {
-    print ('Starting people analysis')
-    people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
-    people = people$pid
-    limit = 30
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(destdir,"/scm-people.json", sep=''))
+    all.top.authors <- top_authors_data[['authors.']]$id
+    all.top.authors <- append(all.top.authors, top_authors_data[['authors.last year']]$id)
+    all.top.authors <- append(all.top.authors, top_authors_data[['authors.last month']]$id)
+    all.top.authors <- unique(all.top.authors)
+    createJSON(all.top.authors, paste(destdir,"/scm-people.json", sep=''))
 	
-    for (upeople_id in people) {
+    for (upeople_id in all.top.authors) {
         evol_data <- GetEvolPeopleSCM(upeople_id, period, 
                 conf$startdate, conf$enddate)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
@@ -367,21 +365,5 @@ if ('companies-countries' %in% reports){
 }
 
 # Demographics
-d <- new ("Demographics","scm",6)
-people <- Aging(d)
-people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
-people$age[people$age < 0 ] <- 0
-aux <- data.frame(people["id"], people["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/scm-demographics-aging.json"), collapse=''))
-
-newcomers <- Birth(d)
-newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
-newcomers$age[newcomers$age < 0 ] <- 0
-aux <- data.frame(newcomers["id"], newcomers["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/scm-demographics-birth.json"), collapse=''))
+ReportDemographicsAgingSCM(conf$str_enddate, destdir)
+ReportDemographicsBirthSCM(conf$str_enddate, destdir)

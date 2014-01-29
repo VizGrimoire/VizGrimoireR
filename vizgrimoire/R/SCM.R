@@ -1187,12 +1187,14 @@ companies_name_wo_affs <- function(affs_list, startdate, enddate) {
                  from companies c,
                       people_upeople pup,
                       upeople_companies upc,
-                      scmlog s
+                      scmlog s, 
+                      actions a
                  where c.id = upc.company_id and
                        upc.upeople_id = pup.upeople_id and
                        s.date >= upc.init and
                        s.date < upc.end and
                        pup.people_id = s.author_id and
+                       s.id = a.commit_id and
                        ",affiliations," 
                        s.date >=", startdate, " and
                        s.date < ", enddate, "
@@ -1210,10 +1212,12 @@ companies_name <- function(startdate, enddate) {
                  from companies c,
                       people_upeople pup,
                       upeople_companies upc,
-                      scmlog s
+                      scmlog s, 
+                      actions a
                  where c.id = upc.company_id and
                        upc.upeople_id = pup.upeople_id and
                        pup.people_id = s.author_id and
+                       s.id = a.commit_id and
                        s.date >=", startdate, " and
                        s.date < ", enddate, "
                  group by c.name
@@ -1387,11 +1391,13 @@ evol_companies <- function(period, startdate, enddate){
 repos_name <- function(startdate, enddate) {
     # List of repositories name
 
-    q <- paste ("select count(*) as total, 
+    q <- paste ("select count(distinct(s.id)) as total, 
                         name
-                 from scmlog s, 
+                 from actions a, 
+                      scmlog s, 
                       repositories r
-                 where s.repository_id=r.id and
+                 where s.id = a.commit_id and
+                       s.repository_id=r.id and
                        s.date >", startdate, " and
                        s.date <= ", enddate, "
                  group by repository_id 
@@ -1632,3 +1638,27 @@ GetCommitsSummaryCompanies <- function(period, startdate, enddate, identities_db
     return(first_companies)
 }
 
+# Demographics
+ReportDemographicsAgingSCM <- function (enddate, destdir) {
+    d <- new ("Demographics","scm",6)
+    people <- Aging(d)
+    people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
+    people$age[people$age < 0 ] <- 0
+    aux <- data.frame(people["id"], people["age"])
+    new <- list()
+    new[['date']] <- conf$str_enddate
+    new[['persons']] <- aux
+    createJSON (new, paste(c(destdir, "/scm-demographics-aging.json"), collapse=''))
+}
+
+ReportDemographicsBirthSCM <- function (enddate, destdir) {
+    d <- new ("Demographics","scm",6)
+    newcomers <- Birth(d)
+    newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
+    newcomers$age[newcomers$age < 0 ] <- 0
+    aux <- data.frame(newcomers["id"], newcomers["age"])
+    new <- list()
+    new[['date']] <- conf$str_enddate
+    new[['persons']] <- aux
+    createJSON (new, paste(c(destdir, "/scm-demographics-birth.json"), collapse=''))
+}
