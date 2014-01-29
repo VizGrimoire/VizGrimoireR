@@ -103,31 +103,6 @@ destdir <- conf$destination
 #EVOLUTIONARY DATA
 #########
 
-#closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
-## closed <- EvolIssuesClosed(period, startdate, enddate, NA, list(NA,NA), closed_condition)
-## changed <- EvolIssuesChanged(period, startdate, enddate, identities_db, type_analysis)
-## changers <- EvolIssuesChangers(period, startdate, enddate, identities_db, type_analysis)
-## open <- EvolIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
-## openers <- EvolIssuesOpeners(period, startdate, enddate, identities_db, type_analysis)
-## repos <- EvolIssuesRepositories(period, startdate, enddate, identities_db, type_analysis)
-
-#changed <- GetEvolChanged(period, startdate, enddate)
-#open <- GetEvolOpened(period, startdate, enddate)
-#repos <- GetEvolReposITS(period, startdate, enddate)
-
-## evol <- merge (open, closed, all = TRUE)
-## evol <- merge (evol, repos, all = TRUE)
-## evol <- merge (evol, changed, all = TRUE)
-
-## if ('repositories' %in% reports) {
-##     data = GetEvolReposITS(period, startdate, enddate)
-##     evol = merge(evol, data, all = TRUE)
-## }
-## if ('domains' %in% reports) {
-##     info_data_domains = GetEvolDomainsITS(period, startdate, enddate, identities_db)
-##     evol = merge(evol, info_data_domains, all = TRUE)
-##}
-
 evol <- EvolITSInfo(period, startdate, enddate, identities_db,
                     list(NA, NA), closed_condition)
 
@@ -136,20 +111,13 @@ evol[is.na(evol)] <- 0
 evol <- evol[order(evol$id),]
 createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
-## markov <- MarkovChain()
-## createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
-
 ##
 ## Data in snapshots
 ##
 
-#all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
 all_static_info <- AggITSInfo (period, startdate, enddate, identities_db,
                                list(NA, NA), closed_condition)
-## if ('domains' %in% reports) {
-##     info_com = GetStaticDomainsITS (startdate, enddate, identities_db)
-##     all_static_info = merge(all_static_info, info_com, all = TRUE)
-## }
+
 
 closed_7 = GetDiffClosedDays(period, identities_db, conf$enddate,
     7, list(NA, NA), closed_condition)
