@@ -183,7 +183,7 @@ def countriesData(period, startdate, enddate, identities_db, destdir):
         data = completePeriodIds(data)
         if (country == "country5" or country == "country2"):
             # Wrong JSON generated in R. Don't check
-            createJSON(data, destdir+"/"+country+"-mls-com-evolutionary.json", False)
+            createJSON(data, destdir+"/"+country+"-mls-cou-evolutionary.json", False)
         else:
             createJSON (data, destdir+"/"+country+"-mls-cou-evolutionary.json")
 
@@ -205,7 +205,7 @@ def domainsData(period, startdate, enddate, identities_db, destdir):
         data = completePeriodIds(data)
         if (domain == "everybody" or domain == "hallowelt"):
             # Wrong JSON generated in R. Don't check
-            createJSON(data, destdir+"/"+domain+"-mls-com-evolutionary.json", False)
+            createJSON(data, destdir+"/"+domain+"-mls-dom-evolutionary.json", False)
         else:
             createJSON(data, destdir+"/"+domain+"-mls-dom-evolutionary.json")
 
