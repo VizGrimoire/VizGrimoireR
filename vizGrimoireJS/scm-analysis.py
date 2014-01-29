@@ -44,24 +44,25 @@ from GrimoireUtils import valRtoPython, read_options, getPeriod
 import SCM
 
 def aggData(period, startdate, enddate, identities_db, destdir):
-    data = dataFrame2Dict(vizr.GetSCMStaticData(period, startdate, enddate, identities_db))
+    # data = dataFrame2Dict(vizr.GetSCMStaticData(period, startdate, enddate, identities_db))
+    data = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, None)
     agg = data
-    static_url = dataFrame2Dict(vizr.StaticURL())
+    static_url = SCM.StaticURL()
     agg = dict(agg.items() + static_url.items())
 
     if ('companies' in reports):
-        data = dataFrame2Dict(vizr.evol_info_data_companies (startdate, enddate))
+        data = SCM.evol_info_data_companies (startdate, enddate)
         agg = dict(agg.items() + data.items())
 
     if ('countries' in reports): 
-        data = dataFrame2Dict(vizr.evol_info_data_countries (startdate, enddate))
+        data = SCM.evol_info_data_countries (startdate, enddate)
         agg = dict(agg.items() + data.items())
 
     if ('domains' in reports):
-        data = dataFrame2Dict(vizr.evol_info_data_domains (startdate, enddate))
+        data = SCM.evol_info_data_domains (startdate, enddate)
         agg = dict(agg.items() + data.items())
 
-    data = dataFrame2Dict(vizr.GetCodeCommunityStructure(period, startdate, enddate, identities_db))
+    data = SCM.GetCodeCommunityStructure(period, startdate, enddate, identities_db)
     agg = dict(agg.items() + data.items())
 
     # TODO: repeated data
@@ -70,18 +71,18 @@ def aggData(period, startdate, enddate, identities_db, destdir):
 
     # Tendencies    
     for i in [7,30,365]:
-        data = dataFrame2Dict(vizr.GetDiffCommitsDays(period, enddate, i))
+        data = SCM.GetDiffCommitsDays(period, enddate, identities_db, i)
         agg = dict(agg.items() + data.items())
-        data = dataFrame2Dict(vizr.GetDiffAuthorsDays(period, enddate, identities_db, i))
+        data = SCM.GetDiffAuthorsDays(period, enddate, identities_db, i)
         agg = dict(agg.items() + data.items())
-        data = dataFrame2Dict(vizr.GetDiffFilesDays(period, enddate, identities_db, i))
+        data = SCM.GetDiffFilesDays(period, enddate, identities_db, i)
         agg = dict(agg.items() + data.items())
-        data = dataFrame2Dict(vizr.GetDiffLinesDays(period, enddate, identities_db, i))
+        data = SCM.GetDiffLinesDays(period, enddate, identities_db, i)
         agg = dict(agg.items() + data.items())
 
     # Last Activity: to be removed
     for i in [7,14,30,60,90,180,365,730]:
-        data = dataFrame2Dict(vizr.last_activity(i))
+        data = SCM.last_activity(i)
         agg = dict(agg.items() + data.items())
 
     createJSON (agg, destdir+"/scm-static.json")
@@ -116,17 +117,18 @@ def peopleData(period, startdate, enddate, identities_db, destdir, top_authors_d
     createJSON(top, destdir+"/scm-people.json", False)
 
     for upeople_id in top :
-        evol_data = vizr.GetEvolPeopleSCM(upeople_id, period, startdate, enddate)
-        evol_data = completePeriodIds(dataFrame2Dict(evol_data))
+        evol_data = SCM.GetEvolPeopleSCM(upeople_id, period, startdate, enddate)
+        evol_data = completePeriodIds(evol_data)
         createJSON (evol_data, destdir+"/people-"+str(upeople_id)+"-scm-evolutionary.json")
 
-        agg = vizr.GetStaticPeopleSCM(upeople_id,  startdate, enddate)
-        createJSON (dataFrame2Dict(agg), destdir+"/people-"+str(upeople_id)+"-scm-static.json")
+        agg = SCM.GetStaticPeopleSCM(upeople_id,  startdate, enddate)
+        createJSON (agg, destdir+"/people-"+str(upeople_id)+"-scm-static.json")
 
     pass
 
 def reposData(period, startdate, enddate, identities_db, destdir, conf):
-    repos  = dataFrame2Dict(vizr.repos_name(startdate, enddate))
+    # repos  = dataFrame2Dict(vizr.repos_name(startdate, enddate))
+    repos  = SCM.repos_name(startdate, enddate)
     repos = repos['name']
     createJSON(repos, destdir+"/scm-repos.json")
 
@@ -134,15 +136,15 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf):
         repo_name = "'"+ repo+ "'"
         print (repo_name)
 
-        evol_data = vizr.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["repository", repo_name])
-        evol_data = completePeriodIds(dataFrame2Dict(evol_data))
+        evol_data = SCM.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["repository", repo_name])
+        evol_data = completePeriodIds(evol_data)
         createJSON(evol_data, destdir+"/"+repo+"-scm-rep-evolutionary.json")
 
-        agg = vizr.GetSCMStaticData(period, startdate, enddate, identities_db, ["repository", repo_name])
-        createJSON(dataFrame2Dict(agg), destdir+"/"+repo+"-scm-rep-static.json")
+        agg = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, ["repository", repo_name])
+        createJSON(agg, destdir+"/"+repo+"-scm-rep-static.json")
 
 def companiesData(period, startdate, enddate, identities_db, destdir, bots):
-    companies  = dataFrame2Dict(vizr.companies_name_wo_affs(bots, startdate, enddate))
+    companies  = SCM.companies_name_wo_affs(bots, startdate, enddate)
     companies = companies['name']
     createJSON(companies, destdir+"/scm-companies.json")
 
@@ -150,24 +152,24 @@ def companiesData(period, startdate, enddate, identities_db, destdir, bots):
         company_name = "'"+ company+ "'"
         print (company_name)
 
-        evol_data = vizr.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["company", company_name])
-        evol_data = completePeriodIds(dataFrame2Dict(evol_data))
+        evol_data = SCM.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["company", company_name])
+        evol_data = completePeriodIds(evol_data)
         createJSON(evol_data, destdir+"/"+company+"-scm-com-evolutionary.json")
 
-        agg = vizr.GetSCMStaticData(period, startdate, enddate, identities_db, ["company", company_name])
-        createJSON(dataFrame2Dict(agg), destdir+"/"+company+"-scm-com-static.json")
+        agg = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, ["company", company_name])
+        createJSON(agg, destdir+"/"+company+"-scm-com-static.json")
 
-        top_authors = dataFrame2Dict(vizr.company_top_authors(company_name, startdate, enddate))
+        top_authors = SCM.company_top_authors(company_name, startdate, enddate)
         createJSON(top_authors, destdir+"/"+company+"-scm-com-top-authors.json")
 
         for i in [2006,2009,2012]:
-            data = dataFrame2Dict(vizr.company_top_authors_year(company_name, i))
+            data = SCM.company_top_authors_year(company_name, i)
             createJSON(data, destdir+"/"+company+"-scm-top-authors_"+str(i)+".json")
 
     pass
 
 def countriesData(period, startdate, enddate, identities_db, destdir):
-    countries  = dataFrame2Dict(vizr.scm_countries_names(identities_db,startdate, enddate))
+    countries  = SCM.scm_countries_names(identities_db,startdate, enddate)
     countries = countries['name']
     createJSON(countries, destdir+"/scm-countries.json")
 
@@ -175,41 +177,46 @@ def countriesData(period, startdate, enddate, identities_db, destdir):
         print (country)
         country_name = "'"+country+"'"
 
-        evol_data = vizr.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["country", country_name])
-        evol_data = completePeriodIds(dataFrame2Dict(evol_data))
+        evol_data = SCM.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["country", country_name])
+        evol_data = completePeriodIds(evol_data)
         createJSON (evol_data, destdir+"/"+country+"-scm-cou-evolutionary.json")
 
-        agg = vizr.GetSCMStaticData(period, startdate, enddate, identities_db, ["country", country_name])
-        createJSON (dataFrame2Dict(agg), destdir+"/"+country+"-scm-cou-static.json")
+        agg = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, ["country", country_name])
+        createJSON (agg, destdir+"/"+country+"-scm-cou-static.json")
 
 def domainsData(period, startdate, enddate, identities_db, destdir):
-    domains = dataFrame2Dict(vizr.scm_domains_names(identities_db,startdate, enddate))
+    domains = SCM.scm_domains_names(identities_db,startdate, enddate)
     domains = domains['name']
     createJSON(domains, destdir+"/scm-domains.json")
+    # Some R ts are wrong
+    bad_R_json_domains = ['gerrit','gmx','emsenhuber']
 
     for domain in domains :
         domain_name = "'"+domain+"'"
         print (domain_name)
 
-        evol_data = vizr.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["domain", domain_name])
-        evol_data = completePeriodIds(dataFrame2Dict(evol_data))
-        createJSON(evol_data, destdir+"/"+domain+"-scm-dom-evolutionary.json")
+        evol_data = SCM.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["domain", domain_name])
+        evol_data = completePeriodIds(evol_data)
+        if domain in bad_R_json_domains:
+            createJSON(evol_data, destdir+"/"+domain+"-scm-dom-evolutionary.json", False)
+        else:
+            createJSON(evol_data, destdir+"/"+domain+"-scm-dom-evolutionary.json")
 
-        agg = vizr.GetSCMStaticData(period, startdate, enddate, identities_db, ["domain", domain_name])
-        createJSON(dataFrame2Dict(agg), destdir+ "/"+domain+"-scm-dom-static.json")
+        agg = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, ["domain", domain_name])
+        createJSON(agg, destdir+ "/"+domain+"-scm-dom-static.json")
 
 
 def companies_countriesData(period, startdate, enddate, identities_db, destdir):
-    companies = dataFrame2Dict(vizr.companies_name(startdate, enddate))
+    companies = SCM.companies_name(startdate, enddate)
     companies = companies['name']
     for company in companies:
         company_name = "'"+company+ "'"
-        countries  = dataFrame2Dict(vizr.scm_countries_names(identities_db,startdate, enddate))
+        countries  = SCM.scm_countries_names(identities_db,startdate, enddate)
         countries = countries['name']
         for country in countries :
             print (country, "=>", company)
-            data = vizr.scm_companies_countries_evol(identities_db, company, country, nperiod, startdate, enddate)
-            data = completePeriodIds(dataFrame2Dict(data))
+            data = SCM.scm_companies_countries_evol(identities_db, company, country, nperiod, startdate, enddate)
+            data = completePeriodIds(data)
             createJSON (data, destdir + "/"+company+"_"+country+"-scm-evolutionary.json", False)
 
             # Not implemented in original R
@@ -218,13 +225,13 @@ def companies_countriesData(period, startdate, enddate, identities_db, destdir):
 
 def topData(period, startdate, enddate, identities_db, destdir, bots):
     top_authors_data =  {}
-    top_authors_data['authors.'] = dataFrame2Dict(vizr.top_people(0, startdate, enddate, "author" , "" ))
-    top_authors_data['authors.last year']= dataFrame2Dict(vizr.top_people(365, startdate, enddate, "author", ""))
-    top_authors_data['authors.last month']= dataFrame2Dict(vizr.top_people(31, startdate, enddate, "author", ""))
+    top_authors_data['authors.'] = SCM.top_people(0, startdate, enddate, "author" , "" )
+    top_authors_data['authors.last year']= SCM.top_people(365, startdate, enddate, "author", "")
+    top_authors_data['authors.last month']= SCM.top_people(31, startdate, enddate, "author", "")
     createJSON (top_authors_data, destdir+"/scm-top.json")
 
     # Top files
-    top_files_modified_data = vizr.top_files_modified()
+    top_files_modified_data = SCM.top_files_modified()
 
     return top_authors_data
 
@@ -254,11 +261,11 @@ if __name__ == '__main__':
     vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
-    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
 
-    sys.exit()
-
+    if ('domains' in reports):
+        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
     if ('countries' in reports):
@@ -267,12 +274,9 @@ if __name__ == '__main__':
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     if ('companies-countries' in reports):
         companies_countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
-    if ('domains' in reports):
-        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
-
     # pretty slow!
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
-
     microStudies(opts.startdate, opts.destdir)
+

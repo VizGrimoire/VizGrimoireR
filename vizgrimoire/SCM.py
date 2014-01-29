@@ -28,7 +28,8 @@
 
 import re, sys
 
-from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
+from GrimoireSQL import GetSQLGlobal, GetSQLPeriod
+# TODO integrate: from GrimoireSQL import  GetSQLReportFrom 
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
 import GrimoireUtils
@@ -42,13 +43,13 @@ def GetSCMEvolutionaryData (period, startdate, enddate, i_db, type_analysis):
     # management system. Those are merged and returned.
 
     # 1- Retrieving information
-    commits = EvolCommits(period, startdate, enddate, i_db, type_analysis)
-    authors = EvolAuthors(period, startdate, enddate, i_db, type_analysis)
-    committers = EvolCommitters(period, startdate, enddate, i_db, type_analysis)
-    files = EvolFiles(period, startdate, enddate, i_db, type_analysis)
-    lines = EvolLines(period, startdate, enddate, i_db, type_analysis)
-    branches = EvolBranches(period, startdate, enddate, i_db, type_analysis)
-    repositories = EvolRepositories(period, startdate, enddate, i_db, type_analysis)
+    commits = completePeriodIds(EvolCommits(period, startdate, enddate, i_db, type_analysis))
+    authors = completePeriodIds(EvolAuthors(period, startdate, enddate, i_db, type_analysis))
+    committers = completePeriodIds(EvolCommitters(period, startdate, enddate, i_db, type_analysis))
+    files = completePeriodIds(EvolFiles(period, startdate, enddate, i_db, type_analysis))
+    lines = completePeriodIds(EvolLines(period, startdate, enddate, i_db, type_analysis))
+    branches = completePeriodIds(EvolBranches(period, startdate, enddate, i_db, type_analysis))
+    repositories = completePeriodIds(EvolRepositories(period, startdate, enddate, i_db, type_analysis))
 
     # 2- Merging information
     evol = dict(commits.items() + repositories.items() + committers.items())
@@ -134,7 +135,7 @@ def GetSQLCountriesWhere (country, role):
 
 def GetSQLDomainsFrom (identities_db) :
     #tables necessaries for domains
-    return (" , ",identities_db+".people_upeople pup, "+\
+    return (" , "+identities_db+".people_upeople pup, "+\
                 identities_db+".upeople_domains upd, "+\
                 identities_db+".domains d")
 
@@ -266,12 +267,12 @@ def StaticNumAuthors (period, startdate, enddate, identities_db, type_analysis):
     return (GetAuthors(period, startdate, enddate, identities_db, type_analysis, False))
 
 
-def GetDiffAuthorsDays (period, init_date, identities_db, days):
+def GetDiffAuthorsDays (period, date, identities_db, days):
     # This function provides the percentage in activity between two periods:
     chardates = GetDates(date, days)
-    last = StaticNumAuthors(period, chardates[1], chardates[0], identities_db)
+    last = StaticNumAuthors(period, chardates[1], chardates[0], identities_db, None)
     last = int(last['authors'])
-    prev = StaticNumAuthors(period, chardates[2], chardates[1], identities_db)
+    prev = StaticNumAuthors(period, chardates[2], chardates[1], identities_db, None)
     prev = int(prev['authors'])
 
     data = {}
@@ -348,12 +349,12 @@ def StaticNumFiles (period, startdate, enddate, identities_db, type_analysis):
     return (GetFiles(period, startdate, enddate, identities_db, type_analysis, False))
 
 
-def GetDiffFilesDays (period, init_date, identities_db, days):
+def GetDiffFilesDays (period, date, identities_db, days):
     # This function provides the percentage in activity between two periods:
     chardates = GetDates(date, days)
-    last = StaticNumFiles(period, chardates[1], chardates[0], identities_db)
+    last = StaticNumFiles(period, chardates[1], chardates[0], identities_db, None)
     last = int(last['files'])
-    prev = StaticNumFiles(period, chardates[2], chardates[1], identities_db)
+    prev = StaticNumFiles(period, chardates[2], chardates[1], identities_db, None)
     prev = int(prev['files'])
 
     data = {}
@@ -381,6 +382,10 @@ def GetLines (period, startdate, enddate, identities_db, type_analysis, evolutio
     q = BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
 
     data = ExecuteQuery(q)
+
+    if not (isinstance(data['removed_lines'], list)): data['removed_lines'] = [data['removed_lines']]
+    if not (isinstance(data['added_lines'], list)): data['added_lines'] = [data['added_lines']]
+
     data['removed_lines'] = [float(lines)  for lines in data['removed_lines']]
     data['added_lines'] = [float(lines)  for lines in data['added_lines']]
     # TODO: not used so we don't need it - acs
@@ -398,13 +403,13 @@ def StaticNumLines (period, startdate, enddate, identities_db, type_analysis):
     # returns the aggregate number of lines in the specified timeperiod (enddate - startdate)
     return (GetLines(period, startdate, enddate, identities_db, type_analysis, False))
 
-def GetDiffLinesDays (period, init_date, identities_db, days):
+def GetDiffLinesDays (period, date, identities_db, days):
     # This function provides the percentage in activity between two periods:
     chardates = GetDates(date, days)
-    last = StaticNumLines(period, chardates[1], chardates[0], identities_db)
+    last = StaticNumLines(period, chardates[1], chardates[0], identities_db, None)
     last_added = int(last['added_lines'])
     last_removed = int(last['removed_lines'])
-    prev = StaticNumLines(period, chardates[2], chardates[1], identities_db)
+    prev = StaticNumLines(period, chardates[2], chardates[1], identities_db, None)
     prev_added = int(prev['added_lines'])
     prev_removed = int(prev['removed_lines'])
 
@@ -501,13 +506,13 @@ def StaticNumCommits (period, startdate, enddate, identities_db, type_analysis) 
     return(ExecuteQuery(q))
 
 
-def GetDiffCommitsDays (period, init_date, days):
+def GetDiffCommitsDays (period, date, identities_db, days):
     # This function provides the percentage in activity between two periods:
 
     chardates = GetDates(date, days)
-    last = StaticNumCommits(period, chardates[1], chardates[0])
+    last = StaticNumCommits(period, chardates[1], chardates[0], identities_db, None)
     last = int(last['commits'])
-    prev = StaticNumCommits(period, chardates[2], chardates[1])
+    prev = StaticNumCommits(period, chardates[2], chardates[1], identities_db, None)
     prev = int(prev['commits'])
 
     data = {}
@@ -562,7 +567,10 @@ def StaticNumLines (period, startdate, enddate, identities_db, type_analysis) :
 
     #executing the query
     q = select + tables + filters
-    return(ExecuteQuery(q))
+    data = ExecuteQuery(q)
+    if (data['added_lines'] is None): data['added_lines'] = 0
+    if (data['removed_lines'] is None): data['removed_lines'] = 0
+    return(data)
 
 
 def GetAvgCommitsPeriod (period, startdate, enddate, identities_db, type_analysis, evolutionary):
@@ -632,12 +640,12 @@ def GetAvgCommitsAuthor (period, startdate, enddate, identities_db, type_analysi
     if (type_analysis is None or len (type_analysis) != 2) :
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id"
 
     elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id "
 
     q = BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
@@ -673,12 +681,12 @@ def GetAvgAuthorPeriod (period, startdate, enddate, identities_db, type_analysis
     if (type_analysis is None or len (type_analysis) != 2) :
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id"
 
     elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id "
 
 
@@ -714,12 +722,12 @@ def GetAvgCommitterPeriod (period, startdate, enddate, identities_db, type_analy
     if (type_analysis is None or len (type_analysis) != 2) :
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.committer_id = pup.people_id"
 
     elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.committer_id = pup.people_id "
 
     q = BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
@@ -755,12 +763,12 @@ def GetAvgFilesAuthor (period, startdate, enddate, identities_db, type_analysis,
     if (type_analysis is None or len (type_analysis) != 2) :
         #Specific case for the basic option where people_upeople table is needed
         #and not taken into account in the initial part of the query
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id"
 
     elif (type_analysis[0] == "repository"):
         #Adding people_upeople table
-        tables += ",  ",identities_db,".people_upeople pup"
+        tables += ",  "+identities_db+".people_upeople pup"
         filters += " and s.author_id = pup.people_id "
 
     q = BuildQuery(period, startdate, enddate, " s.date ", fields, tables, filters, evolutionary)
@@ -810,7 +818,7 @@ def GetPeopleQuerySCM (developer_id, period, startdate, enddate, evol) :
     fields ='COUNT(s.id) AS commits'
     tables = GetTablesOwnUniqueIdsSCM()
     filters = GetFiltersOwnUniqueIdsSCM()
-    filters +="AND pup.upeople_id=",developer_id
+    filters +=" AND pup.upeople_id="+str(developer_id)
     if (evol) :
         q = GetSQLPeriod(period,'s.date', fields, tables, filters,
                 startdate, enddate)
@@ -1131,7 +1139,7 @@ def evol_info_data_companies (startdate, enddate) :
          "      pup.people_id = s.author_id and "+\
          "      s.date >="+ startdate+ " and "+\
          "      s.date < "+ enddate
-	query = new("Query", sql = q)
+	
 	data13 = ExecuteQuery(q)
 	
 	q = "select count(distinct(c.id)) as companies_2006 "+\
@@ -1145,7 +1153,7 @@ def evol_info_data_companies (startdate, enddate) :
         "  s.date < upc.end and "+\
         "  upc.company_id = c.id and "+\
         "  year(s.date) = 2006"
-	query = new("Query", sql = q)
+	
 	data14 = ExecuteQuery(q)
 	
 	q = "select count(distinct(c.id)) as companies_2009 "+\
@@ -1159,7 +1167,7 @@ def evol_info_data_companies (startdate, enddate) :
         "  s.date < upc.end and "+\
         "  upc.company_id = c.id and "+\
         "  year(s.date) = 2009"
-	query = new("Query", sql = q)
+	
 	data15 = ExecuteQuery(q)
 	
 	q = "select count(distinct(c.id)) as companies_2012 "+\
@@ -1173,7 +1181,7 @@ def evol_info_data_companies (startdate, enddate) :
         "  s.date < upc.end and "+\
         "  upc.company_id = c.id and "+\
         "  year(s.date) = 2012"
-	query = new("Query", sql = q)
+	
 	data16 = ExecuteQuery(q)
 	
 	
@@ -1242,7 +1250,7 @@ def company_top_authors_year (company_name, year):
         "        pup.upeople_id = u.id and "+\
         "        s.date >= upc.init and "+\
         "        s.date < upc.end and "+\
-        "        year(s.date)="+year+" and "+\
+        "        year(s.date)="+str(year)+" and "+\
         "        upc.company_id = c.id and "+\
         "        c.name ="+ company_name+ " "+\
         " group by u.id "+\
@@ -1305,13 +1313,13 @@ def scm_countries_names (identities_db, startdate, enddate) :
         "     people_upeople pup, "+\
         "     "+identities_db+".countries c, "+\
         "     "+identities_db+".upeople_countries upc "+\
-        "WHERE pup.people_id = s.",rol,"_id AND "+\
+        "WHERE pup.people_id = s."+rol+"_id AND "+\
         "      pup.upeople_id  = upc.upeople_id and "+\
         "      upc.country_id = c.id and "+\
         "      s.date >="+startdate+ " and "+\
         "      s.date < "+enddate+ " "+\
         "group by c.name "+\
-        "order by commits desc LIMIT "+ countries_limit
+        "order by commits desc LIMIT "+ str(countries_limit)
 
     data = ExecuteQuery(q)	
     return (data)
@@ -1322,16 +1330,16 @@ def scm_companies_countries_evol (identities_db, company, country, period, start
 
     rol = "author" #committer
 
-    q = "SELECT ((to_days(s.date) - to_days(",startdate,")) div ",period,") as id, "+\
+    q = "SELECT ((to_days(s.date) - to_days("+startdate+")) div "+str(period)+") as id, "+\
         "count(s.id) AS commits, "+\
-        "COUNT(DISTINCT(s.",rol,"_id)) as ", rol,"s "+\
+        "COUNT(DISTINCT(s."+rol+"_id)) as "+rol+"s "+\
         "FROM scmlog s,  "+\
         "     people_upeople pup, "+\
         "     "+identities_db+".countries ct, "+\
         "     "+identities_db+".upeople_countries upct, "+\
         "     "+identities_db+".companies com, "+\
         "     "+identities_db+".upeople_companies upcom "+\
-        "WHERE pup.people_id = s.",rol,"_id AND "+\
+        "WHERE pup.people_id = s."+rol+"_id AND "+\
         "      pup.upeople_id  = upct.upeople_id and "+\
         "      pup.upeople_id = upcom.upeople_id AND "+\
         "      upcom.company_id = com.id AND "+\
@@ -1340,7 +1348,7 @@ def scm_companies_countries_evol (identities_db, company, country, period, start
         "      s.date < "+ enddate+ " and "+\
         "      ct.name = '"+ country+ "' AND "+\
         "      com.name ='"+company+"' "+\
-        "GROUP BY ((to_days(s.date) - to_days(",startdate,")) div ",period,")"
+        "GROUP BY ((to_days(s.date) - to_days("+startdate+")) div "+str(period)+")"
 
     data = ExecuteQuery(q)	
     return (data)
@@ -1370,7 +1378,7 @@ def scm_domains_names (identities_db, startdate, enddate) :
         "  people_upeople pup, "+\
         "  "+identities_db+".domains d, "+\
         "  "+identities_db+".upeople_domains upd "+\
-        "WHERE pup.people_id = s.",rol,"_id AND "+\
+        "WHERE pup.people_id = s."+rol+"_id AND "+\
         "  pup.upeople_id  = upd.upeople_id and "+\
         "  upd.domain_id = d.id and "+\
         "  s.date >="+ startdate+ " and "+\
@@ -1399,7 +1407,7 @@ def GetCodeCommunityStructure (period, startdate, enddate, identities_db):
   community['regular'] = None
   community['occasional'] = None
 
-  q = "select count(distinct(s.id)) "+\
+  q = "select count(distinct(s.id)) as total "+\
        "from scmlog s, people p, actions a "+\
        "where s.author_id = p.id and "+\
        "      p.email <> '%gerrit@%' and "+\
@@ -1407,9 +1415,9 @@ def GetCodeCommunityStructure (period, startdate, enddate, identities_db):
        "      s.id = a.commit_id and "+\
        "      s.date>="+startdate+" and "+\
        "      s.date<="+enddate+";"
-  query = new("Query", sql=q)
+
   total = ExecuteQuery(q)
-  total_commits = int(total)
+  total_commits = float(total['total'])
 
   # Database access: developer, %commits
   q = " select pup.upeople_id, "+\
@@ -1428,7 +1436,6 @@ def GetCodeCommunityStructure (period, startdate, enddate, identities_db):
       " group by pup.upeople_id "+\
       " order by commits desc; "
 
-  query = new("Query", sql=q)
   people = ExecuteQuery(q)
   # this is a list. Operate over the list
   people['commits'] = [((commits / total_commits) * 100) for commits in people['commits']]

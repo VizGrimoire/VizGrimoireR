@@ -299,12 +299,21 @@ def getPeriod(granularity, number = None):
     if (number): return nperiod
     return period
 
+
+def removeDecimals(data):
+    from decimal import Decimal
+    if (isinstance(data, dict)):
+        for key in data:
+            if (isinstance(data[key], Decimal)):
+                data[key] = float(data[key])
+    return data
+
 # Until we use VizPy we will create JSON python files with _py
 def createJSON(data, filepath, check=True):
     filepath_py = filepath.split(".json")
     filepath_py = filepath_py[0]+"_py.json"
     jsonfile = open(filepath_py, 'w')
-    json_data = json.dumps(data, sort_keys=True)
+    json_data = json.dumps(removeDecimals(data), sort_keys=True)
     # NA as value is not decoded with Python JSON
     # JSON R has "NA" and not NaN
     # JSON R has "NA" and not null
@@ -332,6 +341,7 @@ def compareJSON(orig_file, new_file):
     if isinstance(data1, list):
         for i in range(0, len(data1)):
             if (data1[i] != data2[i]):
+                if (data1[i] == "NA" and data2[i] == 0): continue
                 logging.warn(data1[i])
                 logging.warn("is not")
                 logging.warn(data2[i])
@@ -344,6 +354,7 @@ def compareJSON(orig_file, new_file):
                 logging.warn (name + " does not exists in " + new_file)
                 check = False
             elif data1[name] != data2[name]:
+                if (data1[name] == "NA" and data2[name] == 0): continue
                 logging.warn ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
                 check = False
         for name in data2:
