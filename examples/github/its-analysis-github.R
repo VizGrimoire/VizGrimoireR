@@ -173,6 +173,10 @@ all_static_info = merge(all_static_info, latest_activity90)
 all_static_info = merge(all_static_info, latest_activity180)
 all_static_info = merge(all_static_info, latest_activity365)
 all_static_info = merge(all_static_info, latest_activity730)
+
+all.participants <- AggAllParticipants (startdate, enddate)
+all_static_info = merge(all_static_info, all.participants)
+
 createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 GetTopClosersSimple <- function(days = 0, startdate, enddate, identites_db) {
