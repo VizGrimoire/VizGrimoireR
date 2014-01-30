@@ -83,9 +83,11 @@ if (conf$backend == 'jira'){
     name_log_table <- 'issues_log_jira'
 }
 if (conf$backend == 'launchpad'){
-    #closed_condition <- "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
+    #Specific closed condition for OpenStack project
     closed_condition <- "(new_value='Fix Committed')"
-    statuses = c("Fix Committed")
+    #Specific statuses from OpenStack project
+    statuses = c("Confirmed", "Fix Committed", "New", "In Progress", "Triaged", "Incomplete", "Invalid", "Won\\'t Fix", "Fix Released", "Opinion", "Unknown", "Expired")
+    name_log_table = "issues_log_launchpad"
 }
 if (conf$backend == 'redmine'){
     statuses = c("New", "Verified", "Need More Info", "In Progress", "Feedback",
@@ -114,6 +116,25 @@ destdir <- conf$destination
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 
 evol = EvolITSInfo(period, startdate, enddate, identities_db, list(NA, NA), closed_condition)
+
+markov <- MarkovChain()
+createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
+
+
+
+## for (status in statuses)
+## {
+##     #Evolution of the backlog
+##     tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
+##     colnames(tickets_status)[2] <- status
+##     #Issues per status
+##     current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
+##     #Merging data
+##     if (nrow(current_status)>0){
+##         evol <- merge(evol, current_status, all=TRUE)
+##     }
+##     evol <- merge (evol, tickets_status, all = TRUE)
+## }
 
 
 if ('companies' %in% reports) {
@@ -325,20 +346,26 @@ if ('domains' %in% reports) {
 }
 # People
 if ('people' %in% reports) {
-    people  <- GetPeopleListITS(conf$startdate, conf$enddate)
-    people = people$pid
-    limit = 30
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
+    top_closers_data[['closers.']]
 
-    for (upeople_id in people) {
-        evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
+    all.top.people <- top_closers_data[['closers.']]$id
+    all.top.people <- append(all.top.people, top_closers_data[['closers.last year']]$id)
+    all.top.people <- append(all.top.people, top_closers_data[['closers.last month']]$id)
+    
+    all.top.people <- append(all.top.people, top_openers_data[['openers.']]$id)
+    all.top.people <- append(all.top.people, top_openers_data[['openers.last year']]$id)
+    all.top.people <- append(all.top.people, top_openers_data[['openers.last month']]$id)
+    
+    all.top.people <- unique(all.top.people)
+    createJSON(all.top.people, paste(c(destdir,"/its-people.json"), collapse=''))
+
+    for (upeople_id in all.top.people) {
+        evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate, closed_condition)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
         createJSON (evol, paste(c(destdir,"/people-",upeople_id,"-its-evolutionary.json",sep=''), collapse=''))
 
-        data <- GetPeopleStaticITS(upeople_id, conf$startdate, conf$enddate)
+        data <- GetPeopleStaticITS(upeople_id, conf$startdate, conf$enddate, closed_condition)
         createJSON (data, paste(c(destdir,"/people-",upeople_id,"-its-static.json",sep=''), collapse=''))
     }
 }

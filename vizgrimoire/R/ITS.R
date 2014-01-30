@@ -345,10 +345,13 @@ GetCurrentStatus <- function(period, startdate, enddate, identities_db, status){
     # This functions provides  of the status specified by 'status'
     # group by submitted date. Thus, as an example, for those issues 
     # in status = open, it is possible to know when they were submitted
-
-    fields = paste(" count(distinct(id)) as current_", status, sep="")
-    tables = paste(" issues ", GetITSSQLReportFrom(identities_db, type_analysis), sep="")
-    filters = paste(" status = '", status, "' and ", GetITSSQLReportWhere(type_analysis) , sep="")
+    fields = paste(" count(distinct(id)) as `current_", status, "`", sep="")
+    # Fix commented lines in order to make generic this function to any
+    # type of granularity (per company, repository, etc)
+    #tables = paste(" issues ", GetITSSQLReportFrom(identities_db, list(NA, NA)), sep="")
+    tables = " issues "
+    #filters = paste(" status = '", status, "' and ", GetITSSQLReportWhere(list(NA, NA)) , sep="")
+    filters = paste(" status = '", status, "'", sep="")
     q <- GetSQLPeriod(period,'submitted_on', fields, tables, filters,
             startdate, enddate)
     query <- new ("Query", sql = q)
@@ -670,7 +673,7 @@ GetDate <- function(startdate, enddate, identities_db, type_analysis=list(NA, NA
     tables = paste(" issues i ", GetITSSQLReportFrom(identities_db, type_analysis))
     filters = GetITSSQLReportWhere(type_analysis)
 
-    q <- BuildQuery(NA, startdate, enddate, " i.submitted_on ", fields, tables, filters, "FALSE") 
+    q <- BuildQuery(NA, startdate, enddate, " i.submitted_on ", fields, tables, filters, "FALSE")
     data <- ExecuteQuery(q)
     return(data)    
 }
@@ -752,7 +755,7 @@ GetDomainsNameITS <- function(startdate, enddate, identities_db, closed_conditio
                        c.changed_on < ", enddate, " AND
                        ", closed_condition,"
                  GROUP BY dom.name
-                 ORDER BY COUNT(DISTINCT(c.issue_id)),dom.name DESC", sep="")
+                 ORDER BY COUNT(DISTINCT(c.issue_id)) DESC", sep="")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -1032,7 +1035,7 @@ GetFiltersCompaniesITS <- function (table='') {
 }
 
 GetCompanyTopClosers <- function(company_name, startdate, enddate,
-        identities_db, filter = c(''), closed_condition) {
+        identities_db, filter = c('')) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1055,8 +1058,7 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
 }
 
 
-GetTopClosers <- function(days = 0, startdate, enddate,
-        identities_db, filter = c(""), closed_condition) {
+GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
 
     affiliations = ""
     for (aff in filter){
@@ -1091,8 +1093,7 @@ GetTopClosers <- function(days = 0, startdate, enddate,
     return (data)
 }
 
-GetDomainTopClosers <- function(domain_name, startdate, enddate, 
-        identities_db, filter = c(''), closed_condition) {
+GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, filter = c('')) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1114,8 +1115,7 @@ GetDomainTopClosers <- function(domain_name, startdate, enddate,
     return (data)
 }
 
-GetTopOpeners <- function(days = 0, startdate, enddate,
-        identities_db, filter = c(""), closed_condition = closed_condition) {
+GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {  
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
@@ -1164,10 +1164,11 @@ GetPeopleListITS <- function(startdate, enddate) {
         return (data)
 }
 
-GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol) {
+GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol, closed_condition) {
     fields = "COUNT(c.id) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
     filters = paste(GetFiltersOwnUniqueIdsITS(), "AND pup.upeople_id = ", developer_id)
+    filters = paste(filters, "AND ", closed_condition)
 
     if (evol) {
         q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
@@ -1183,15 +1184,19 @@ GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol) {
 }
 
 
-GetPeopleEvolITS <- function(developer_id, period, startdate, enddate) {
-    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, TRUE)
+GetPeopleEvolITS <- function(developer_id, period, startdate, enddate, closed_condition) {
+    ## FIXME is this function used only to calculate closed issues? if not it must be
+    ## fixed
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, TRUE, closed_condition)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetPeopleStaticITS <- function(developer_id, startdate, enddate) {
-    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, FALSE)
+GetPeopleStaticITS <- function(developer_id, startdate, enddate, closed_condition) {
+    ## FIXME is this function used only to calculate closed issues? if not it must be
+    ## fixed
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, FALSE, closed_condition)
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -1232,9 +1237,11 @@ MarkovChain<-function()
     query <- new ("Query", sql = q)
     status <- run(query)
 
+    print(status)
     T<-status[order(status$value),]
     T1<-gsub("'", "", T)
 
+    print(T1)
     new_value<-function(old)
     {
         q<-paste("select old_value, new_value, count(*) as issue
@@ -1324,6 +1331,7 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
     first = TRUE
     for (company in companies){
         # Cleaning data
+        print(company)
         company_data = subset(data, data$name %in% company)
         company_data <- completePeriodIds(company_data, conf$granularity, conf)
         company_data <- company_data[order(company_data$id), ]
@@ -1355,73 +1363,5 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
     }
 
     return(first_companies)
-}
-
-
-# Microstudies
-
-# Demographics
-ReportDemographicsAgingITS <- function (enddate, destdir) {
-    d <- new ("Demographics","its",6)
-    people <- Aging(d)
-    people$age <- as.Date(enddate) - as.Date(people$firstdate)
-    people$age[people$age < 0 ] <- 0
-    aux <- data.frame(people["id"], people["age"])
-    new <- list()
-    new[['date']] <- enddate
-    new[['persons']] <- aux
-    createJSON (new, paste(c(destdir, "/its-demographics-aging.json"), collapse=''))
-}
-
-ReportDemographicsBirthITS <- function (enddate, destdir) {
-    d <- new ("Demographics","its",6)
-    newcomers <- Birth(d)
-    newcomers$age <- as.Date(enddate) - as.Date(newcomers$firstdate)
-    newcomers$age[newcomers$age < 0 ] <- 0
-    aux <- data.frame(newcomers["id"], newcomers["age"])
-    new <- list()
-    new[['date']] <- enddate
-    new[['persons']] <- aux
-    createJSON (new, paste(c(destdir, "/its-demographics-birth.json"), collapse=''))
-}
-
-# Time to close
-ReportTimeToCloseITS <- function (backend, destdir) {
-    if (backend == 'bugzilla' ||
-        backend == 'allura' ||
-        backend == 'jira' ||
-        backend == 'launchpad') {
-        ## Quantiles
-        ## Which quantiles we're interested in
-        quantiles_spec = c(.99,.95,.5,.25)
-
-        ## Closed tickets: time ticket was open, first closed, time-to-first-close
-        closed <- new ("ITSTicketsTimes")
-
-        ## Yearly quantiles of time to fix (minutes)
-        events.tofix <- new ("TimedEvents",
-            closed$open, closed$tofix %/% 60)
-        quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-        JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
-
-        ## Monthly quantiles of time to fix (hours)
-        events.tofix.hours <- new ("TimedEvents",
-            closed$open, closed$tofix %/% 3600)
-        quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
-        JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
-    
-        ## Changed tickets: time ticket was attended, last move
-        changed <- new ("ITSTicketsChangesTimes")
-        ## Yearly quantiles of time to attention (minutes)
-        events.toatt <- new ("TimedEvents",
-            changed$open, changed$toattention %/% 60)
-        quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-        JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
-    }
-}
-
-ReportMarkovChain <- function(destdir) {
-    markov <- MarkovChain()
-    createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
 }
 
