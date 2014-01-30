@@ -62,8 +62,8 @@ class Backend(object):
             Backend.name_log_table = 'issues_log_bugzilla'
             Backend.statuses = ["NEW", "ASSIGNED"]
             #Pretty specific states in Red Hat's Bugzilla
-            Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
-                        "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
+            # Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
+            #            "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
 
         if (its_type == 'github'):
             Backend.closed_condition = "field='closed'"
@@ -134,7 +134,9 @@ def aggData(period, startdate, enddate, identities_db, destdir, closed_condition
     createJSON (agg, destdir+"/its-static.json")
 
 def tsData(period, startdate, enddate, identities_db, destdir, granularity,
-           conf, closed_condition):
+           conf, backend):
+
+    closed_condition = backend.closed_condition
 #    data = vizr.EvolITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition)
 #    evol = completePeriodIds(dataFrame2Dict(data))
     data = ITS.EvolITSInfo(period, startdate, enddate, identities_db, [], closed_condition)
@@ -154,6 +156,9 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
     if ('domains' in reports) :
         data = ITS.EvolIssuesDomains(period, startdate, enddate, identities_db)
         evol = dict(evol.items() + completePeriodIds(data).items())
+
+    evol = dict(evol.items() +
+                ticketsStates(period, startdate, enddate, identities_db, backend).items())
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 
@@ -284,6 +289,23 @@ def microStudies(destdir):
     # Markov
     vizr.ReportMarkovChain(opts.destdir)
 
+def ticketsStates(period, startdate, enddate, identities_db, backend):
+    print (backend.statuses)
+    evol = {}
+    for status in backend.statuses:
+        print ("Working with ticket status: " + status)
+        #Evolution of the backlog
+        tickets_status = vizr.GetEvolBacklogTickets(period, startdate, enddate, status, backend.name_log_table)
+        tickets_status = completePeriodIds(dataFrame2Dict(tickets_status))
+        # rename key
+        tickets_status[status] = tickets_status.pop("pending_tickets")
+        #Issues per status
+        current_status = vizr.GetCurrentStatus(period, startdate, enddate, identities_db, status)
+        current_status = completePeriodIds(dataFrame2Dict(current_status))
+        #Merging data
+        evol = dict(evol.items() + current_status.items() + tickets_status.items())
+    return evol
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
     logging.info("Starting ITS data source analysis")
@@ -304,9 +326,9 @@ if __name__ == '__main__':
     # backends
     backend = Backend(opts.backend)
 
-#    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, 
-#            opts.granularity, opts, backend.closed_condition)
-#    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
+    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, 
+            opts.granularity, opts, backend)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
 
