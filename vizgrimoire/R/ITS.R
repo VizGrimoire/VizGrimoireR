@@ -1035,7 +1035,7 @@ GetFiltersCompaniesITS <- function (table='') {
 }
 
 GetCompanyTopClosers <- function(company_name, startdate, enddate,
-        identities_db, filter = c('')) {
+        identities_db, filter = c(''), closed_condition = closed_condition) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1058,8 +1058,8 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
 }
 
 
-GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
-
+GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c(""),
+                          closed_condition = closed_condition) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
@@ -1093,7 +1093,8 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
     return (data)
 }
 
-GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, filter = c('')) {
+GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, filter = c(''),
+        closed_condition = closed_condition) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1115,7 +1116,8 @@ GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, 
     return (data)
 }
 
-GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {  
+GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c(""),
+        closed_condition = closed_condition) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
@@ -1365,3 +1367,69 @@ GetClosedSummaryCompanies <- function(period, startdate, enddate, identities_db,
     return(first_companies)
 }
 
+# Microstudies
+
+# Demographics
+ReportDemographicsAgingITS <- function (enddate, destdir) {
+    d <- new ("Demographics","its",6)
+    people <- Aging(d)
+    people$age <- as.Date(enddate) - as.Date(people$firstdate)
+    people$age[people$age < 0 ] <- 0
+    aux <- data.frame(people["id"], people["age"])
+    new <- list()
+    new[['date']] <- enddate
+    new[['persons']] <- aux
+    createJSON (new, paste(c(destdir, "/its-demographics-aging.json"), collapse=''))
+}
+
+ReportDemographicsBirthITS <- function (enddate, destdir) {
+    d <- new ("Demographics","its",6)
+    newcomers <- Birth(d)
+    newcomers$age <- as.Date(enddate) - as.Date(newcomers$firstdate)
+    newcomers$age[newcomers$age < 0 ] <- 0
+    aux <- data.frame(newcomers["id"], newcomers["age"])
+    new <- list()
+    new[['date']] <- enddate
+    new[['persons']] <- aux
+    createJSON (new, paste(c(destdir, "/its-demographics-birth.json"), collapse=''))
+}
+
+# Time to close
+ReportTimeToCloseITS <- function (backend, destdir) {
+    if (backend == 'bugzilla' ||
+                    backend == 'allura' ||
+                    backend == 'jira' ||
+                    backend == 'launchpad') {
+        ## Quantiles
+        ## Which quantiles we're interested in
+        quantiles_spec = c(.99,.95,.5,.25)
+        
+        ## Closed tickets: time ticket was open, first closed, time-to-first-close
+        closed <- new ("ITSTicketsTimes")
+        
+        ## Yearly quantiles of time to fix (minutes)
+        events.tofix <- new ("TimedEvents",
+                            closed$open, closed$tofix %/% 60)
+        quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+        JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
+        
+        ## Monthly quantiles of time to fix (hours)
+        events.tofix.hours <- new ("TimedEvents",
+                            closed$open, closed$tofix %/% 3600)
+        quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
+        JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
+        
+        ## Changed tickets: time ticket was attended, last move
+        changed <- new ("ITSTicketsChangesTimes")
+        ## Yearly quantiles of time to attention (minutes)
+        events.toatt <- new ("TimedEvents",
+                            changed$open, changed$toattention %/% 60)
+        quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+        JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
+    }
+}
+
+ReportMarkovChain <- function(destdir) {
+    markov <- MarkovChain()
+    createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
+}
