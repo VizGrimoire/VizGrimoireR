@@ -31,7 +31,6 @@ def GetTablesOwnUniqueIdsIRC():
     tables = 'irclog, people_upeople pup'
     return (tables)
 
-
 def GetFiltersOwnUniqueIdsIRC():
     filters = 'pup.people_id = irclog.nick'
     return (filters)
@@ -42,6 +41,7 @@ def StaticNumSentIRC (period, startdate, enddate, identities_db=None, type_analy
               DATE_FORMAT (max(date), '%Y-%m-%d') as last_date "
     tables = " FROM irclog "
     filters = "WHERE date >=" + startdate + " and date < " + enddate
+    filters += " AND type='COMMENT' "
     q = fields + tables + filters
     return(ExecuteQuery(q))
 
@@ -49,6 +49,7 @@ def StaticNumSendersIRC (period, startdate, enddate, identities_db=None, type_an
     fields = "SELECT count(distinct(nick)) as senders"
     tables = " FROM irclog "
     filters = "WHERE date >=" + startdate + " and date < " + enddate
+    filters += " AND type='COMMENT' "
     q = fields + tables + filters
     return(ExecuteQuery(q))
 
@@ -56,6 +57,7 @@ def StaticNumRepositoriesIRC (period, startdate, enddate, identities_db=None, ty
     fields = "SELECT COUNT(DISTINCT(channel_id)) AS repositories "
     tables = "FROM irclog "
     filters = "WHERE date >=" + startdate + " AND date < " + enddate
+    filters += " AND type='COMMENT' "
     q = fields + tables + filters
     return(ExecuteQuery(q))
 
@@ -74,6 +76,7 @@ def GetSentIRC (period, startdate, enddate, identities_db, type_analysis, evolut
     fields = " count(distinct(message)) as sent "
     tables = " irclog " + GetSQLReportFrom(identities_db, type_analysis)
     filters = GetSQLReportWhere(type_analysis, "author")
+    filters += " AND type='COMMENT' "
     q = BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)
     return(ExecuteQuery(q))
 
@@ -84,6 +87,7 @@ def GetSendersIRC (period, startdate, enddate, identities_db, type_analysis, evo
     fields = " count(distinct(nick)) as senders "
     tables = " irclog " + GetSQLReportFrom(identities_db, type_analysis)
     filters = GetSQLReportWhere(type_analysis, "author")
+    filters += " AND type='COMMENT' "
     q = BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)
     return(ExecuteQuery(q))
 
@@ -122,6 +126,7 @@ def GetRepoEvolSentSendersIRC (repo, period, startdate, enddate):
     fields = 'COUNT(irclog.id) AS sent, COUNT(DISTINCT(pup.upeople_id)) AS senders'
     tables= GetTablesReposIRC()
     filters = GetFiltersReposIRC() + " AND c.name='"+repo+"'"
+    filters += " AND irclog.type='COMMENT'"
     q = GetSQLPeriod(period,'date', fields, tables, filters, startdate, enddate)
     return(ExecuteQuery(q))
 
@@ -130,6 +135,7 @@ def GetRepoStaticSentSendersIRC (repo, startdate, enddate):
             'COUNT(DISTINCT(pup.upeople_id)) AS senders'
     tables = GetTablesReposIRC()
     filters = GetFiltersReposIRC()+" AND c.name='"+repo+"'"
+    filters += " AND irclog.type='COMMENT'"
     q = GetSQLGlobal('date',fields, tables, filters, startdate, enddate)
     return(ExecuteQuery(q))
 
@@ -191,7 +197,8 @@ def GetTopSendersIRC (days, startdate, enddate, identities_db, bots):
     q = "SELECT up.id as id, up.identifier as senders,"+\
         "       COUNT(irclog.id) as sent "+\
         " FROM irclog, people_upeople pup, "+identities_db+".upeople up "+\
-        " WHERE "+ filter_bots + \
+        " WHERE "+ filter_bots +\
+        "            irclog.type = 'COMMENT' and "+\
         "            irclog.nick = pup.people_id and "+\
         "            pup.upeople_id = up.id and "+\
         "            date >= "+ startdate+ " and "+\
@@ -208,6 +215,7 @@ def GetListPeopleIRC (startdate, enddate):
     fields = "DISTINCT(pup.upeople_id) as id, count(irclog.id) total"
     tables = GetTablesOwnUniqueIdsIRC()
     filters = GetFiltersOwnUniqueIdsIRC()
+    filters += " AND irclog.type='COMMENT'"
     filters += " GROUP BY nick ORDER BY total DESC"
     q = GetSQLGlobal('date', fields, tables, filters, startdate, enddate)
     return(ExecuteQuery(q))
@@ -216,6 +224,7 @@ def GetQueryPeopleIRC (developer_id, period, startdate, enddate, evol):
     fields = "COUNT(irclog.id) AS sent"
     tables = GetTablesOwnUniqueIdsIRC()
     filters = GetFiltersOwnUniqueIdsIRC() + " AND pup.upeople_id = " + str(developer_id)
+    filters += " AND irclog.type='COMMENT'"
 
     if (evol) :
         q = GetSQLPeriod(period,'date', fields, tables, filters,
