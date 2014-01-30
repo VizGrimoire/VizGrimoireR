@@ -60,7 +60,7 @@ class Backend(object):
             Backend.closed_condition = "(new_value='RESOLVED' OR new_value='CLOSED')"
             Backend.reopened_condition = "new_value='NEW'"
             Backend.name_log_table = 'issues_log_bugzilla'
-            Backend.statuses = ["NEW", "ASSIGNED"]
+            Backend.statuses = ["ASSIGNED"]
             #Pretty specific states in Red Hat's Bugzilla
             # Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
             #            "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
@@ -161,6 +161,7 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
                 ticketsStates(period, startdate, enddate, identities_db, backend).items())
 
     createJSON (evol, destdir+"/its-evolutionary.json")
+    sys.exit()
 
 def peopleData(period, startdate, enddate, identities_db, destdir, closed_condition, top_data):
     top  = top_data['closers.']["id"]
@@ -290,7 +291,6 @@ def microStudies(destdir):
     vizr.ReportMarkovChain(opts.destdir)
 
 def ticketsStates(period, startdate, enddate, identities_db, backend):
-    print (backend.statuses)
     evol = {}
     for status in backend.statuses:
         print ("Working with ticket status: " + status)
