@@ -1165,7 +1165,7 @@ GetPeopleListITS <- function(startdate, enddate) {
 }
 
 GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol, closed_condition) {
-    fields = "COUNT(c.id) AS closed"
+    fields = "COUNT(distinct(c.issue_id)) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
     filters = paste(GetFiltersOwnUniqueIdsITS(), "AND pup.upeople_id = ", developer_id)
     filters = paste(filters, "AND ", closed_condition)
