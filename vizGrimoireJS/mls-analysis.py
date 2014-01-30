@@ -101,15 +101,14 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf
     createJSON (evol, destdir+"/mls-evolutionary.json")
 
 
-def peopleData(period, startdate, enddate, identities_db, destdir):
-    # people =  dataFrame2Dict(vizr.GetListPeopleMLS(startdate, enddate))
-    people =  MLS.GetListPeopleMLS(startdate, enddate)
-    people = people['id']
-    limit = 100
-    if (len(people)<limit): limit = len(people);
-    people = people[0:limit]
-
-    createJSON(people, destdir+"/mls-people.json")
+def peopleData(period, startdate, enddate, identities_db, destdir, top_data):
+    top = top_data['senders.']["id"]
+    top += top_data['senders.last year']["id"]
+    top += top_data['senders.last month']["id"]
+    # remove duplicates
+    people = list(set(top))
+    # the order is not the same than in R json
+    createJSON(people, destdir+"/mls-people.json", False)
 
     for upeople_id in people:
         evol = MLS.GetEvolPeopleMLS(upeople_id, period, startdate, enddate)
@@ -223,6 +222,8 @@ def topData(period, startdate, enddate, identities_db, destdir, bots):
 
     createJSON (top_senders_data, destdir+"/mls-top.json", False)
 
+    return top_senders_data
+
 def demographics(enddate, destdir):
     vizr.ReportDemographicsAgingMLS(enddate, destdir)
     vizr.ReportDemographicsBirthMLS(enddate, destdir)
@@ -259,8 +260,10 @@ if __name__ == '__main__':
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
 
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     if ('people' in reports):
-        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
+
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts, rfield)
     if ('countries' in reports):
@@ -269,7 +272,7 @@ if __name__ == '__main__':
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('domains' in reports):
         domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+
 
     # R specific reports
     demographics(opts.enddate, opts.destdir)

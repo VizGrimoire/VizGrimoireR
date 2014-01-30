@@ -58,13 +58,14 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf
     evol_data = completePeriodIds(evol_data)
     createJSON (evol_data, destdir+"/mediawiki-evolutionary.json")
 
-def peopleData(period, startdate, enddate, identities_db, destdir):
-    people = Mediawiki.GetListPeopleMediaWiki(startdate, enddate)
-    people = people['id']
-    limit = 30
-    if (len(people)<limit): limit = len(people);
-    people = people[0:limit]
-    createJSON(people, destdir+"/mediawiki-people.json")
+def peopleData(period, startdate, enddate, identities_db, destdir, top_data):
+    top = top_data['authors.']["id"]
+    top += top_data['authors.last year']["id"]
+    top += top_data['authors.last month']["id"]
+    # remove duplicates
+    people = list(set(top))
+    # the order is not the same than in R json 
+    createJSON(people, destdir+"/mediawiki-people.json", False)
 
     for upeople_id in people:
         evol = Mediawiki.GetEvolPeopleMediaWiki(upeople_id, period, startdate, enddate)
@@ -90,6 +91,8 @@ def topData(period, startdate, enddate, identities_db, destdir, bots):
     top_authors['authors.last month']= Mediawiki.GetTopAuthorsMediaWiki(31, startdate, enddate, identities_db, bots)
     createJSON (top_authors, destdir+"/mediawiki-top.json")
 
+    return(top_authors)
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
     logging.info("Starting MLS data source analysis")
@@ -109,10 +112,10 @@ if __name__ == '__main__':
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
 
     if ('people' in reports):
-        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
     if ('countries' in reports):

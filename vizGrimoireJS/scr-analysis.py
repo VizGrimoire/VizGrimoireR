@@ -150,13 +150,19 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
-def peopleData(period, startdate, enddate, idb, destdir):
-    # people = dataFrame2Dict(vizr.GetPeopleListSCR(startdate, enddate))
-    people = SCR.GetPeopleListSCR(startdate, enddate)
-    people = people["id"]
-    limit = 60
-    if (len(people)<limit): limit = len(people);
-    # The order of the list item change so we can not check it
+def peopleData(period, startdate, enddate, idb, destdir, top_data):
+    top = top_data['reviewers']["id"]
+    top += top_data['reviewers.last year']["id"]
+    top += top_data['reviewers.last month']["id"]
+    top = top_data['openers.']["id"]
+    top += top_data['openers.last year']["id"]
+    top += top_data['openers.last_month']["id"]
+    top = top_data['mergers.']["id"]
+    top += top_data['mergers.last year']["id"]
+    top += top_data['mergers.last_month']["id"]
+    # remove duplicates
+    people = list(set(top))
+    # the order is not the same than in R json 
     createJSON(people, destdir+"/scr-people.json", False)
 
     for upeople_id in people:
@@ -312,7 +318,10 @@ def topData(period, startdate, enddate, idb, destdir, bots):
     top_mergers['mergers.last_month']=SCR.GetTopMergersSCR(31, startdate, enddate,idb, bots)
 
     # The order of the list item change so we can not check it
-    createJSON (dict(top_reviewers.items() +  top_openers.items() + top_mergers.items()), destdir+"/scr-top.json",False)
+    top_all = dict(top_reviewers.items() +  top_openers.items() + top_mergers.items())
+    createJSON (top_all, destdir+"/scr-top.json",False)
+
+    return (top_all)
 
 
 if __name__ == '__main__':
@@ -332,11 +341,12 @@ if __name__ == '__main__':
     # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
-    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
-    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+#    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
+#    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
 
     if ('people' in reports):
-        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
     if ('countries' in reports):
@@ -344,5 +354,4 @@ if __name__ == '__main__':
     if ('companies' in reports):
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
 
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
 

@@ -157,14 +157,17 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 
-def peopleData(period, startdate, enddate, identities_db, destdir, closed_condition):
-    # people  = dataFrame2Dict(vizr.GetPeopleListITS(startdate, enddate))
-    people  = ITS.GetPeopleListITS(startdate, enddate)
-    people = people['pid']
-    limit = 30
-    if (len(people)<limit): limit = len(people);
-    people = people[0:limit]
-    createJSON(people, destdir+"/its-people.json")
+def peopleData(period, startdate, enddate, identities_db, destdir, closed_condition, top_data):
+    top  = top_data['closers.']["id"]
+    top += top_data['closers.last year']["id"]
+    top += top_data['closers.last month']["id"]
+    top  = top_data['openers.']["id"]
+    top += top_data['openers.last year']["id"]
+    top += top_data['openers.last_month']["id"]
+    # remove duplicates
+    people = list(set(top))
+    # the order is not the same than in R json
+    createJSON(people, destdir+"/its-people.json", False)
 
     for upeople_id in people :
         evol = ITS.GetPeopleEvolITS(upeople_id, period, startdate, enddate)
@@ -266,6 +269,8 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, closed_con
     all_top = dict(top_closers_data.items() + top_openers_data.items())
     createJSON (all_top, destdir+"/its-top.json", False)
 
+    return dict(all_top)
+
 def microStudies(destdir):
     # Studies implemented in R
 
@@ -303,12 +308,12 @@ if __name__ == '__main__':
             opts.granularity, opts, backend.closed_condition)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
 
     microStudies(opts.destdir)
 
     if ('people' in reports):
-        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, top)
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts, backend.closed_condition)
     if ('countries' in reports):

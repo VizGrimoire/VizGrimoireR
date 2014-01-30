@@ -72,15 +72,14 @@ def tsData(period, startdate, enddate, idb, destdir):
     ts_data = completePeriodIds(ts_data)
     createJSON (ts_data, destdir+"/irc-evolutionary.json")
 
-def peopleData(period, startdate, enddate, idb, destdir):
-    # people_data = dataFrame2Dict(vizr.GetListPeopleIRC(startdate, enddate))
-    people_data = IRC.GetListPeopleIRC(startdate, enddate)
-    people = people_data['id']
-    limit = 30
-    if (len(people)<limit): limit = len(people);
-    people = people[0:limit]
-    people_file = destdir+"/irc-people.json"
-    createJSON(people, people_file)
+def peopleData(period, startdate, enddate, idb, destdir, top_data):
+    top = top_data['senders.']["id"]
+    top += top_data['senders.last year']["id"]
+    top += top_data['senders.last month']["id"]
+    # remove duplicates
+    people = list(set(top))
+    # the order is not the same than in R json 
+    createJSON(people, destdir+"/irc-people.json", False)
 
     for upeople_id in people:
         # evol = dataFrame2Dict(vizr.GetEvolPeopleIRC(upeople_id, period, startdate, enddate))
@@ -128,6 +127,8 @@ def topData(period, startdate, enddate, idb, destdir, bots):
     top_file = destdir+"/irc-top.json"
     createJSON (top_senders, top_file)
 
+    return(top_senders)
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
     logging.info("Starting IRC data source analysis")
@@ -146,8 +147,9 @@ if __name__ == '__main__':
 
     aggData (period, startdate, enddate, opts.identities_db, opts.destdir)
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     if ('people' in reports):
-        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
     if ('repositories' in reports):
         reposData (period, startdate, enddate, opts.identities_db, opts.destdir)
-    topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+

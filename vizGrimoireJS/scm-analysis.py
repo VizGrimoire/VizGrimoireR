@@ -112,11 +112,11 @@ def peopleData(period, startdate, enddate, identities_db, destdir, top_authors_d
     top += top_authors_data['authors.last year']["id"]
     top += top_authors_data['authors.last month']["id"]
     # remove duplicates
-    top = list(set(top))
+    people = list(set(top))
     # the order is not the same than in R json
-    createJSON(top, destdir+"/scm-people.json", False)
+    createJSON(people, destdir+"/scm-people.json", False)
 
-    for upeople_id in top :
+    for upeople_id in people :
         evol_data = SCM.GetEvolPeopleSCM(upeople_id, period, startdate, enddate)
         evol_data = completePeriodIds(evol_data)
         createJSON (evol_data, destdir+"/people-"+str(upeople_id)+"-scm-evolutionary.json")
