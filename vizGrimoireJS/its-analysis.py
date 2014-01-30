@@ -170,11 +170,11 @@ def peopleData(period, startdate, enddate, identities_db, destdir, closed_condit
     createJSON(people, destdir+"/its-people.json", False)
 
     for upeople_id in people :
-        evol = ITS.GetPeopleEvolITS(upeople_id, period, startdate, enddate)
+        evol = ITS.GetPeopleEvolITS(upeople_id, period, startdate, enddate, closed_condition)
         evol = completePeriodIds(evol)
         createJSON (evol, destdir+"/people-"+str(upeople_id)+"-its-evolutionary.json")
 
-        data = ITS.GetPeopleStaticITS(upeople_id, startdate, enddate)
+        data = ITS.GetPeopleStaticITS(upeople_id, startdate, enddate, closed_condition)
         createJSON (data, destdir+"/people-"+str(upeople_id)+"-its-static.json")
 
 def reposData(period, startdate, enddate, identities_db, destdir, conf, closed_condition):
@@ -304,9 +304,9 @@ if __name__ == '__main__':
     # backends
     backend = Backend(opts.backend)
 
-    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, 
-            opts.granularity, opts, backend.closed_condition)
-    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
+#    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, 
+#            opts.granularity, opts, backend.closed_condition)
+#    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
 

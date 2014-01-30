@@ -898,10 +898,11 @@ def GetPeopleListITS (startdate, enddate) :
     return (data)
 
 
-def GetPeopleQueryITS (developer_id, period, startdate, enddate, evol) :
+def GetPeopleQueryITS (developer_id, period, startdate, enddate, evol,  closed_condition) :
     fields = "COUNT(c.id) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
     filters = GetFiltersOwnUniqueIdsITS() + " AND pup.upeople_id = "+ str(developer_id)
+    filters += " AND "+ closed_condition
 
     if (evol) :
         q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
@@ -914,14 +915,18 @@ def GetPeopleQueryITS (developer_id, period, startdate, enddate, evol) :
 
     return (q)
 
-def GetPeopleEvolITS (developer_id, period, startdate, enddate) :
-    q = GetPeopleQueryITS(developer_id, period, startdate, enddate, True)
+def GetPeopleEvolITS (developer_id, period, startdate, enddate, closed_condition) :
+    ## FIXME is this function used only to calculate closed issues? if not it must be
+    ## fixed
+    q = GetPeopleQueryITS(developer_id, period, startdate, enddate, True, closed_condition)
 
     data = ExecuteQuery(q)
     return (data)
 
-def GetPeopleStaticITS (developer_id, startdate, enddate) :
-    q = GetPeopleQueryITS(developer_id, None, startdate, enddate, False)
+def GetPeopleStaticITS (developer_id, startdate, enddate, closed_condition) :
+    ## FIXME is this function used only to calculate closed issues? if not it must be
+    ## fixed
+    q = GetPeopleQueryITS(developer_id, None, startdate, enddate, False, closed_condition)
 
     data = ExecuteQuery(q)
     return (data)
