@@ -120,21 +120,19 @@ evol = EvolITSInfo(period, startdate, enddate, identities_db, list(NA, NA), clos
 markov <- MarkovChain()
 createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
 
-
-
-## for (status in statuses)
-## {
-##     #Evolution of the backlog
-##     tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
-##     colnames(tickets_status)[2] <- status
-##     #Issues per status
-##     current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
-##     #Merging data
-##     if (nrow(current_status)>0){
-##         evol <- merge(evol, current_status, all=TRUE)
-##     }
-##     evol <- merge (evol, tickets_status, all = TRUE)
-## }
+for (status in statuses)
+{
+    #Evolution of the backlog
+    tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
+    colnames(tickets_status)[2] <- status
+    #Issues per status
+    current_status <- GetCurrentStatus(period, startdate, enddate, identities_db, status)
+    #Merging data
+    if (nrow(current_status)>0){
+        evol <- merge(evol, current_status, all=TRUE)
+    }
+    evol <- merge (evol, tickets_status, all = TRUE)
+}
 
 
 if ('companies' %in% reports) {
