@@ -111,8 +111,9 @@ def get_analysis_cmd(v, script, db):
         (v['db_identities'], v['start_date'], v['end_date'], v['json_dir'], v['period'])
     if script == "its-analysis.R":
         cmd = cmd + "-t %s " % (v['bicho_backend'])
-    cmd = cmd + "--npeople %s < %s >> %s 2>&1" % \
-        (v['people_number'], script, v['log_file'])
+    if v.has_key('people_number'):
+        cmd = cmd + "--npeople %s < %s >> %s 2>&1" % \
+            (v['people_number'], script, v['log_file'])
 
     if (get_options().debug): print(cmd)
     return (cmd)
