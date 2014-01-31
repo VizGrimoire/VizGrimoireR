@@ -268,12 +268,12 @@ if ('people' %in% reports) {
 	createJSON(people, paste(c(destdir,"/its-people.json"), collapse=''))
 
     for (upeople_id in people) {
-        evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate)
+        evol <- GetPeopleEvolITS(upeople_id, period, conf$startdate, conf$enddate, closed_condition)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
         createJSON (evol, paste(c(destdir,"/people-",upeople_id,"-its-evolutionary.json",sep=''), collapse=''))
 
-        data <- GetPeopleStaticITS(upeople_id, conf$startdate, conf$enddate)
+        data <- GetPeopleStaticITS(upeople_id, conf$startdate, conf$enddate, closed_condition)
         createJSON (data, paste(c(destdir,"/people-",upeople_id,"-its-static.json",sep=''), collapse=''))
     }
 }
