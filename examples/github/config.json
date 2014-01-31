@@ -1,4 +1,26 @@
 {
-"global-data-dir":".",
-"global-html-dir":""
+    "data-sources": [
+        "scm", 
+        "its", 
+    ], 
+    "start_date": "$start_date",
+    "end_date": "$end_date", 
+    "period": "weeks", 
+    "project_info": {
+        "producer": "vg-github.py", 
+        "project_name": "$project_name", 
+        "project_url": "$project_url", 
+        "scm_name": "Git",
+        "scm_type": "git", 
+        "scm_url": "$scm_url", 
+        "its_name": "Issues",
+        "its_type": "github",
+        "its_url": "$its_url", 
+        "blog_url": "",
+        "date": "",
+    }, 
+    "reports": [
+        "repositories", 
+        "people"
+    ], 
 }
