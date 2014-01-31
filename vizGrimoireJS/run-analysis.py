@@ -105,10 +105,15 @@ def get_vars():
     return v
 
 def get_analysis_cmd(v, script, db):
-    cmd = "LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s -i %s -s %s -e %s -o %s -g %s -t %s < %s >> %s 2>&1" % \
-              (v['r_libs'], v['reports'], db , v['db_user'], v['db_password'], \
-               v['db_identities'], v['start_date'], v['end_date'], v['json_dir'], \
-               v['period'], v['bicho_backend'], script, v['log_file'])
+    cmd = "LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s " % \
+        (v['r_libs'], v['reports'], db , v['db_user'], v['db_password'])
+    cmd = cmd + "-i %s -s %s -e %s -o %s -g %s " % \
+        (v['db_identities'], v['start_date'], v['end_date'], v['json_dir'], v['period'])
+    if script == "its-analysis.R":
+        cmd = cmd + "-t %s " % (v['bicho_backend'])
+    cmd = cmd + "--npeople %s < %s >> %s 2>&1" % \
+        (v['people_number'], script, v['log_file'])
+
     if (get_options().debug): print(cmd)
     return (cmd)
 
