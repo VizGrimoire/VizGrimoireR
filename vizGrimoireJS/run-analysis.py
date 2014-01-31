@@ -105,7 +105,6 @@ def get_vars():
     return v
 
 def get_analysis_cmd(v, script, db):
-    print(v)
     cmd = "LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s " % \
         (v['r_libs'], v['reports'], db , v['db_user'], v['db_password'])
     cmd += "-i %s -s %s -e %s -o %s -g %s " % \
