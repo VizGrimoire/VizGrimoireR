@@ -1104,12 +1104,12 @@ GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, 
                      ",identities_db,".domains dom,
                      ",identities_db,".upeople up
                 WHERE ", GetFiltersDomainsITS()," AND ", closed_condition, "
-                      AND pup.people_id = up.id
+                      AND pup.upeople_id = up.id
                       AND upd.domain_id = dom.id
                       AND dom.name = ",domain_name,"
                       AND changed_on >= ",startdate," AND changed_on < ",enddate,
                       affiliations, "
-                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
+                GROUP BY up.identifier ORDER BY closed DESC LIMIT 10;",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
