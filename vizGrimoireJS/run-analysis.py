@@ -113,6 +113,8 @@ def get_analysis_cmd(v, script, db):
         cmd += "-t %s " % (v['bicho_backend'])
     if v.has_key('people_number'):
         cmd += "--npeople %s " %  (v['people_number'])
+    else:
+        cmd += "--npeople 10 " # default value is 10
     cmd += " < %s >> %s 2>&1" % (script, v['log_file'])
 
     if (get_options().debug): print(cmd)
