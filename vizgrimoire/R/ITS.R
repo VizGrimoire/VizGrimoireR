@@ -1035,7 +1035,7 @@ GetFiltersCompaniesITS <- function (table='') {
 }
 
 GetCompanyTopClosers <- function(company_name, startdate, enddate,
-        identities_db, filter = c('')) {
+        identities_db, filter = c(''), limit) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1051,14 +1051,14 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
                       AND com.name = ",company_name,"
                       AND changed_on >= ",startdate," AND changed_on < ",enddate,
                       affiliations, "
-                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
+                GROUP BY changed_by ORDER BY closed DESC LIMIT ",limit ,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 
-GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
+GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c(""), limit) {
 
     affiliations = ""
     for (aff in filter){
@@ -1087,13 +1087,13 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                       closed_condition, " ", date_limit, "
                 GROUP BY up.identifier
                 ORDER BY closed desc
-                LIMIT 10;", sep="")
+                LIMIT " ,limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, filter = c('')) {
+GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, filter = c(''), limit) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1109,13 +1109,13 @@ GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, 
                       AND dom.name = ",domain_name,"
                       AND changed_on >= ",startdate," AND changed_on < ",enddate,
                       affiliations, "
-                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
+                GROUP BY changed_by ORDER BY closed DESC LIMIT ",limit,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {  
+GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c(""), limit) {  
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
@@ -1143,7 +1143,7 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
                     date_limit, "
                     GROUP BY up.identifier
                     ORDER BY opened desc
-                    LIMIT 10;", sep="")
+                    LIMIT " ,limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

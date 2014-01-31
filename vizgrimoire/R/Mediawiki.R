@@ -145,7 +145,7 @@ EvolAuthorsMediaWiki <- function(period, startdate, enddate, identities_db=NA, t
     return(GetAuthorsMediaWiki(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-GetTopAuthorsMediaWiki <- function(days = 0, startdate, enddate, identities_db, bots) {
+GetTopAuthorsMediaWiki <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
@@ -167,7 +167,7 @@ GetTopAuthorsMediaWiki <- function(days = 0, startdate, enddate, identities_db, 
                     date  < ", enddate, " ", date_limit, "
                     GROUP BY authors
                     ORDER BY reviews desc
-                    LIMIT 10;", sep="")
+                    LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

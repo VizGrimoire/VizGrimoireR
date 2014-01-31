@@ -800,7 +800,7 @@ GetStaticPeopleMLS <- function(developer_id, startdate, enddate) {
 #########################
 
 
-top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("")) {
+top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c(""), limit) {
 
     limit = 30
     affiliations = ""
@@ -834,7 +834,7 @@ top_senders <- function(days = 0, startdate, enddate, identites_db, filter = c("
     return (data)
 }
 
-repoTopSenders <- function(repo, identities_db, startdate, enddate){
+repoTopSenders <- function(repo, identities_db, startdate, enddate, limit){
     q <- paste("SELECT up.id as id, up.identifier as senders,
                 COUNT(m.message_id) as sent
                 FROM ", GetTablesOwnUniqueIdsMLS(), ",",identities_db,".upeople up
@@ -845,7 +845,7 @@ repoTopSenders <- function(repo, identities_db, startdate, enddate){
                   ",rfield,"='",repo,"'
                 GROUP BY up.identifier
                 ORDER BY sent desc
-                LIMIT 10", sep="")
+                LIMIT ",limit,";", sep="")
 
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -853,7 +853,7 @@ repoTopSenders <- function(repo, identities_db, startdate, enddate){
 }
 
 
-countryTopSenders <- function(country_name, identities_db, startdate, enddate){
+countryTopSenders <- function(country_name, identities_db, startdate, enddate, limit){
     q <- paste("SELECT up.id as id, up.identifier as senders,
                   COUNT(DISTINCT(m.message_id)) as sent
                 FROM ", GetTablesCountries(identities_db),
@@ -864,14 +864,14 @@ countryTopSenders <- function(country_name, identities_db, startdate, enddate){
                   m.first_date < ",enddate," AND
                   c.name = '",country_name,"'
                 GROUP BY up.identifier
-                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10", sep="")
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT ",limit,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 
-companyTopSenders <- function(company_name, identities_db, startdate, enddate){
+companyTopSenders <- function(company_name, identities_db, startdate, enddate, limit){
     q <- paste("SELECT up.id as id, up.identifier as senders,
                   COUNT(DISTINCT(m.message_id)) as sent
                 FROM ", GetTablesCompanies(identities_db),
@@ -882,13 +882,13 @@ companyTopSenders <- function(company_name, identities_db, startdate, enddate){
                   m.first_date < ",enddate," AND
                   c.name = '",company_name,"'
                 GROUP BY up.identifier
-                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10", sep="")
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-domainTopSenders <- function(domain_name, identities_db, startdate, enddate){
+domainTopSenders <- function(domain_name, identities_db, startdate, enddate, limit){
     q <- paste("SELECT up.identifier as senders,
                   COUNT(DISTINCT(m.message_id)) as sent
                 FROM ", GetTablesDomains(identities_db),
@@ -899,7 +899,7 @@ domainTopSenders <- function(domain_name, identities_db, startdate, enddate){
                   m.first_date < ",enddate," AND
                   d.name = '",domain_name,"'
                 GROUP BY up.identifier
-                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10", sep="")
+                ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
