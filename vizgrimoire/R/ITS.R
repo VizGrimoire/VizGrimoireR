@@ -891,11 +891,12 @@ GetPeopleListITS <- function(startdate, enddate) {
 	return (data)        
 }
 
-GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol) {    
+GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol, closed_condition) {
     fields = "COUNT(c.id) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
     filters = paste(GetFiltersOwnUniqueIdsITS(), "AND pup.upeople_id = ", developer_id)
-    
+    filters = paste(filters, "AND ", closed_condition)
+
     if (evol) {
         q = GetSQLPeriod(period,'changed_on', fields, tables, filters, 
                             startdate, enddate)
@@ -910,15 +911,19 @@ GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol) {
 }
 
 
-GetPeopleEvolITS <- function(developer_id, period, startdate, enddate) {
-    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, TRUE)    
+GetPeopleEvolITS <- function(developer_id, period, startdate, enddate, closed_condition) {
+    ## FIXME is this function used only to calculate closed issues? if not it must be
+    ## fixed
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, TRUE, closed_condition)
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
 }
 
-GetPeopleStaticITS <- function(developer_id, startdate, enddate) {
-    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, FALSE)      
+GetPeopleStaticITS <- function(developer_id, startdate, enddate, closed_condition) {
+    ## FIXME is this function used only to calculate closed issues? if not it must be
+    ## fixed
+    q <- GetPeopleQueryITS(developer_id, period, startdate, enddate, FALSE, closed_condition)
     query <- new("Query", sql = q)
     data <- run(query)	
     return (data)
