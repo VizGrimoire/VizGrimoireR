@@ -163,7 +163,7 @@ def companiesData(period, startdate, enddate, identities_db, destdir, bots, npeo
         createJSON(top_authors, destdir+"/"+company+"-scm-com-top-authors.json")
 
         for i in [2006,2009,2012]:
-            data = SCM.company_top_authors_year(company_name, i)
+            data = SCM.company_top_authors_year(company_name, i, npeople)
             createJSON(data, destdir+"/"+company+"-scm-top-authors_"+str(i)+".json")
 
     pass
