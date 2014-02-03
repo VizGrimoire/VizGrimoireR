@@ -50,6 +50,8 @@ def get_options():
     parser.add_option('-s', dest='section',
                       help='Section to be done: scm, its, mls, scr, irc, mediawiki, people',
                       default=None)
+    parser.add_option('--python', dest='python', action="store_true",
+                      help='Use python script for getting metrics.')
 
     (ops, args) = parser.parse_args()
 
@@ -92,6 +94,7 @@ def get_vars():
     v.update(options['r'])
     # Fixed locations
     v['r_libs'] = '../../r-lib'
+    v['python_libs'] = '../vizgrimoire'
     v['json_dir'] = '../../../json'
 
     # if end_date is not present or is empty we set up today's date
@@ -105,8 +108,14 @@ def get_vars():
     return v
 
 def get_analysis_cmd(v, script, db):
-    cmd = "LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s " % \
-        (v['r_libs'], v['reports'], db , v['db_user'], v['db_password'])
+    if (not get_options().python):
+        cmd = "LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s " % \
+            (v['r_libs'], v['reports'], db , v['db_user'], v['db_password'])
+    else:
+        script = script.replace(".R",".py")
+        print(script)
+        cmd = "PYTHONPATH=%s LANG= R_LIBS=%s ./%s -r %s -d %s -u %s -p %s " % \
+            (v['python_libs'], v['r_libs'], script, v['reports'], db , v['db_user'], v['db_password'])
     cmd += "-i %s -s %s -e %s -o %s -g %s " % \
         (v['db_identities'], v['start_date'], v['end_date'], v['json_dir'], v['period'])
     if script == "its-analysis.R":
@@ -115,7 +124,10 @@ def get_analysis_cmd(v, script, db):
         cmd += "--npeople %s " %  (v['people_number'])
     else:
         cmd += "--npeople 10 " # default value is 10
-    cmd += " < %s >> %s 2>&1" % (script, v['log_file'])
+    if (not get_options().python):
+        cmd += " < %s >> %s 2>&1" % (script, v['log_file'])
+    else:
+        cmd += " >> %s 2>&1" % (v['log_file'])
 
     if (get_options().debug): print(cmd)
     return (cmd)
