@@ -119,7 +119,7 @@ def peopleData(period, startdate, enddate, identities_db, destdir, top_data):
         createJSON(static, destdir+"/people-"+str(upeople_id)+"-mls-static.json")
 
 
-def reposData(period, startdate, enddate, identities_db, destdir, conf, repofield):
+def reposData(period, startdate, enddate, identities_db, destdir, conf, repofield, npeople):
     repos = MLS.reposNames(rfield, startdate, enddate)
     createJSON (repos, destdir+"/mls-lists.json")
     repos = repos['mailing_list_url']
@@ -139,7 +139,7 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, repofiel
         # Multirepos filename
         createJSON (data, destdir+"/"+listname_file+"-mls-rep-evolutionary.json")
 
-        top_senders = MLS.repoTopSenders (repo, identities_db, startdate, enddate, repofield)
+        top_senders = MLS.repoTopSenders (repo, identities_db, startdate, enddate, repofield, npeople)
         createJSON(top_senders, destdir+ "/"+listname_file+"-mls-rep-top-senders.json", False)
 
         # Static data
@@ -149,7 +149,7 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, repofiel
         # Multirepos filename
         createJSON (data, destdir+ "/"+listname_file+"-mls-rep-static.json")
 
-def companiesData(period, startdate, enddate, identities_db, destdir):
+def companiesData(period, startdate, enddate, identities_db, destdir, npeople):
     # companies = valRtoPython(vizr.companiesNames(identities_db, startdate, enddate))
     companies = MLS.companiesNames(identities_db, startdate, enddate)
     createJSON(companies, destdir+"/mls-companies.json")
@@ -164,13 +164,13 @@ def companiesData(period, startdate, enddate, identities_db, destdir):
         else:
             createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json")
 
-        top_senders = MLS.companyTopSenders (company, identities_db, startdate, enddate)
+        top_senders = MLS.companyTopSenders (company, identities_db, startdate, enddate, npeople)
         createJSON(top_senders, destdir+"/"+company+"-mls-com-top-senders.json")
 
         data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
         createJSON(data, destdir+"/"+company+"-mls-com-static.json")
 
-def countriesData(period, startdate, enddate, identities_db, destdir):
+def countriesData(period, startdate, enddate, identities_db, destdir, npeople):
 
     countries = MLS.countriesNames(identities_db, startdate, enddate) 
     createJSON (countries, destdir + "/mls-countries.json")
@@ -186,13 +186,13 @@ def countriesData(period, startdate, enddate, identities_db, destdir):
         else:
             createJSON (data, destdir+"/"+country+"-mls-cou-evolutionary.json")
 
-        top_senders = MLS.countryTopSenders (country, identities_db, startdate, enddate)
+        top_senders = MLS.countryTopSenders (country, identities_db, startdate, enddate, npeople)
         createJSON(top_senders, destdir+"/"+country+"-mls-cou-top-senders.json")
 
         data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
         createJSON (data, destdir+"/"+country+"-mls-cou-static.json")
 
-def domainsData(period, startdate, enddate, identities_db, destdir):
+def domainsData(period, startdate, enddate, identities_db, destdir, npeople):
 
     domains = MLS.domainsNames(identities_db, startdate, enddate)
     createJSON(domains, destdir+"/mls-domains.json")
@@ -208,17 +208,17 @@ def domainsData(period, startdate, enddate, identities_db, destdir):
         else:
             createJSON(data, destdir+"/"+domain+"-mls-dom-evolutionary.json")
 
-        data = MLS.domainTopSenders(domain, identities_db, startdate, enddate)
+        data = MLS.domainTopSenders(domain, identities_db, startdate, enddate, npeople)
         createJSON(data, destdir+"/"+domain+"-mls-dom-top-senders.json")
 
         data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
         createJSON(data, destdir+"/"+domain+"-mls-dom-static.json")
 
-def topData(period, startdate, enddate, identities_db, destdir, bots):
+def topData(period, startdate, enddate, identities_db, destdir, bots, npeople):
     top_senders_data = {}
-    top_senders_data['senders.']=MLS.top_senders(0, startdate, enddate,identities_db,bots)
-    top_senders_data['senders.last year']=MLS.top_senders(365, startdate, enddate,identities_db, bots)
-    top_senders_data['senders.last month']=MLS.top_senders(31, startdate, enddate,identities_db,bots)
+    top_senders_data['senders.']=MLS.top_senders(0, startdate, enddate,identities_db,bots, npeople)
+    top_senders_data['senders.last year']=MLS.top_senders(365, startdate, enddate,identities_db, bots, npeople)
+    top_senders_data['senders.last month']=MLS.top_senders(31, startdate, enddate,identities_db,bots, npeople)
 
     createJSON (top_senders_data, destdir+"/mls-top.json", False)
 
@@ -260,18 +260,18 @@ if __name__ == '__main__':
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
 
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
 
     if ('repositories' in reports):
-        reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts, rfield)
+        reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts, rfield, opts.npeople)
     if ('countries' in reports):
-        countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        countriesData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.npeople)
     if ('companies' in reports):
-        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.npeople)
     if ('domains' in reports):
-        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir)
+        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.npeople)
 
 
     # R specific reports

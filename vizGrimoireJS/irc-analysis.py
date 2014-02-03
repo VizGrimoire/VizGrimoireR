@@ -113,16 +113,16 @@ def reposData(period, startdate, enddate, idb, destdir):
         aggdata = IRC.GetRepoStaticSentSendersIRC(repo, startdate, enddate)
         createJSON(aggdata, repo_file)
 
-def topData(period, startdate, enddate, idb, destdir, bots):
+def topData(period, startdate, enddate, idb, destdir, bots, npeople):
     top_senders = {}
     top_senders['senders.'] = \
-        IRC.GetTopSendersIRC(0, startdate, enddate, idb, bots) 
+        IRC.GetTopSendersIRC(0, startdate, enddate, idb, bots, npeople)
         # dataFrame2Dict(vizr.GetTopSendersIRC(0, startdate, enddate, idb, bots))
     top_senders['senders.last year'] = \
-        IRC.GetTopSendersIRC(365, startdate, enddate, idb, bots)
+        IRC.GetTopSendersIRC(365, startdate, enddate, idb, bots, npeople)
         # dataFrame2Dict(vizr.GetTopSendersIRC(365, startdate, enddate, idb, bots))
     top_senders['senders.last month'] = \
-        IRC.GetTopSendersIRC(31, startdate, enddate, idb, bots)
+        IRC.GetTopSendersIRC(31, startdate, enddate, idb, bots, npeople)
         # dataFrame2Dict(vizr.GetTopSendersIRC(31, startdate, enddate, idb, bots))
     top_file = destdir+"/irc-top.json"
     createJSON (top_senders, top_file)
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
     aggData (period, startdate, enddate, opts.identities_db, opts.destdir)
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir)
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
     if ('repositories' in reports):

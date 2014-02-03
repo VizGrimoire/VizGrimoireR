@@ -143,7 +143,7 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf):
         agg = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, ["repository", repo_name])
         createJSON(agg, destdir+"/"+repo+"-scm-rep-static.json")
 
-def companiesData(period, startdate, enddate, identities_db, destdir, bots):
+def companiesData(period, startdate, enddate, identities_db, destdir, bots, npeople):
     companies  = SCM.companies_name_wo_affs(bots, startdate, enddate)
     companies = companies['name']
     createJSON(companies, destdir+"/scm-companies.json")
@@ -159,7 +159,7 @@ def companiesData(period, startdate, enddate, identities_db, destdir, bots):
         agg = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, ["company", company_name])
         createJSON(agg, destdir+"/"+company+"-scm-com-static.json")
 
-        top_authors = SCM.company_top_authors(company_name, startdate, enddate)
+        top_authors = SCM.company_top_authors(company_name, startdate, enddate, npeople)
         createJSON(top_authors, destdir+"/"+company+"-scm-com-top-authors.json")
 
         for i in [2006,2009,2012]:
@@ -223,11 +223,11 @@ def companies_countriesData(period, startdate, enddate, identities_db, destdir):
             # data = vizr.scm_countries_static(identities_db, country, startdate, enddate)
             # createJSON (dataFrame2Dict(data), destdir + "/"+company+"_"+country+"-scm-static.json", False)
 
-def topData(period, startdate, enddate, identities_db, destdir, bots):
+def topData(period, startdate, enddate, identities_db, destdir, bots, npeople):
     top_authors_data =  {}
-    top_authors_data['authors.'] = SCM.top_people(0, startdate, enddate, "author" , "" )
-    top_authors_data['authors.last year']= SCM.top_people(365, startdate, enddate, "author", "")
-    top_authors_data['authors.last month']= SCM.top_people(31, startdate, enddate, "author", "")
+    top_authors_data['authors.'] = SCM.top_people(0, startdate, enddate, "author" , "" , npeople)
+    top_authors_data['authors.last year']= SCM.top_people(365, startdate, enddate, "author", "", npeople)
+    top_authors_data['authors.last month']= SCM.top_people(31, startdate, enddate, "author", "", npeople)
     createJSON (top_authors_data, destdir+"/scm-top.json")
 
     # Top files
@@ -271,11 +271,11 @@ if __name__ == '__main__':
     if ('countries' in reports):
         countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('companies' in reports):
-        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
     if ('companies-countries' in reports):
         companies_countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     # pretty slow!
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
     microStudies(opts.startdate, opts.destdir)

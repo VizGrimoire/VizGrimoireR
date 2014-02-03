@@ -84,11 +84,11 @@ def companiesData(period, startdate, enddate, identities_db, destdir):
 def countriesData(period, startdate, enddate, identities_db, destdir):
     pass
 
-def topData(period, startdate, enddate, identities_db, destdir, bots):
+def topData(period, startdate, enddate, identities_db, destdir, bots, npeople):
     top_authors = {}
-    top_authors['authors.'] = Mediawiki.GetTopAuthorsMediaWiki(0, startdate, enddate, identities_db, bots)
-    top_authors['authors.last year']= Mediawiki.GetTopAuthorsMediaWiki(365, startdate, enddate, identities_db, bots)
-    top_authors['authors.last month']= Mediawiki.GetTopAuthorsMediaWiki(31, startdate, enddate, identities_db, bots)
+    top_authors['authors.'] = Mediawiki.GetTopAuthorsMediaWiki(0, startdate, enddate, identities_db, bots, npeople)
+    top_authors['authors.last year']= Mediawiki.GetTopAuthorsMediaWiki(365, startdate, enddate, identities_db, bots, npeople)
+    top_authors['authors.last month']= Mediawiki.GetTopAuthorsMediaWiki(31, startdate, enddate, identities_db, bots, npeople)
     createJSON (top_authors, destdir+"/mediawiki-top.json")
 
     return(top_authors)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
 
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)

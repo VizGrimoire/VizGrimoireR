@@ -200,7 +200,7 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, closed_c
         agg = ITS.AggITSInfo(period, startdate, enddate, identities_db, ['repository', repo_name], closed_condition)
         createJSON(agg, destdir+"/"+repo_file+"-its-rep-static.json")
 
-def companiesData(period, startdate, enddate, identities_db, destdir, closed_condition, bots):
+def companiesData(period, startdate, enddate, identities_db, destdir, closed_condition, bots, npeople):
     # companies  = dataFrame2Dict(vizr.GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, bots))
     companies  = ITS.GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, bots)
     companies = companies['name']
@@ -217,7 +217,7 @@ def companiesData(period, startdate, enddate, identities_db, destdir, closed_con
         agg = ITS.AggITSInfo(period, startdate, enddate, identities_db, ['company', company_name], closed_condition)
         createJSON(agg, destdir+"/"+company+"-its-com-static.json")
 
-        top = ITS.GetCompanyTopClosers(company_name, startdate, enddate, identities_db, bots, closed_condition)
+        top = ITS.GetCompanyTopClosers(company_name, startdate, enddate, identities_db, bots, closed_condition, npeople)
         createJSON(top, destdir+"/"+company+"-its-com-top-closers.json", False)
 
 def countriesData(period, startdate, enddate, identities_db, destdir, closed_condition):
@@ -237,7 +237,7 @@ def countriesData(period, startdate, enddate, identities_db, destdir, closed_con
         data = ITS.AggITSInfo(period, startdate, enddate, identities_db, ['country', country_name], closed_condition)
         createJSON (data, destdir+"/"+country+"-its-cou-static.json")
 
-def domainsData(period, startdate, enddate, identities_db, destdir, closed_condition, bots):
+def domainsData(period, startdate, enddate, identities_db, destdir, closed_condition, bots, npeople):
     # domains = dataFrame2Dict(vizr.GetDomainsNameITS(startdate, enddate, identities_db, closed_condition, bots))
     domains = ITS.GetDomainsNameITS(startdate, enddate, identities_db, closed_condition, bots)
     domains = domains['name']
@@ -254,23 +254,23 @@ def domainsData(period, startdate, enddate, identities_db, destdir, closed_condi
         agg = ITS.AggITSInfo(period, startdate, enddate, identities_db, ['domain', domain_name], closed_condition)
         createJSON(agg, destdir+"/"+domain+"-its-dom-static.json")
 
-        top = ITS.GetDomainTopClosers(domain_name, startdate, enddate, identities_db, bots, closed_condition)
+        top = ITS.GetDomainTopClosers(domain_name, startdate, enddate, identities_db, bots, closed_condition, npeople)
         createJSON(top, destdir+"/"+domain+"-its-dom-top-closers.json", False)
 
-def topData(period, startdate, enddate, identities_db, destdir, bots, closed_condition):
+def topData(period, startdate, enddate, identities_db, destdir, bots, closed_condition, npeople):
 
     # Top closers
     top_closers_data = {}
     # top_closers_data['closers.']=dataFrame2Dict(vizr.GetTopClosers(0, startdate, enddate,identities_db, bots, closed_condition))
-    top_closers_data['closers.']=ITS.GetTopClosers(0, startdate, enddate,identities_db, bots, closed_condition)
-    top_closers_data['closers.last year']=ITS.GetTopClosers(365, startdate, enddate,identities_db, bots, closed_condition)
-    top_closers_data['closers.last month']=ITS.GetTopClosers(31, startdate, enddate,identities_db, bots, closed_condition)
+    top_closers_data['closers.']=ITS.GetTopClosers(0, startdate, enddate,identities_db, bots, closed_condition, npeople)
+    top_closers_data['closers.last year']=ITS.GetTopClosers(365, startdate, enddate,identities_db, bots, closed_condition, npeople)
+    top_closers_data['closers.last month']=ITS.GetTopClosers(31, startdate, enddate,identities_db, bots, closed_condition, npeople)
 
     # Top openers
     top_openers_data = {}
-    top_openers_data['openers.']=ITS.GetTopOpeners(0, startdate, enddate,identities_db, bots, closed_condition)
-    top_openers_data['openers.last year']=ITS.GetTopOpeners(365, startdate, enddate,identities_db, bots, closed_condition)
-    top_openers_data['openers.last_month']=ITS.GetTopOpeners(31, startdate, enddate,identities_db, bots, closed_condition)
+    top_openers_data['openers.']=ITS.GetTopOpeners(0, startdate, enddate,identities_db, bots, closed_condition, npeople)
+    top_openers_data['openers.last year']=ITS.GetTopOpeners(365, startdate, enddate,identities_db, bots, closed_condition, npeople)
+    top_openers_data['openers.last_month']=ITS.GetTopOpeners(31, startdate, enddate,identities_db, bots, closed_condition, npeople)
 
     all_top = dict(top_closers_data.items() + top_openers_data.items())
     createJSON (all_top, destdir+"/its-top.json", False)
@@ -330,7 +330,7 @@ if __name__ == '__main__':
             opts.granularity, opts, backend)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition, npeople)
 
     microStudies(opts.destdir)
 
@@ -341,6 +341,6 @@ if __name__ == '__main__':
     if ('countries' in reports):
         countriesData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
     if ('companies' in reports):
-        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots)
+        companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots, opts.npeople)
     if ('domains' in reports):
-        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots)
+        domainsData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots, opts.npeople)

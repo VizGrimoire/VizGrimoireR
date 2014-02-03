@@ -298,24 +298,24 @@ def countriesData(period, startdate, enddate, idb, destdir):
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir+"/"+country_file+"-scr-cou-static.json")
 
-def topData(period, startdate, enddate, idb, destdir, bots):
+def topData(period, startdate, enddate, idb, destdir, bots, npeople):
     top_reviewers = {}
 #    top_reviewers['reviewers'] = dataFrame2Dict(vizr.GetTopReviewersSCR(0, startdate, enddate, idb, bots))
-    top_reviewers['reviewers'] = SCR.GetTopReviewersSCR(0, startdate, enddate, idb, bots)
-    top_reviewers['reviewers.last year']= SCR.GetTopReviewersSCR(365, startdate, enddate, idb, bots)
-    top_reviewers['reviewers.last month']= SCR.GetTopReviewersSCR(31, startdate, enddate, idb, bots)
+    top_reviewers['reviewers'] = SCR.GetTopReviewersSCR(0, startdate, enddate, idb, bots, npeople)
+    top_reviewers['reviewers.last year']= SCR.GetTopReviewersSCR(365, startdate, enddate, idb, bots, npeople)
+    top_reviewers['reviewers.last month']= SCR.GetTopReviewersSCR(31, startdate, enddate, idb, bots, npeople)
 
     # Top openers
     top_openers = {}
-    top_openers['openers.']=SCR.GetTopOpenersSCR(0, startdate, enddate,idb, bots)
-    top_openers['openers.last year']=SCR.GetTopOpenersSCR(365, startdate, enddate,idb, bots)
-    top_openers['openers.last_month']=SCR.GetTopOpenersSCR(31, startdate, enddate,idb, bots)
+    top_openers['openers.']=SCR.GetTopOpenersSCR(0, startdate, enddate,idb, bots, npeople)
+    top_openers['openers.last year']=SCR.GetTopOpenersSCR(365, startdate, enddate,idb, bots, npeople)
+    top_openers['openers.last_month']=SCR.GetTopOpenersSCR(31, startdate, enddate,idb, bots, npeople)
 
     # Top mergers
     top_mergers = {}
-    top_mergers['mergers.last year']=SCR.GetTopMergersSCR(365, startdate, enddate,idb, bots)
-    top_mergers['mergers.']=SCR.GetTopMergersSCR(0, startdate, enddate,idb, bots)
-    top_mergers['mergers.last_month']=SCR.GetTopMergersSCR(31, startdate, enddate,idb, bots)
+    top_mergers['mergers.last year']=SCR.GetTopMergersSCR(365, startdate, enddate,idb, bots, npeople)
+    top_mergers['mergers.']=SCR.GetTopMergersSCR(0, startdate, enddate,idb, bots, npeople)
+    top_mergers['mergers.last_month']=SCR.GetTopMergersSCR(31, startdate, enddate,idb, bots, npeople)
 
     # The order of the list item change so we can not check it
     top_all = dict(top_reviewers.items() +  top_openers.items() + top_mergers.items())
@@ -343,7 +343,7 @@ if __name__ == '__main__':
 
 #    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
 #    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, npeople)
 
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
