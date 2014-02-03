@@ -569,7 +569,7 @@ def GetLongestReviews  (startdate, enddate, type_analysis = []):
 ##
 
 # Is this right???
-def GetTopReviewersSCR   (days, startdate, enddate, identities_db, bots):
+def GetTopReviewersSCR (days, startdate, enddate, identities_db, bots, limit):
     date_limit = ""
     filter_bots = ''
     for bot in bots:
@@ -591,11 +591,11 @@ def GetTopReviewersSCR   (days, startdate, enddate, identities_db, bots):
         "            "+ date_limit + " "+\
         "        GROUP BY up.identifier "+\
         "        ORDER BY reviewed desc "+\
-        "        LIMIT 10"
+        "        LIMIT " + limit
     return(ExecuteQuery(q))
 
 
-def GetTopSubmittersQuerySCR   (days, startdate, enddate, identities_db, bots, merged = False):
+def GetTopSubmittersQuerySCR   (days, startdate, enddate, identities_db, bots, limit, merged = False):
     date_limit = ""
     merged_sql = ""
     rol = "openers"
@@ -626,17 +626,17 @@ def GetTopSubmittersQuerySCR   (days, startdate, enddate, identities_db, bots, m
         "            "+date_limit+ merged_sql+ " "+\
         "        GROUP BY up.identifier "+\
         "        ORDER BY "+action+" desc "+\
-        "        LIMIT 10"
+        "        LIMIT "+ limit
     return(q)
 
 
-def GetTopOpenersSCR (days, startdate, enddate, identities_db, bots):
-    q = GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
+def GetTopOpenersSCR (days, startdate, enddate, identities_db, bots, limit):
+    q = GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, limit)
     return(ExecuteQuery(q))
 
 
-def GetTopMergersSCR   (days, startdate, enddate, identities_db, bots):
-    q = GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, True)
+def GetTopMergersSCR   (days, startdate, enddate, identities_db, bots, limit):
+    q = GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, limit, True)
     return(ExecuteQuery(q))
 
 

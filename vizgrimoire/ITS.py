@@ -775,7 +775,7 @@ def GetFiltersCompaniesITS (table='') :
     return (filters)
 
 def GetCompanyTopClosers (company_name, startdate, enddate,
-        identities_db, filter, closed_condition) :
+        identities_db, filter, closed_condition, limit) :
     affiliations = ""
     for aff in filter:
         affiliations += " AND up.identifier<>'"+aff+"' "
@@ -791,13 +791,13 @@ def GetCompanyTopClosers (company_name, startdate, enddate,
         "      AND com.name = "+ company_name +" "+\
         "      AND changed_on >= "+startdate+" AND changed_on < "+enddate+\
             affiliations +\
-        " GROUP BY changed_by ORDER BY closed DESC LIMIT 10"
+        " GROUP BY changed_by ORDER BY closed DESC LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)
 
 def GetTopClosers (days, startdate, enddate,
-        identities_db, filter, closed_condition) :
+        identities_db, filter, closed_condition, limit) :
 
     affiliations = ""
     for aff in filter:
@@ -824,14 +824,14 @@ def GetTopClosers (days, startdate, enddate,
         "      "+closed_condition+ " " + date_limit+ " "+\
         "GROUP BY up.identifier "+\
         "ORDER BY closed desc "+\
-        "LIMIT 10"
+        "LIMIT "+ limit
 
     data = ExecuteQuery(q)
     return (data)
 
 
 def GetDomainTopClosers (domain_name, startdate, enddate,
-        identities_db, filter, closed_condition) :
+        identities_db, filter, closed_condition, limit) :
     affiliations = ""
     for aff in filter:
         affiliations += " AND up.identifier<>'"+aff+"' "
@@ -847,14 +847,14 @@ def GetDomainTopClosers (domain_name, startdate, enddate,
         "      AND dom.name = "+domain_name+" "+\
         "      AND changed_on >= "+startdate+" AND changed_on < " +enddate +\
               affiliations+ " "+\
-        "GROUP BY changed_by ORDER BY closed DESC LIMIT 10"
+        "GROUP BY changed_by ORDER BY closed DESC LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)
 
 
 def GetTopOpeners (days, startdate, enddate,
-        identities_db, filter, closed_condition) :
+        identities_db, filter, closed_condition, limit) :
     affiliations = ""
     for aff in filter:
         affiliations += " com.name<>'"+ aff +"' and "
@@ -878,7 +878,7 @@ def GetTopOpeners (days, startdate, enddate,
             date_limit+ " "+\
         "    GROUP BY up.identifier "+\
         "    ORDER BY opened desc "+\
-        "    LIMIT 10"
+        "    LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)

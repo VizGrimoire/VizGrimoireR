@@ -229,7 +229,7 @@ def EvolRepositoriesIRC (period, startdate, enddate, identities_db, type_analysi
     return(GetRepositoriesIRC(period, startdate, enddate, identities_db, type_analysis, True))
 
 
-def GetTopSendersIRC (days, startdate, enddate, identities_db, bots):
+def GetTopSendersIRC (days, startdate, enddate, identities_db, bots, limit):
     date_limit = ""
     filter_bots = ''
     for bot in bots:
@@ -249,7 +249,7 @@ def GetTopSendersIRC (days, startdate, enddate, identities_db, bots):
         "            date  < "+ enddate+ " "+ date_limit +\
         "            GROUP BY senders "+\
         "            ORDER BY sent desc "+\
-        "            LIMIT 10 "
+        "            LIMIT " + limit
     return(ExecuteQuery(q))
 
 #

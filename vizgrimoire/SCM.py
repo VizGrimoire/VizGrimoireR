@@ -939,7 +939,7 @@ def last_activity (days) :
 
     return (agg_data)
 
-def top_people (days, startdate, enddate, role, filters="") :
+def top_people (days, startdate, enddate, role, filters="", limit) :
     # This function returns the 10 top people participating in the source code.
     # Dataset can be filtered by the affiliations, where specific companies
     # can be ignored.
@@ -973,7 +973,7 @@ def top_people (days, startdate, enddate, role, filters="") :
         " upc.company_id = c.id "+\
         " GROUP BY u.identifier "+\
         " ORDER BY commits desc "+\
-        " LIMIT 10"
+        " LIMIT "+ limit
 
     data = ExecuteQuery(q)
     return (data)	
@@ -993,8 +993,11 @@ def top_files_modified () :
 
 
 ## TODO: Follow top_committers implementation
-def top_authors (startdate, enddate) :
+def top_authors (startdate, enddate, limit) :
     # Top 10 authors without filters
+    #
+    # DEPRECATED use top_people instead
+    #
 
     q = "SELECT u.id as id, u.identifier as authors, "+\
         "       count(distinct(s.id)) as commits "+\
@@ -1009,14 +1012,14 @@ def top_authors (startdate, enddate) :
         "      s.date < "+ enddate+ " "+\
         "group by u.identifier "+\
         "order by commits desc "+\
-        "LIMIT 10;"
+        "LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)
 
 
 
-def top_authors_wo_affiliations (list_affs, startdate, enddate) :
+def top_authors_wo_affiliations (list_affs, startdate, enddate, limit) :
     # top ten authors with affiliation removal
     #list_affs
     affiliations = ""
@@ -1041,13 +1044,13 @@ def top_authors_wo_affiliations (list_affs, startdate, enddate) :
         "      upc.company_id = c.id "+\
         "group by u.identifier "+\
         "order by commits desc "+\
-        "LIMIT 10;"
+        "LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)
 
 
-def top_authors_year (year) :
+def top_authors_year (year, limit) :
    # Given a year, this functions provides the top 10 authors 
    # of such year
     q = "SELECT u.id as id, u.identifier as authors, "+\
@@ -1060,7 +1063,7 @@ def top_authors_year (year) :
         "      year(s.date) = "+year+" "+\
         "group by u.identifier "+\
         "order by commits desc "+\
-        "LIMIT 10;"
+        "LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)
@@ -1203,7 +1206,7 @@ def evol_info_data_countries (startdate, enddate) :
     data = ExecuteQuery(q)
     return (data)
 
-def company_top_authors (company_name, startdate, enddate) :
+def company_top_authors (company_name, startdate, enddate, limit) :
     # Returns top ten authors per company
 
     q = "select u.id as id, u.identifier  as authors, "+\
@@ -1228,12 +1231,12 @@ def company_top_authors (company_name, startdate, enddate) :
         "        c.name ="+ company_name+ " "+\
         "group by u.id "+\
         "order by count(distinct(s.id)) desc "+\
-        "limit 10"
+        "limit " + limit
 
     data = ExecuteQuery(q)
     return (data)
 
-def company_top_authors_year (company_name, year):
+def company_top_authors_year (company_name, year, limit):
     # Top 10 authors per company and in a given year
 	
     q = "select u.id as id, u.identifier as authors, "+\
@@ -1255,7 +1258,7 @@ def company_top_authors_year (company_name, year):
         "        c.name ="+ company_name+ " "+\
         " group by u.id "+\
         " order by count(distinct(s.id)) desc "+\
-        " limit 10;"
+        " limit " + limit
 
     data = ExecuteQuery(q)
     return (data)

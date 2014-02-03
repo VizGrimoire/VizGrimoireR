@@ -138,7 +138,7 @@ def EvolAuthorsMediaWiki (period, startdate, enddate, identities_db, type_analys
     return(GetAuthorsMediaWiki(period, startdate, enddate, identities_db, type_analysis, True))
 
 
-def GetTopAuthorsMediaWiki (days, startdate, enddate, identities_db, bots) :
+def GetTopAuthorsMediaWiki (days, startdate, enddate, identities_db, bots, limit) :
     date_limit = ""
     filter_bots = ''
     for bot in bots:
@@ -158,7 +158,7 @@ def GetTopAuthorsMediaWiki (days, startdate, enddate, identities_db, bots) :
         "    date  < "+ enddate+ " "+ date_limit+ " "+\
         "    GROUP BY authors "+\
         "    ORDER BY reviews desc "+\
-        "    LIMIT 10"
+        "    LIMIT "+ limit
 
     data = ExecuteQuery(q)
     return (data)

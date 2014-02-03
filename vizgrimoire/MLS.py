@@ -720,7 +720,7 @@ def top_senders (days, startdate, enddate, identities_db, filter = []) :
     data = ExecuteQuery(q)
     return (data)
 
-def repoTopSenders (repo, identities_db, startdate, enddate, rfield):
+def repoTopSenders (repo, identities_db, startdate, enddate, rfield, limit):
     q = "SELECT up.id as id, up.identifier as senders, "+\
             "COUNT(m.message_id) as sent "+\
             "FROM "+ GetTablesOwnUniqueIdsMLS()+ ","+identities_db+".upeople up "+\
@@ -731,11 +731,11 @@ def repoTopSenders (repo, identities_db, startdate, enddate, rfield):
             "  "+rfield+"='"+repo+"' "+\
             "GROUP BY up.identifier "+\
             "ORDER BY sent desc "+\
-            "LIMIT 10"
+            "LIMIT " + limit
     data = ExecuteQuery(q)
     return (data)
 
-def countryTopSenders (country_name, identities_db, startdate, enddate):
+def countryTopSenders (country_name, identities_db, startdate, enddate, limit):
     q = "SELECT up.id as id, up.identifier as senders, "+\
         "COUNT(DISTINCT(m.message_id)) as sent "+\
         "FROM "+ GetTablesCountries(identities_db)+ \
@@ -746,11 +746,11 @@ def countryTopSenders (country_name, identities_db, startdate, enddate):
         "  m.first_date < "+enddate+" AND "+\
         "  c.name = '"+country_name+"' "+\
         "GROUP BY up.identifier "+\
-        "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10"
+        "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT " + limit
     data = ExecuteQuery(q)
     return (data)
 
-def companyTopSenders (company_name, identities_db, startdate, enddate):
+def companyTopSenders (company_name, identities_db, startdate, enddate, limit):
     q = "SELECT up.id as id, up.identifier as senders, "+\
         "COUNT(DISTINCT(m.message_id)) as sent "+\
         "FROM "+GetTablesCompanies(identities_db)+\
@@ -761,11 +761,11 @@ def companyTopSenders (company_name, identities_db, startdate, enddate):
         "  m.first_date < "+enddate+" AND "+\
         "  c.name = '"+company_name+"' "+\
         "GROUP BY up.identifier "+\
-        "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10"
+        "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT " + limit
     data = ExecuteQuery(q)
     return (data)
 
-def domainTopSenders (domain_name, identities_db, startdate, enddate):
+def domainTopSenders (domain_name, identities_db, startdate, enddate, limit):
     q = "SELECT up.identifier as senders, "+\
         "COUNT(DISTINCT(m.message_id)) as sent "+\
         "FROM "+GetTablesDomains(identities_db) +\
@@ -776,7 +776,7 @@ def domainTopSenders (domain_name, identities_db, startdate, enddate):
         "  m.first_date < "+enddate+" AND "+\
         "  d.name = '"+domain_name+"' "+\
         "GROUP BY up.identifier "+\
-        "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT 10"
+        "ORDER BY COUNT(DISTINCT(m.message_ID)) DESC LIMIT "+ limit
     data = ExecuteQuery(q)
     return (data)
 

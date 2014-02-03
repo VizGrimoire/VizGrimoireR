@@ -86,6 +86,12 @@ def read_options():
                       dest="backend",
                       default="bugzilla",
                       help="Type of backend: bugzilla, allura, jira, github")
+    parser.add_option("--npeople",
+                      action="store",
+                      dest="npeople",
+                      default="10",
+                      help="Limit for people analysis")
+
 
     (opts, args) = parser.parse_args()
 
