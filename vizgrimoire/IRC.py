@@ -257,7 +257,7 @@ def GetTopSendersIRC (days, startdate, enddate, identities_db, bots, limit):
 #
 
 def GetTablesReposIRC () :
-    return (GetTablesOwnUniqueIdsIRC(),",channels c")
+    return (GetTablesOwnUniqueIdsIRC()+",channels c")
 
 
 def GetFiltersReposIRC () :
@@ -320,16 +320,12 @@ def GetQueryPeopleIRC (developer_id, period, startdate, enddate, evol):
 
 def GetEvolPeopleIRC (developer_id, period, startdate, enddate) :
     q = GetQueryPeopleIRC(developer_id, period, startdate, enddate, True)
-    query = new("Query", sql = q)
-    data = run(query)
-    return (data)
+    return(ExecuteQuery(q))
 
 
 def GetStaticPeopleIRC (developer_id, startdate, enddate) :
-    q = GetQueryPeopleIRC(developer_id, period, startdate, enddate, False)
-    query = new("Query", sql = q)
-    data = run(query)
-    return (data)
+    q = GetQueryPeopleIRC(developer_id, None, startdate, enddate, False)
+    return(ExecuteQuery(q))
 
 ##############
 # Microstudies
