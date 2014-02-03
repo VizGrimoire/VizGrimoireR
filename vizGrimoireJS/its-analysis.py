@@ -161,15 +161,14 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
                 ticketsStates(period, startdate, enddate, identities_db, backend).items())
 
     createJSON (evol, destdir+"/its-evolutionary.json")
-    sys.exit()
 
 def peopleData(period, startdate, enddate, identities_db, destdir, closed_condition, top_data):
-    top  = top_data['closers.']["id"]
+    top = top_data['closers.']["id"]
     top += top_data['closers.last year']["id"]
     top += top_data['closers.last month']["id"]
-    top  = top_data['openers.']["id"]
+    top += top_data['openers.']["id"]
     top += top_data['openers.last year']["id"]
-    top += top_data['openers.last_month']["id"]
+    top += top_data['openers.last month']["id"]
     # remove duplicates
     people = list(set(top))
     # the order is not the same than in R json
@@ -270,7 +269,8 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, closed_con
     top_openers_data = {}
     top_openers_data['openers.']=ITS.GetTopOpeners(0, startdate, enddate,identities_db, bots, closed_condition, npeople)
     top_openers_data['openers.last year']=ITS.GetTopOpeners(365, startdate, enddate,identities_db, bots, closed_condition, npeople)
-    top_openers_data['openers.last_month']=ITS.GetTopOpeners(31, startdate, enddate,identities_db, bots, closed_condition, npeople)
+    top_openers_data['openers.last month']=ITS.GetTopOpeners(31, startdate, enddate,identities_db, bots, closed_condition, npeople)
+
 
     all_top = dict(top_closers_data.items() + top_openers_data.items())
     createJSON (all_top, destdir+"/its-top.json", False)
@@ -330,7 +330,7 @@ if __name__ == '__main__':
             opts.granularity, opts, backend)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition, npeople)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, backend.closed_condition, opts.npeople)
 
     microStudies(opts.destdir)
 

@@ -939,7 +939,7 @@ def last_activity (days) :
 
     return (agg_data)
 
-def top_people (days, startdate, enddate, role, filters="", limit) :
+def top_people (days, startdate, enddate, role, filters, limit) :
     # This function returns the 10 top people participating in the source code.
     # Dataset can be filtered by the affiliations, where specific companies
     # can be ignored.
@@ -947,6 +947,7 @@ def top_people (days, startdate, enddate, role, filters="", limit) :
     # X days specified in that parameter
 
     affiliations = ""
+    if (not filters): filters = []
     for aff in filters:
         affiliations += " c.name<>'"+aff+"' and "
 

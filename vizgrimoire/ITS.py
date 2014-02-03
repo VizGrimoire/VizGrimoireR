@@ -519,8 +519,7 @@ def GetDomainsNameITS (startdate, enddate, identities_db, closed_condition, filt
         "       c.changed_on < "+ enddate+ " AND "+\
         "       "+ closed_condition+" "+\
         "GROUP BY dom.name "+\
-        "ORDER BY COUNT(DISTINCT(c.issue_id)),dom.name DESC"
-
+        "ORDER BY COUNT(DISTINCT(c.issue_id)) DESC"
     data = ExecuteQuery(q)
     return (data)
 
@@ -860,7 +859,7 @@ def GetTopOpeners (days, startdate, enddate,
         affiliations += " com.name<>'"+ aff +"' and "
     date_limit = ""
     if (days != 0 ) :
-        sql = "SELECT @maxdate:=max(changed_on) from changes limit 1"
+        sql = "SELECT @maxdate:=max(submitted_on) from issues limit 1"
         ExecuteQuery(sql)
         date_limit = " AND DATEDIFF(@maxdate, submitted_on)<"+str(days)
 
@@ -879,7 +878,6 @@ def GetTopOpeners (days, startdate, enddate,
         "    GROUP BY up.identifier "+\
         "    ORDER BY opened desc "+\
         "    LIMIT " + limit
-
     data = ExecuteQuery(q)
     return (data)
 
@@ -899,7 +897,7 @@ def GetPeopleListITS (startdate, enddate) :
 
 
 def GetPeopleQueryITS (developer_id, period, startdate, enddate, evol,  closed_condition) :
-    fields = "COUNT(c.id) AS closed"
+    fields = " COUNT(distinct(c.issue_id)) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
     filters = GetFiltersOwnUniqueIdsITS() + " AND pup.upeople_id = "+ str(developer_id)
     filters += " AND "+ closed_condition
