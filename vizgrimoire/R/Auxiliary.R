@@ -95,6 +95,8 @@ ConfFromOptParse <- function (datasource="") {
                                         help="Granularity for the report (months, weeks)", default="months"),
 			make_option(c("-e", "--end"), dest="enddate", 
 					help="End date for the report", default="2100-01-01"),
+                        make_option(c("--npeople"), dest="npeople", 
+					help="Limit for people analysis", default="10"),
           		make_option(c("-o", "--destination"), dest="destination", 
 					help="Destination directory", default="data/json")
 	)	

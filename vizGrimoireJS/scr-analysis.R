@@ -306,21 +306,21 @@ if ('countries' %in% reports) {
 
 # Tops
 top_reviewers <- list()
-top_reviewers[['reviewers.']] <- GetTopReviewersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['reviewers.last year']]<- GetTopReviewersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['reviewers.']] <- GetTopReviewersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_reviewers[['reviewers.last year']]<- GetTopReviewersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
 
 # Top openers
 top_openers <- list()
-top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople )
+top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
 
 # Top mergers
 top_mergers <- list()
-top_mergers[['mergers.']]<-GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_mergers[['mergers.']]<-GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
 
 createJSON (c(top_reviewers, top_openers, top_mergers), paste(destdir,"/scr-top.json", sep=''))
 

@@ -1036,7 +1036,7 @@ GetFiltersCompaniesITS <- function (table='') {
 }
 
 GetCompanyTopClosers <- function(company_name, startdate, enddate,
-        identities_db, filter = c(''), closed_condition = closed_condition) {
+        identities_db, filter = c(''), closed_condition = closed_condition, limit) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1047,20 +1047,21 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
                      ",identities_db,".companies com,
                      ",identities_db,".upeople up
                 WHERE ", GetFiltersCompaniesITS()," AND ", closed_condition, "
-                      AND pup.people_id = up.id
+                      AND pup.upeople_id = up.id
                       AND upc.company_id = com.id
                       AND com.name = ",company_name,"
                       AND changed_on >= ",startdate," AND changed_on < ",enddate,
                       affiliations, "
-                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
+                GROUP BY up.identifier ORDER BY closed DESC LIMIT ",limit ,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
 
+
 GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c(""),
-                          closed_condition = closed_condition) {
+                          closed_condition = closed_condition, limit) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
@@ -1088,14 +1089,15 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                       closed_condition, " ", date_limit, "
                 GROUP BY up.identifier
                 ORDER BY closed desc
-                LIMIT 10;", sep="")
+                LIMIT " ,limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
+
 GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, filter = c(''),
-        closed_condition = closed_condition) {
+        closed_condition = closed_condition, limit) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " AND up.identifier<>'",aff,"' ",sep='')
@@ -1106,19 +1108,20 @@ GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, 
                      ",identities_db,".domains dom,
                      ",identities_db,".upeople up
                 WHERE ", GetFiltersDomainsITS()," AND ", closed_condition, "
-                      AND pup.people_id = up.id
+                      AND pup.upeople_id = up.id
                       AND upd.domain_id = dom.id
                       AND dom.name = ",domain_name,"
                       AND changed_on >= ",startdate," AND changed_on < ",enddate,
                       affiliations, "
-                GROUP BY changed_by ORDER BY closed DESC LIMIT 10;",sep='')
+                GROUP BY up.identifier ORDER BY closed DESC LIMIT ",limit,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
+
 GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c(""),
-        closed_condition = closed_condition) {
+        closed_condition = closed_condition, limit) {
     affiliations = ""
     for (aff in filter){
         affiliations <- paste(affiliations, " com.name<>'", aff ,"' and ", sep="")
@@ -1146,7 +1149,7 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
                     date_limit, "
                     GROUP BY up.identifier
                     ORDER BY opened desc
-                    LIMIT 10;", sep="")
+                    LIMIT " ,limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -1168,7 +1171,7 @@ GetPeopleListITS <- function(startdate, enddate) {
 }
 
 GetPeopleQueryITS <- function(developer_id, period, startdate, enddate, evol, closed_condition) {
-    fields = "COUNT(c.id) AS closed"
+    fields = "COUNT(distinct(c.issue_id)) AS closed"
     tables = GetTablesOwnUniqueIdsITS()
     filters = paste(GetFiltersOwnUniqueIdsITS(), "AND pup.upeople_id = ", developer_id)
     filters = paste(filters, "AND ", closed_condition)

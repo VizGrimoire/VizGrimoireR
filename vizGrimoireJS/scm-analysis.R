@@ -164,11 +164,10 @@ createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 
 # Top authors
 
-top_authors_data <- top_authors(conf$startdate, conf$enddate)
 top_authors_data <- list()
-top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "" )
-top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "")
-top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "")
+top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "", conf$npeople)
+top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "", conf$npeople)
+top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "", conf$npeople)
 createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 
 # Top files
@@ -205,13 +204,13 @@ if ('companies' %in% reports) {
 
         createJSON(static_data, paste(destdir,"/",company_aux,"-scm-com-static.json", sep=''))
 	
-        top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
+        top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate, conf$npeople)
         createJSON(top_authors, paste(destdir,"/",company_aux,"-scm-com-top-authors.json", sep=''))
-        top_authors_2006 <- company_top_authors_year(company_name, 2006)
+        top_authors_2006 <- company_top_authors_year(company_name, 2006, conf$npeople)
         createJSON(top_authors_2006, paste(destdir,"/",company_aux,"-scm-top-authors_2006.json", sep=''))
-        top_authors_2009 <- company_top_authors_year(company_name, 2009)
+        top_authors_2009 <- company_top_authors_year(company_name, 2009, conf$npeople)
         createJSON(top_authors_2009, paste(destdir,"/",company_aux,"-scm-top-authors_2009.json", sep=''))
-        top_authors_2012 <- company_top_authors_year(company_name, 2012)
+        top_authors_2012 <- company_top_authors_year(company_name, 2012, conf$npeople)
         createJSON(top_authors_2012, paste(destdir,"/",company_aux,"-scm-top-authors_2012.json", sep=''))	
     }
 }

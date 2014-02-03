@@ -291,6 +291,7 @@ if ('companies' %in% reports) {
         static_info = AggITSInfo(period, startdate, enddate, identities_db, list('company', company_name), closed_condition)
         createJSON(static_info, paste(c(destdir,"/",company_aux,"-its-com-static.json"), collapse=''))
 		
+
         top_closers <- GetCompanyTopClosers(company_name, startdate, enddate, identities_db, c("-Bot"), closed_condition)
         createJSON(top_closers, paste(c(destdir,"/",company_aux,"-its-com-top-closers.json"), collapse=''))
 

@@ -272,7 +272,7 @@ EvolRepositoriesIRC <- function(period, startdate, enddate, identities_db=NA, ty
     return(GetRepositoriesIRC(period, startdate, enddate, identities_db, type_analysis, TRUE))
 }
 
-GetTopSendersIRC <- function(days = 0, startdate, enddate, identities_db, bots) {
+GetTopSendersIRC <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
@@ -295,7 +295,7 @@ GetTopSendersIRC <- function(days = 0, startdate, enddate, identities_db, bots) 
                     date  < ", enddate, " ", date_limit, "
                     GROUP BY senders
                     ORDER BY sent desc
-                    LIMIT 10;", sep="")
+                    LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

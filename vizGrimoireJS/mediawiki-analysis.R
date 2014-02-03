@@ -91,9 +91,9 @@ createJSON (evol_data, paste(destdir,"/mediawiki-evolutionary.json", sep=''))
 #######
 
 top_authors <- list()
-top_authors[['authors.']] <- GetTopAuthorsMediaWiki(0, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_authors[['authors.last year']]<- GetTopAuthorsMediaWiki(365, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_authors[['authors.last month']]<- GetTopAuthorsMediaWiki(31, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_authors[['authors.']] <- GetTopAuthorsMediaWiki(0, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_authors[['authors.last year']]<- GetTopAuthorsMediaWiki(365, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_authors[['authors.last month']]<- GetTopAuthorsMediaWiki(31, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
 createJSON (top_authors, paste(destdir,"/mediawiki-top.json", sep=''))
 
 

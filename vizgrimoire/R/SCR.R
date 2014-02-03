@@ -627,7 +627,7 @@ GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA))
 ##
 
 # Is this right???
-GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
@@ -652,13 +652,13 @@ GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bo
                     ",date_limit, "
                 GROUP BY up.identifier
                 ORDER BY reviewed desc
-                LIMIT 10;", sep="")
+                LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, merged = FALSE) {
+GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit, merged = FALSE) {
     date_limit = ""
     merged_sql = ""
     rol = "openers"
@@ -692,19 +692,19 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
                     ",date_limit, merged_sql, "
                 GROUP BY up.identifier
                 ORDER BY ",action," desc
-                LIMIT 10;", sep="")
+                LIMIT ",limit ,";", sep="")
     return(q)
 }
 
-GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) {
-    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
+GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, limit)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
-    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE)
+GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, limit, TRUE)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)

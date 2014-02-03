@@ -1033,8 +1033,8 @@ last_activity <- function(days) {
     return (agg_data)
 }
 
-top_people <- function(days, startdate, enddate, role, filters="") {
-    # This function returns the 10 top people participating in the source code.
+top_people <- function(days, startdate, enddate, role, filters="", limit) {
+    # This function returns the top people participating in the source code.
     # Dataset can be filtered by the affiliations, where specific companies
     # can be ignored.
     # In addition, the number of days allows to limit the study to the last
@@ -1070,7 +1070,7 @@ top_people <- function(days, startdate, enddate, role, filters="") {
                  upc.company_id = c.id
                GROUP BY u.identifier
                ORDER BY commits desc
-               LIMIT 10;", sep="")
+               LIMIT " ,limit, ";", sep="")
     
     query <- new("Query", sql = q)
     data <- run(query)
@@ -1094,6 +1094,9 @@ top_files_modified <- function() {
 ## TODO: Follow top_committers implementation
 top_authors <- function(startdate, enddate) {
     # Top 10 authors without filters
+    ##
+    ## DEPRECATED use top_people instead
+    ##
 
     q <- paste("SELECT u.id as id, u.identifier as authors,
                        count(distinct(s.id)) as commits
@@ -1309,7 +1312,7 @@ evol_info_data_countries <- function(startdate, enddate) {
         return (data)
     }
 
-company_top_authors <- function(company_name, startdate, enddate) {
+company_top_authors <- function(company_name, startdate, enddate, limit) {
     # Returns top ten authors per company
  	
     q <- paste ("select u.id as id, u.identifier  as authors,
@@ -1334,13 +1337,13 @@ company_top_authors <- function(company_name, startdate, enddate) {
                         c.name =", company_name, "
                  group by u.id
                  order by count(distinct(s.id)) desc
-                 limit 10;")
+                 limit ",limit ,";")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-company_top_authors_year <- function(company_name, year){
+company_top_authors_year <- function(company_name, year, limit){
     # Top 10 authors per company and in a given year
 	
     q <- paste ("select u.id as id, u.identifier as authors,
@@ -1362,7 +1365,7 @@ company_top_authors_year <- function(company_name, year){
                         c.name =", company_name, "
                  group by u.id
                  order by count(distinct(s.id)) desc
-                 limit 10;")
+                 limit ",limit,";")
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
