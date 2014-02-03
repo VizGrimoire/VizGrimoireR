@@ -348,8 +348,8 @@ if __name__ == '__main__':
     # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
-#    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
-#    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
 
     if ('people' in reports):
