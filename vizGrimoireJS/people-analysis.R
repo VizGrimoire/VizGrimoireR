@@ -53,12 +53,12 @@ people_data <- list()
 people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
 people = people$pid
 limit = 100
-if (length(people)<limit) limit = length(people);
+if (length(people)<limit) limit = length(people)
 people = people[1:limit]
 
 for (upeople_id in people) {
     data <- GetPersonIdentifiers(upeople_id);
-    people_data[[as.character(upeople_id)]] <- GetPersonIdentifiers(upeople_id);
+    people_data[[as.character(upeople_id)]] <- GetPersonIdentifiers(upeople_id)
 }
 
 createJSON(people_data, paste(destdir,"/people.json", sep=''))

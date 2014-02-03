@@ -896,11 +896,11 @@ GetPeopleListSCM <- function(startdate, enddate) {
     fields = "DISTINCT(pup.upeople_id) as pid, COUNT(s.id) as total"
     tables = GetTablesOwnUniqueIdsSCM()
     filters = GetFiltersOwnUniqueIdsSCM()
-    filters = paste(filters,"GROUP BY pid ORDER BY total desc")
+    filters = paste(filters,"GROUP BY pid ORDER BY total desc, pid")
     q = GetSQLGlobal('s.date',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)
 	data <- run(query)
-	return (data)        
+	return (data)
 }
 
 GetPeopleQuerySCM <- function(developer_id, period, startdate, enddate, evol) {

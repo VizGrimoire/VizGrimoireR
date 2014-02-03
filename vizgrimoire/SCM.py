@@ -808,7 +808,7 @@ def GetPeopleListSCM (startdate, enddate) :
     fields = "DISTINCT(pup.upeople_id) as pid, COUNT(s.id) as total"
     tables = GetTablesOwnUniqueIdsSCM()
     filters = GetFiltersOwnUniqueIdsSCM()
-    filters +=" GROUP BY pid ORDER BY total desc"
+    filters +=" GROUP BY pid ORDER BY total desc, pid"
     q = GetSQLGlobal('s.date',fields,tables, filters, startdate, enddate)
 
     data = ExecuteQuery(q)
