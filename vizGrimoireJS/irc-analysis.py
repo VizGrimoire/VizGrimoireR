@@ -60,7 +60,7 @@ def aggData(period, startdate, enddate, idb, destdir):
 
     # Global aggregated data
     # static_data = vizr.GetStaticDataIRC(period, startdate, enddate, idb)
-    static_data = IRC.GetStaticDataIRC(period, startdate, enddate, idb)
+    static_data = IRC.GetStaticDataIRC(period, startdate, enddate, idb, None)
     agg_data = dict(agg_data.items() + static_data.items())
 
     createJSON (agg_data, destdir+"/irc-static.json")
@@ -68,7 +68,7 @@ def aggData(period, startdate, enddate, idb, destdir):
 def tsData(period, startdate, enddate, idb, destdir):
     ts_data = {}
     # ts_data = dataFrame2Dict(vizr.GetEvolDataIRC(period, startdate, enddate, idb))
-    ts_data = IRC.GetEvolDataIRC(period, startdate, enddate, idb)
+    ts_data = IRC.GetEvolDataIRC(period, startdate, enddate, idb, None)
     ts_data = completePeriodIds(ts_data)
     createJSON (ts_data, destdir+"/irc-evolutionary.json")
 
