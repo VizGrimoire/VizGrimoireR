@@ -60,10 +60,10 @@ class Backend(object):
             Backend.closed_condition = "(new_value='RESOLVED' OR new_value='CLOSED')"
             Backend.reopened_condition = "new_value='NEW'"
             Backend.name_log_table = 'issues_log_bugzilla'
-            Backend.statuses = ["ASSIGNED"]
+            Backend.statuses = ["NEW", "ASSIGNED"]
             #Pretty specific states in Red Hat's Bugzilla
-            # Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
-            #            "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
+            Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
+                    "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
 
         if (its_type == 'github'):
             Backend.closed_condition = "field='closed'"
