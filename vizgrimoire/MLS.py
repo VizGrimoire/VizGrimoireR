@@ -691,10 +691,10 @@ def GetStaticPeopleMLS (developer_id, startdate, enddate) :
 #########################
 
 
-def top_senders (days, startdate, enddate, identities_db, filter = []) :
+def top_senders (days, startdate, enddate, identities_db, filter, limit) :
 
-    limit = 30
     affiliations = ""
+    if (not filter): filter = []
     for aff in filter:
         affiliations = affiliations+ " c.name<>'"+ aff +"' and "
 
@@ -716,7 +716,7 @@ def top_senders (days, startdate, enddate, identities_db, filter = []) :
             date_limit+ " "+\
             "GROUP BY up.identifier "+\
             "ORDER BY sent desc "+\
-            "LIMIT " + str(limit)
+            "LIMIT " + limit
     data = ExecuteQuery(q)
     return (data)
 
