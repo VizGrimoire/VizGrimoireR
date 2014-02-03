@@ -227,15 +227,15 @@ createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
 
 # Top closers
 top_closers_data <- list()
-top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
-top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
-top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
+top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
+top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
+top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
 
 # Top openers
 top_openers_data <- list()
-top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
-top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
-top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition)
+top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
+top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
+top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
 
 all_top <- c(top_closers_data, top_openers_data)
 createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
@@ -292,7 +292,7 @@ if ('companies' %in% reports) {
         createJSON(static_info, paste(c(destdir,"/",company_aux,"-its-com-static.json"), collapse=''))
 		
 
-        top_closers <- GetCompanyTopClosers(company_name, startdate, enddate, identities_db, c("-Bot"), closed_condition)
+        top_closers <- GetCompanyTopClosers(company_name, startdate, enddate, identities_db, c("-Bot"), closed_condition, conf$npeople)
         createJSON(top_closers, paste(c(destdir,"/",company_aux,"-its-com-top-closers.json"), collapse=''))
 
     }
@@ -339,7 +339,7 @@ if ('domains' %in% reports) {
         static_info = AggITSInfo(period, startdate, enddate, identities_db, list('domain', domain_name), closed_condition)
         createJSON(static_info, paste(c(destdir,"/",domain_aux,"-its-dom-static.json"), collapse=''))
 
-        top_closers <- GetDomainTopClosers(domain_name, startdate, enddate, identities_db, c("-Bot"), closed_condition)
+        top_closers <- GetDomainTopClosers(domain_name, startdate, enddate, identities_db, c("-Bot"), closed_condition, conf$npeople)
         createJSON(top_closers, paste(c(destdir,"/",domain_aux,"-its-dom-top-closers.json"), collapse=''))
     }
 }
