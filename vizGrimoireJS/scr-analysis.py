@@ -150,16 +150,23 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
+# Unify top format
+def safeTopIds(top_data_period):
+    if not isinstance(top_data_period['id'], (list)):
+        for name in top_data_period:
+            top_data_period[name] = [top_data_period[name]]
+    return top_data_period['id']
+
 def peopleData(period, startdate, enddate, idb, destdir, top_data):
-    top = top_data['reviewers']["id"]
-    top += top_data['reviewers.last year']["id"]
-    top += top_data['reviewers.last month']["id"]
-    top = top_data['openers.']["id"]
-    top += top_data['openers.last year']["id"]
-    top += top_data['openers.last_month']["id"]
-    top = top_data['mergers.']["id"]
-    top += top_data['mergers.last year']["id"]
-    top += top_data['mergers.last_month']["id"]
+    top = safeTopIds(top_data['reviewers'])
+    top += safeTopIds(top_data['reviewers.last year'])
+    top += safeTopIds(top_data['reviewers.last month'])
+    top += safeTopIds(top_data['openers.'])
+    top += safeTopIds(top_data['openers.last year'])
+    top += safeTopIds(top_data['openers.last_month'])
+    top += safeTopIds(top_data['mergers.'])
+    top += safeTopIds(top_data['mergers.last year'])
+    top += safeTopIds(top_data['mergers.last_month'])
     # remove duplicates
     people = list(set(top))
     # the order is not the same than in R json 
@@ -343,7 +350,7 @@ if __name__ == '__main__':
 
 #    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
 #    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
-    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, npeople)
+    top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
 
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
