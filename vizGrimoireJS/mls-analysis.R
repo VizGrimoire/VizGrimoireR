@@ -53,6 +53,7 @@ enddate <- conf$enddate
 #
 options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
 rfield = reposField()
+rfield = 'mailing_list_url'
 
 data <- EvolMLSInfo(period, startdate, enddate, identities_db, rfield)
 
