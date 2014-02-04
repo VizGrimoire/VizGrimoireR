@@ -33,7 +33,7 @@ import math
 from optparse import OptionParser
 import rpy2.rinterface as rinterface
 from rpy2.robjects.vectors import StrVector
-import sys
+import os,sys
 
 def read_options():
     parser = OptionParser(usage="usage: %prog [options]",
