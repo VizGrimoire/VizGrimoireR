@@ -315,7 +315,7 @@ def removeDecimals(data):
     return data
 
 # Until we use VizPy we will create JSON python files with _py
-def createJSON(data, filepath, check=True):
+def createJSON(data, filepath, check=True, skip_fields = []):
     filepath_py = filepath.split(".json")
     filepath_py = filepath_py[0]+"_py.json"
     jsonfile = open(filepath_py, 'w')
@@ -329,11 +329,11 @@ def createJSON(data, filepath, check=True):
 
     if (check == False): return
 
-    if compareJSON(filepath, filepath_py) is False:
+    if compareJSON(filepath, filepath_py, skip_fields) is False:
         logging.error("Wrong data generated from Python "+ filepath_py)
         sys.exit(1)
 
-def compareJSON(orig_file, new_file):
+def compareJSON(orig_file, new_file, skip_fields = []):
     check = True
     f1 = open(orig_file)
     f2 = open(new_file)
@@ -361,6 +361,9 @@ def compareJSON(orig_file, new_file):
                 check = False
             elif data1[name] != data2[name]:
                 if (data1[name] == "NA" and data2[name] == 0): continue
+                elif name in skip_fields:
+                    logging.warn ("'"+name + "' (skipped) different in dicts\n" + str(data1[name]) + "\n" + str(data2[name])) 
+                    continue
                 logging.warn ("'"+name + "' different in dicts\n" + str(data1[name]) + "\n" + str(data2[name]))
                 check = False
         for name in data2:
