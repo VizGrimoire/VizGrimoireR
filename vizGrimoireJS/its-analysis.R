@@ -235,9 +235,10 @@ top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf
 top_openers_data <- list()
 top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
 top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
-top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
+top_openers_data[['openers.last month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identities_db, c("-Bot"), closed_condition, conf$npeople)
 
 all_top <- c(top_closers_data, top_openers_data)
+
 createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # People List for working in unique identites
@@ -350,11 +351,11 @@ if ('people' %in% reports) {
     all.top.people <- top_closers_data[['closers.']]$id
     all.top.people <- append(all.top.people, top_closers_data[['closers.last year']]$id)
     all.top.people <- append(all.top.people, top_closers_data[['closers.last month']]$id)
-    
+
     all.top.people <- append(all.top.people, top_openers_data[['openers.']]$id)
     all.top.people <- append(all.top.people, top_openers_data[['openers.last year']]$id)
     all.top.people <- append(all.top.people, top_openers_data[['openers.last month']]$id)
-    
+
     all.top.people <- unique(all.top.people)
     createJSON(all.top.people, paste(c(destdir,"/its-people.json"), collapse=''))
 
