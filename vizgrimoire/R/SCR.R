@@ -651,7 +651,7 @@ GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bo
                     c.changed_on < ", enddate, "
                     ",date_limit, "
                 GROUP BY up.identifier
-                ORDER BY reviewed desc
+                ORDER BY reviewed desc, reviewers
                 LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -691,7 +691,7 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
                     i.submitted_on < ", enddate, "
                     ",date_limit, merged_sql, "
                 GROUP BY up.identifier
-                ORDER BY ",action," desc
+                ORDER BY ",action," desc, id
                 LIMIT ",limit ,";", sep="")
     return(q)
 }

@@ -590,7 +590,7 @@ def GetTopReviewersSCR (days, startdate, enddate, identities_db, bots, limit):
         "            c.changed_on < "+ enddate + " "+\
         "            "+ date_limit + " "+\
         "        GROUP BY up.identifier "+\
-        "        ORDER BY reviewed desc "+\
+        "        ORDER BY reviewed desc, reviewers "+\
         "        LIMIT " + limit
     return(ExecuteQuery(q))
 
@@ -625,7 +625,7 @@ def GetTopSubmittersQuerySCR   (days, startdate, enddate, identities_db, bots, l
         "            i.submitted_on < "+ enddate+ " "+\
         "            "+date_limit+ merged_sql+ " "+\
         "        GROUP BY up.identifier "+\
-        "        ORDER BY "+action+" desc "+\
+        "        ORDER BY "+action+" desc, id "+\
         "        LIMIT "+ limit
     return(q)
 
