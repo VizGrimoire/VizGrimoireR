@@ -85,7 +85,9 @@ def aggData(period, startdate, enddate, identities_db, destdir):
         data = SCM.last_activity(i)
         agg = dict(agg.items() + data.items())
 
-    createJSON (agg, destdir+"/scm-static.json")
+    # Fields with wrong data in R
+    skip_fields = ['percentage_removed_lines_30','percentage_added_lines_30','diff_netadded_lines_30','diff_netremoved_lines_30']
+    createJSON (agg, destdir+"/scm-static.json", True, skip_fields)
 
 def tsData(period, startdate, enddate, identities_db, destdir, granularity, conf):
 #    data = vizr.GetSCMEvolutionaryData(period, startdate, enddate, identities_db)
