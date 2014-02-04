@@ -1001,7 +1001,7 @@ GetTopClosersByAssignee <- function(days = 0, startdate, enddate, identities_db,
                                            changed_on>=", startdate, " and 
                                            changed_on<", enddate, " ", date_limit,") 
                 GROUP BY up.identifier 
-                ORDER BY closed desc limit 10;", sep="")
+                ORDER BY closed desc, closers limit 10;", sep="")
 
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -1052,7 +1052,7 @@ GetCompanyTopClosers <- function(company_name, startdate, enddate,
                       AND com.name = ",company_name,"
                       AND changed_on >= ",startdate," AND changed_on < ",enddate,
                       affiliations, "
-                GROUP BY up.identifier ORDER BY closed DESC LIMIT ",limit ,";",sep='')
+                GROUP BY up.identifier ORDER BY closed DESC,closers LIMIT ",limit ,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -1088,7 +1088,7 @@ GetTopClosers <- function(days = 0, startdate, enddate, identites_db, filter = c
                       c.changed_on < ", enddate, " and ",
                       closed_condition, " ", date_limit, "
                 GROUP BY up.identifier
-                ORDER BY closed desc
+                ORDER BY closed desc, closers
                 LIMIT " ,limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
@@ -1113,7 +1113,7 @@ GetDomainTopClosers <- function(domain_name, startdate, enddate, identities_db, 
                       AND dom.name = ",domain_name,"
                       AND changed_on >= ",startdate," AND changed_on < ",enddate,
                       affiliations, "
-                GROUP BY up.identifier ORDER BY closed DESC LIMIT ",limit,";",sep='')
+                GROUP BY up.identifier ORDER BY closed DESC, closers LIMIT ",limit,";",sep='')
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -1148,7 +1148,7 @@ GetTopOpeners <- function(days = 0, startdate, enddate, identites_db, filter = c
                     i.submitted_on < ", enddate,
                     date_limit, "
                     GROUP BY up.identifier
-                    ORDER BY opened desc
+                    ORDER BY opened desc, openers
                     LIMIT " ,limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)

@@ -741,7 +741,7 @@ def GetTopClosersByAssignee (days, startdate, enddate, identities_db, filter) :
         "               changed_on>="+ startdate+ " and  "+\
         "               changed_on<"+ enddate+ " "+ date_limit+") "+\
         "GROUP BY up.identifier "+\
-        "ORDER BY closed desc limit 10"
+        "ORDER BY closed desc, closers limit 10"
 
 
     data = ExecuteQuery(q)
@@ -790,7 +790,7 @@ def GetCompanyTopClosers (company_name, startdate, enddate,
         "      AND com.name = "+ company_name +" "+\
         "      AND changed_on >= "+startdate+" AND changed_on < "+enddate+\
             affiliations +\
-        " GROUP BY changed_by ORDER BY closed DESC LIMIT " + limit
+        " GROUP BY changed_by ORDER BY closed DESC, closers LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)
@@ -822,7 +822,7 @@ def GetTopClosers (days, startdate, enddate,
         "      c.changed_on < "+ enddate+ " and " +\
         "      "+closed_condition+ " " + date_limit+ " "+\
         "GROUP BY up.identifier "+\
-        "ORDER BY closed desc "+\
+        "ORDER BY closed desc, closers "+\
         "LIMIT "+ limit
 
     data = ExecuteQuery(q)
@@ -846,7 +846,7 @@ def GetDomainTopClosers (domain_name, startdate, enddate,
         "      AND dom.name = "+domain_name+" "+\
         "      AND changed_on >= "+startdate+" AND changed_on < " +enddate +\
               affiliations+ " "+\
-        "GROUP BY changed_by ORDER BY closed DESC LIMIT " + limit
+        "GROUP BY changed_by ORDER BY closed DESC, closers LIMIT " + limit
 
     data = ExecuteQuery(q)
     return (data)
@@ -876,7 +876,7 @@ def GetTopOpeners (days, startdate, enddate,
         "    i.submitted_on < "+ enddate+\
             date_limit+ " "+\
         "    GROUP BY up.identifier "+\
-        "    ORDER BY opened desc "+\
+        "    ORDER BY opened desc, openers "+\
         "    LIMIT " + limit
     data = ExecuteQuery(q)
     return (data)
