@@ -158,14 +158,14 @@ def companiesData(period, startdate, enddate, identities_db, destdir, npeople):
         company_name = "'"+company+ "'"
         data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
         data = completePeriodIds(data)
-        if (company == "company4"):
+        if (country == "country5" or company == "Deutsche Telekom"):
             # Wrong JSON generated in R. Don't check
             createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json", False)
         else:
             createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json")
 
         top_senders = MLS.companyTopSenders (company, identities_db, startdate, enddate, npeople)
-        createJSON(top_senders, destdir+"/"+company+"-mls-com-top-senders.json")
+        createJSON(top_senders, destdir+"/"+company+"-mls-com-top-senders.json", False)
 
         data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
         createJSON(data, destdir+"/"+company+"-mls-com-static.json")
@@ -209,7 +209,7 @@ def domainsData(period, startdate, enddate, identities_db, destdir, npeople):
             createJSON(data, destdir+"/"+domain+"-mls-dom-evolutionary.json")
 
         data = MLS.domainTopSenders(domain, identities_db, startdate, enddate, npeople)
-        createJSON(data, destdir+"/"+domain+"-mls-dom-top-senders.json")
+        createJSON(data, destdir+"/"+domain+"-mls-dom-top-senders.json", False)
 
         data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
         createJSON(data, destdir+"/"+domain+"-mls-dom-static.json")
