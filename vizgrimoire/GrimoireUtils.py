@@ -319,8 +319,9 @@ def removeDecimals(data):
 
 # Until we use VizPy we will create JSON python files with _py
 def createJSON(data, filepath, check=True, skip_fields = []):
-    filepath_py = filepath.split(".json")
-    filepath_py = filepath_py[0]+"_py.json"
+    filepath_tokens = filepath.split(".json")
+    filepath_py = filepath_tokens[0]+"_py.json"
+    filepath_r = filepath_tokens[0]+"_r.json"
     jsonfile = open(filepath_py, 'w')
     json_data = json.dumps(removeDecimals(data), sort_keys=True)
     # NA as value is not decoded with Python JSON
@@ -335,6 +336,10 @@ def createJSON(data, filepath, check=True, skip_fields = []):
     if compareJSON(filepath, filepath_py, skip_fields) is False:
         logging.error("Wrong data generated from Python "+ filepath_py)
         sys.exit(1)
+    else:
+        # Rename the files so Python JSON is used
+        os.rename(filepath, filepath_r)
+        os.rename(filepath_py, filepath)
 
 def compareJSON(orig_file, new_file, skip_fields = []):
     check = True
