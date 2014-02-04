@@ -191,7 +191,7 @@ def domainsData(period, startdate, enddate, identities_db, destdir):
     domains = domains['name']
     createJSON(domains, destdir+"/scm-domains.json")
     # Some R ts are wrong
-    bad_R_json_domains = ['gerrit','gmx','emsenhuber']
+    bad_R_json_domains = ['gerrit','gmx','emsenhuber','bitergia']
 
     for domain in domains :
         domain_name = "'"+domain+"'"
