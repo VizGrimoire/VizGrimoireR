@@ -1434,6 +1434,7 @@ ReportTimeToCloseITS <- function (backend, destdir) {
 }
 
 ReportMarkovChain <- function(destdir) {
+    options(stringsAsFactors = FALSE) # avoid merge factors for toJSON 
     markov <- MarkovChain()
     createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
 }
