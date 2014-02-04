@@ -118,7 +118,7 @@ def get_analysis_cmd(v, script, db):
             (v['python_libs'], v['r_libs'], script, v['reports'], db , v['db_user'], v['db_password'])
     cmd += "-i %s -s %s -e %s -o %s -g %s " % \
         (v['db_identities'], v['start_date'], v['end_date'], v['json_dir'], v['period'])
-    if script == "its-analysis.R":
+    if script == "its-analysis.R" or script == "its-analysis.py":
         cmd += "-t %s " % (v['bicho_backend'])
     if v.has_key('people_number'):
         cmd += "--npeople %s " %  (v['people_number'])
