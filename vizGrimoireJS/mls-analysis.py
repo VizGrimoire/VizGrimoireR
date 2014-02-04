@@ -158,7 +158,7 @@ def companiesData(period, startdate, enddate, identities_db, destdir, npeople):
         company_name = "'"+company+ "'"
         data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
         data = completePeriodIds(data)
-        if (country == "country5" or company == "Deutsche Telekom"):
+        if (company == "company4" or company == "Deutsche Telekom"):
             # Wrong JSON generated in R. Don't check
             createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json", False)
         else:
