@@ -331,9 +331,7 @@ def createJSON(data, filepath, check=True, skip_fields = []):
     jsonfile.write(json_data)
     jsonfile.close()
 
-    if (check == False): return
-
-    if compareJSON(filepath, filepath_py, skip_fields) is False:
+    if (check == True and compareJSON(filepath, filepath_py, skip_fields) is False):
         logging.error("Wrong data generated from Python "+ filepath_py)
         sys.exit(1)
     else:
