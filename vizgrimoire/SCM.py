@@ -1298,7 +1298,7 @@ def repos_name (startdate, enddate) :
         "       s.date >"+startdate+ " and "+\
         "       s.date <= "+enddate+ " "+\
         " group by repository_id  "+\
-        " order by total desc";
+        " order by total desc,name";
 
     data = ExecuteQuery(q)
     return (data)	
