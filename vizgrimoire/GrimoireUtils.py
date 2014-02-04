@@ -183,6 +183,9 @@ def completePeriodIdsMonths(ts_data, start, end):
     end_month = end.year*12 + end.month
     months = end_month - start_month
 
+    # All data is from the complete month
+    start = start - timedelta(days=(start.day-1))
+
     for i in range(0, months+1):
         if (start_month+i in ts_data['month']) is False:
             # Add new time point with all vars to zero
