@@ -275,7 +275,7 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, closed_con
     all_top = dict(top_closers_data.items() + top_openers_data.items())
     createJSON (all_top, destdir+"/its-top.json", False)
 
-    return dict(all_top)
+    return all_top
 
 def microStudies(destdir):
     # Studies implemented in R
@@ -292,6 +292,7 @@ def microStudies(destdir):
 
 def ticketsStates(period, startdate, enddate, identities_db, backend):
     evol = {}
+
     for status in backend.statuses:
         print ("Working with ticket status: " + status)
         #Evolution of the backlog
