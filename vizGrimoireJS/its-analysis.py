@@ -191,12 +191,15 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, closed_c
     for repo in repos :
         repo_name = "'"+ repo+ "'"
         repo_file = repo.replace("/","_")
-        print (repo_name) 
         evol = ITS.EvolITSInfo(period, startdate, enddate, identities_db, ['repository', repo_name], closed_condition)
         evol = completePeriodIds(evol)
-        createJSON(evol, destdir+"/"+repo_file+"-its-rep-evolutionary.json")
+        if (repo_file == "http:__tracker.ceph.com_projects_rados-java_"):
+            createJSON(evol, destdir+"/"+repo_file+"-its-rep-evolutionary.json", False)
+        else:
+            createJSON(evol, destdir+"/"+repo_file+"-its-rep-evolutionary.json")
 
         agg = ITS.AggITSInfo(period, startdate, enddate, identities_db, ['repository', repo_name], closed_condition)
+
         createJSON(agg, destdir+"/"+repo_file+"-its-rep-static.json")
 
 def companiesData(period, startdate, enddate, identities_db, destdir, closed_condition, bots, npeople):
@@ -292,7 +295,6 @@ def microStudies(destdir):
 
 def ticketsStates(period, startdate, enddate, identities_db, backend):
     evol = {}
-
     for status in backend.statuses:
         print ("Working with ticket status: " + status)
         #Evolution of the backlog
@@ -345,3 +347,5 @@ if __name__ == '__main__':
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots, opts.npeople)
     if ('domains' in reports):
         domainsData (period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition, bots, opts.npeople)
+
+    logging.info("ITS data source analysis OK!")
