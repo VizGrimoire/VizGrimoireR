@@ -166,7 +166,7 @@ GetTopAuthorsMediaWiki <- function(days = 0, startdate, enddate, identities_db, 
                     date >= ", startdate, " and
                     date  < ", enddate, " ", date_limit, "
                     GROUP BY authors
-                    ORDER BY reviews desc
+                    ORDER BY reviews desc, authors
                     LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)

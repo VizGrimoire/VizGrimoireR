@@ -157,7 +157,7 @@ def GetTopAuthorsMediaWiki (days, startdate, enddate, identities_db, bots, limit
         "    date >= "+ startdate+ " and "+\
         "    date  < "+ enddate+ " "+ date_limit+ " "+\
         "    GROUP BY authors "+\
-        "    ORDER BY reviews desc "+\
+        "    ORDER BY reviews desc, authors "+\
         "    LIMIT "+ limit
 
     data = ExecuteQuery(q)

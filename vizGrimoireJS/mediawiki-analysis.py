@@ -95,7 +95,7 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, npeople):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
-    logging.info("Starting MLS data source analysis")
+    logging.info("Starting Mediawiki data source analysis")
     opts = read_options()
     period = getPeriod(opts.granularity)
     reports = opts.reports.split(",")
