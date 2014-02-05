@@ -714,7 +714,10 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
     filters = ""
     q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
             startdate, enddate)
-    return(ExecuteQuery(q))
+    data = ExecuteQuery(q)
+    if not isinstance(data['review_time_days_avg'], (list)): 
+        data['review_time_days_avg'] = [data['review_time_days_avg']]
+    return(data)
 
 def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
