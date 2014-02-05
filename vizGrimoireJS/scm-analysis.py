@@ -162,7 +162,7 @@ def companiesData(period, startdate, enddate, identities_db, destdir, bots, npeo
         createJSON(agg, destdir+"/"+company+"-scm-com-static.json")
 
         top_authors = SCM.company_top_authors(company_name, startdate, enddate, npeople)
-        createJSON(top_authors, destdir+"/"+company+"-scm-com-top-authors.json")
+        createJSON(top_authors, destdir+"/"+company+"-scm-com-top-authors.json", False)
 
         for i in [2006,2009,2012]:
             data = SCM.company_top_authors_year(company_name, i, npeople)
@@ -237,12 +237,12 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, npeople):
 
     return top_authors_data
 
-def microStudies(startdate, destdir):
+def microStudies(enddate, destdir):
     # Studies implemented in R
 
     # Demographics
-    vizr.ReportDemographicsAgingSCM(startdate, destdir)
-    vizr.ReportDemographicsBirthSCM(startdate, destdir)
+    vizr.ReportDemographicsAgingSCM(enddate, destdir)
+    vizr.ReportDemographicsBirthSCM(enddate, destdir)
 
 
 if __name__ == '__main__':
@@ -280,5 +280,4 @@ if __name__ == '__main__':
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
-    microStudies(opts.startdate, opts.destdir)
-
+    microStudies(opts.enddate, opts.destdir)
