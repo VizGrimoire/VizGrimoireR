@@ -57,9 +57,9 @@ def GetStaticDataMediaWiki (period, startdate, enddate, i_db, type_analysis):
 def GetEvolDataMediaWiki (period, startdate, enddate, i_db, type_analysis):
 
     # 1- Retrieving information
-    reviews = EvolReviewsMediaWiki(period, startdate, enddate, i_db, type_analysis)
-    authors = EvolAuthorsMediaWiki(period, startdate, enddate, i_db, type_analysis)
-    pages = EvolPagesMediaWiki(period, startdate, enddate, i_db, type_analysis)
+    reviews = completePeriodIds(EvolReviewsMediaWiki(period, startdate, enddate, i_db, type_analysis))
+    authors =completePeriodIds( EvolAuthorsMediaWiki(period, startdate, enddate, i_db, type_analysis))
+    pages = completePeriodIds(EvolPagesMediaWiki(period, startdate, enddate, i_db, type_analysis))
 
     # 2- Merging information
     evol_data = dict(reviews.items()+ authors.items() + pages.items())
