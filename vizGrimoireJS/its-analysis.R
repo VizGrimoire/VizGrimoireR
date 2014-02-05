@@ -122,6 +122,7 @@ createJSON (markov, paste(c(destdir,"/its-markov.json"), collapse=''))
 
 for (status in statuses)
 {
+    break
     #Evolution of the backlog
     tickets_status <- GetEvolBacklogTickets(period, startdate, enddate, status, name_log_table)
     colnames(tickets_status)[2] <- status
