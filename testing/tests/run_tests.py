@@ -18,11 +18,39 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Authors:
-#         Santiago Dueñas <sduenas@libresoft.es>
+#         Santiago Dueñas <sduenas@bitergia.com>
 #
 
+import os
+import tempfile
+import shutil
+import subprocess
 import unittest
 
+
+def install_r_lib():
+    r_lib_path = tempfile.mkdtemp(prefix='vizr-lib_')
+
+    cmd = "R CMD INSTALL -l %s ../../vizgrimoire/" % r_lib_path
+    retcode = subprocess.call(cmd, shell=True)
+
+    if retcode != 0:
+        shutil.rmtree(r_lib_path)
+        raise RuntimeError("Error installing R library. Code error: %s" % retcode)
+
+    os.environ['R_LIBS'] = r_lib_path
+    return r_lib_path
+
+def remove_r_lib(r_lib_path):
+    shutil.rmtree(r_lib_path)
+    os.environ['R_LIBS'] = ''
+
+
 if __name__ == '__main__':
+    r_lib_path = install_r_lib()
+
+    # Look for tests and run them
     test_suite = unittest.TestLoader().discover('.', pattern='test*.py')
     unittest.TextTestRunner(buffer=True).run(test_suite)
+
+    remove_r_lib(r_lib_path)
