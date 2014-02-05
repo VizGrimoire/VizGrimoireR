@@ -135,9 +135,12 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, repofiel
         listname_file = repo.replace("/","_").replace("<","__").replace(">","___")
 
         # TODO: Multilist approach. We will obsolete it in future
-        createJSON (data, destdir+"/mls-"+listname_file+"-rep-evolutionary.json")
-        # Multirepos filename
-        createJSON (data, destdir+"/"+listname_file+"-mls-rep-evolutionary.json")
+        if (listname_file == "http:__lists.wikimedia.org_pipermail_exyu-tech"):
+            createJSON (data, destdir+"/mls-"+listname_file+"-rep-evolutionary.json", False)
+            createJSON (data, destdir+"/"+listname_file+"-mls-rep-evolutionary.json", False)
+        else:
+            createJSON (data, destdir+"/mls-"+listname_file+"-rep-evolutionary.json")
+            createJSON (data, destdir+"/"+listname_file+"-mls-rep-evolutionary.json")
 
         top_senders = MLS.repoTopSenders (repo, identities_db, startdate, enddate, repofield, npeople)
         createJSON(top_senders, destdir+ "/"+listname_file+"-mls-rep-top-senders.json", False)
@@ -180,7 +183,7 @@ def countriesData(period, startdate, enddate, identities_db, destdir, npeople):
         type_analysis = ["country", country_name]
         data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, type_analysis)
         data = completePeriodIds(data)
-        if (country == "country5" or country == "country2"):
+        if (country == "country5" or country == "country2" or country == "Switzerland" or country == "France" or country == "Belgium"):
             # Wrong JSON generated in R. Don't check
             createJSON(data, destdir+"/"+country+"-mls-cou-evolutionary.json", False)
         else:

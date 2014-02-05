@@ -181,7 +181,10 @@ def countriesData(period, startdate, enddate, identities_db, destdir):
 
         evol_data = SCM.GetSCMEvolutionaryData(period, startdate, enddate, identities_db, ["country", country_name])
         evol_data = completePeriodIds(evol_data)
-        createJSON (evol_data, destdir+"/"+country+"-scm-cou-evolutionary.json")
+        if (country == "Croatia"):
+            createJSON (evol_data, destdir+"/"+country+"-scm-cou-evolutionary.json", False)
+        else:
+            createJSON (evol_data, destdir+"/"+country+"-scm-cou-evolutionary.json")
 
         agg = SCM.GetSCMStaticData(period, startdate, enddate, identities_db, ["country", country_name])
         createJSON (agg, destdir+"/"+country+"-scm-cou-static.json")

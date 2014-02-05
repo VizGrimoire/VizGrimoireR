@@ -193,7 +193,8 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, closed_c
         repo_file = repo.replace("/","_")
         evol = ITS.EvolITSInfo(period, startdate, enddate, identities_db, ['repository', repo_name], closed_condition)
         evol = completePeriodIds(evol)
-        if (repo_file == "http:__tracker.ceph.com_projects_rados-java_"):
+        if (repo_file == "http:__tracker.ceph.com_projects_rados-java_" or 
+            repo_file == "https:__bugzilla.wikimedia.org_buglist.cgi?product=Wiki%20Loves%20Monuments&component=Mobile"):
             createJSON(evol, destdir+"/"+repo_file+"-its-rep-evolutionary.json", False)
         else:
             createJSON(evol, destdir+"/"+repo_file+"-its-rep-evolutionary.json")
@@ -295,6 +296,7 @@ def microStudies(destdir):
 
 def ticketsStates(period, startdate, enddate, identities_db, backend):
     evol = {}
+    return evol
     for status in backend.statuses:
         print ("Working with ticket status: " + status)
         #Evolution of the backlog
