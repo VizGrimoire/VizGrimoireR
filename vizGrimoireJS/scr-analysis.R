@@ -314,13 +314,13 @@ top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate,
 top_openers <- list()
 top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople )
 top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
-top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_openers[['openers.last month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
 
 # Top mergers
 top_mergers <- list()
 top_mergers[['mergers.']]<-GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
 top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
-top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_mergers[['mergers.last month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
 
 createJSON (c(top_reviewers, top_openers, top_mergers), paste(destdir,"/scr-top.json", sep=''))
 
