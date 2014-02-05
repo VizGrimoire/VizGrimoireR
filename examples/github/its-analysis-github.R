@@ -29,12 +29,14 @@
 ##
 ## Usage:
 ## its-analysis-github.R -d dbname -u user -p passwd -i uids_dbname \
-##   [-r repositories,companies] --granularity days|weeks|months|years] \
+##   [-r repositories] --granularity days|weeks|months|years] \
 ##   --destination destdir
+##
+## (There are some more options, look at the source, Luke)
 ##
 ## Example:
 ##  LANG=en_US R_LIBS=rlib:$R_LIBS its-analysis-github.R -d proydb \
-##  -u jgb -p XXX -i uiddb -r repositories,companies --granularity weeks \
+##  -u jgb -p XXX -i uiddb -r repositories --granularity weeks \
 ##  --destination destdir
 
 library("vizgrimoire")
@@ -63,8 +65,8 @@ SetDBChannel (database = conf$database,
 	      user = conf$dbuser, password = conf$dbpassword)
 
 period <- ITSDatesPeriod()
-conf$startdate <- paste('"', as.character(period["startdate"]), '"', sep="")
-conf$enddate <- paste('"', as.character(period["enddate"]), '"', sep="")
+conf$startdate <- paste("'", as.character(period["startdate"]), "'", sep="")
+conf$enddate <- paste("'", as.character(period["enddate"]), "'", sep="")
 conf$str_startdate <- as.character(period["startdate"])
 conf$str_enddate <- as.character(period["enddate"])
 print(conf)
@@ -83,60 +85,77 @@ if (conf$granularity == 'years') {
 } else {stop(paste("Incorrect period:",conf$granularity))}
 
 conf$backend <- 'github'
-# Closed condition for github
+
+## Closed condition for github
 closed_condition <- "field='closed'"
 
-# dates
+## Dates
 startdate <- conf$startdate
 enddate <- conf$enddate
-# database with unique identities
+# Database with unique identities
 identities_db <- conf$identities_db
-# multireport
+# Reports
 reports=strsplit(conf$reports,",",fixed=TRUE)[[1]]
-# destination directory
+# Destination directory
 destdir <- conf$destination
 
 #########
 #EVOLUTIONARY DATA
 #########
 
-closed <- GetEvolClosed(closed_condition, period, startdate, enddate)
-changed <- GetEvolChanged(period, startdate, enddate)
-open <- GetEvolOpened(period, startdate, enddate)
-repos <- GetEvolReposITS(period, startdate, enddate)
-evol <- merge (open, closed, all = TRUE)
-evol <- merge (evol, changed, all = TRUE)
-evol <- merge (evol, repos, all = TRUE)
-
-if ('companies' %in% reports) {
-    info_data_companies = GetEvolCompaniesITS (period, startdate, enddate, identities_db)
-    evol = merge(evol, info_data_companies, all = TRUE)
-}
-if ('countries' %in% reports) {
-    info_data_countries = GetEvolCountriesITS(period, startdate, enddate, identities_db)
-    evol = merge(evol, info_data_countries, all = TRUE)
-}
-if ('repositories' %in% reports) {
-    data = GetEvolReposITS(period, startdate, enddate)
-    evol = merge(evol, data, all = TRUE)
-}
+evol <- EvolITSInfo(period, startdate, enddate, identities_db,
+                    list(NA, NA), closed_condition)
 
 evol <- completePeriodIds(evol, conf$granularity, conf)
 evol[is.na(evol)] <- 0
 evol <- evol[order(evol$id),]
 createJSON (evol, paste(c(destdir,"/its-evolutionary.json"), collapse=''))
 
+##
+## Data in snapshots
+##
 
-all_static_info <- GetStaticITS(closed_condition, startdate, enddate)
+all_static_info <- AggITSInfo (period, startdate, enddate, identities_db,
+                               list(NA, NA), closed_condition)
 
-if ('companies' %in% reports) {
-    info_com = GetStaticCompaniesITS (startdate, enddate, identities_db)
-    all_static_info = merge(all_static_info, info_com, all = TRUE)
-}
-if ('countries' %in% reports) {
-    info_com = GetStaticCountriesITS (startdate, enddate, identities_db)
-    all_static_info = merge(all_static_info, info_com, all = TRUE)
-}
+
+closed_7 = GetDiffClosedDays(period, identities_db, conf$enddate,
+    7, list(NA, NA), closed_condition)
+closed_30 = GetDiffClosedDays(period, identities_db, conf$enddate,
+    30, list(NA, NA), closed_condition)
+closed_365 = GetDiffClosedDays(period, identities_db, conf$enddate,
+    365, list(NA, NA), closed_condition)
+opened_7 = GetDiffOpenedDays(period, identities_db, conf$enddate,
+    7, list(NA, NA))
+opened_30 = GetDiffOpenedDays(period, identities_db, conf$enddate,
+    30, list(NA, NA))
+opened_365 = GetDiffOpenedDays(period, identities_db, conf$enddate,
+    365, list(NA, NA))
+closers_7 = GetDiffClosersDays(period, identities_db, conf$enddate,
+    7, list(NA, NA), closed_condition)
+closers_30 = GetDiffClosersDays(period, identities_db, conf$enddate,
+    30, list(NA, NA), closed_condition)
+closers_365 = GetDiffClosersDays(period, identities_db, conf$enddate,
+    365, list(NA, NA), closed_condition)
+changers_7 = GetDiffChangersDays(period, identities_db, conf$enddate,
+    7, list(NA, NA))
+changers_30 = GetDiffChangersDays(period, identities_db, conf$enddate,
+    30, list(NA, NA))
+changers_365 = GetDiffChangersDays(period, identities_db, conf$enddate,
+    365, list(NA, NA))
+
+all_static_info = merge(all_static_info, closed_365)
+all_static_info = merge(all_static_info, closed_30)
+all_static_info = merge(all_static_info, closed_7)
+all_static_info = merge(all_static_info, opened_365)
+all_static_info = merge(all_static_info, opened_30)
+all_static_info = merge(all_static_info, opened_7)
+all_static_info = merge(all_static_info, closers_7)
+all_static_info = merge(all_static_info, closers_30)
+all_static_info = merge(all_static_info, closers_365)
+all_static_info = merge(all_static_info, changers_7)
+all_static_info = merge(all_static_info, changers_30)
+all_static_info = merge(all_static_info, changers_365)
 
 latest_activity7 = GetLastActivityITS(7, closed_condition)
 latest_activity14 = GetLastActivityITS(14, closed_condition)
@@ -154,21 +173,56 @@ all_static_info = merge(all_static_info, latest_activity90)
 all_static_info = merge(all_static_info, latest_activity180)
 all_static_info = merge(all_static_info, latest_activity365)
 all_static_info = merge(all_static_info, latest_activity730)
+
+all.participants <- AggAllParticipants (startdate, enddate)
+all_static_info = merge(all_static_info, all.participants)
+
 createJSON (all_static_info, paste(c(destdir,"/its-static.json"), collapse=''))
+
+GetTopClosersSimple <- function(days = 0, startdate, enddate, identites_db) {
+    
+    date_limit = ""
+    if (days != 0 ) {
+        query <- new("Query",
+                sql = "SELECT @maxdate:=max(changed_on) from changes limit 1")
+        data <- run(query)
+        date_limit <- paste(" AND DATEDIFF(@maxdate, changed_on)<",days)
+    }
+    q <- paste("SELECT up.id as id, up.identifier as closers,
+                       count(distinct(c.id)) as closed
+                FROM changes c, people_upeople pup, ",
+               identities_db, ".upeople up
+                WHERE pup.people_id = c.changed_by AND
+                      pup.upeople_id = up.id AND
+                      c.changed_on >= ", startdate, " AND
+                      c.changed_on < ", enddate, " AND ",
+                      closed_condition, " ", date_limit, "
+                GROUP BY up.identifier
+                ORDER BY closed desc
+                LIMIT 10", sep="")
+    query <- new ("Query", sql = q)
+    data <- run(query)
+    return (data)
+}
 
 # Top closers
 top_closers_data <- list()
-top_closers_data[['closers.']]<-GetTopClosers(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_closers_data[['closers.last year']]<-GetTopClosers(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_closers_data[['closers.last month']]<-GetTopClosers(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+top_closers_data[['closers.']]<-GetTopClosersSimple(0, conf$startdate,
+                                                    conf$enddate,identites_db)
+top_closers_data[['closers.last year']]<-GetTopClosersSimple(365, conf$startdate,
+                                                             conf$enddate,identites_db)
+top_closers_data[['closers.last month']]<-GetTopClosersSimple(31, conf$startdate,
+                                                              conf$enddate,identites_db)
+top_closers_data[['closers.last week']]<-GetTopClosersSimple(7, conf$startdate,
+                                                             conf$enddate,identites_db)
 
-# Top openers
-top_openers_data <- list()
-top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
-top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## # Top openers
+## top_openers_data <- list()
+## top_openers_data[['openers.']]<-GetTopOpeners(0, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## top_openers_data[['openers.last year']]<-GetTopOpeners(365, conf$startdate, conf$enddate,identites_db, c("-Bot"))
+## top_openers_data[['openers.last_month']]<-GetTopOpeners(31, conf$startdate, conf$enddate,identites_db, c("-Bot"))
 
-all_top <- c(top_closers_data, top_openers_data)
+all_top <- c(top_closers_data)
 createJSON (all_top, paste(c(destdir,"/its-top.json"), collapse=''))
 
 # People List for working in unique identites
@@ -202,58 +256,6 @@ if ('repositories' %in% reports) {
 	}
 }
 
-# COMPANIES
-if ('companies' %in% reports) {
-
-    # companies <- its_companies_name_wo_affs(c("-Bot", "-Individual", "-Unknown"), startdate, enddate, identities_db)
-    companies  <- GetCompaniesNameITS(startdate, enddate, identities_db, c("-Bot", "-Individual", "-Unknown"))
-    companies <- companies$name
-    createJSON(companies, paste(c(destdir,"/its-companies.json"), collapse=''))
-    
-    for (company in companies){
-        company_name = paste(c("'", company, "'"), collapse='')
-        company_aux = paste(c("", company, ""), collapse='')
-        print (company_name)
-
-        closed <- GetCompanyEvolClosed(company_name, closed_condition, period, startdate, enddate, identities_db)
-        changed <- GetCompanyEvolChanged(company_name, period, startdate, enddate, identities_db)
-        opened <- GetCompanyEvolOpened(company_name, period, startdate, enddate, identities_db)        
-        evol = merge(closed, changed, all = TRUE)
-        evol = merge(evol, opened, all = TRUE)
-        evol <- completePeriodIds(evol, conf$granularity, conf)
-        evol[is.na(evol)] <- 0
-        evol <- evol[order(evol$id),]               
-        createJSON(evol, paste(c(destdir,"/",company_aux,"-its-evolutionary.json"), collapse=''))
-
-        static_info <- GetCompanyStaticITS(company_name, closed_condition, startdate, enddate, identities_db)
-        createJSON(static_info, paste(c(destdir,"/",company_aux,"-its-static.json"), collapse=''))
-		
-        top_closers <- GetCompanyTopClosers(company_name, startdate, enddate, identities_db)
-        createJSON(top_closers, paste(c(destdir,"/",company_aux,"-its-top-closers.json"), collapse=''))
-
-    }
-}
-
-# COUNTRIES
-if ('countries' %in% reports) {
-    countries  <- GetCountriesNamesITS(conf$identities_db,conf$startdate, conf$enddate)
-	countries <- countries$name
-	createJSON(countries, paste(c(destdir,"/its-countries.json"), collapse=''))
-    
-    for (country in countries) {
-        if (is.na(country)) next
-        print (country)
-        
-        evol <- GetCountriesEvolITS(conf$identities_db, country, period, conf$startdate, conf$enddate)
-        evol <- completePeriodIds(evol, conf$granularity, conf)
-        evol[is.na(evol)] <- 0
-        evol <- evol[order(evol$id),]
-        createJSON (evol, paste(c(destdir,"/",country,"-its-evolutionary.json",sep=''), collapse=''))
-        
-        data <- GetCountriesStaticITS(conf$identities_db, country, conf$startdate, conf$enddate)
-        createJSON (data, paste(c(destdir,"/",country,"-its-static.json",sep=''), collapse=''))
-    }    
-}
 
 # People
 if ('people' %in% reports) {
@@ -273,37 +275,39 @@ if ('people' %in% reports) {
 }
     
 # Time to Close: Other backends not yet supported
-if (conf$backend == 'bugzilla' || 
-    conf$backend == 'allura' || 
-    conf$backend == 'jira' ||
-    conf$backend == 'launchpad') { 
-    ## Quantiles
-    ## Which quantiles we're interested in
-    quantiles_spec = c(.99,.95,.5,.25)
+## Quantiles
+## Which quantiles we're interested in
+quantiles_spec = c(.99,.95,.5,.25)
+
+## Closed tickets: time ticket was open, first closed, time-to-first-close
+closed <- new ("ITSTicketsTimes")
     
-    ## Closed tickets: time ticket was open, first closed, time-to-first-close
-    closed <- new ("ITSTicketsTimes")
+## Yearly quantiles of time to fix (minutes)
+events.tofix <- new ("TimedEvents",
+                     closed$open, closed$tofix %/% 60)
+quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
+JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
     
-    ## Yearly quantiles of time to fix (minutes)
-    events.tofix <- new ("TimedEvents",
-                         closed$open, closed$tofix %/% 60)
-    quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-    JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_fix_min.json'), collapse=''))
+## Monthly quantiles of time to fix (hours)
+events.tofix.hours <- new ("TimedEvents",
+                           closed$open, closed$tofix %/% 3600)
+quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
+JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
     
-    ## Monthly quantiles of time to fix (hours)
-    events.tofix.hours <- new ("TimedEvents",
-                               closed$open, closed$tofix %/% 3600)
-    quantiles.month <- QuantilizeMonths (events.tofix.hours, quantiles_spec)
-    JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_fix_hour.json'), collapse=''))
-    
-    ## Changed tickets: time ticket was attended, last move
-    changed <- new ("ITSTicketsChangesTimes")
-    ## Yearly quantiles of time to attention (minutes)
-    events.toatt <- new ("TimedEvents",
-                         changed$open, changed$toattention %/% 60)
-    quantiles <- QuantilizeYears (events.tofix, quantiles_spec)
-    JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
-}
+## Changed tickets: time ticket were attended, last move
+changed <- new ("ITSTicketsChangesTimes")
+## Yearly quantiles of time to attention (minutes)
+events.toatt <- new ("TimedEvents",
+                     changed$open, changed$toattention %/% 60)
+quantiles <- QuantilizeYears (events.toatt, quantiles_spec)
+JSON(quantiles, paste(c(destdir,'/its-quantiles-year-time_to_attention_min.json'), collapse=''))
+
+## Monthly quantiles of time to attention (hours)
+events.toatt.hours <- new ("TimedEvents",
+                           changed$open, changed$toattention %/% 3600)
+quantiles.month <- QuantilizeMonths (events.toatt.hours, quantiles_spec)
+JSON(quantiles.month, paste(c(destdir,'/its-quantiles-month-time_to_attention_hour.json'), collapse=''))
+
 
 # Demographics
 d <- new ("Demographics","its",6)

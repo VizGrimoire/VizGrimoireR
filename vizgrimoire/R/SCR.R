@@ -8,7 +8,7 @@
 ## This program is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-## GNU General Public License for more details. 
+## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with this program; if not, write to the Free Software
@@ -26,7 +26,6 @@
 ## Authors:
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
-
 
 ##########
 # Specific FROM and WHERE clauses per type of report
@@ -80,7 +79,7 @@ GetSQLCountriesWhereSCR <- function(country){
 
 GetSQLReportFromSCR <- function(identities_db, type_analysis){
     #generic function to generate 'from' clauses
-    #"type" is a list of two values: type of analysis and value of 
+    #"type" is a list of two values: type of analysis and value of
     #such analysis
 
     analysis = type_analysis[1]
@@ -97,11 +96,10 @@ GetSQLReportFromSCR <- function(identities_db, type_analysis){
     return (from)
 }
 
-
 GetSQLReportWhereSCR <- function(type_analysis){
     #generic function to generate 'where' clauses
 
-    #"type" is a list of two values: type of analysis and value of 
+    #"type" is a list of two values: type of analysis and value of
     #such analysis
 
     analysis = type_analysis[1]
@@ -468,15 +466,15 @@ StaticPatchesSent <- function(period, startdate, enddate, type_analysis = list(N
 GetWaiting4Reviewer <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
 
      fields = " count(distinct(c.id)) as WaitingForReviewer "
-     tables = " changes c, 
+     tables = " changes c,
                 issues i,
-                      (select c.issue_id as issue_id, 
-                              c.old_value as old_value, 
-                              max(c.id) as id 
-                       from changes c, 
-                            issues i 
-                       where c.issue_id = i.id and 
-                             i.status='NEW' 
+                      (select c.issue_id as issue_id,
+                              c.old_value as old_value,
+                              max(c.id) as id
+                       from changes c,
+                            issues i
+                       where c.issue_id = i.id and
+                             i.status='NEW'
                        group by c.issue_id, c.old_value) t1 "
      tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters =  " i.id = c.issue_id
@@ -506,20 +504,18 @@ StaticWaiting4Reviewer <- function(period, startdate, enddate, identities_db=NA,
     return (GetWaiting4Reviewer(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-
-
 GetWaiting4Submitter <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
 
      fields = "count(distinct(c.id)) as WaitingForSubmitter "
-     tables = "  changes c, 
+     tables = "  changes c,
                  issues i,
-                      (select c.issue_id as issue_id, 
-                              c.old_value as old_value, 
-                              max(c.id) as id 
-                       from changes c, 
-                            issues i 
-                       where c.issue_id = i.id and 
-                             i.status='NEW' 
+                      (select c.issue_id as issue_id,
+                              c.old_value as old_value,
+                              max(c.id) as id
+                       from changes c,
+                            issues i
+                       where c.issue_id = i.id and
+                             i.status='NEW'
                        group by c.issue_id, c.old_value) t1 "
      tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
      filters = " i.id = c.issue_id
@@ -549,9 +545,7 @@ StaticWaiting4Submitter <- function(period, startdate, enddate, identities_db=NA
     return (GetWaiting4Submitter(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-
 #REVIEWERS
-
 
 GetReviewers <- function(period, startdate, enddate, identities_db, type_analysis, evolutionary){
     # TODO: so far without unique identities
@@ -581,40 +575,39 @@ StaticReviewers <- function (period, startdate, enddate, identities_db = NA, typ
     return (GetReviewers(period, startdate, enddate, identities_db, type_analysis, FALSE))
 }
 
-
 GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA)){
 
     q <- "select i.issue as review,
-                 t1.old_value as patch, 
-                 timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened 
+                 t1.old_value as patch,
+                 timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened
           from (
-                select c.issue_id as issue_id, 
-                       c.old_value as old_value, 
-                       min(c.changed_on) as min_time, 
-                       max(c.changed_on) as max_time 
-                from changes c, 
-                     issues i 
-                where c.issue_id = i.id and 
-                      i.status='NEW'  
-                group by c.issue_id, 
+                select c.issue_id as issue_id,
+                       c.old_value as old_value,
+                       min(c.changed_on) as min_time,
+                       max(c.changed_on) as max_time
+                from changes c,
+                     issues i
+                where c.issue_id = i.id and
+                      i.status='NEW'
+                group by c.issue_id,
                          c.old_value) t1,
                issues i
           where t1.issue_id = i.id
           order by timeOpened desc
           limit 20;"
-    fields = paste(" i.issue as review, ", 
+    fields = paste(" i.issue as review, ",
                    " t1.old_value as patch, ",
                    " timestampdiff (HOUR, t1.min_time, t1.max_time) as timeOpened, ")
     tables = " issues i,
-               (select c.issue_id as issue_id, 
-                       c.old_value as old_value, 
-                       min(c.changed_on) as min_time, 
-                       max(c.changed_on) as max_time 
-                from changes c, 
-                     issues i 
-                where c.issue_id = i.id and 
-                      i.status='NEW'  
-                group by c.issue_id, 
+               (select c.issue_id as issue_id,
+                       c.old_value as old_value,
+                       min(c.changed_on) as min_time,
+                       max(c.changed_on) as max_time
+                from changes c,
+                     issues i
+                where c.issue_id = i.id and
+                      i.status='NEW'
+                group by c.issue_id,
                          c.old_value) t1 "
     tables = paste(tables, GetSQLReportFromSCR(identities_db, type_analysis))
     filters = " t1.issue_id = i.id "
@@ -634,13 +627,12 @@ GetLongestReviews <- function (startdate, enddate, type_analysis = list(NA, NA))
 ##
 
 # Is this right???
-GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bots) {
+GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
     date_limit = ""
     filter_bots = ''
     for (bot in bots){
         filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
     }
-
 
     if (days != 0 ) {
         query <- new("Query",
@@ -659,14 +651,14 @@ GetTopReviewersSCR   <- function(days = 0, startdate, enddate, identities_db, bo
                     c.changed_on < ", enddate, "
                     ",date_limit, "
                 GROUP BY up.identifier
-                ORDER BY reviewed desc
-                LIMIT 10;", sep="")
+                ORDER BY reviewed desc, reviewers
+                LIMIT ",limit ,";", sep="")
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, merged = FALSE, limit = 10) {
+GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit, merged = FALSE) {
     date_limit = ""
     merged_sql = ""
     rol = "openers"
@@ -688,7 +680,7 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
         rol = "mergers"
         action = "merged"
     }
-        
+
     q <- paste("SELECT up.id as id, up.identifier as ",rol,",
                     count(distinct(i.id)) as ",action,"
                 FROM people_upeople pup, issues i, ", identities_db,".upeople up
@@ -699,20 +691,20 @@ GetTopSubmittersQuerySCR   <- function(days = 0, startdate, enddate, identities_
                     i.submitted_on < ", enddate, "
                     ",date_limit, merged_sql, "
                 GROUP BY up.identifier
-                ORDER BY ",action," desc
-                LIMIT ",limit, sep="")
+                ORDER BY ",action," desc, id
+                LIMIT ",limit ,";", sep="")
     return(q)
 }
 
-GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots) {
-    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots)
+GetTopOpenersSCR <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, limit)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
 }
 
-GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit = 10) {
-    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, TRUE, limit)
+GetTopMergersSCR   <- function(days = 0, startdate, enddate, identities_db, bots, limit) {
+    q <- GetTopSubmittersQuerySCR (days, startdate, enddate, identities_db, bots, limit, TRUE)
     query <- new ("Query", sql = q)
     data <- run(query)
     return (data)
@@ -733,12 +725,10 @@ GetFiltersOwnUniqueIdsSCR <- function (table='') {
     return (filters)
 }
 
-GetPeopleListSCRChanges <- function(startdate, enddate) {
-    fields = "DISTINCT(pup.upeople_id) as id, count(i.id) as total, name"
+GetPeopleListSCR <- function(startdate, enddate) {
+    fields = "DISTINCT(pup.upeople_id) as id, count(c.id) as total"
     tables = GetTablesOwnUniqueIdsSCR()
-    tables = paste(tables,",people")
     filters = GetFiltersOwnUniqueIdsSCR()
-    filters = paste(filters,"AND people.id=pup.people_id")
     filters = paste(filters,"GROUP BY id ORDER BY total desc")
     q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
 	query <- new("Query", sql = q)
@@ -746,24 +736,7 @@ GetPeopleListSCRChanges <- function(startdate, enddate) {
 	return (data)
 }
 
-GetPeopleListSCR <- function(startdate, enddate, identities_db, bots) {
-    filter_bots = ''
-    for (bot in bots){
-        filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
-    }
-
-    q = paste("SELECT COUNT(i.id) as total, pup.upeople_id as id, name
-         FROM issues i, people p, people_upeople pup, ", identities_db,".upeople up
-         WHERE ", filter_bots, " pup.upeople_id = up.id
-            AND i.submitted_by=p.id AND p.id = pup.people_id AND status='merged'
-         GROUP by pup.upeople_id ORDER by total desc", sep="")
-	query <- new("Query", sql = q)
-	data <- run(query)
-	return (data)
-}
-
-
-GetPeopleQuerySCRChanges <- function(developer_id, period, startdate, enddate, evol) {
+GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
     fields = "COUNT(c.id) AS closed"
     tables = GetTablesOwnUniqueIdsSCR()
     filters = paste(GetFiltersOwnUniqueIdsSCR(), "AND pup.upeople_id = ", developer_id)
@@ -781,27 +754,6 @@ GetPeopleQuerySCRChanges <- function(developer_id, period, startdate, enddate, e
     return (q)
 }
 
-# In Mediawiki Changes tables is wrong until 2013-05 so we use isuess table
-# Average review time is 3.6 days so it is an approach to use submission time as merged time
-# For month analysis, 10% error in average for times
-GetPeopleQuerySCR <- function(developer_id, period, startdate, enddate, evol) {
-    fields = "COUNT(i.id) AS closed"
-    tables = "issues i, people p, people_upeople pup"
-    filters = paste("i.submitted_by=p.id AND p.id = pup.people_id AND
-                     status='merged' AND pup.upeople_id = ", developer_id)
-    if (evol) {
-        q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
-                startdate, enddate)
-    } else {
-        fields = paste(fields,
-                ",DATE_FORMAT (min(submitted_on),'%Y-%m-%d') as first_date,
-                  DATE_FORMAT (max(submitted_on),'%Y-%m-%d') as last_date")
-        q = GetSQLGlobal('submitted_on', fields, tables, filters,
-                         startdate, enddate)
-    }
-    return (q)
-}
-
 GetPeopleEvolSCR <- function(developer_id, period, startdate, enddate) {
     q <- GetPeopleQuerySCR(developer_id, period, startdate, enddate, TRUE)
     query <- new("Query", sql = q)
@@ -811,47 +763,6 @@ GetPeopleEvolSCR <- function(developer_id, period, startdate, enddate) {
 
 GetPeopleStaticSCR <- function(developer_id, startdate, enddate) {
     q <- GetPeopleQuerySCR(developer_id, period, startdate, enddate, FALSE)
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-
-########################################
-# Quarter analysis: Companies and People
-########################################
-
-# No use of generic query because changes table is not used
-# COMPANIES
-GetCompaniesQuartersSCR <- function(year, quarter, identities_db, limit = 25) {
-    q <- (paste("
-           SELECT COUNT(i.id) AS total, c.name, c.id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year
-           FROM issues i, people p , people_upeople pup, 
-             ",identities_db,".upeople_companies upc,",identities_db,".companies c
-           WHERE i.submitted_by=p.id AND pup.people_id=p.id 
-             AND pup.upeople_id = upc.upeople_id AND upc.company_id = c.id
-             AND status='merged'
-             AND QUARTER(submitted_on) = ",quarter," AND YEAR(submitted_on) = ",year,"
-          GROUP BY year, quarter, c.id ORDER BY year, quarter, total DESC LIMIT ",limit))
-    query <- new("Query", sql = q)
-    data <- run(query)
-    return (data)
-}
-# PEOPLE
-GetPeopleQuartersSCR <- function(year, quarter, identities_db, limit = 25, bots) {
-
-    filter_bots = ''
-    for (bot in bots){
-        filter_bots <- paste(filter_bots, " up.identifier<>'",bot,"' and ",sep="")
-    }
-
-    q <- (paste("
-           SELECT COUNT(i.id) AS total, p.name, pup.upeople_id as id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year
-           FROM issues i, people p , people_upeople pup, ", identities_db,".upeople up
-           WHERE ", filter_bots, "
-             i.submitted_by=p.id AND pup.people_id=p.id AND pup.upeople_id = up.id
-             AND status='merged'
-             AND QUARTER(submitted_on) = ",quarter," AND YEAR(submitted_on) = ",year,"
-          GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC LIMIT ",limit))
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)

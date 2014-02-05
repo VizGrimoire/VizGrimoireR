@@ -31,6 +31,7 @@ library('RUnit')
 library('testthat')
 library('vizgrimoire')
 library('zoo')
+library('ISOweek')
 
 #R --vanilla --args -d fake -u root  -i jenkins_scm_vizr_1783 < init_tests.R
 
@@ -38,6 +39,28 @@ options(stringsAsFactors = FALSE) # avoid merge factors for toJSON
 conf <- ConfFromOptParse()
 idb = conf$identities_db
 error = FALSE
+
+SetDBChannel (database = "jenkins_its_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+idb = conf$identities_db
+test.suite <- defineTestSuite("IssueTracker",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'its.R$')
+test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0) {q(status=1)}
+
+printTextProtocol(test.result)
+
+
+
+SetDBChannel (database = "jenkins_mls_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+idb = conf$identities_db
+test.suite <- defineTestSuite("MailingLists",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'mls.R$')
+test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0) {q(status=1)}
+
+printTextProtocol(test.result)
 
 SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
 idb = conf$identities_db
@@ -47,6 +70,7 @@ test.suite <- defineTestSuite("SCM",
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0) {q(status=1)}
 
+printTextProtocol(test.result)
 
 
 SetDBChannel (database = "jenkins_scr_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
@@ -56,6 +80,7 @@ test.suite <- defineTestSuite("SCR",
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0){q(status=1)}
 
+printTextProtocol(test.result)
 
 
 SetDBChannel (database = "jenkins_scm_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
@@ -67,7 +92,18 @@ test.suite <- defineTestSuite("StatTest",
 
 test.result <- runTestSuite(test.suite)
 if (getErrors(test.result)[1]>0){q(status=1)}
-#printTextProtocol(test.result)
+printTextProtocol(test.result)
+
+
+SetDBChannel (database = "jenkins_irc_vizr_1783", user = conf$dbuser, password = conf$dbpassword)
+test.suite <- defineTestSuite("IRC",
+                              dirs = file.path("tests"),
+                              testFileRegexp = 'irc.R$')
+test.result <- runTestSuite(test.suite)
+if (getErrors(test.result)[1]>0){q(status=1)}
+
+
+printTextProtocol(test.result)
 
 
 

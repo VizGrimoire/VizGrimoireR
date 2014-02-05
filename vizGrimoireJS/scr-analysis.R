@@ -82,8 +82,10 @@ data = EvolReviewsOpened(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsNew(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+
 # Ok data after startok
 data = EvolReviewsNewChanges(period, startok, conf$enddate)
+
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsInProgress(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -91,6 +93,7 @@ data = EvolReviewsClosed(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 data = EvolReviewsMerged(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+
 # Ok data after startok
 data = EvolReviewsMergedChanges(period, startok, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -101,8 +104,7 @@ reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, con
 # For pending we need all data so accumulation is right
 data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
-data = EvolReviewsPendingChanges(period, conf$startdate, conf$enddate, config=conf)
-reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
+
 #Patches info
 data = EvolPatchesVerified(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
@@ -122,8 +124,10 @@ reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, con
 data = EvolReviewers(period, conf$startdate, conf$enddate)
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # print(reviews.evol)
+
 # Time to Review info: Wikimedia data ok after '2013-04-30'
 data = EvolTimeToReviewSCR (period, startok, conf$enddate)
+
 reviews.evol = merge(reviews.evol, completePeriodIds(data, conf$granularity, conf), all=TRUE)
 # Create JSON
 createJSON(reviews.evol, paste(destdir,"/scr-evolutionary.json", sep=''))
@@ -154,8 +158,10 @@ reviews.static = merge(reviews.static, StaticWaiting4Submitter(period, conf$star
 # print(reviews.static)
 #Reviewers info
 reviews.static = merge(reviews.static, StaticReviewers(period, conf$startdate, conf$enddate))
+
 # Time to Review info: Wikimedia data ok after '2013-04-30'
 reviews.static = merge(reviews.static, StaticTimeToReviewSCR(startok, conf$enddate))
+
 
 # Tendencies
 diffsubmitted.365 = GetSCRDiffSubmittedDays(period, conf$enddate, 365, conf$identities_db)
@@ -275,7 +281,6 @@ if ('companies' %in% reports) {
 ########
 #ANALYSIS PER COUNTRY
 ########
-
 print("ANALYSIS PER COUNTRY BASIC")
 if ('countries' %in% reports) {
     countries  <- GetCountriesSCRName(conf$startdate, conf$enddate, conf$identities_db)
@@ -305,30 +310,6 @@ if ('countries' %in% reports) {
         static <- merge(static, StaticReviewsMerged(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
         static <- merge(static, StaticReviewsAbandoned(period, conf$startdate, conf$enddate, type_analysis, conf$identities_db))
         createJSON(static, paste(destdir, "/",country_file,"-scr-cou-static.json", sep=''))
-    }
-}
-
-########
-# PEOPLE
-########
-if ('people' %in% reports) {
-    print("PEOPLE ANALYSIS")
-    people = GetPeopleListSCR(conf$startdate, conf$enddate, conf$identities_db, bots)
-    createJSON(people, paste(destdir,"/scr-people-all.json",sep=''))
-    people = people$id
-    limit = 60
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(destdir,"/scr-people.json",sep=''))
-
-    for (upeople_id in people){
-        evol = GetPeopleEvolSCR(upeople_id, period, conf$startdate, conf$enddate)
-        evol <- completePeriodIds(evol, conf$granularity, conf)
-        evol[is.na(evol)] <- 0
-        createJSON(evol, paste(destdir,"/people-",upeople_id,"-scr-evolutionary.json", sep=''))
-
-        static <- GetPeopleStaticSCR(upeople_id, conf$startdate, conf$enddate)
-        createJSON(static, paste(destdir,"/people-",upeople_id,"-scr-static.json", sep=''))
     }
 }
 
@@ -362,27 +343,63 @@ for (i in 0:quarters) {
 createJSON(companies_quarters, paste(destdir,"/scr-companies-quarters.json", sep=''))
 createJSON(people_quarters, paste(destdir,"/scr-people-quarters.json", sep=''))
 
+########
+# TOPS
+########
+
 # Tops
 top_reviewers <- list()
-top_reviewers[['reviewers']] <- GetTopReviewersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['reviewers.last year']]<- GetTopReviewersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots)
+top_reviewers[['reviewers.']] <- GetTopReviewersSCR(0, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_reviewers[['reviewers.last year']]<- GetTopReviewersSCR(365, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_reviewers[['reviewers.last month']]<- GetTopReviewersSCR(31, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
 
 # Top openers
 top_openers <- list()
-top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_openers[['openers.']]<-GetTopOpenersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople )
+top_openers[['openers.last year']]<-GetTopOpenersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_openers[['openers.last_month']]<-GetTopOpenersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
 
 # Top mergers 
 top_mergers <- list()
-top_mergers[['mergers.']]<-GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots)
-top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots)
+top_mergers[['mergers.']]<-GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_mergers[['mergers.last year']]<-GetTopMergersSCR(365, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
+top_mergers[['mergers.last_month']]<-GetTopMergersSCR(31, conf$startdate, conf$enddate,conf$identities_db, bots, conf$npeople)
 
 createJSON (c(top_reviewers, top_openers, top_mergers), paste(destdir,"/scr-top.json", sep=''))
+
 
 # Top mergers 100
 limit = 100
 top_mergers_100 <- GetTopMergersSCR(0, conf$startdate, conf$enddate,conf$identities_db, bots, limit)
 createJSON (top_mergers_100, paste(destdir,"/scr-top-100.json", sep=''))
+
+########
+# PEOPLE
+########
+if ('people' %in% reports) {
+    all.top.people <- top_reviewers[['reviewers.']]$id
+    all.top.people <- append(all.top.people, top_reviewers[['reviewers.last year']]$id)
+    all.top.people <- append(all.top.people, top_reviewers[['reviewers.last month']]$id)
+
+    all.top.people <- append(all.top.people, top_openers[['openers.']]$id)
+    all.top.people <- append(all.top.people, top_openers[['openers.last year']]$id)
+    all.top.people <- append(all.top.people, top_openers[['openers.last month']]$id)
+
+    all.top.people <- append(all.top.people, top_mergers[['mergers.']]$id)
+    all.top.people <- append(all.top.people, top_mergers[['mergers.last year']]$id)
+    all.top.people <- append(all.top.people, top_mergers[['mergers.last month']]$id)
+
+    all.top.people <- unique(all.top.people)
+
+    createJSON(all.top.people, paste(destdir,"/scr-people.json",sep=''))
+
+    for (upeople_id in all.top.people){
+        evol = GetPeopleEvolSCR(upeople_id, period, conf$startdate, conf$enddate)
+        evol <- completePeriodIds(evol, conf$granularity, conf)
+        evol[is.na(evol)] <- 0
+        createJSON(evol, paste(destdir,"/people-",upeople_id,"-scr-evolutionary.json", sep=''))
+
+        static <- GetPeopleStaticSCR(upeople_id, conf$startdate, conf$enddate)
+        createJSON(static, paste(destdir,"/people-",upeople_id,"-scr-static.json", sep=''))
+    }
+}
