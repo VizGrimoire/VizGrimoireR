@@ -84,18 +84,30 @@ evol_data = GetEvolDataIRC(period, conf$startdate, conf$enddate, conf$identities
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 createJSON (evol_data, paste(destdir,"/irc-evolutionary.json", sep=''))
 
+#######
+# TOPS
+#######
+
+top_senders <- list()
+top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))
+
 ###################
 # PEOPLE
 ###################
-if ('people' %in% reports){
-    people = GetListPeopleIRC(conf$startdate, conf$enddate)
-    people = people$id
-    limit = 30
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(destdir,"/irc-people.json",sep=''))
 
-    for (upeople_id in people){
+
+
+if ('people' %in% reports){
+    all.top.senders <- top_senders[['senders.']]$id
+    all.top.senders <- append(all.top.senders, top_senders[['senders.last year']]$id)
+    all.top.senders <- append(all.top.senders, top_senders[['senders.last month']]$id)
+    all.top.senders <- unique(all.top.senders)
+    createJSON(all.top.senders, paste(destdir,"/irc-people.json",sep=''))    
+
+    for (upeople_id in all.top.senders){
         evol = GetEvolPeopleIRC(upeople_id, period, conf$startdate, conf$enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
@@ -124,13 +136,3 @@ if ('repositories' %in% reports) {
         createJSON (data, paste(destdir,"/",repo,"-irc-rep-evolutionary.json",sep=''))
     }
 }
-
-#######
-# TOPS
-#######
-
-top_senders <- list()
-top_senders[['senders.']] <- GetTopSendersIRC(0, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_senders[['senders.last year']]<- GetTopSendersIRC(365, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_senders[['senders.last month']]<- GetTopSendersIRC(31, conf$startdate, conf$enddate, conf$identities_db, bots)
-createJSON (top_senders, paste(destdir,"/irc-top.json", sep=''))

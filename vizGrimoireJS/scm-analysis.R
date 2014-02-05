@@ -74,6 +74,10 @@ if ('countries' %in% reports) {
     countries <- EvolCountries(period, conf$startdate, conf$enddate)
     evol_data = merge(evol_data, countries, all = TRUE)
 }
+if ('domains' %in% reports) {
+    domains <- EvolDomains(period, conf$startdate, conf$enddate)
+    evol_data = merge(evol_data, domains, all = TRUE)
+}
 
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 evol_data <- evol_data[order(evol_data$id), ]
@@ -101,10 +105,19 @@ latest_activity730 = last_activity(730)
 
 diffcommits_365 = GetDiffCommitsDays(period, conf$enddate, 365)
 diffauthors_365 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 365)
+diff_files_365 = GetDiffFilesDays(period, conf$enddate, conf$identities_db, 365)
+diff_lines_365 = GetDiffLinesDays(period, conf$enddate, conf$identities_db, 365)
+
 diffcommits_30 = GetDiffCommitsDays(period, conf$enddate, 30)
 diffauthors_30 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 30)
+diff_files_30 = GetDiffFilesDays(period, conf$enddate, conf$identities_db, 30)
+diff_lines_30 = GetDiffLinesDays(period, conf$enddate, conf$identities_db, 30)
+
 diffcommits_7 = GetDiffCommitsDays(period, conf$enddate, 7)
 diffauthors_7 = GetDiffAuthorsDays(period, conf$enddate, conf$identities_db, 7)
+diff_files_7 = GetDiffFilesDays(period, conf$enddate, conf$identities_db, 7)
+diff_lines_7 = GetDiffLinesDays(period, conf$enddate, conf$identities_db, 7)
+
 
 community_structure = GetCodeCommunityStructure(period, conf$startdate, conf$enddate, conf$identities_db)
 
@@ -116,6 +129,10 @@ if ('companies' %in% reports){
 if ('countries' %in% reports){ 
 	static_data_countries = evol_info_data_countries (conf$startdate, conf$enddate)
         static_data = merge(static_data, static_data_countries)
+}
+if ('domains' %in% reports){
+    static_data_domains = evol_info_data_domains (conf$startdate, conf$enddate)
+    static_data = merge(static_data, static_data_domains)
 }
 # 2- Merging information
 static_data = merge(static_data, static_url)
@@ -135,18 +152,23 @@ static_data = merge(static_data, diffcommits_7)
 static_data = merge(static_data, diffauthors_365)
 static_data = merge(static_data, diffauthors_30)
 static_data = merge(static_data, diffauthors_7)
-
+static_data = merge(static_data, diff_files_365)
+static_data = merge(static_data, diff_files_30)
+static_data = merge(static_data, diff_files_7)
+static_data = merge(static_data, diff_lines_365)
+static_data = merge(static_data, diff_lines_30)
+static_data = merge(static_data, diff_lines_7)
 
 # 3- Creating file with static data
 createJSON (static_data, paste(destdir,"/scm-static.json", sep=''))
 
 # Top authors
 
-top_authors_data <- top_authors(conf$startdate, conf$enddate)
 top_authors_data <- list()
-top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot" )
-top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot")
-top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot")
+
+top_authors_data[['authors.']] <- top_people(0, conf$startdate, conf$enddate, "author" , "-Bot", conf$npeople)
+top_authors_data[['authors.last year']]<- top_people(365, conf$startdate, conf$enddate, "author", "-Bot", conf$npeople)
+top_authors_data[['authors.last month']]<- top_people(31, conf$startdate, conf$enddate, "author", "-Bot", conf$npeople)
 createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 
 # Top files
@@ -183,13 +205,13 @@ if ('companies' %in% reports) {
 
         createJSON(static_data, paste(destdir,"/",company_aux,"-scm-com-static.json", sep=''))
 	
-        top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate)
+        top_authors <- company_top_authors(company_name, conf$startdate, conf$enddate, conf$npeople)
         createJSON(top_authors, paste(destdir,"/",company_aux,"-scm-com-top-authors.json", sep=''))
-        top_authors_2006 <- company_top_authors_year(company_name, 2006)
+        top_authors_2006 <- company_top_authors_year(company_name, 2006, conf$npeople)
         createJSON(top_authors_2006, paste(destdir,"/",company_aux,"-scm-top-authors_2006.json", sep=''))
-        top_authors_2009 <- company_top_authors_year(company_name, 2009)
+        top_authors_2009 <- company_top_authors_year(company_name, 2009, conf$npeople)
         createJSON(top_authors_2009, paste(destdir,"/",company_aux,"-scm-top-authors_2009.json", sep=''))
-        top_authors_2012 <- company_top_authors_year(company_name, 2012)
+        top_authors_2012 <- company_top_authors_year(company_name, 2012, conf$npeople)
         createJSON(top_authors_2012, paste(destdir,"/",company_aux,"-scm-top-authors_2012.json", sep=''))	
     }
 }
@@ -256,16 +278,48 @@ if ('countries' %in% reports) {
     }
 }
 
+if ('domains' %in% reports) {
+    domains <- scm_domains_names(conf$identities_db,conf$startdate, conf$enddate)
+    domains <- domains$name
+    createJSON(domains, paste(destdir,"/scm-domains.json", sep=''))
+
+    for (domain in domains) {
+        domain_name = paste("'", domain, "'", sep='')
+        domain_aux = paste("", domain, "", sep='')
+        print (domain_name)
+
+        ###########
+        #EVOLUTIONARY DATA
+        ###########
+        #1- Retrieving data
+
+        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, list("domain", domain_name))
+        evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
+        evol_data <- evol_data[order(evol_data$id), ]
+        evol_data[is.na(evol_data)] <- 0
+
+        #3- Creating JSON
+        createJSON(evol_data, paste(destdir, "/", domain_aux,"-scm-dom-evolutionary.json", sep=''))
+
+        ##########
+        #STATIC DATA
+        ##########
+        # 1- Retrieving information
+        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, list("domain", domain_name))
+
+        #3- Creating JSON
+        createJSON(static_data, paste(destdir, "/", domain_aux, "-scm-dom-static.json", sep=''))
+    }
+}
+
 if ('people' %in% reports) {
-    print ('Starting people analysis')
-    people  <- GetPeopleListSCM(conf$startdate, conf$enddate)
-    people = people$pid
-    limit = 100
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(destdir,"/scm-people.json", sep=''))
+    all.top.authors <- top_authors_data[['authors.']]$id
+    all.top.authors <- append(all.top.authors, top_authors_data[['authors.last year']]$id)
+    all.top.authors <- append(all.top.authors, top_authors_data[['authors.last month']]$id)
+    all.top.authors <- unique(all.top.authors)
+    createJSON(all.top.authors, paste(destdir,"/scm-people.json", sep=''))
 	
-    for (upeople_id in people) {
+    for (upeople_id in all.top.authors) {
         evol_data <- GetEvolPeopleSCM(upeople_id, period, 
                 conf$startdate, conf$enddate)
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
@@ -314,21 +368,5 @@ if ('companies-countries' %in% reports){
 }
 
 # Demographics
-d <- new ("Demographics","scm",6)
-people <- Aging(d)
-people$age <- as.Date(conf$str_enddate) - as.Date(people$firstdate)
-people$age[people$age < 0 ] <- 0
-aux <- data.frame(people["id"], people["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/scm-demographics-aging.json"), collapse=''))
-
-newcomers <- Birth(d)
-newcomers$age <- as.Date(conf$str_enddate) - as.Date(newcomers$firstdate)
-newcomers$age[newcomers$age < 0 ] <- 0
-aux <- data.frame(newcomers["id"], newcomers["age"])
-new <- list()
-new[['date']] <- conf$str_enddate
-new[['persons']] <- aux
-createJSON (new, paste(c(destdir, "/scm-demographics-birth.json"), collapse=''))
+ReportDemographicsAgingSCM(conf$str_enddate, destdir)
+ReportDemographicsBirthSCM(conf$str_enddate, destdir)

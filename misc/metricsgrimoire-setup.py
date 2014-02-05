@@ -39,7 +39,8 @@ bicho = metricsgrimoire + "Bicho"
 mlstats = metricsgrimoire + "MailingListStats"
 
 tools = ["CVSAnalY", "RepositoryHandler", "Bicho", "MailingListStats"]
-bintooldirs =  ["CVSAnalY", "Bicho", "MailingListStats"]
+bintooldirs = ["CVSAnalY", "Bicho", "MailingListStats"]
+bintoolbindirs = ["CVSAnalY", "Bicho/bin", "MailingListStats"]
 bintools =  ["cvsanaly2", "bicho", "mlstats"]
 
 # Parse command line options
@@ -69,7 +70,7 @@ print "Everything should now be installed under " + args.dir
 print
 
 paths = ""
-for tool in bintooldirs:
+for tool in bintoolbindirs:
    paths = paths + args.dir + "/" + tool + ":"
 pythonpaths = ""
 for tool in tools:

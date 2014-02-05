@@ -86,19 +86,28 @@ evol_data = GetEvolDataMediaWiki(period, conf$startdate, conf$enddate, conf$iden
 evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
 createJSON (evol_data, paste(destdir,"/mediawiki-evolutionary.json", sep=''))
 
+#######
+# TOPS
+#######
+
+top_authors <- list()
+top_authors[['authors.']] <- GetTopAuthorsMediaWiki(0, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_authors[['authors.last year']]<- GetTopAuthorsMediaWiki(365, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+top_authors[['authors.last month']]<- GetTopAuthorsMediaWiki(31, conf$startdate, conf$enddate, conf$identities_db, bots, conf$npeople)
+createJSON (top_authors, paste(destdir,"/mediawiki-top.json", sep=''))
+
 
 ###################
 # PEOPLE
 ###################
 if ('people' %in% reports){
-    people = GetListPeopleMediaWiki(conf$startdate, conf$enddate)
-    people = people$id
-    limit = 30
-    if (length(people)<limit) limit = length(people);
-    people = people[1:limit]
-    createJSON(people, paste(destdir,"/mediawiki-people.json",sep=''))
+    all.top.authors <- top_authors[['authors.']]$id
+    all.top.authors <- append(all.top.authors, top_authors[['authors.last year']]$id)
+    all.top.authors <- append(all.top.authors, top_authors[['authors.last month']]$id)             
+    all.top.authors <- unique(all.top.authors)
+    createJSON(all.top.authors, paste(destdir,"/mediawiki-people.json",sep=''))
 
-    for (upeople_id in people){
+    for (upeople_id in all.top.authors){
         evol = GetEvolPeopleMediaWiki(upeople_id, period, conf$startdate, conf$enddate)
         evol <- completePeriodIds(evol, conf$granularity, conf)
         evol[is.na(evol)] <- 0
@@ -109,15 +118,6 @@ if ('people' %in% reports){
     }
 }
 
-#######
-# TOPS
-#######
-
-top_authors <- list()
-top_authors[['authors.']] <- GetTopAuthorsMediaWiki(0, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_authors[['authors.last year']]<- GetTopAuthorsMediaWiki(365, conf$startdate, conf$enddate, conf$identities_db, bots)
-top_authors[['authors.last month']]<- GetTopAuthorsMediaWiki(31, conf$startdate, conf$enddate, conf$identities_db, bots)
-createJSON (top_authors, paste(destdir,"/mediawiki-top.json", sep=''))
 
 
 
