@@ -383,6 +383,12 @@ def topData(period, startdate, enddate, idb, destdir, bots, npeople):
     return (top_all)
 
 def quartersData(period, startdate, enddate, idb, destdir, bots):
+    # Needed files. Ugly hack for date format
+    people = SCR.GetPeopleListSCR("'"+startdate+"'", "'"+enddate+"'")
+    createJSON(people, destdir+"/scr-people-all.json", False)
+    companies = SCR.GetCompaniesSCRName("'"+startdate+"'", "'"+enddate+"'", idb)
+    createJSON(companies, destdir+"/scr-companies-all.json", False)
+
     start = datetime.strptime(startdate, "%Y-%m-%d")
     start_quarter = (start.month-1)%3 + 1
     end = datetime.strptime(enddate, "%Y-%m-%d")

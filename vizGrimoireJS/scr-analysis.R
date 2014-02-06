@@ -317,6 +317,11 @@ if ('countries' %in% reports) {
 # Quarters analysis
 ##
 
+people = GetPeopleListSCR(conf$startdate, conf$enddate, conf$identities_db, bots)
+createJSON(people, paste(destdir,"/scr-people-all.json",sep=''))
+companies  <- GetCompaniesSCRName(conf$startdate, conf$enddate, conf$identities_db)
+createJSON(companies, paste(destdir,"/scr-companies-all.json", sep=''))
+
 # quarters: http://rss.acs.unt.edu/Rdoc/library/zoo/html/yearqtr.html
 print(as.yearqtr(as.POSIXlt(conf$str_enddate)))
 print(as.yearqtr(as.POSIXlt(conf$str_startdate)))
