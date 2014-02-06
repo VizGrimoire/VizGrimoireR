@@ -288,8 +288,8 @@ def microStudies(destdir):
     vizr.ReportTimeToCloseITS(opts.backend, opts.destdir)
 
     # Demographics
-    vizr.ReportDemographicsAgingITS(opts.startdate, opts.destdir)
-    vizr.ReportDemographicsBirthITS(opts.startdate, opts.destdir)
+    vizr.ReportDemographicsAgingITS(opts.enddate, opts.destdir)
+    vizr.ReportDemographicsBirthITS(opts.enddate, opts.destdir)
 
     # Markov
     vizr.ReportMarkovChain(opts.destdir)
