@@ -178,7 +178,6 @@ def peopleData(period, startdate, enddate, idb, destdir, top_data):
     top += safeTopIds(top_data['mergers.last_month'])
     # remove duplicates
     people = list(set(top))
-    print(people)
     # the order is not the same than in R json 
     createJSON(people, destdir+"/scr-people.json", False)
 
@@ -402,9 +401,6 @@ def quartersData(period, startdate, enddate, idb, destdir, bots):
         data_people = GetPeopleQuartersSCR(year, quarter, idb, 25, bots)
         people_quarters[str(year)+" "+str(quarter)] = data_people
         start = start + relativedelta(months=3)
-        print(start)
-    print(companies_quarters)
-    print(people_quarters)
     createJSON(companies_quarters, destdir+"/scr-companies-quarters.json")
     createJSON(people_quarters, destdir+"/scr-people-quarters.json")
 
