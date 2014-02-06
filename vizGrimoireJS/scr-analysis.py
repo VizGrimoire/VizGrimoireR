@@ -30,9 +30,12 @@
 #                                                -o ../../../json -r people,repositories
 #
 
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import logging
 # from rpy2.robjects.packages import importr
 import sys
+from Wikimedia import GetCompaniesQuartersSCR, GetPeopleQuartersSCR
 
 # isoweek = importr("ISOweek")
 # vizr = importr("vizgrimoire")
@@ -379,34 +382,31 @@ def topData(period, startdate, enddate, idb, destdir, bots, npeople):
 
     return (top_all)
 
-def quartersData(period, startdate, enddate, idb, destdir):
-    pass
-#
-#    # quarters: http://rss.acs.unt.edu/Rdoc/library/zoo/html/yearqtr.html
-#    print(as.yearqtr(as.POSIXlt(conf$str_enddate)))
-#    print(as.yearqtr(as.POSIXlt(conf$str_startdate)))
-#    quarters = ((as.yearqtr(as.POSIXlt(conf$str_enddate)))-as.yearqtr(as.POSIXlt(conf$str_startdate)))*4
-#
-#    start = as.POSIXlt(conf$str_startdate)
-#    companies_quarters <- list()
-#    people_quarters <- list()
-#    for (i in 0:quarters) {
-#        year = start$year+1900
-#        quarter = (i%%4)+1
-#        print (paste ("Analyzing for companies and people  quarter ",paste(year, quarter)))
-#        data <- GetCompaniesQuartersSCR(year, quarter, conf$identities_db)
-#        companies_quarters[[paste(year,quarter)]]<-data
-#        data_people <- GetPeopleQuartersSCR(year, quarter, conf$identities_db, 25, bots)
-#        people_quarters[[paste(year,quarter)]]<-data_people
-#        start$mon = start$mon+3
-#        # hate doing this staff by hand
-#        if (start$mon>11) {
-#            start$year = start$year+(start$mon%%11)
-#            start$mon = (start$mon%/%11)-1
-#        }
-#    }
-#    createJSON(companies_quarters, paste(destdir,"/scr-companies-quarters.json", sep=''))
-#    createJSON(people_quarters, paste(destdir,"/scr-people-quarters.json", sep=''))
+def quartersData(period, startdate, enddate, idb, destdir, bots):
+    start = datetime.strptime(startdate, "%Y-%m-%d")
+    start_quarter = (start.month-1)%3 + 1
+    end = datetime.strptime(enddate, "%Y-%m-%d")
+    end_quarter = (end.month-1)%3 + 1
+
+    companies_quarters = {}
+    people_quarters = {}
+
+    quarters = (end.year - start.year) * 4 + (end_quarter - start_quarter)
+
+    for i in range(0, quarters):
+        year = start.year
+        quarter = (i%4)+1
+        logging.info("Analyzing companies and people quarter " + str(year) + " " +  str(quarter))
+        data = GetCompaniesQuartersSCR(year, quarter, idb)
+        companies_quarters[str(year)+" "+str(quarter)] = data
+        data_people = GetPeopleQuartersSCR(year, quarter, idb, 25, bots)
+        people_quarters[str(year)+" "+str(quarter)] = data_people
+        start = start + relativedelta(months=3)
+        print(start)
+    print(companies_quarters)
+    print(people_quarters)
+    createJSON(companies_quarters, destdir+"/scr-companies-quarters.json")
+    createJSON(people_quarters, destdir+"/scr-people-quarters.json")
 
 
 if __name__ == '__main__':
@@ -428,7 +428,7 @@ if __name__ == '__main__':
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
-    quartersData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    quartersData(period, opts.startdate, opts.enddate, opts.identities_db, opts.destdir, bots)
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
 
     if ('people' in reports):
