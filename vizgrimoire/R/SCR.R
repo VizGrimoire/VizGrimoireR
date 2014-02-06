@@ -900,7 +900,7 @@ GetCompaniesQuartersSCR <- function(year, quarter, identities_db, limit = 25) {
              AND pup.upeople_id = upc.upeople_id AND upc.company_id = c.id
              AND status='merged'
              AND QUARTER(submitted_on) = ",quarter," AND YEAR(submitted_on) = ",year,"
-          GROUP BY year, quarter, c.id ORDER BY year, quarter, total DESC LIMIT ",limit))
+          GROUP BY year, quarter, c.id ORDER BY year, quarter, total DESC, c.name LIMIT ",limit))
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
@@ -920,7 +920,7 @@ GetPeopleQuartersSCR <- function(year, quarter, identities_db, limit = 25, bots)
              i.submitted_by=p.id AND pup.people_id=p.id AND pup.upeople_id = up.id
              AND status='merged'
              AND QUARTER(submitted_on) = ",quarter," AND YEAR(submitted_on) = ",year,"
-          GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC LIMIT ",limit))
+          GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC, id LIMIT ",limit))
     query <- new("Query", sql = q)
     data <- run(query)
     return (data)
