@@ -39,8 +39,8 @@ def GetCompaniesQuartersSCR (year, quarter, identities_db, limit = 25):
         "   WHERE i.submitted_by=p.id AND pup.people_id=p.id  "+\
         "     AND pup.upeople_id = upc.upeople_id AND upc.company_id = c.id "+\
         "     AND status='merged' "+\
-        "     AND QUARTER(submitted_on) = "+quarter+" AND YEAR(submitted_on) = "+year+" "+\
-        "  GROUP BY year, quarter, c.id ORDER BY year, quarter, total DESC LIMIT "+limit
+        "     AND QUARTER(submitted_on) = "+str(quarter)+" AND YEAR(submitted_on) = "+str(year)+" "+\
+        "  GROUP BY year, quarter, c.id ORDER BY year, quarter, total DESC, c.name LIMIT "+str(limit)
     return (ExecuteQuery(q))
 
 
@@ -57,6 +57,6 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
            " WHERE "+ filter_bots+ " "+\
            "  i.submitted_by=p.id AND pup.people_id=p.id AND pup.upeople_id = up.id "+\
            "  AND status='merged' "+\
-           "  AND QUARTER(submitted_on) = "+quarter+" AND YEAR(submitted_on) = "+year+" "+\
-           " GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC LIMIT "+limit
+           "  AND QUARTER(submitted_on) = "+str(quarter)+" AND YEAR(submitted_on) = "+str(year)+" "+\
+           " GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC, id LIMIT "+str(limit)
     return (ExecuteQuery(q))
