@@ -656,9 +656,9 @@ def GetFiltersOwnUniqueIdsSCR  (table=''):
 
 
 def GetPeopleListSCR (startdate, enddate):
-    fields = "DISTINCT(pup.upeople_id) as upid, count(c.id) as total"
-    tables = GetTablesOwnUniqueIdsSCR()
-    filters = GetFiltersOwnUniqueIdsSCR()
+    fields = "DISTINCT(pup.upeople_id) as upid, count(c.id) as total, name"
+    tables = GetTablesOwnUniqueIdsSCR() + ", people"
+    filters = GetFiltersOwnUniqueIdsSCR()+ " and people.id = pup.people_id"
     filters = filters+" GROUP BY upid ORDER BY total desc"
     q = GetSQLGlobal('changed_on',fields,tables, filters, startdate, enddate)
     print(q)
