@@ -655,12 +655,18 @@ def GetFiltersOwnUniqueIdsSCR  (table=''):
     return (filters)
 
 
-def GetPeopleListSCR (startdate, enddate):
+def GetPeopleListSCR (startdate, enddate, bots):
+
+    filter_bots = ""
+    for bot in bots:
+        filter_bots += " name<>'"+bot+"' and "
+
     fields = "DISTINCT(pup.upeople_id) as id, count(i.id) as total, name"
     tables = GetTablesOwnUniqueIdsSCR('issues') + ", people"
-    filters = GetFiltersOwnUniqueIdsSCR('issues')+ " and people.id = pup.people_id"
-    filters = filters+" GROUP BY id ORDER BY total desc"
-    q = GetSQLGlobal('submitted_on',fields,tables, filters, startdate, enddate)
+    filters = filter_bots
+    filters += GetFiltersOwnUniqueIdsSCR('issues')+ " and people.id = pup.people_id"
+    filters += " GROUP BY id ORDER BY total desc"
+    q = GetSQLGlobal('submitted_on', fields, tables, filters, startdate, enddate)
     print(q)
     return(ExecuteQuery(q))
 

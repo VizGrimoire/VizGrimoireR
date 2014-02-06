@@ -383,7 +383,7 @@ def topData(period, startdate, enddate, idb, destdir, bots, npeople):
 
 def quartersData(period, startdate, enddate, idb, destdir, bots):
     # Needed files. Ugly hack for date format
-    people = SCR.GetPeopleListSCR("'"+startdate+"'", "'"+enddate+"'")
+    people = SCR.GetPeopleListSCR("'"+startdate+"'", "'"+enddate+"'", bots)
     createJSON(people, destdir+"/scr-people-all.json", False)
     companies = SCR.GetCompaniesSCRName("'"+startdate+"'", "'"+enddate+"'", idb)
     createJSON(companies, destdir+"/scr-companies-all.json", False)
@@ -419,7 +419,7 @@ if __name__ == '__main__':
     reports = opts.reports.split(",")
     # filtered bots
 
-    bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot']
+    bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot','L10n-bot']
     # TODO: hack because VizR library needs. Fix in lib in future
     startdate = "'"+opts.startdate+"'"
     enddate = "'"+opts.enddate+"'"
