@@ -72,7 +72,6 @@ def aggData(period, startdate, enddate, idb, destdir):
     agg = dict(agg.items() + data.items())
     data = SCR.StaticWaiting4Submitter(period, startdate, enddate)
     agg = dict(agg.items() + data.items())
-    # print(agg)
     #Reviewers info
     data = SCR.StaticReviewers(period, startdate, enddate)
     agg = dict(agg.items() + data.items())
@@ -209,12 +208,17 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
+        if not isinstance(data['review_time_days_avg'], (list)):
+            data['review_time_days_avg'] = [data['review_time_days_avg']]
         for i in range(0,len(data['review_time_days_avg'])):
             val = data['review_time_days_avg'][i] 
             data['review_time_days_avg'][i] = float(val)
             if (val == 0): data['review_time_days_avg'][i] = 0
         evol = dict(evol.items() + completePeriodIds(data).items())
-        createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
+        if repo_file in ["gerrit.ovirt.org_jenkins-whitelist","gerrit.ovirt.org_ovirt-release","gerrit.ovirt.org_jasperreports-server-rpm","gerrit.ovirt.org_ovirt-docs","gerrit.ovirt.org_samples-portals","gerrit.ovirt.org_gerrit-admin"]:
+            createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json", False)
+        else:
+            createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
 
         # Static
         agg = {}
@@ -361,4 +365,5 @@ if __name__ == '__main__':
     if ('companies' in reports):
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
 
+    logging.info("SCR data source analysis OK")
 
