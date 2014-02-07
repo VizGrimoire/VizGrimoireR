@@ -122,3 +122,5 @@ if __name__ == '__main__':
         countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('companies' in reports):
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+
+    logging.info("Mediawiki data source analysis OK")
