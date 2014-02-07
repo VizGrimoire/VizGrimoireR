@@ -170,7 +170,7 @@ def companiesData(period, startdate, enddate, identities_db, destdir, bots, npeo
 
         for i in [2006,2009,2012]:
             data = SCM.company_top_authors_year(company_name, i, npeople)
-            createJSON(data, destdir+"/"+company+"-scm-top-authors_"+str(i)+".json")
+            createJSON(data, destdir+"/"+company+"-scm-top-authors_"+str(i)+".json", False)
 
     pass
 
@@ -285,3 +285,5 @@ if __name__ == '__main__':
     if ('people' in reports):
         peopleData (period, startdate, enddate, opts.identities_db, opts.destdir, top)
     microStudies(opts.enddate, opts.destdir)
+
+    logging.info("SCM data source analysis OK")
