@@ -277,3 +277,5 @@ if __name__ == '__main__':
     # R specific reports
     demographics(opts.enddate, opts.destdir)
     timeToAttend(opts.destdir)
+
+    logging.info("MLS data source analysis OK")
