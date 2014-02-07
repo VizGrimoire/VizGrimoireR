@@ -218,7 +218,10 @@ def companiesData(period, startdate, enddate, identities_db, destdir, closed_con
 
         evol = ITS.EvolITSInfo(period, startdate, enddate, identities_db, ['company', company_name], closed_condition)
         evol = completePeriodIds(evol)
-        createJSON(evol, destdir+"/"+company+"-its-com-evolutionary.json")
+        if company in ['IBM','Internap']:
+            createJSON(evol, destdir+"/"+company+"-its-com-evolutionary.json", False)
+        else:
+            createJSON(evol, destdir+"/"+company+"-its-com-evolutionary.json")
 
         agg = ITS.AggITSInfo(period, startdate, enddate, identities_db, ['company', company_name], closed_condition)
         createJSON(agg, destdir+"/"+company+"-its-com-static.json")
