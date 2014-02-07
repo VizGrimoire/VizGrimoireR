@@ -186,7 +186,11 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, closed_c
     # repos  = dataFrame2Dict(vizr.GetReposNameITS(startdate, enddate))
     repos  = ITS.GetReposNameITS(startdate, enddate)
     repos = repos['name']
-    createJSON(repos, destdir+"/its-repos.json")
+    if not isinstance(repos, (list)): 
+        repos = [repos]
+        createJSON(repos, destdir+"/its-repos.json", False)
+    else:
+        createJSON(repos, destdir+"/its-repos.json")
 
     for repo in repos :
         repo_name = "'"+ repo+ "'"
