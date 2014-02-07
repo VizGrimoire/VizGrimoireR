@@ -132,7 +132,11 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf):
     # repos  = dataFrame2Dict(vizr.repos_name(startdate, enddate))
     repos  = SCM.repos_name(startdate, enddate)
     repos = repos['name']
-    createJSON(repos, destdir+"/scm-repos.json")
+    if not isinstance(repos, (list)): 
+        repos = [repos]
+        createJSON(repos, destdir+"/scm-repos.json", False)
+    else:
+        createJSON(repos, destdir+"/scm-repos.json")
 
     for repo in repos :
         repo_name = "'"+ repo+ "'"
