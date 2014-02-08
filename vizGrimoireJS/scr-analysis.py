@@ -79,6 +79,9 @@ def aggData(period, startdate, enddate, idb, destdir):
     data = SCR.StaticTimeToReviewSCR(startdate, enddate)
     data['review_time_days_avg'] = float(data['review_time_days_avg'])
     agg = dict(agg.items() + data.items())
+    data = SCR.StaticTimeToReviewMedianSCR(startok, enddate)
+    data['review_time_days_median'] = float(data['review_time_days_median'])
+    agg = dict(agg.items() + data.items())
 
     # Tendencies
     for i in [7,30,365]:
