@@ -667,7 +667,6 @@ def GetPeopleListSCR (startdate, enddate, bots):
     filters += GetFiltersOwnUniqueIdsSCR('issues')+ " and people.id = pup.people_id"
     filters += " GROUP BY id ORDER BY total desc"
     q = GetSQLGlobal('submitted_on', fields, tables, filters, startdate, enddate)
-    print(q)
     return(ExecuteQuery(q))
 
 
@@ -731,6 +730,12 @@ def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analys
     # Total AVG review time
     q = " SELECT AVG(revtime) AS review_time_days_avg FROM ("+q+") t"
     return(ExecuteQuery(q))
+    
+def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_analysis = []):
+    data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis))
+    data = data['revtime']
+    ttr_median = sorted(data)[len(data)//2]
+    return {"review_time_days_median":ttr_median}
 
 ##############
 # Microstudies
