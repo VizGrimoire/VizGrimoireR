@@ -418,3 +418,12 @@ def GetPercentageDiff (value1, value2):
         percentage = int((1-(value2/value1)) * 100)
 
     return(percentage)
+
+def checkFloatArray(data):
+    if not isinstance(data, (list)):
+        data = [data]
+    for i in range(0,len(data)):
+        val = data[i]
+        data[i] = float(val)
+        if (val == 0): data[i] = 0
+    return data
