@@ -186,7 +186,11 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, closed_c
     # repos  = dataFrame2Dict(vizr.GetReposNameITS(startdate, enddate))
     repos  = ITS.GetReposNameITS(startdate, enddate)
     repos = repos['name']
-    createJSON(repos, destdir+"/its-repos.json")
+    if not isinstance(repos, (list)): 
+        repos = [repos]
+        createJSON(repos, destdir+"/its-repos.json", False)
+    else:
+        createJSON(repos, destdir+"/its-repos.json")
 
     for repo in repos :
         repo_name = "'"+ repo+ "'"
@@ -215,7 +219,10 @@ def companiesData(period, startdate, enddate, identities_db, destdir, closed_con
 
         evol = ITS.EvolITSInfo(period, startdate, enddate, identities_db, ['company', company_name], closed_condition)
         evol = completePeriodIds(evol)
-        createJSON(evol, destdir+"/"+company+"-its-com-evolutionary.json")
+        if company in ['IBM','Internap']:
+            createJSON(evol, destdir+"/"+company+"-its-com-evolutionary.json", False)
+        else:
+            createJSON(evol, destdir+"/"+company+"-its-com-evolutionary.json")
 
         agg = ITS.AggITSInfo(period, startdate, enddate, identities_db, ['company', company_name], closed_condition)
         createJSON(agg, destdir+"/"+company+"-its-com-static.json")

@@ -60,3 +60,4 @@ if __name__ == '__main__':
         people_data[upeople_id] = People.GetPersonIdentifiers(upeople_id)
 
     createJSON(people_data, opts.destdir+"/people.json")
+    logging.info("People data source analysis OK")

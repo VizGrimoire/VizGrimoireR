@@ -36,6 +36,7 @@ from utils import set_db_channel
 
 DB_ITS_TEST = 'jenkins_its_vizr_1783'
 DB_IDENTITIES_TEST = 'jenkins_scm_vizr_1783'
+
 CLOSED_COND = " (new_value='Fix Committed') "
 
 
@@ -286,6 +287,13 @@ class TestITSLists(unittest.TestCase):
     def test_companies_name(self):
         results = GetCompaniesNameITS("'2012-01-01'", "'2013-01-01'", DB_IDENTITIES_TEST, CLOSED_COND, [])
         self.assertEqual(23, len(results['name']))
+
+
+class TestITSMicroStudies(unittest.TestCase):
+
+    def test_bmi_month(self):
+        results = EvolBMIIndex('month', "'2012-01-01'", "'2013-01-01'", DB_IDENTITIES_TEST, [], CLOSED_COND)
+        self.assertEqual(12, len(results['bmi']))
 
 
 if __name__ == "__main__":

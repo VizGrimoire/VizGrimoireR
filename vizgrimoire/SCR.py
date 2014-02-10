@@ -27,6 +27,8 @@
 ##   Daniel Izquierdo <dizquierdo@bitergia.com>
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
 
+import time
+
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
@@ -706,7 +708,7 @@ def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_anal
     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
     filters = "i.id = changes.issue_id AND field='status' "
     filters = filters+ GetSQLReportWhereSCR(type_analysis)
-    filters = filters+ " AND new_value='MERGED' "
+    filters = filters+ " AND new_value='MERGED' ORDER BY changed_on"
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
     return (q)
@@ -736,6 +738,37 @@ def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_
     data = data['revtime']
     ttr_median = sorted(data)[len(data)//2]
     return {"review_time_days_median":ttr_median}
+
+def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_analysis = []):
+    data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis))
+    data = data['revtime']
+    ttr_median = sorted(data)[len(data)//2]
+    return {"review_time_days_median":ttr_median}
+
+def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
+    q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
+    review_list = ExecuteQuery(q)
+    # median_list = {"month":[],"review_time_median":[],"review_time_avg":[]}
+    median_list = {"month":[],"review_time_days_median":[]}
+    review_list_len = len(review_list['changed_on'])
+    start = review_list['changed_on'][0]
+    end = review_list['changed_on'][review_list_len-1]
+    start_month = start.year*12 + start.month
+    end_month = end.year*12 + end.month
+    month = start_month
+    median = []
+    for i in range (0,review_list_len):
+        date = review_list['changed_on'][i]
+        if (date.year*12 + date.month) > month or i == review_list_len-1:
+            median_list['month'].append(month)
+            ttr_median = sorted(median)[len(median)//2]
+            # avg = sum(median) / float(len(median))
+            # median_list['review_time_avg'].append(avg)
+            median_list['review_time_days_median'].append(ttr_median)
+            month = date.year*12 + date.month
+            median = [review_list['revtime'][i]]
+        else: median.append (review_list['revtime'][i])
+    return median_list
 
 ##############
 # Microstudies

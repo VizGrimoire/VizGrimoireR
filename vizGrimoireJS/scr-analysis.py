@@ -42,7 +42,7 @@ from Wikimedia import GetCompaniesQuartersSCR, GetPeopleQuartersSCR
 
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
-from GrimoireUtils import valRtoPython, read_options, getPeriod
+from GrimoireUtils import valRtoPython, read_options, getPeriod, checkFloatArray
 import SCR
 
 def aggData(period, startdate, enddate, idb, destdir):
@@ -78,7 +78,6 @@ def aggData(period, startdate, enddate, idb, destdir):
     agg = dict(agg.items() + data.items())
     data = SCR.StaticWaiting4Submitter(period, startdate, enddate)
     agg = dict(agg.items() + data.items())
-    # print(agg)
     #Reviewers info
     data = SCR.StaticReviewers(period, startdate, enddate)
     agg = dict(agg.items() + data.items())
@@ -159,6 +158,8 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
         data['review_time_days_avg'][i] = float(val)
         if (val == 0): data['review_time_days_avg'][i] = 0
     evol = dict(evol.items() + completePeriodIds(data).items())
+    data = SCR.EvolTimeToReviewMedianSCR (period, startdate, enddate)
+    evol = dict(evol.items() + completePeriodIds(data).items())
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
@@ -222,10 +223,10 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
-        for i in range(0,len(data['review_time_days_avg'])):
-            val = data['review_time_days_avg'][i] 
-            data['review_time_days_avg'][i] = float(val)
-            if (val == 0): data['review_time_days_avg'][i] = 0
+        data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
+        evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolTimeToReviewMedianSCR(period, startdate, enddate, idb, type_analysis)
+        data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
         # For some reason this repos include merged_changes - 235 repos total
         if (repo_file == "gerrit.wikimedia.org_mediawiki_extensions_CodeReview" or
@@ -284,6 +285,11 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         val = data['review_time_days_avg']
         if (not val or val == 0): data['review_time_days_avg'] = 0
         else: data['review_time_days_avg'] = float(val)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticTimeToReviewMedianSCR(startdate, enddate, idb, type_analysis)
+        val = data['review_time_days_median']
+        data['review_time_days_median'] = float(val)
+        if (val == 0): data['review_time_days_median'] = 0
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 

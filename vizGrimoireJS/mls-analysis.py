@@ -123,9 +123,13 @@ def reposData(period, startdate, enddate, identities_db, destdir, conf, repofiel
     repos = MLS.reposNames(rfield, startdate, enddate)
     createJSON (repos, destdir+"/mls-lists.json")
     repos = repos['mailing_list_url']
+    check = True
+    if not isinstance(repos, (list)):
+        repos = [repos]
+        check = False
     repos_files = [repo.replace('/', '_').replace("<","__").replace(">","___")
-                   for repo in repos]
-    createJSON(repos_files, destdir+"/mls-repos.json")
+            for repo in repos]
+    createJSON(repos_files, destdir+"/mls-repos.json", check)
 
     for repo in repos:
         # Evol data   
@@ -161,7 +165,7 @@ def companiesData(period, startdate, enddate, identities_db, destdir, npeople):
         company_name = "'"+company+ "'"
         data = MLS.EvolMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
         data = completePeriodIds(data)
-        if (company == "company4" or company == "Deutsche Telekom"):
+        if company in ["company4","Deutsche Telekom","IBM"]:
             # Wrong JSON generated in R. Don't check
             createJSON(data, destdir+"/"+company+"-mls-com-evolutionary.json", False)
         else:
@@ -249,16 +253,16 @@ if __name__ == '__main__':
     reports = opts.reports.split(",")
     # filtered bots
 
+    # Working at the same time with VizR and VizPy yet
+    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+
     bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot']
     # TODO: hack because VizR library needs. Fix in lib in future
     startdate = "'"+opts.startdate+"'"
     enddate = "'"+opts.enddate+"'"
-    # rfield = vizr.reposField()
+    # rfield = valRtoPython(vizr.reposField())[0]
     rfield = "mailing_list_url"
-
-    # Working at the same time with VizR and VizPy yet
-    vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
@@ -280,3 +284,5 @@ if __name__ == '__main__':
     # R specific reports
     demographics(opts.enddate, opts.destdir)
     timeToAttend(opts.destdir)
+
+    logging.info("MLS data source analysis OK")

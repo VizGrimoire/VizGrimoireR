@@ -324,16 +324,16 @@ def createJSON(data, filepath, check=True, skip_fields = []):
     filepath_py = filepath_tokens[0]+"_py.json"
     filepath_r = filepath_tokens[0]+"_r.json"
     json_data = json.dumps(removeDecimals(data), sort_keys=True)
-    # NA as value is not decoded with Python JSON
-    # JSON R has "NA" and not NaN
-    # JSON R has "NA" and not null
-    json_data = json_data.replace('NA','"NA"').replace('NaN','"NA"').replace('null','"NA"')
     if check == False: #forget about R JSON checking
         jsonfile = open(filepath, 'w')
         jsonfile.write(json_data)
         jsonfile.close()
         return
 
+    # NA as value is not decoded with Python JSON
+    # JSON R has "NA" and not NaN
+    # JSON R has "NA" and not null
+    json_data = json_data.replace('NA','"NA"').replace('NaN','"NA"').replace('null',' "NA" ')
     jsonfile = open(filepath_py, 'w')
     jsonfile.write(json_data)
     jsonfile.close()
@@ -418,3 +418,12 @@ def GetPercentageDiff (value1, value2):
         percentage = int((1-(value2/value1)) * 100)
 
     return(percentage)
+
+def checkFloatArray(data):
+    if not isinstance(data, (list)):
+        data = [data]
+    for i in range(0,len(data)):
+        val = data[i]
+        data[i] = float(val)
+        if (val == 0): data[i] = 0
+    return data

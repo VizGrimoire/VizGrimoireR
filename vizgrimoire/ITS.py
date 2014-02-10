@@ -928,3 +928,21 @@ def GetPeopleStaticITS (developer_id, startdate, enddate, closed_condition) :
 
     data = ExecuteQuery(q)
     return (data)
+
+#################
+# Micro studies
+#################
+
+def EvolBMIIndex(period, startdate, enddate, identities_db, type_analysis, closed_condition):
+    # Metric based on chapter 4.3.1 from
+    # "Metrics and Models in Software Quality Engineering"
+    # by Stephen H. Kan
+    closed = EvolIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+    opened = EvolIssuesOpened(period, startdate, enddate, identities_db, type_analysis)
+
+    evol_bmi = [closed['closed'][i] / float(opened['opened'][i]) * 100\
+                for i in range(len(closed['closed']))]
+
+    return {'closed' : closed['closed'],
+            'opened' : opened['opened'],
+            'bmi' : evol_bmi}

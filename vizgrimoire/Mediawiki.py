@@ -58,7 +58,7 @@ def GetEvolDataMediaWiki (period, startdate, enddate, i_db, type_analysis):
 
     # 1- Retrieving information
     reviews = completePeriodIds(EvolReviewsMediaWiki(period, startdate, enddate, i_db, type_analysis))
-    authors =completePeriodIds( EvolAuthorsMediaWiki(period, startdate, enddate, i_db, type_analysis))
+    authors = completePeriodIds(EvolAuthorsMediaWiki(period, startdate, enddate, i_db, type_analysis))
     pages = completePeriodIds(EvolPagesMediaWiki(period, startdate, enddate, i_db, type_analysis))
 
     # 2- Merging information

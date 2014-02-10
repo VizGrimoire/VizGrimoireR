@@ -22,9 +22,23 @@
 
 """Misc functions for testing the library"""
 
+from csv import DictReader
+
 from vizgrimoire.GrimoireSQL import SetDBChannel
 
 
 def set_db_channel(user='root', password='', database=None,
                    host="127.0.0.1", port=3306, group=None):
     SetDBChannel(user, password, database, host, port, group)
+
+
+def read_dataset(filepath, fieldnames, delimiter):
+    data = {field : [] for field in fieldnames}
+
+    with open(filepath, 'r') as f:
+        cvs = DictReader(f, fieldnames=fieldnames,
+                          delimiter=delimiter)
+        for line in cvs:
+            for field, value in line.items():
+                data[field].append(value)
+    return data
