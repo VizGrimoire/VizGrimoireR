@@ -39,7 +39,7 @@ import sys
 
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
-from GrimoireUtils import valRtoPython, read_options, getPeriod
+from GrimoireUtils import valRtoPython, read_options, getPeriod, checkFloatArray
 import SCR
 
 def aggData(period, startdate, enddate, idb, destdir):
@@ -213,12 +213,10 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
-        if not isinstance(data['review_time_days_avg'], (list)):
-            data['review_time_days_avg'] = [data['review_time_days_avg']]
-        for i in range(0,len(data['review_time_days_avg'])):
-            val = data['review_time_days_avg'][i] 
-            data['review_time_days_avg'][i] = float(val)
-            if (val == 0): data['review_time_days_avg'][i] = 0
+        data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
+        evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolTimeToReviewMedianSCR(period, startdate, enddate, idb, type_analysis)
+        data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
         if repo_file in ["gerrit.ovirt.org_jenkins-whitelist","gerrit.ovirt.org_ovirt-release","gerrit.ovirt.org_jasperreports-server-rpm","gerrit.ovirt.org_ovirt-docs","gerrit.ovirt.org_samples-portals","gerrit.ovirt.org_gerrit-admin"]:
             createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json", False)
@@ -239,6 +237,11 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         val = data['review_time_days_avg']
         data['review_time_days_avg'] = float(val)
         if (val == 0): data['review_time_days_avg'] = 0
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticTimeToReviewMedianSCR(startdate, enddate, idb, type_analysis)
+        val = data['review_time_days_median']
+        data['review_time_days_median'] = float(val)
+        if (val == 0): data['review_time_days_median'] = 0
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
