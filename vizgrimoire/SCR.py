@@ -32,7 +32,7 @@ from numpy import median
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
-from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, removeDecimals
+from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray, removeDecimals
 import GrimoireUtils
 
 
@@ -744,9 +744,11 @@ def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_
 def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     review_list = ExecuteQuery(q)
+    checkListArray(review_list)
     # median_list = {"month":[],"review_time_median":[],"review_time_avg":[]}
     median_list = {"month":[],"review_time_days_median":[]}
     review_list_len = len(review_list['changed_on'])
+    if len(review_list['changed_on']) == 0: return median_list
     start = review_list['changed_on'][0]
     end = review_list['changed_on'][review_list_len-1]
     start_month = start.year*12 + start.month
