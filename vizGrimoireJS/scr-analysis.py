@@ -79,7 +79,7 @@ def aggData(period, startdate, enddate, idb, destdir):
     data = SCR.StaticTimeToReviewSCR(startdate, enddate)
     data['review_time_days_avg'] = float(data['review_time_days_avg'])
     agg = dict(agg.items() + data.items())
-    data = SCR.StaticTimeToReviewMedianSCR(startok, enddate)
+    data = SCR.StaticTimeToReviewMedianSCR(startdate, enddate)
     data['review_time_days_median'] = float(data['review_time_days_median'])
     agg = dict(agg.items() + data.items())
 
@@ -148,6 +148,8 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
         val = data['review_time_days_avg'][i] 
         data['review_time_days_avg'][i] = float(val)
         if (val == 0): data['review_time_days_avg'][i] = 0
+    evol = dict(evol.items() + completePeriodIds(data).items())
+    data = SCR.EvolTimeToReviewMedianSCR (period, startdate, enddate)
     evol = dict(evol.items() + completePeriodIds(data).items())
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
