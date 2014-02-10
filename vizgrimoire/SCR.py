@@ -737,6 +737,7 @@ def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analys
 def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_analysis = []):
     data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis))
     data = data['revtime']
+    if (isinstance(data, list) == False): data = [data]
     # ttr_median = sorted(data)[len(data)//2]
     ttr_median = median(removeDecimals(data))
     return {"review_time_days_median":ttr_median}
