@@ -315,6 +315,10 @@ def removeDecimals(data):
         for key in data:
             if (isinstance(data[key], Decimal)):
                 data[key] = float(data[key])
+    if (isinstance(data, list)):
+        for i in range(0,len(data)):
+            if (isinstance(data[i], Decimal)):
+                data[i] = float(data[i])
     return data
 
 # Until we use VizPy we will create JSON python files with _py
