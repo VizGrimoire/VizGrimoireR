@@ -31,7 +31,7 @@ import time
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
-from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
+from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray
 import GrimoireUtils
 
 ##########
@@ -740,17 +740,21 @@ def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_
     return {"review_time_days_median":ttr_median}
 
 def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_analysis = []):
+    type_analysis = ['repository', 'gerrit.wikimedia.org_analytics/wp-zero']
     data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis))
     data = data['revtime']
-    ttr_median = sorted(data)[len(data)//2]
+    if len(data) == 0: ttr_median = float('nan')
+    else: ttr_median = sorted(data)[len(data)//2]
     return {"review_time_days_median":ttr_median}
 
 def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     review_list = ExecuteQuery(q)
+    checkListArray(review_list)
     # median_list = {"month":[],"review_time_median":[],"review_time_avg":[]}
     median_list = {"month":[],"review_time_days_median":[]}
     review_list_len = len(review_list['changed_on'])
+    if len(review_list['changed_on']) == 0: return median_list
     start = review_list['changed_on'][0]
     end = review_list['changed_on'][review_list_len-1]
     start_month = start.year*12 + start.month
@@ -761,7 +765,10 @@ def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None,
         date = review_list['changed_on'][i]
         if (date.year*12 + date.month) > month or i == review_list_len-1:
             median_list['month'].append(month)
-            ttr_median = sorted(median)[len(median)//2]
+            if len(median)>0:
+                ttr_median = sorted(median)[len(median)//2]
+            else:
+                ttr_median = float('nan')
             # avg = sum(median) / float(len(median))
             # median_list['review_time_avg'].append(avg)
             median_list['review_time_days_median'].append(ttr_median)

@@ -207,7 +207,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
     # number of patches waiting for reviewer and submitter 
     for repo in repos:
         repo_file = repo.replace("/","_")
-        logging.info("Repo: " + repo_file)
+        # logging.info("Repo: " + repo_file)
         type_analysis = ['repository', repo]
 
         evol = {}
@@ -410,7 +410,7 @@ def quartersData(period, startdate, enddate, idb, destdir, bots):
     for i in range(0, quarters):
         year = start.year
         quarter = (i%4)+1
-        logging.info("Analyzing companies and people quarter " + str(year) + " " +  str(quarter))
+        # logging.info("Analyzing companies and people quarter " + str(year) + " " +  str(quarter))
         data = GetCompaniesQuartersSCR(year, quarter, idb)
         companies_quarters[str(year)+" "+str(quarter)] = data
         data_people = GetPeopleQuartersSCR(year, quarter, idb, 25, bots)
