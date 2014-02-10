@@ -28,11 +28,13 @@
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
 
 import time
+from numpy import median
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
 import GrimoireUtils
+
 
 ##########
 # Specific FROM and WHERE clauses per type of report
@@ -703,7 +705,8 @@ def GetPeopleStaticSCR (developer_id, startdate, enddate):
 
 def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_analysis = []):
     # Subquery to get the time to review for all reviews
-    fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on "
+    # fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on "
+    fields = "TIMEDIFF(changed_on,submitted_on)/(24*3600) AS revtime, changed_on "
     tables = "issues i, changes "
     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
     filters = "i.id = changes.issue_id AND field='status' "
@@ -733,7 +736,8 @@ def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analys
 def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_analysis = []):
     data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis))
     data = data['revtime']
-    ttr_median = sorted(data)[len(data)//2]
+    # ttr_median = sorted(data)[len(data)//2]
+    ttr_median = median(data)
     return {"review_time_days_median":ttr_median}
 
 def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
@@ -747,18 +751,18 @@ def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None,
     start_month = start.year*12 + start.month
     end_month = end.year*12 + end.month
     month = start_month
-    median = []
+    median_data = []
     for i in range (0,review_list_len):
         date = review_list['changed_on'][i]
         if (date.year*12 + date.month) > month or i == review_list_len-1:
             median_list['month'].append(month)
-            ttr_median = sorted(median)[len(median)//2]
+            ttr_median = median(median_data)
             # avg = sum(median) / float(len(median))
             # median_list['review_time_avg'].append(avg)
             median_list['review_time_days_median'].append(ttr_median)
             month = date.year*12 + date.month
-            median = [review_list['revtime'][i]]
-        else: median.append (review_list['revtime'][i])
+            median_data = [review_list['revtime'][i]]
+        else: median_data.append (review_list['revtime'][i])
     return median_list
 
 ##############
