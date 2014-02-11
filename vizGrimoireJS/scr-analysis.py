@@ -45,7 +45,7 @@ from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from GrimoireUtils import valRtoPython, read_options, getPeriod, checkFloatArray
 import SCR
 
-def aggData(period, startdate, enddate, idb, destdir):
+def aggData(period, startdate, enddate, idb, destdir, bots):
     # Wikimedia data ok after '2013-04-30' for changes based metrics
     startok = "'2013-04-30'"
 
@@ -82,10 +82,8 @@ def aggData(period, startdate, enddate, idb, destdir):
     data = SCR.StaticReviewers(period, startdate, enddate)
     agg = dict(agg.items() + data.items())
     # Time to Review info
-    data = SCR.StaticTimeToReviewSCR(startok, enddate)
+    data = SCR.StaticTimeToReviewSCR(startok, enddate, idb, [], bots)
     data['review_time_days_avg'] = float(data['review_time_days_avg'])
-    agg = dict(agg.items() + data.items())
-    data = SCR.StaticTimeToReviewMedianSCR(startok, enddate)
     data['review_time_days_median'] = float(data['review_time_days_median'])
     agg = dict(agg.items() + data.items())
 
@@ -438,7 +436,7 @@ if __name__ == '__main__':
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
-    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     quartersData(period, opts.startdate, opts.enddate, opts.identities_db, opts.destdir, bots)
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
 
