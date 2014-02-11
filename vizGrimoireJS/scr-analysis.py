@@ -283,10 +283,10 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         val = data['review_time_days_avg']
         if (not val or val == 0): data['review_time_days_avg'] = 0
         else: data['review_time_days_avg'] = float(val)
-        agg = dict(agg.items() + data.items())
-        data = SCR.StaticTimeToReviewMedianSCR(startdate, enddate, idb, type_analysis)
         val = data['review_time_days_median']
-        data['review_time_days_median'] = float(val)
+        if (not val or val == 0): data['review_time_days_avg'] = 0
+        else: data['review_time_days_median'] = float(val)
+        agg = dict(agg.items() + data.items())
         if (val == 0): data['review_time_days_median'] = 0
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
