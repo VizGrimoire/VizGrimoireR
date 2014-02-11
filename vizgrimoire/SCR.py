@@ -28,7 +28,7 @@
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
 
 import time
-from numpy import median
+from numpy import median, average
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
@@ -703,18 +703,27 @@ def GetPeopleStaticSCR (developer_id, startdate, enddate):
 # Time to review
 ################
 
-def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_analysis = []):
+def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_analysis = [], bots = []):
+
+    filter_bots = ''
+    for bot in bots:
+        filter_bots = filter_bots + " people.name<>'"+bot+"' and "
+
     # Subquery to get the time to review for all reviews
     # fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on "
     # fields = "TIMEDIFF(changed_on,submitted_on)/(24*3600) AS revtime, changed_on "
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime, changed_on "
-    tables = "issues i, changes "
+    tables = "issues i, changes, people "
     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
-    filters = "i.id = changes.issue_id AND field='status' "
-    filters = filters+ GetSQLReportWhereSCR(type_analysis)
-    filters = filters+ " AND new_value='MERGED' ORDER BY changed_on"
+    filters = filter_bots + "i.id = changes.issue_id AND field='status' "
+    filters += " AND people.id = changes.changed_by "
+    filters += GetSQLReportWhereSCR(type_analysis)
+    filters += " AND new_value='MERGED' ORDER BY changed_on"
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
+    min_days_for_review = 0.042 # one hour
+    q = "SELECT revtime, changed_on FROM ("+q+") qrevs WHERE revtime>"+str(min_days_for_review)
+    print(q)
     return (q)
 
 
@@ -731,19 +740,21 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
         data['review_time_days_avg'] = [data['review_time_days_avg']]
     return(data)
 
-def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analysis = []):
+# Average can be calculate directly from SQL
+def StaticTimeToReviewSCRsql (startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     # Total AVG review time
     q = " SELECT AVG(revtime) AS review_time_days_avg FROM ("+q+") t"
     return(ExecuteQuery(q))
 
-def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_analysis = []):
-    data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis))
+def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analysis = [], bots = []):
+    data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis, bots))
     data = data['revtime']
     if (isinstance(data, list) == False): data = [data]
     # ttr_median = sorted(data)[len(data)//2]
     ttr_median = median(removeDecimals(data))
-    return {"review_time_days_median":ttr_median}
+    ttr_avg = average(removeDecimals(data))
+    return {"review_time_days_median":ttr_median, "review_time_days_avg":ttr_avg}
 
 def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
