@@ -156,8 +156,6 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
         data['review_time_days_avg'][i] = float(val)
         if (val == 0): data['review_time_days_avg'][i] = 0
     evol = dict(evol.items() + completePeriodIds(data).items())
-    data = SCR.EvolTimeToReviewMedianSCR (period, startdate, enddate)
-    evol = dict(evol.items() + completePeriodIds(data).items())
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
@@ -222,8 +220,6 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
         data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
-        evol = dict(evol.items() + completePeriodIds(data).items())
-        data = SCR.EvolTimeToReviewMedianSCR(period, startdate, enddate, idb, type_analysis)
         data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
         # For some reason this repos include merged_changes - 235 repos total
