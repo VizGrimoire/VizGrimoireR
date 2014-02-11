@@ -723,7 +723,6 @@ def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_anal
                     startdate, enddate)
     min_days_for_review = 0.042 # one hour
     q = "SELECT revtime, changed_on FROM ("+q+") qrevs WHERE revtime>"+str(min_days_for_review)
-    print(q)
     return (q)
 
 
