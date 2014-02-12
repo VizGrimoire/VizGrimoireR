@@ -703,6 +703,7 @@ def GetPeopleStaticSCR (developer_id, startdate, enddate):
 # Time to review
 ################
 
+# Real reviews spend >1h, are not autoreviews, and bots are filtered out.
 def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_analysis = [], bots = []):
     filter_bots = ''
     for bot in bots:
@@ -714,10 +715,13 @@ def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_anal
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime, changed_on "
     tables = "issues i, changes, people "
     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
-    filters = filter_bots + "i.id = changes.issue_id AND field='status' "
+    filters = filter_bots + " i.id = changes.issue_id "
     filters += " AND people.id = changes.changed_by "
     filters += GetSQLReportWhereSCR(type_analysis)
-    filters += " AND new_value='MERGED' ORDER BY changed_on"
+    filters += " AND field='status' AND new_value='MERGED' "
+    # remove autoreviews
+    filters += " AND i.submitted_by<>changes.changed_by "
+    filters += " ORDER BY changed_on "
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
     min_days_for_review = 0.042 # one hour
