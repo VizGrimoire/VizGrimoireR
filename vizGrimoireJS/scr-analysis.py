@@ -280,14 +280,13 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         if (not val or val == 0): data['review_time_days_avg'] = 0
         else: data['review_time_days_avg'] = float(val)
         val = data['review_time_days_median']
-        if (not val or val == 0): data['review_time_days_avg'] = 0
+        if (not val or val == 0): data['review_time_days_median'] = 0
         else: data['review_time_days_median'] = float(val)
-        agg = dict(agg.items() + data.items())
-        if (val == 0): data['review_time_days_median'] = 0
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
+    startok = "'2013-04-30'"
     # companies  = dataFrame2Dict(vizr.GetCompaniesSCRName(startdate, enddate, idb))
     companies  = SCR.GetCompaniesSCRName(startdate, enddate, idb)
     companies = companies['name']
@@ -309,6 +308,10 @@ def companiesData(period, startdate, enddate, idb, destdir):
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolTimeToReviewSCR(period, startok, enddate, idb, type_analysis)
+        data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
+        data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
+        evol = dict(evol.items() + completePeriodIds(data).items())
         createJSON(evol, destdir+ "/"+company_file+"-scr-com-evolutionary.json")
         # Static
         agg = {}
@@ -319,6 +322,14 @@ def companiesData(period, startdate, enddate, idb, destdir):
         data = SCR.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
         agg = dict(agg.items() + data.items())
         data = SCR.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticTimeToReviewSCR(startok, enddate, idb, type_analysis)
+        val = data['review_time_days_avg']
+        if (not val or val == 0): data['review_time_days_avg'] = 0
+        else: data['review_time_days_avg'] = float(val)
+        val = data['review_time_days_median']
+        if (not val or val == 0): data['review_time_days_median'] = 0
+        else: data['review_time_days_median'] = float(val)
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir+"/"+company_file+"-scr-com-static.json")
 
