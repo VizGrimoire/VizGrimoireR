@@ -222,48 +222,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
         data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
-        # For some reason this repos include merged_changes - 235 repos total
-        if (repo_file == "gerrit.wikimedia.org_mediawiki_extensions_CodeReview" or
-            repo_file == "gerrit.wikimedia.org_analytics_geowiki" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_extensions_DataTypes" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_extensions_NewUserMessage" or
-            repo_file == "gerrit.wikimedia.org_pywikibot_sf-export" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_extensions_CharInsert" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_extensions_StrategyWiki" or
-            repo_file == "gerrit.wikimedia.org_analytics_kraken" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_extensions_UnicodeConverter" or
-            repo_file == "gerrit.wikimedia.org_operations_puppet_jmxtrans" or
-            repo_file == "gerrit.wikimedia.org_integration_testswarm" or
-            repo_file == "gerrit.wikimedia.org_integration_testswarm" or
-            repo_file == "gerrit.wikimedia.org_openstack-wikistatus" or
-            repo_file == "gerrit.wikimedia.org_wikimedia_communications_WP-Victor" or
-            repo_file == "gerrit.wikimedia.org_wikimedia_bugzilla_wikibugs" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_tools_fluoride" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_rcsub" or
-            repo_file == "gerrit.wikimedia.org_integration_doc" or
-            repo_file == "gerrit.wikimedia.org_analytics_udplog" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_extensions_ActiveAbstract" or
-            repo_file == "gerrit.wikimedia.org_integration_grunt-contrib-wikimedia" or
-            repo_file == "gerrit.wikimedia.org_analytics_global-dev_dashboard" or
-            repo_file == "gerrit.wikimedia.org_wikimedia_communications_WMBlog" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_tools_commonshelper2" or
-            repo_file == "gerrit.wikimedia.org_wikimedia_bugzilla_triagescripts" or
-            repo_file == "gerrit.wikimedia.org_integration_junitdiff" or
-            repo_file == "gerrit.wikimedia.org_wikimedia_fundraising_twig" or
-            repo_file == "gerrit.wikimedia.org_analytics_blog" or
-            repo_file == "gerrit.wikimedia.org_operations_software_otrs" or
-            repo_file == "gerrit.wikimedia.org_wikimedia_fundraising_stomp" or
-            repo_file == "gerrit.wikimedia.org_operations_dumps_test" or
-            repo_file == "gerrit.wikimedia.org_integration_consistency" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_tools_dippybird" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_tools_upload_PhotoUpload" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_php_NativePreprocessor" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_tools_bundles" or
-            repo_file == "gerrit.wikimedia.org_mediawiki_tools_Cite4Wiki" or
-            repo_file == "gerrit.wikimedia.org_operations_software_varnish_vhtcpd"):
-            createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json", False)
-        else:
-            createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
+        createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
 
         # Static
         agg = {}
