@@ -193,16 +193,16 @@ def peopleData(period, startdate, enddate, idb, destdir, top_data):
         createJSON(agg, destdir+"/people-"+str(upeople_id)+"-scr-static.json")
 
 def reposData(period, startdate, enddate, idb, destdir, conf):
-    # repos  = dataFrame2Dict(vizr.GetReposSCRName(startdate, enddate))
     repos  = SCR.GetReposSCRName(startdate, enddate)
     repos = repos["name"]
-    repos_files = [repo.replace('/', '_') for repo in repos]
-    createJSON(repos_files, destdir+"/scr-repos.json")
+    # For repos aggregated data. Include metrics to sort in javascript.
+    repos_list = {"name":[],"review_time_days_median":[],"submitted":[]}
 
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for repo in repos:
         repo_file = repo.replace("/","_")
+        repos_list["name"].append(repo_file)
         # logging.info("Repo: " + repo_file)
         type_analysis = ['repository', repo]
 
@@ -268,6 +268,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         # Static
         agg = {}
         data = SCR.StaticReviewsSubmitted(period, startdate, enddate, type_analysis)
+        repos_list["submitted"].append(data["submitted"])
         agg = dict(agg.items() + data.items())
         data = SCR.StaticReviewsMerged(period, startdate, enddate, type_analysis)
         agg = dict(agg.items() + data.items())
@@ -282,8 +283,11 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         val = data['review_time_days_median']
         if (not val or val == 0): data['review_time_days_median'] = 0
         else: data['review_time_days_median'] = float(val)
+        repos_list["review_time_days_median"].append(data['review_time_days_median'])
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
+
+    createJSON(repos_list, destdir+"/scr-repos.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
     startok = "'2013-04-30'"
