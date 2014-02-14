@@ -754,6 +754,7 @@ def StaticTimeToReviewSCRsql (startdate, enddate, identities_db = None, type_ana
 def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analysis = [], bots = []):
     data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis, bots))
     data = data['revtime']
+    print(data)
     if (isinstance(data, list) == False): data = [data]
     # ttr_median = sorted(data)[len(data)//2]
     if (len(data) == 0):
@@ -767,6 +768,7 @@ def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analys
 def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     review_list = ExecuteQuery(q)
+    print(review_list)
     checkListArray(review_list)
     metrics_list = {"month":[],"review_time_days_median":[],"review_time_days_avg":[]}
     # metrics_list = {"month":[],"review_time_days_median":[]}
@@ -796,7 +798,8 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
             metrics_list['review_time_days_avg'].append(ttr_avg)
             metrics_data = [review_list['revtime'][i]]
             # if change month and last item, close last month also
-            if (date.year*12 + date.month) > month and i == review_list_len-1:
+            if (date.year*12 + date.month) >= month and i == review_list_len-1:
+                print("YEAHH")
                 month = date.year*12 + date.month
                 metrics_list['month'].append(month)
                 ttr_median = median(removeDecimals(metrics_data))
@@ -805,6 +808,7 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
                 metrics_list['review_time_days_avg'].append(ttr_avg)
             month = date.year*12 + date.month
         else: metrics_data.append (review_list['revtime'][i])
+    print(metrics_list)
     return metrics_list
 
 ##############
