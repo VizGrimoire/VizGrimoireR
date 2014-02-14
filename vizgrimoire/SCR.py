@@ -794,8 +794,16 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
             # metrics_list['review_time_avg'].append(avg)
             metrics_list['review_time_days_median'].append(ttr_median)
             metrics_list['review_time_days_avg'].append(ttr_avg)
-            month = date.year*12 + date.month
             metrics_data = [review_list['revtime'][i]]
+            # if change month and last item, close last month also
+            if (date.year*12 + date.month) > month and i == review_list_len-1:
+                month = date.year*12 + date.month
+                metrics_list['month'].append(month)
+                ttr_median = median(removeDecimals(metrics_data))
+                ttr_avg = average(removeDecimals(metrics_data))
+                metrics_list['review_time_days_median'].append(ttr_median)
+                metrics_list['review_time_days_avg'].append(ttr_avg)
+            month = date.year*12 + date.month
         else: metrics_data.append (review_list['revtime'][i])
     return metrics_list
 
