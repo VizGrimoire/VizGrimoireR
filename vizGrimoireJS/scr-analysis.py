@@ -193,6 +193,7 @@ def peopleData(period, startdate, enddate, idb, destdir, top_data):
         createJSON(agg, destdir+"/people-"+str(upeople_id)+"-scr-static.json")
 
 def reposData(period, startdate, enddate, idb, destdir, conf):
+    startok = "'2013-04-30'"
     repos  = SCR.GetReposSCRName(startdate, enddate)
     repos = repos["name"]
     # For repos aggregated data. Include metrics to sort in javascript.
@@ -201,7 +202,9 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for repo in repos:
+        # repo = "gerrit.wikimedia.org_mediawiki/extensions/timeline"
         repo_file = repo.replace("/","_")
+        logging.info(repo_file)
         repos_list["name"].append(repo_file)
         # logging.info("Repo: " + repo_file)
         type_analysis = ['repository', repo]
@@ -216,9 +219,9 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         evol = dict(evol.items() + completePeriodIds(data).items())
         # data = vizr.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis)
         # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
+        data = SCR.EvolReviewsPendingChanges(period, startok, enddate, conf, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
-        data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
+        data = SCR.EvolTimeToReviewSCR(period, startok, enddate, idb, type_analysis)
         data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
         data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
@@ -233,19 +236,21 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         agg = dict(agg.items() + data.items())
         data = SCR.StaticReviewsAbandoned(period, startdate, enddate, type_analysis)
         agg = dict(agg.items() + data.items())
-        data = SCR.StaticReviewsPending(period, startdate, enddate, type_analysis)
+        data = SCR.StaticReviewsPending(period, startok, enddate, type_analysis)
         agg = dict(agg.items() + data.items())
-        data = SCR.StaticTimeToReviewSCR(startdate, enddate, idb, type_analysis)
+        data = SCR.StaticTimeToReviewSCR(startok, enddate, idb, type_analysis)
         val = data['review_time_days_avg']
         if (not val or val == 0): data['review_time_days_avg'] = 0
         else: data['review_time_days_avg'] = float(val)
         val = data['review_time_days_median']
         if (not val or val == 0): data['review_time_days_median'] = 0
         else: data['review_time_days_median'] = float(val)
-        repos_list["review_time_days_median"].append(data['review_time_days_median'])
         agg = dict(agg.items() + data.items())
+        repos_list["review_time_days_median"].append(data['review_time_days_median'])
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
+        # break
+        
     createJSON(repos_list, destdir+"/scr-repos.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
@@ -404,6 +409,8 @@ if __name__ == '__main__':
     # Working at the same time with VizR and VizPy yet
     # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    # reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
+    # sys.exit(0)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
