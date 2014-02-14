@@ -140,7 +140,9 @@ def GetReposSCRName  (startdate, enddate, limit = 0):
            "  i.submitted_on < "+ enddate +\
            " GROUP BY t.url "+\
            " ORDER BY issues DESC "+limit_sql
-    return(ExecuteQuery(q))
+    names = ExecuteQuery(q)
+    if not isinstance(names['name'], (list)): names['name'] = [names['name']]
+    return(names)
 
 def GetCompaniesSCRName  (startdate, enddate, identities_db, limit = 0):
     limit_sql=""
@@ -780,6 +782,8 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
         date = review_list['changed_on'][i]
         if (date.year*12 + date.month) > month or i == review_list_len-1:
             metrics_list['month'].append(month)
+            if review_list_len == 1: 
+                metrics_data.append (review_list['revtime'][i])
             if len(metrics_data) == 0: 
                 ttr_median = float('nan')
                 ttr_avg = float('nan')
