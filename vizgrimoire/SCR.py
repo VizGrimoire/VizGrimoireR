@@ -780,7 +780,7 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
     metrics_data = []
     for i in range (0,review_list_len):
         date = review_list['changed_on'][i]
-        if (date.year*12 + date.month) > month or i == review_list_len-1:
+        if (date.year*12 + date.month) > month:
             metrics_list['month'].append(month)
             if review_list_len == 1: 
                 metrics_data.append (review_list['revtime'][i])
@@ -795,15 +795,19 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
             metrics_list['review_time_days_median'].append(ttr_median)
             metrics_list['review_time_days_avg'].append(ttr_avg)
             metrics_data = [review_list['revtime'][i]]
-            # if change month and last item, close last month also
-            if (date.year*12 + date.month) >= month and i == review_list_len-1:
-                month = date.year*12 + date.month
-                metrics_list['month'].append(month)
-                ttr_median = median(removeDecimals(metrics_data))
-                ttr_avg = average(removeDecimals(metrics_data))
-                metrics_list['review_time_days_median'].append(ttr_median)
-                metrics_list['review_time_days_avg'].append(ttr_avg)
             month = date.year*12 + date.month
+        if  i == review_list_len-1:
+            month = date.year*12 + date.month
+            # Close last month also
+            if (date.year*12 + date.month) > month:
+                metrics_data = [review_list['revtime'][i]]
+            elif (date.year*12 + date.month) == month:
+                metrics_data.append (review_list['revtime'][i])
+            metrics_list['month'].append(month)
+            ttr_median = median(removeDecimals(metrics_data))
+            ttr_avg = average(removeDecimals(metrics_data))
+            metrics_list['review_time_days_median'].append(ttr_median)
+            metrics_list['review_time_days_avg'].append(ttr_avg)
         else: metrics_data.append (review_list['revtime'][i])
     return metrics_list
 
