@@ -30,6 +30,8 @@
 import time
 from numpy import median, average
 
+
+
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray, removeDecimals
@@ -764,10 +766,12 @@ def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analys
         ttr_avg = average(removeDecimals(data))
     return {"review_time_days_median":ttr_median, "review_time_days_avg":ttr_avg}
 
+
 def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     review_list = ExecuteQuery(q)
     checkListArray(review_list)
+
     metrics_list = {"month":[],"review_time_days_median":[],"review_time_days_avg":[]}
     # metrics_list = {"month":[],"review_time_days_median":[]}
     review_list_len = len(review_list['changed_on'])
@@ -777,6 +781,7 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
     start_month = start.year*12 + start.month
     end_month = end.year*12 + end.month
     month = start_month
+
     metrics_data = []
     for i in range (0,review_list_len):
         date = review_list['changed_on'][i]
@@ -798,6 +803,7 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
             month = date.year*12 + date.month
         if  i == review_list_len-1:
             month = date.year*12 + date.month
+
             # Close last month also
             if (date.year*12 + date.month) > month:
                 metrics_data = [review_list['revtime'][i]]
