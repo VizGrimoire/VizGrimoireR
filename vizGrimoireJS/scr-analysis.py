@@ -393,13 +393,12 @@ def quartersData(period, startdate, enddate, idb, destdir, bots):
     createJSON(companies_quarters, destdir+"/scr-companies-quarters.json")
     createJSON(people_quarters, destdir+"/scr-people-quarters.json")
 
-def CodeContribKPI():
-    data = GetNewSubmitters()
-    print(data)
-    data = GetNewMergers()
-    print(data)
-    data = GetNewAbandoners()
-    print(data)
+def CodeContribKPI(destdir):
+    code_contrib = {}
+    code_contrib["submitters"] = GetNewSubmitters()
+    code_contrib["mergers"] = GetNewMergers()
+    code_contrib["abandoners"] = GetNewAbandoners()
+    createJSON(code_contrib, destdir+"/scr-code-contrib.json")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
@@ -435,6 +434,6 @@ if __name__ == '__main__':
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
 
     # Specific Wikiemdia KPI analysis
-    CodeContribKPI()
+    CodeContribKPI(opts.destdir)
 
     logging.info("SCR data source analysis OK")
