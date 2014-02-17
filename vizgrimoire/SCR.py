@@ -34,7 +34,7 @@ from numpy import median, average
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
-from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray, removeDecimals
+from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray, convertDecimals
 import GrimoireUtils
 
 
@@ -762,8 +762,8 @@ def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analys
         ttr_median = float("nan")
         ttr_avg = float("nan")
     else:
-        ttr_median = median(removeDecimals(data))
-        ttr_avg = average(removeDecimals(data))
+        ttr_median = median(convertDecimals(data))
+        ttr_avg = average(convertDecimals(data))
     return {"review_time_days_median":ttr_median, "review_time_days_avg":ttr_avg}
 
 
@@ -793,8 +793,8 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
                 ttr_median = float('nan')
                 ttr_avg = float('nan')
             else: 
-                ttr_median = median(removeDecimals(metrics_data))
-                ttr_avg = average(removeDecimals(metrics_data))
+                ttr_median = median(convertDecimals(metrics_data))
+                ttr_avg = average(convertDecimals(metrics_data))
             # avg = sum(median) / float(len(median))
             # metrics_list['review_time_avg'].append(avg)
             metrics_list['review_time_days_median'].append(ttr_median)
@@ -810,8 +810,8 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
             elif (date.year*12 + date.month) == month:
                 metrics_data.append (review_list['revtime'][i])
             metrics_list['month'].append(month)
-            ttr_median = median(removeDecimals(metrics_data))
-            ttr_avg = average(removeDecimals(metrics_data))
+            ttr_median = median(convertDecimals(metrics_data))
+            ttr_avg = average(convertDecimals(metrics_data))
             metrics_list['review_time_days_median'].append(ttr_median)
             metrics_list['review_time_days_avg'].append(ttr_avg)
         else: metrics_data.append (review_list['revtime'][i])

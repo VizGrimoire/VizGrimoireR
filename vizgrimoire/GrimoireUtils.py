@@ -309,16 +309,35 @@ def getPeriod(granularity, number = None):
     return period
 
 
-def removeDecimals(data):
+def convertDecimals(data):
     from decimal import Decimal
     if (isinstance(data, dict)):
         for key in data:
             if (isinstance(data[key], Decimal)):
                 data[key] = float(data[key])
+            elif (isinstance(data[key], list)):
+                data[key] = convertDecimals(data[key])
+            elif (isinstance(data[key], dict)):
+                data[key] = convertDecimals(data[key])
     if (isinstance(data, list)):
         for i in range(0,len(data)):
             if (isinstance(data[i], Decimal)):
                 data[i] = float(data[i])
+    return data
+
+def convertDatetime(data):
+    if (isinstance(data, dict)):
+        for key in data:
+            if (isinstance(data[key], datetime)):
+                data[key] = str(data[key])
+            elif (isinstance(data[key], list)):
+                data[key] = convertDatetime(data[key])
+            elif (isinstance(data[key], dict)):
+                data[key] = convertDatetime(data[key])
+    if (isinstance(data, list)):
+        for i in range(0,len(data)):
+            if (isinstance(data[i], datetime)):
+                data[i] = str(data[i])
     return data
 
 # Until we use VizPy we will create JSON python files with _py
@@ -327,7 +346,7 @@ def createJSON(data, filepath, check=True, skip_fields = []):
     filepath_tokens = filepath.split(".json")
     filepath_py = filepath_tokens[0]+"_py.json"
     filepath_r = filepath_tokens[0]+"_r.json"
-    json_data = json.dumps(removeDecimals(data), sort_keys=True)
+    json_data = json.dumps(convertDatetime(convertDecimals(data)), sort_keys=True)
     json_data = json_data.replace('NaN','"NA"')
     if check == False: #forget about R JSON checking
         jsonfile = open(filepath, 'w')
