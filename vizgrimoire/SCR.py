@@ -28,7 +28,9 @@
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
 
 import time
-from numpy import median
+from numpy import median, average
+
+
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
@@ -705,22 +707,33 @@ def GetPeopleStaticSCR (developer_id, startdate, enddate):
 # Time to review
 ################
 
-def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_analysis = []):
+# Real reviews spend >1h, are not autoreviews, and bots are filtered out.
+def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_analysis = [], bots = []):
+    filter_bots = ''
+    for bot in bots:
+        filter_bots = filter_bots + " people.name<>'"+bot+"' and "
+
     # Subquery to get the time to review for all reviews
     # fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on "
     # fields = "TIMEDIFF(changed_on,submitted_on)/(24*3600) AS revtime, changed_on "
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime, changed_on "
-    tables = "issues i, changes "
+    tables = "issues i, changes, people "
     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
-    filters = "i.id = changes.issue_id AND field='status' "
-    filters = filters+ GetSQLReportWhereSCR(type_analysis)
-    filters = filters+ " AND new_value='MERGED' ORDER BY changed_on"
+    filters = filter_bots + " i.id = changes.issue_id "
+    filters += " AND people.id = changes.changed_by "
+    filters += GetSQLReportWhereSCR(type_analysis)
+    filters += " AND field='status' AND new_value='MERGED' "
+    # remove autoreviews
+    filters += " AND i.submitted_by<>changes.changed_by "
+    filters += " ORDER BY changed_on "
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
+    min_days_for_review = 0.042 # one hour
+    q = "SELECT revtime, changed_on FROM ("+q+") qrevs WHERE revtime>"+str(min_days_for_review)
     return (q)
 
-
-def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
+# Average can be calculate directly from SQL. But not used.
+def EvolTimeToReviewSCRsql (period, startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     # Evolution in time of AVG review time
     fields = "SUM(revtime)/COUNT(revtime) AS review_time_days_avg "
@@ -728,39 +741,51 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
     filters = ""
     q = GetSQLPeriod(period,'changed_on', fields, tables, filters,
             startdate, enddate)
-    return(ExecuteQuery(q))
+    data = ExecuteQuery(q)
+    if not isinstance(data['review_time_days_avg'], (list)): 
+        data['review_time_days_avg'] = [data['review_time_days_avg']]
+    return(data)
 
-def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analysis = []):
+# Average can be calculate directly from SQL. But not used.
+def StaticTimeToReviewSCRsql (startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     # Total AVG review time
     q = " SELECT AVG(revtime) AS review_time_days_avg FROM ("+q+") t"
     return(ExecuteQuery(q))
 
-def StaticTimeToReviewMedianSCR (startdate, enddate, identities_db = None, type_analysis = []):
-    data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis))
+def StaticTimeToReviewSCR (startdate, enddate, identities_db = None, type_analysis = [], bots = []):
+    data = ExecuteQuery(GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis, bots))
     data = data['revtime']
     if (isinstance(data, list) == False): data = [data]
     # ttr_median = sorted(data)[len(data)//2]
-    ttr_median = median(removeDecimals(data))
-    return {"review_time_days_median":ttr_median}
+    if (len(data) == 0):
+        ttr_median = float("nan")
+        ttr_avg = float("nan")
+    else:
+        ttr_median = median(removeDecimals(data))
+        ttr_avg = average(removeDecimals(data))
+    return {"review_time_days_median":ttr_median, "review_time_days_avg":ttr_avg}
 
-def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
+
+def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
     review_list = ExecuteQuery(q)
     checkListArray(review_list)
-    # median_list = {"month":[],"review_time_median":[],"review_time_avg":[]}
-    median_list = {"month":[],"review_time_days_median":[]}
+
+    metrics_list = {"month":[],"review_time_days_median":[],"review_time_days_avg":[]}
+    # metrics_list = {"month":[],"review_time_days_median":[]}
     review_list_len = len(review_list['changed_on'])
-    if len(review_list['changed_on']) == 0: return median_list
+    if len(review_list['changed_on']) == 0: return metrics_list
     start = review_list['changed_on'][0]
     end = review_list['changed_on'][review_list_len-1]
     start_month = start.year*12 + start.month
     end_month = end.year*12 + end.month
     month = start_month
-    median_data = []
+
+    metrics_data = []
     for i in range (0,review_list_len):
         date = review_list['changed_on'][i]
-        if (date.year*12 + date.month) > month or i == review_list_len-1:
+        if (date.year*12 + date.month) > month:
             metrics_list['month'].append(month)
             if review_list_len == 1: 
                 metrics_data.append (review_list['revtime'][i])
@@ -771,12 +796,26 @@ def EvolTimeToReviewMedianSCR (period, startdate, enddate, identities_db = None,
                 ttr_median = median(removeDecimals(metrics_data))
                 ttr_avg = average(removeDecimals(metrics_data))
             # avg = sum(median) / float(len(median))
-            # median_list['review_time_avg'].append(avg)
-            median_list['review_time_days_median'].append(ttr_median)
+            # metrics_list['review_time_avg'].append(avg)
+            metrics_list['review_time_days_median'].append(ttr_median)
+            metrics_list['review_time_days_avg'].append(ttr_avg)
+            metrics_data = [review_list['revtime'][i]]
             month = date.year*12 + date.month
-            median_data = [review_list['revtime'][i]]
-        else: median_data.append (review_list['revtime'][i])
-    return median_list
+        if  i == review_list_len-1:
+            month = date.year*12 + date.month
+
+            # Close last month also
+            if (date.year*12 + date.month) > month:
+                metrics_data = [review_list['revtime'][i]]
+            elif (date.year*12 + date.month) == month:
+                metrics_data.append (review_list['revtime'][i])
+            metrics_list['month'].append(month)
+            ttr_median = median(removeDecimals(metrics_data))
+            ttr_avg = average(removeDecimals(metrics_data))
+            metrics_list['review_time_days_median'].append(ttr_median)
+            metrics_list['review_time_days_avg'].append(ttr_avg)
+        else: metrics_data.append (review_list['revtime'][i])
+    return metrics_list
 
 ##############
 # Microstudies

@@ -78,8 +78,6 @@ def aggData(period, startdate, enddate, idb, destdir):
     # Time to Review info
     data = SCR.StaticTimeToReviewSCR(startdate, enddate)
     data['review_time_days_avg'] = float(data['review_time_days_avg'])
-    agg = dict(agg.items() + data.items())
-    data = SCR.StaticTimeToReviewMedianSCR(startdate, enddate)
     data['review_time_days_median'] = float(data['review_time_days_median'])
     agg = dict(agg.items() + data.items())
 
@@ -149,8 +147,6 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
         data['review_time_days_avg'][i] = float(val)
         if (val == 0): data['review_time_days_avg'][i] = 0
     evol = dict(evol.items() + completePeriodIds(data).items())
-    data = SCR.EvolTimeToReviewMedianSCR (period, startdate, enddate)
-    evol = dict(evol.items() + completePeriodIds(data).items())
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
@@ -188,16 +184,18 @@ def peopleData(period, startdate, enddate, idb, destdir, top_data):
         createJSON(agg, destdir+"/people-"+str(upeople_id)+"-scr-static.json")
 
 def reposData(period, startdate, enddate, idb, destdir, conf):
-    # repos  = dataFrame2Dict(vizr.GetReposSCRName(startdate, enddate))
     repos  = SCR.GetReposSCRName(startdate, enddate)
     repos = repos["name"]
-    repos_files = [repo.replace('/', '_') for repo in repos]
-    createJSON(repos_files, destdir+"/scr-repos.json")
+    # For repos aggregated data. Include metrics to sort in javascript.
+    repos_list = {"name":[],"review_time_days_median":[],"submitted":[]}
 
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for repo in repos:
         repo_file = repo.replace("/","_")
+        logging.info(repo_file)
+        repos_list["name"].append(repo_file)
+        # logging.info("Repo: " + repo_file)
         type_analysis = ['repository', repo]
 
         evol = {}
@@ -214,18 +212,14 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
         data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
-        evol = dict(evol.items() + completePeriodIds(data).items())
-        data = SCR.EvolTimeToReviewMedianSCR(period, startdate, enddate, idb, type_analysis)
         data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
-        if repo_file in ["gerrit.ovirt.org_jenkins-whitelist","gerrit.ovirt.org_ovirt-release","gerrit.ovirt.org_jasperreports-server-rpm","gerrit.ovirt.org_ovirt-docs","gerrit.ovirt.org_samples-portals","gerrit.ovirt.org_gerrit-admin"]:
-            createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json", False)
-        else:
-            createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
+        createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
 
         # Static
         agg = {}
         data = SCR.StaticReviewsSubmitted(period, startdate, enddate, type_analysis)
+        repos_list["submitted"].append(data["submitted"])
         agg = dict(agg.items() + data.items())
         data = SCR.StaticReviewsMerged(period, startdate, enddate, type_analysis)
         agg = dict(agg.items() + data.items())
@@ -235,15 +229,16 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         agg = dict(agg.items() + data.items())
         data = SCR.StaticTimeToReviewSCR(startdate, enddate, idb, type_analysis)
         val = data['review_time_days_avg']
-        data['review_time_days_avg'] = float(val)
-        if (val == 0): data['review_time_days_avg'] = 0
-        agg = dict(agg.items() + data.items())
-        data = SCR.StaticTimeToReviewMedianSCR(startdate, enddate, idb, type_analysis)
+        if (not val or val == 0): data['review_time_days_avg'] = 0
+        else: data['review_time_days_avg'] = float(val)
         val = data['review_time_days_median']
-        data['review_time_days_median'] = float(val)
-        if (val == 0): data['review_time_days_median'] = 0
+        if (not val or val == 0): data['review_time_days_median'] = 0
+        else: data['review_time_days_median'] = float(val)
         agg = dict(agg.items() + data.items())
+        repos_list["review_time_days_median"].append(data['review_time_days_median'])
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
+        
+    createJSON(repos_list, destdir+"/scr-repos.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
     # companies  = dataFrame2Dict(vizr.GetCompaniesSCRName(startdate, enddate, idb))
@@ -267,6 +262,10 @@ def companiesData(period, startdate, enddate, idb, destdir):
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
+        data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
+        data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
+        evol = dict(evol.items() + completePeriodIds(data).items())
         createJSON(evol, destdir+ "/"+company_file+"-scr-com-evolutionary.json")
         # Static
         agg = {}
@@ -277,6 +276,14 @@ def companiesData(period, startdate, enddate, idb, destdir):
         data = SCR.StaticReviewsMerged(period, startdate, enddate, type_analysis, idb)
         agg = dict(agg.items() + data.items())
         data = SCR.StaticReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticTimeToReviewSCR(startdate, enddate, idb, type_analysis)
+        val = data['review_time_days_avg']
+        if (not val or val == 0): data['review_time_days_avg'] = 0
+        else: data['review_time_days_avg'] = float(val)
+        val = data['review_time_days_median']
+        if (not val or val == 0): data['review_time_days_median'] = 0
+        else: data['review_time_days_median'] = float(val)
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir+"/"+company_file+"-scr-com-static.json")
 
@@ -361,7 +368,7 @@ if __name__ == '__main__':
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
-    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
 
     if ('people' in reports):
