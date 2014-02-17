@@ -60,3 +60,54 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
            "  AND QUARTER(submitted_on) = "+str(quarter)+" AND YEAR(submitted_on) = "+str(year)+" "+\
            " GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC, id LIMIT "+str(limit)
     return (ExecuteQuery(q))
+
+################
+# KPI queries
+################
+
+# People Code Contrib New and Gone KPI
+def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
+                        order_by = ""):
+
+    if (tables != ""): tables +=  ","
+    if (filters != ""): filters  += " AND "
+    if (fields != ""): fields  += ","
+    if (order_by != ""): order_by  += ","
+
+    q= """
+    SELECT %s url, submitted_by, name, email, submitted_on
+    FROM %s
+      (SELECT COUNT(id) AS total, id, submitted_by, submitted_on
+       FROM issues GROUP BY submitted_by ORDER BY total) t,
+      people, issues_ext_gerrit
+    WHERE %s submitted_by = people.id AND total = 1 and DATEDIFF(now(), submitted_on)<%s
+          AND issues_ext_gerrit.issue_id = t.id
+    ORDER BY %s submitted_on DESC""" % (fields, tables, filters, period, order_by)
+
+    return q
+
+
+def GetNewSubmitters():
+    period = 180 # period of days to be analyzed
+    q = GetNewSubmittersSQL(period)
+    return(ExecuteQuery(q))
+
+def GetNewMergers():
+    period = 180 # period of days to be analyzed
+    fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime"
+    tables = "changes"
+    filters = " changes.issue_id = t.id "
+    filters += "AND field='status' AND new_value='MERGED'"
+    order_by = "revtime DESC"
+    q = GetNewSubmittersSQL(period, fields, tables, filters, order_by)
+    return(ExecuteQuery(q))
+
+def GetNewAbandoners():
+    period = 180 # period of days to be analyzed
+    fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime"
+    tables = "changes"
+    filters = " changes.issue_id = t.id "
+    filters += "AND field='status' AND new_value='ABANDONED'"
+    order_by = "revtime DESC"
+    q = GetNewSubmittersSQL(period, fields, tables, filters, order_by)
+    return(ExecuteQuery(q))

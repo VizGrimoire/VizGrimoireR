@@ -36,6 +36,7 @@ import logging
 # from rpy2.robjects.packages import importr
 import sys
 from Wikimedia import GetCompaniesQuartersSCR, GetPeopleQuartersSCR
+from Wikimedia import GetNewSubmitters, GetNewMergers, GetNewAbandoners
 
 # isoweek = importr("ISOweek")
 # vizr = importr("vizgrimoire")
@@ -392,6 +393,13 @@ def quartersData(period, startdate, enddate, idb, destdir, bots):
     createJSON(companies_quarters, destdir+"/scr-companies-quarters.json")
     createJSON(people_quarters, destdir+"/scr-people-quarters.json")
 
+def CodeContribKPI():
+    data = GetNewSubmitters()
+    print(data)
+    data = GetNewMergers()
+    print(data)
+    data = GetNewAbandoners()
+    print(data)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
@@ -425,5 +433,8 @@ if __name__ == '__main__':
         countriesData (period, startdate, enddate, opts.identities_db, opts.destdir)
     if ('companies' in reports):
         companiesData (period, startdate, enddate, opts.identities_db, opts.destdir)
+
+    # Specific Wikiemdia KPI analysis
+    CodeContribKPI()
 
     logging.info("SCR data source analysis OK")
