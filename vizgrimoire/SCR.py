@@ -679,7 +679,7 @@ def GetPeopleListSCR (startdate, enddate, bots):
 
 
 def GetPeopleQuerySCR (developer_id, period, startdate, enddate, evol):
-    fields = "COUNT(c.id) AS closed"
+    fields = "COUNT(c.id) AS changes"
     tables = GetTablesOwnUniqueIdsSCR()
     filters = GetFiltersOwnUniqueIdsSCR()+ " AND pup.upeople_id = "+ str(developer_id)
 
