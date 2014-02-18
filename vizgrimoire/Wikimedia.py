@@ -152,24 +152,24 @@ def GetPeopleLeaving():
 
     q_all_people = """
         SELECT COUNT(issues.id) AS total, submitted_by,
-               MAX(submitted_on) AS date, name, email
+               MAX(submitted_on) AS submitted_on, name, email
        FROM issues, people
        WHERE people.id = issues.submitted_by
        GROUP BY submitted_by ORDER BY total
        """
 
     q_leaving = """
-        SELECT name, submitted_by, email, date from
+        SELECT name, submitted_by, email, submitted_on from
           (%s) t
-        WHERE DATEDIFF(NOW(),date)>180 and DATEDIFF(NOW(),date)<=365
-        ORDER BY date, total DESC
+        WHERE DATEDIFF(NOW(),submitted_on)>180 and DATEDIFF(NOW(),submitted_on)<=365
+        ORDER BY submitted_on, total DESC
         """ % (q_all_people)
 
     q_mia  = """
-        SELECT name, submitted_by, email, date from
+        SELECT name, submitted_by, email, submitted_on from
           (%s) t
-        WHERE DATEDIFF(NOW(),date)>365
-        ORDER BY date, total DESC
+        WHERE DATEDIFF(NOW(),submitted_on)>365
+        ORDER BY submitted_on, total DESC
         """ % (q_all_people)
 
     data = {"leaving":{},"mia":{}}
