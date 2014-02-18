@@ -137,9 +137,10 @@ def GetNewSubmittersActivity():
 
     # Total submissions for new people in period
     q = """
-        SELECT total, name, email, first
-        FROM (%s) total_period, people
+        SELECT total, name, email, first, people_upeople.upeople_id
+        FROM (%s) total_period, people, people_upeople
         WHERE submitted_by = people.id and total < 20 and total>3
+          AND people.id = people_upeople.people_id
           AND submitted_by IN (%s)
         ORDER BY total DESC
         """ % (q_total_period, q_new_people)
