@@ -396,8 +396,8 @@ def CodeContribKPI(destdir):
     code_contrib["mergers"] = GetNewMergers()
     code_contrib["abandoners"] = GetNewAbandoners()
     createJSON(code_contrib, destdir+"/scr-code-contrib.json")
-    
-    GetNewSubmittersActivity()
+
+    print(GetNewSubmittersActivity())
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')

@@ -143,4 +143,4 @@ def GetNewSubmittersActivity():
           AND submitted_by IN (%s)
         ORDER BY total DESC
         """ % (q_total_period, q_new_people)
-    print(q)
+    return(ExecuteQuery(q))
