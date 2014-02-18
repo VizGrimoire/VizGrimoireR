@@ -30,7 +30,8 @@
 #                                                -o ../../../json -r people,repositories
 #
 
-from datetime import datetime
+from datetime import datetime, timedelta
+
 from dateutil.relativedelta import relativedelta
 import logging
 # from rpy2.robjects.packages import importr
@@ -397,7 +398,17 @@ def CodeContribKPI(destdir):
     code_contrib["abandoners"] = GetNewAbandoners()
     createJSON(code_contrib, destdir+"/scr-code-contrib.json")
 
-    print(GetNewSubmittersActivity())
+    data = GetNewSubmittersActivity()
+    evol = {}
+    evol['people'] = {}
+    for upeople_id in data['upeople_id']:
+        pdata = SCR.GetPeopleEvolSCR(upeople_id, period, startdate, enddate)
+        pdata = completePeriodIds(pdata)
+        evol['people'][upeople_id] = {"changes":pdata['changes']}
+        # Just to have the time series data
+        evol = dict(evol.items() + pdata.items())
+    del evol['changes'] # closed (metrics) is included in people
+    createJSON(evol, destdir+"/new-people-activity-scr-evolutionary.json")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
@@ -415,8 +426,6 @@ if __name__ == '__main__':
     # Working at the same time with VizR and VizPy yet
     # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    # reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
-    # sys.exit(0)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
