@@ -159,14 +159,14 @@ def GetPeopleLeaving():
        """
 
     q_leaving = """
-        SELECT name, submitted_by, email, submitted_on from
+        SELECT name, submitted_by, email, submitted_on, total from
           (%s) t
         WHERE DATEDIFF(NOW(),submitted_on)>180 and DATEDIFF(NOW(),submitted_on)<=365
         ORDER BY submitted_on, total DESC
         """ % (q_all_people)
 
     q_mia  = """
-        SELECT name, submitted_by, email, submitted_on from
+        SELECT name, submitted_by, email, submitted_on, total from
           (%s) t
         WHERE DATEDIFF(NOW(),submitted_on)>365
         ORDER BY submitted_on, total DESC
