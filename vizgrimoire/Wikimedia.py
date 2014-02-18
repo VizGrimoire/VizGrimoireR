@@ -111,3 +111,36 @@ def GetNewAbandoners():
     order_by = "revtime DESC"
     q = GetNewSubmittersSQL(period, fields, tables, filters, order_by)
     return(ExecuteQuery(q))
+
+# New people activity patterns
+
+def GetNewSubmittersActivity():
+    period = 180 # days
+
+    # Submissions total activity in period 
+    q_total_period = """
+        SELECT  status, COUNT(id) as total, id, submitted_by, 
+            MIN(submitted_on) AS first 
+        FROM issues
+        WHERE DATEDIFF(NOW(), submitted_on)<%s
+        GROUP BY submitted_by ORDER BY total""" % (period)
+
+    # First submission by people
+    q_first_submission = """
+        SELECT MIN(submitted_on) AS first, submitted_by 
+        FROM issues group by submitted_by
+        """
+    # New people in period sending submissions
+    q_new_people = """
+        SELECT submitted_by FROM ( %s) t
+        WHERE DATEDIFF(NOW(), first)<%s """ % (q_first_submission, period)
+
+    # Total submissions for new people in period
+    q = """
+        SELECT total, name, email, first
+        FROM (%s) total_period, people
+        WHERE submitted_by = people.id and total < 20 and total>3
+          AND submitted_by IN (%s)
+        ORDER BY total DESC
+        """ % (q_total_period, q_new_people)
+    print(q)

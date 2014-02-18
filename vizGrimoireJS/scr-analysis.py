@@ -37,6 +37,7 @@ import logging
 import sys
 from Wikimedia import GetCompaniesQuartersSCR, GetPeopleQuartersSCR
 from Wikimedia import GetNewSubmitters, GetNewMergers, GetNewAbandoners
+from Wikimedia import GetNewSubmittersActivity
 
 # isoweek = importr("ISOweek")
 # vizr = importr("vizgrimoire")
@@ -203,11 +204,9 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for repo in repos:
-        # repo = "gerrit.wikimedia.org_mediawiki/extensions/timeline"
         repo_file = repo.replace("/","_")
-        logging.info(repo_file)
         repos_list["name"].append(repo_file)
-        # logging.info("Repo: " + repo_file)
+        logging.info("Repo: " + repo_file)
         type_analysis = ['repository', repo]
 
         evol = {}
@@ -250,8 +249,6 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         repos_list["review_time_days_median"].append(data['review_time_days_median'])
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
-        # break
-        
     createJSON(repos_list, destdir+"/scr-repos.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
@@ -399,6 +396,8 @@ def CodeContribKPI(destdir):
     code_contrib["mergers"] = GetNewMergers()
     code_contrib["abandoners"] = GetNewAbandoners()
     createJSON(code_contrib, destdir+"/scr-code-contrib.json")
+    
+    GetNewSubmittersActivity()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
