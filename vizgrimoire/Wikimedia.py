@@ -148,7 +148,7 @@ def GetNewSubmittersActivity():
 # People leaving the project
 def GetPeopleLeaving():
     date_leaving = 180 # last contrib 6 months ago
-    date_mia = 365 # last contrib 1 year ago
+    date_gone = 365 # last contrib 1 year ago
 
     q_all_people = """
         SELECT COUNT(issues.id) AS total, submitted_by,
@@ -161,19 +161,19 @@ def GetPeopleLeaving():
     q_leaving = """
         SELECT name, submitted_by, email, submitted_on, total from
           (%s) t
-        WHERE DATEDIFF(NOW(),submitted_on)>180 and DATEDIFF(NOW(),submitted_on)<=365
+        WHERE DATEDIFF(NOW(),submitted_on)>%s and DATEDIFF(NOW(),submitted_on)<=%s
         ORDER BY submitted_on, total DESC
-        """ % (q_all_people)
+        """ % (q_all_people,date_leaving,date_gone)
 
-    q_mia  = """
+    q_gone  = """
         SELECT name, submitted_by, email, submitted_on, total from
           (%s) t
-        WHERE DATEDIFF(NOW(),submitted_on)>365
+        WHERE DATEDIFF(NOW(),submitted_on)>%s
         ORDER BY submitted_on, total DESC
-        """ % (q_all_people)
+        """ % (q_all_people, date_gone)
 
     data = {"leaving":{},"mia":{}}
-    data["mia"] = ExecuteQuery(q_mia)
+    data["gone"] = ExecuteQuery(q_gone)
     data["leaving"] = ExecuteQuery(q_leaving)
 
     return data
