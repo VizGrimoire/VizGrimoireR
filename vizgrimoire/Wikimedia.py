@@ -86,7 +86,6 @@ def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
 
     return q
 
-
 def GetNewSubmitters():
     period = 180 # period of days to be analyzed
     q = GetNewSubmittersSQL(period)
@@ -145,3 +144,36 @@ def GetNewSubmittersActivity():
         ORDER BY total DESC
         """ % (q_total_period, q_new_people)
     return(ExecuteQuery(q))
+
+# People leaving the project
+def GetPeopleLeaving():
+    date_leaving = 180 # last contrib 6 months ago
+    date_mia = 365 # last contrib 1 year ago
+
+    q_all_people = """
+        SELECT COUNT(issues.id) AS total, submitted_by,
+               MAX(submitted_on) AS date, name, email
+       FROM issues, people
+       WHERE people.id = issues.submitted_by
+       GROUP BY submitted_by ORDER BY total
+       """
+
+    q_leaving = """
+        SELECT name, submitted_by, email, date from
+          (%s) t
+        WHERE DATEDIFF(NOW(),date)>180 and DATEDIFF(NOW(),date)<=365
+        ORDER BY date, total DESC
+        """ % (q_all_people)
+
+    q_mia  = """
+        SELECT name, submitted_by, email, date from
+          (%s) t
+        WHERE DATEDIFF(NOW(),date)>365
+        ORDER BY date, total DESC
+        """ % (q_all_people)
+
+    data = {"leaving":{},"mia":{}}
+    data["mia"] = ExecuteQuery(q_mia)
+    data["leaving"] = ExecuteQuery(q_leaving)
+
+    return data
