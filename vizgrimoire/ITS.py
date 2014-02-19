@@ -249,7 +249,8 @@ def GetClosed (period, startdate, enddate, identities_db, type_analysis, evoluti
     fields = " count(distinct(i.id)) as closed "
     tables = " issues i, changes ch " + GetITSSQLReportFrom(identities_db, type_analysis)
 
-    filters = " i.id = ch.issue_id and " + closed_condition 
+    filters = " i.id = ch.issue_id and " + closed_condition
+
     filters_ext = GetITSSQLReportWhere(type_analysis)
     if (filters_ext != ""):
         filters += " and " + filters_ext
@@ -980,6 +981,157 @@ def GetPeopleStaticITS (developer_id, startdate, enddate, closed_condition) :
     ## fixed
     q = GetPeopleQueryITS(developer_id, None, startdate, enddate, False, closed_condition)
 
+    data = ExecuteQuery(q)
+    return (data)
+
+
+#################
+# Views
+#################
+
+# Actions : changes or comments that were made by others than the reporter.
+
+def GetViewFirstChangeAndCommentQueryITS():
+    """Returns the first change and comment of each issue done by others
+    than the reporter"""
+
+    q = "CREATE OR REPLACE VIEW first_change_and_comment_issues AS " +\
+        "SELECT c.issue_id issue_id, MIN(c.changed_on) date " +\
+        "FROM changes c, issues i " +\
+        "WHERE changed_by <> submitted_by AND i.id = c.issue_id " +\
+        "GROUP BY c.issue_id " +\
+        "UNION " + \
+        "SELECT c.issue_id issue_id, MIN(c.submitted_on) date " +\
+        "FROM comments c, issues i " +\
+        "WHERE c.submitted_by <> i.submitted_by AND c.issue_id = i.id " +\
+        "GROUP BY c.issue_id"
+    return q
+
+
+def GetViewFirstActionPerIssueQueryITS():
+    """Returns the first action of each issue.
+       Actions means changes or comments that were made by others than
+       the reporter."""
+
+    q = "CREATE OR REPLACE VIEW first_action_per_issue AS " +\
+        "SELECT issue_id, MIN(date) date " +\
+        "FROM first_change_and_comment_issues " +\
+        "GROUP BY issue_id"
+    return q
+
+
+def GetViewFirstCommentPerIssueQueryITS():
+    """Returns those issues without changes, only comments made
+       but others than the reporter."""
+
+    q = "CREATE OR REPLACE VIEW first_comment_per_issue AS " +\
+        "SELECT c.issue_id issue_id, MIN(c.submitted_on) date " +\
+        "FROM comments c, issues i " +\
+        "WHERE c.submitted_by <> i.submitted_by " +\
+        "AND c.issue_id = i.id " +\
+        "GROUP BY c.issue_id"
+    return q
+
+
+def GetViewLastCommentPerIssueQueryITS():
+    """Returns those issues without changes, only comments made
+       but others than the reporter."""
+
+    q = "CREATE OR REPLACE VIEW last_comment_per_issue AS " +\
+        "SELECT c.issue_id issue_id, MAX(c.submitted_on) date " +\
+        "FROM comments c, issues i " +\
+        "WHERE c.submitted_by <> i.submitted_by " +\
+        "AND c.issue_id = i.id " +\
+        "GROUP BY c.issue_id"
+    return q
+
+
+def GetViewNoActionIssuesQueryITS():
+    """Returns those issues without actions.
+       Actions means changes or comments that were made by others than
+       the reporter."""
+
+    q = "CREATE OR REPLACE VIEW no_action_issues AS " +\
+        "SELECT id issue_id " +\
+        "FROM issues " +\
+        "WHERE id NOT IN ( " +\
+        "SELECT DISTINCT(c.issue_id) " +\
+        "FROM issues i, changes c " +\
+        "WHERE i.id = c.issue_id AND c.changed_by <> i.submitted_by)"
+    return q
+
+
+def CreateViewsITS():
+    #FIXME: views should be only created once
+    q = GetViewFirstChangeAndCommentQueryITS()
+    ExecuteViewQuery(q)
+
+    q = GetViewFirstActionPerIssueQueryITS()
+    ExecuteViewQuery(q)
+
+    q = GetViewFirstCommentPerIssueQueryITS()
+    ExecuteViewQuery(q)
+
+    q = GetViewLastCommentPerIssueQueryITS()
+    ExecuteViewQuery(q)
+
+    q = GetViewNoActionIssuesQueryITS()
+    ExecuteViewQuery(q)
+
+
+
+#########################
+# Time to first response
+#########################
+
+def GetTimeToFirstAction (period, startdate, enddate, condition, alias=None) :
+    fields = " AVG(TIMESTAMPDIFF(SECOND, submitted_on, fa.date)/(24*3600)) AS %s"
+    if alias:
+        fields = fields % alias
+    else:
+        fields = fields % "action_avg_response"
+    tables = " first_action_per_issue fa, issues i "
+    filters = " i.id = fa.issue_id "
+    if condition:
+        filters += condition
+
+    CreateViewsITS()
+    q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
+                     startdate, enddate)
+    data = ExecuteQuery(q)
+    return (data)
+
+def GetTimeToFirstComment (period, startdate, enddate, condition, alias=None) :
+    fields = " AVG(TIMESTAMPDIFF(SECOND, submitted_on, fc.date)/(24*3600)) AS %s "
+    if alias:
+        fields = fields % alias
+    else:
+        fields = fields % "comment_avg_response"
+    tables = " first_comment_per_issue fc, issues i "
+    filters = " i.id = fc.issue_id "
+    if condition:
+        filters += condition
+
+    CreateViewsITS()
+    q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
+                     startdate, enddate)
+    data = ExecuteQuery(q)
+    return (data)
+
+def GetTimeToClosed (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
+    fields = " AVG(TIMESTAMPDIFF(SECOND, submitted_on, ch.changed_on)/(24*3600)) AS %s "
+    if alias:
+        fields = fields % alias
+    else:
+        fields = fields % "closed_avg"
+    tables = " issues i, changes ch "
+    filters = " i.id = ch.issue_id AND " + closed_condition
+
+    if ext_condition:
+        filters += ext_condition
+
+    q = GetSQLPeriod(period, 'changed_on', fields, tables, filters,
+                     startdate, enddate)
     data = ExecuteQuery(q)
     return (data)
 

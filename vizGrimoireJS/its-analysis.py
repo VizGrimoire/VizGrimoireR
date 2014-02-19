@@ -57,13 +57,15 @@ class Backend(object):
         if (its_type == 'allura'):
             Backend.closed_condition = "new_value='CLOSED'"
         if (its_type == 'bugzilla'):
-            Backend.closed_condition = "(new_value='RESOLVED' OR new_value='CLOSED')"
+            Backend.closed_condition = "(new_value='RESOLVED' OR new_value='CLOSED' OR new_value='Lowest')"
             Backend.reopened_condition = "new_value='NEW'"
             Backend.name_log_table = 'issues_log_bugzilla'
             Backend.statuses = ["NEW", "ASSIGNED"]
             #Pretty specific states in Red Hat's Bugzilla
             Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
                     "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
+            Backend.priority = ["Unprioritized", "Lowest", "Low", "Normal", "High", "Highest", "Immediate"]
+            Backend.severity = ["trivial", "minor", "normal", "major", "blocker", "critical", "enhancement"]
 
         if (its_type == 'github'):
             Backend.closed_condition = "field='closed'"
@@ -159,6 +161,8 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
 
     evol = dict(evol.items() +
                 ticketsStates(period, startdate, enddate, identities_db, backend).items())
+    evol = dict(evol.items() +
+                ticketsTimeToResponse(period, startdate, enddate, identities_db, backend).items())
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 
@@ -328,6 +332,39 @@ def ticketsStates(period, startdate, enddate, identities_db, backend):
         evol = dict(evol.items() + current_status.items() + tickets_status.items())
     return evol
 
+def ticketsTimeToResponse(period, startdate, enddate, identities_db, backend):
+    time_to_response_priority = ticketsTimeToResponseByField(period, startdate, enddate,
+                                                             backend.closed_condition,
+                                                             'priority', backend.priority)
+    time_to_response_severity = ticketsTimeToResponseByField(period, startdate, enddate,
+                                                             backend.closed_condition,
+                                                             'type', backend.severity)
+    evol = dict(time_to_response_priority.items() + time_to_response_severity.items())
+    return evol
+
+def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, field, values_set):
+    condition = "AND i." + field + " = '%s'"
+    evol = {}
+
+    for field_value in values_set:
+        field_condition = condition % field_value
+
+        fa_alias = 'avg_fa_%s' % field_value
+        time_to_fa = ITS.GetTimeToFirstAction(period, startdate, enddate, field_condition, fa_alias)
+        time_to_fa = completePeriodIds(time_to_fa)
+
+        fc_alias = 'avg_fc_%s' % field_value
+        time_to_fc = ITS.GetTimeToFirstComment(period, startdate, enddate, field_condition, fc_alias)
+        time_to_fc = completePeriodIds(time_to_fc)
+
+        closed_alias = 'avg_closed_%s' % field_value
+        time_to_closed = ITS.GetTimeToClosed (period, startdate, enddate, closed_condition, field_condition, closed_alias)
+        time_to_closed = completePeriodIds(time_to_closed)
+
+        evol = dict(evol.items() + time_to_fa.items() + time_to_fc.items() + time_to_closed.items())
+    return evol
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
     logging.info("Starting ITS data source analysis")
@@ -348,7 +385,7 @@ if __name__ == '__main__':
     # backends
     backend = Backend(opts.backend)
 
-    tsData (period, startdate, enddate, opts.identities_db, opts.destdir, 
+    tsData (period, startdate, enddate, opts.identities_db, opts.destdir,
             opts.granularity, opts, backend)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, backend.closed_condition)
 
