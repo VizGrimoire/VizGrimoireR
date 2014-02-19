@@ -451,3 +451,21 @@ def checkFloatArray(data):
         data[i] = float(val)
         if (val == 0): data[i] = 0
     return data
+
+def completeTops(tops, details, backend_name='bugzilla'):
+    completed_tops = dict(tops.items())
+    completed_tops['summary'] = []
+    completed_tops['url'] = []
+
+    for issue_id in tops['issue_id']:
+        info = details[issue_id]
+        completed_tops['summary'].append(info[0])
+        completed_tops['url'].append(buildIssueURL(info[1], issue_id, backend_name))
+    return completed_tops
+
+def buildIssueURL(tracker_url, issue_id, backend='bugzilla'):
+    if backend is not 'bugzilla':
+        return ""
+    offset = tracker_url.find('/buglist.cgi')
+    url = tracker_url[:offset] + '/show_bug.cgi?id=' + issue_id
+    return url

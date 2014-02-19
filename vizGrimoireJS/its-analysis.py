@@ -39,7 +39,7 @@ isoweek = importr("ISOweek")
 vizr = importr("vizgrimoire")
 
 import GrimoireUtils, GrimoireSQL
-from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
+from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds, completeTops
 from GrimoireUtils import valRtoPython, read_options, getPeriod
 import ITS
 
@@ -292,15 +292,25 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, closed_con
     top_close_condition_mediawiki = "(status = 'RESOLVED' OR status = 'CLOSED' OR priority = 'Lowest')"
     nissues = "20"
 
+    issues_details = ITS.GetIssuesDetails()
+
     top_issues_data = {}
-    top_issues_data['issues.no action']=ITS.GetTopIssuesWithoutAction(startdate, enddate, top_close_condition_mediawiki, nissues)
-    top_issues_data['issues.no comment']=ITS.GetTopIssuesWithoutComment(startdate, enddate, top_close_condition_mediawiki, nissues)
-    top_issues_data['issues.no resolution']=ITS.GetTopIssuesWithoutResolution(startdate, enddate, top_close_condition_mediawiki, nissues)
+
+    tops = ITS.GetTopIssuesWithoutAction(startdate, enddate, top_close_condition_mediawiki, nissues)
+    top_issues_data['issues.no action']= completeTops(tops, issues_details)
+
+    tops = ITS.GetTopIssuesWithoutComment(startdate, enddate, top_close_condition_mediawiki, nissues)
+    top_issues_data['issues.no comment']= completeTops(tops, issues_details)
+
+    tops = ITS.GetTopIssuesWithoutResolution(startdate, enddate, top_close_condition_mediawiki, nissues)
+    top_issues_data['issues.no resolution']= completeTops(tops, issues_details)
 
     all_top = dict(top_closers_data.items() + top_openers_data.items() + top_issues_data.items())
     createJSON (all_top, destdir+"/its-top.json", False)
 
     return all_top
+
+
 
 def microStudies(destdir):
     # Studies implemented in R

@@ -936,6 +936,20 @@ def GetTopIssuesWithoutResolution(startdate, enddate, closed_condition, limit):
     return (data)
 
 
+def GetIssuesDetails():
+    q = "SELECT i.issue AS issue_id, i.summary AS summary, t.url AS tracker_url " +\
+        "FROM issues i, trackers t " +\
+        "WHERE i.tracker_id = t.id "
+    data = ExecuteQuery(q)
+
+    details = {}
+    i = 0
+    for issue_id in data['issue_id']:
+        details[issue_id] = (data['summary'][i], data['tracker_url'][i])
+        i += 1
+    return details
+
+
 #################
 # People information, to be refactored
 #################
@@ -1077,7 +1091,6 @@ def CreateViewsITS():
 
     q = GetViewNoActionIssuesQueryITS()
     ExecuteViewQuery(q)
-
 
 
 #########################
