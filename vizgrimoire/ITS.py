@@ -30,7 +30,7 @@
 import re, sys
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
-from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
+from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, ExecuteViewQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds
 import GrimoireUtils
 
@@ -880,6 +880,60 @@ def GetTopOpeners (days, startdate, enddate,
         "    LIMIT " + limit
     data = ExecuteQuery(q)
     return (data)
+
+
+def GetTopIssuesWithoutAction(startdate, enddate, closed_condition, limit):
+    CreateViewsITS()
+
+    q = "SELECT issue_id, TIMESTAMPDIFF(SECOND, date, NOW())/(24*3600) AS time " +\
+        "FROM ( " +\
+        "  SELECT issue AS issue_id, submitted_on AS date " +\
+        "  FROM issues " +\
+        "  WHERE id NOT IN ( " +\
+        "    SELECT issue_id " +\
+        "    FROM first_action_per_issue " +\
+        "  ) " +\
+        "  AND NOT ( " + closed_condition + ") " +\
+        "  AND submitted_on >= " + startdate + " AND submitted_on < " + enddate +\
+        ") no_actions " +\
+        "GROUP BY issue_id " +\
+        "ORDER BY time DESC " +\
+        "LIMIT " + limit
+    data = ExecuteQuery(q)
+    return (data)
+
+
+def GetTopIssuesWithoutComment(startdate, enddate, closed_condition, limit):
+    CreateViewsITS()
+
+    q = "SELECT issue_id, TIMESTAMPDIFF(SECOND, date, NOW())/(24*3600) AS time " +\
+        "FROM ( " +\
+        "  SELECT issue AS issue_id, submitted_on AS date " +\
+        "  FROM issues " +\
+        "  WHERE id NOT IN ( " +\
+        "    SELECT issue_id " +\
+        "    FROM last_comment_per_issue " +\
+        "  ) " +\
+        "  AND NOT ( " + closed_condition + ") " +\
+        "  AND submitted_on >= " + startdate + " AND submitted_on < " + enddate +\
+        ") no_comments " +\
+        "GROUP BY issue_id " +\
+        "ORDER BY time DESC " +\
+        "LIMIT " + limit
+    data = ExecuteQuery(q)
+    return (data)
+
+
+def GetTopIssuesWithoutResolution(startdate, enddate, closed_condition, limit):
+    q = "SELECT issue AS issue_id, TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS time " +\
+        "FROM issues " +\
+        "WHERE NOT ( " + closed_condition + ") " +\
+        "AND submitted_on >= " + startdate + " AND submitted_on < " + enddate +\
+        "ORDER BY time DESC " +\
+        "LIMIT " + limit
+    data = ExecuteQuery(q)
+    return (data)
+
 
 #################
 # People information, to be refactored
