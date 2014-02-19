@@ -75,9 +75,9 @@ def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
     if (order_by != ""): order_by  += ","
 
     q= """
-    SELECT %s url, submitted_by, name, email, submitted_on
+    SELECT %s url, submitted_by, name, email, submitted_on, status
     FROM %s
-      (SELECT COUNT(id) AS total, id, submitted_by, submitted_on
+      (SELECT COUNT(id) AS total, id, submitted_by, submitted_on, status
        FROM issues GROUP BY submitted_by ORDER BY total) t,
       people, issues_ext_gerrit
     WHERE %s submitted_by = people.id AND total = 1 and DATEDIFF(now(), submitted_on)<%s
