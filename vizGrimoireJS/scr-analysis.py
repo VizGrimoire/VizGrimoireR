@@ -228,6 +228,9 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolReviewsAbandoned(period, startdate, enddate, type_analysis)
         evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolReviewsNew(period, startdate, enddate, type_analysis)
+        evol = dict(evol.items() + completePeriodIds(data).items())
+
         # data = vizr.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis)
         # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
         data = SCR.EvolReviewsPendingChanges(period, startok, enddate, conf, type_analysis, idb)
