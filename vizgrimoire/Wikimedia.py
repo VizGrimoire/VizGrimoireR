@@ -68,26 +68,21 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
 # People Code Contrib New and Gone KPI
 
 def GetNewPeopleListSQL(period):
-    # First submission by people
-    q_first_submission = """
-        SELECT MIN(submitted_on) AS first, submitted_by 
-        FROM issues group by submitted_by
-        """
-    # New people in period sending submissions
     q_new_people = """
-        SELECT submitted_by FROM ( %s) t
-        WHERE DATEDIFF(NOW(), first)<%s """ % (q_first_submission, period)
-
-    return (q_new_people)
+        SELECT submitted_by FROM (SELECT MIN(submitted_on) AS first, submitted_by
+        FROM issues GROUP BY submitted_by
+        HAVING DATEDIFF(NOW(), first)<%s) plist """ % (period)
+    return q_new_people
 
 # Total submissions for people in period
 def GetNewPeopleTotalListSQL(period):
     q_total_period = """
-        SELECT  status, COUNT(id) as total, id, submitted_by, 
-            MIN(submitted_on) AS first, submitted_on
+        SELECT COUNT(id) as total, submitted_by, MIN(submitted_on) AS first
         FROM issues
-        WHERE DATEDIFF(NOW(), submitted_on)<%s
-        GROUP BY submitted_by ORDER BY total""" % (period)
+        GROUP BY submitted_by
+        HAVING DATEDIFF(NOW(), first)<%s
+        ORDER BY total
+        """ % (period)
     return q_total_period
 
 # New people in period with 1 submission
@@ -102,19 +97,23 @@ def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
     q_new_people = GetNewPeopleListSQL(period)
     q_total_period = GetNewPeopleTotalListSQL(period)
 
+    # Get the first submission for newcomers
     q= """
     SELECT %s url, submitted_by, name, email, submitted_on, status
-    FROM %s (%s) t, people, issues_ext_gerrit
-    WHERE %s submitted_by = people.id AND total = 1 and DATEDIFF(NOW(), submitted_on)<%s
-          AND issues_ext_gerrit.issue_id = t.id 
+    FROM %s people, issues_ext_gerrit, issues
+    WHERE %s submitted_by = people.id AND DATEDIFF(NOW(), submitted_on)<%s
+          AND issues_ext_gerrit.issue_id = issues.id
           AND submitted_by IN (%s)
-    ORDER BY %s submitted_on DESC""" % \
-        (fields, tables, q_total_period, filters, period, q_new_people, order_by)
-
+    ORDER BY %s submitted_on""" % \
+        (fields, tables, filters, period, q_new_people, order_by)
+    # Order so the group by take the first submission
+    q = """
+    SELECT * FROM ( %s ) t GROUP BY submitted_by
+    """ % (q)
     return q
 
 def GetNewSubmitters():
-    period = 180 # period of days to be analyzed
+    period = 90 # period of days to be analyzed
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS revtime_pending"
     tables = ""
     filters = "status<>'MERGED' AND status<>'ABANDONED'"
@@ -122,20 +121,20 @@ def GetNewSubmitters():
     return(ExecuteQuery(q))
 
 def GetNewMergers():
-    period = 180 # period of days to be analyzed
+    period = 90 # period of days to be analyzed
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime"
     tables = "changes"
-    filters = " changes.issue_id = t.id "
+    filters = " changes.issue_id = issues.id "
     filters += "AND field='status' AND new_value='MERGED'"
     order_by = "revtime DESC"
     q = GetNewSubmittersSQL(period, fields, tables, filters, order_by)
     return(ExecuteQuery(q))
 
 def GetNewAbandoners():
-    period = 180 # period of days to be analyzed
+    period = 90 # period of days to be analyzed
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime"
     tables = "changes"
-    filters = " changes.issue_id = t.id "
+    filters = " changes.issue_id = issues.id "
     filters += "AND field='status' AND new_value='ABANDONED'"
     order_by = "revtime DESC"
     q = GetNewSubmittersSQL(period, fields, tables, filters, order_by)
@@ -144,7 +143,7 @@ def GetNewAbandoners():
 # New people activity patterns
 
 def GetNewSubmittersActivity():
-    period = 180 # days
+    period = 90 # days
     min_submissions = 3 # to have enough data
     max_submissions = 20 # to detect new people
 
@@ -166,8 +165,8 @@ def GetNewSubmittersActivity():
 
 # People leaving the project
 def GetPeopleLeaving():
-    date_leaving = 180 # last contrib 6 months ago
-    date_gone = 365 # last contrib 1 year ago
+    date_leaving = 90 # last contrib 3 months ago
+    date_gone = 180 # last contrib 6 months ago
 
     q_all_people = """
         SELECT COUNT(issues.id) AS total, submitted_by,
