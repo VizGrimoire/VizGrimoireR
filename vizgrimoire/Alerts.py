@@ -22,7 +22,7 @@
 
 import GrimoireUtils
 import GrimoireSQL
-
+from GrimoireSQL import ExecuteQuery
 
 def NewComersSCM(days, i_db):
     # Returns a list of newcomers in the last "days"
@@ -45,7 +45,7 @@ def NewComersSCM(days, i_db):
     return(ExecuteQuery(query))         
 
 
-def NewComersITS(days):
+def NewComersITS(days, i_db):
     # Returns a list of newcomers in the last "days"
     # This is done at the issue level, and not comments/changes level.
     query = """
