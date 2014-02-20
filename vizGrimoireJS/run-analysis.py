@@ -108,6 +108,16 @@ def get_vars():
     return v
 
 def get_analysis_cmd(v, script, db):
+    # Building command line options string
+
+    if not get_options().python:
+        # Specific case of alerts.py script.
+        # This needs specific parameters, and not the common ones to the rest of
+        # the scripts
+        if script == "alerts.py":
+            cmd = "PYTHONPATH=%s LANG= ./%s -i %s --scm %s --mls %s --its %s --scr %s -d %s -u %s -p %s" % \
+                  (v['python_libs'], script, v['identities'], v['db_cvsanaly'], v['db_bicho'], v['db_mlstats'], v['db_gerrit'])
+        
     if (not get_options().python):
         cmd = "LANG= R_LIBS=%s R --vanilla --args -r %s -d %s -u %s -p %s " % \
             (v['r_libs'], v['reports'], db , v['db_user'], v['db_password'])
@@ -116,7 +126,7 @@ def get_analysis_cmd(v, script, db):
         print(script)
         cmd = "PYTHONPATH=%s LANG= R_LIBS=%s ./%s -r %s -d %s -u %s -p %s " % \
             (v['python_libs'], v['r_libs'], script, v['reports'], db , v['db_user'], v['db_password'])
-    cmd += "-i %s -s %s -e %s -o %s -g %s " % \
+        cmd += "-i %s -s %s -e %s -o %s -g %s " % \
         (v['db_identities'], v['start_date'], v['end_date'], v['json_dir'], v['period'])
     if script == "its-analysis.R" or script == "its-analysis.py":
         cmd += "-t %s " % (v['bicho_backend'])
@@ -198,6 +208,20 @@ def execute_mediawiki_script(env):
     os.system(cmd)
     print("MediaWiki analysis finished")
 
+def execute_alerts_script(env):
+    # Specific call for alerts
+    if not 'alerts' in env:
+        print("alerts analysis disabled")
+        return
+    print("Starting Alerts analysis  ..")
+    # TODO: get_analysis_cmd asks for only one db
+    # however, the alerts analysis needs all of the dbs
+    # so no database is provided, but the whole "env" environment
+    cmd = get_analysis_cmd(env, "alerts.py", "")
+    print(cmd)
+    #os.system(cmd)
+    print("Alerts analysis finished")
+
 tasks_section = {
     'scm':execute_scm_script,
     'people':execute_people_script,
@@ -206,8 +230,9 @@ tasks_section = {
     'scr':execute_scr_script,
     'mediawiki':execute_mediawiki_script,
     'irc': execute_irc_script,
+    'alerts': execute_alerts_script
 }
-tasks_order = ['scm','people','its','mls','scr','mediawiki','irc']
+tasks_order = ['scm','people','its','mls','scr','mediawiki','irc', 'alerts']
 
 
 
