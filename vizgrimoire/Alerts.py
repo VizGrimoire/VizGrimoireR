@@ -24,8 +24,8 @@ import GrimoireUtils
 import GrimoireSQL
 
 
-def NewComersSCM(days):
-    # Returns a list of newcomers in the last "days" days
+def NewComersSCM(days, i_db):
+    # Returns a list of newcomers in the last "days"
   
     query = """
             select t.identifier as name, 
@@ -35,20 +35,78 @@ def NewComersSCM(days):
                         min(s.date) as first_date 
                  from scmlog s, 
                       people_upeople pup, 
-                      upeople u 
+                      %s.upeople u 
                  where s.author_id = pup.people_id and 
                        pup.upeople_id = u.id 
                  group by u.id 
                  order by min(s.date) desc) t 
             where t.first_date > date_sub(now(), interval %s day)
-            """ % (str(day))
+            """ % (i_db, str(days))
     return(ExecuteQuery(query))         
 
 
-#def NewComersITS():
+def NewComersITS(days):
+    # Returns a list of newcomers in the last "days"
+    # This is done at the issue level, and not comments/changes level.
+    query = """
+            select t.identifier as name, 
+                   t.first_date as first_date 
+            from 
+                 (select u.identifier as identifier,
+                         min(i.submitted_on) as first_date
+                  from issues i,
+                       people_upeople pup,
+                       %s.upeople u
+                  where i.submitted_by = pup.people_id and
+                        pup.upeople_id = u.id
+                  group by u.id
+                  order by min(i.submitted_on) desc) t 
+            where t.first_date > date_sub(now(), interval %s day)
+            """ % (i_db, str(days))
+    return(ExecuteQuery(query))
 
 
-#def NewComersMLS():
+
+def NewComersMLS(days, i_db):
+    # Returns a list of newcomers in the last "days" 
+    query = """
+            select t.identifier as name, 
+                   t.first_date as first_date 
+            from 
+                 (select u.identifier as identifier, 
+                         min(m.first_date) as first_date 
+                  from messages m, 
+                       messages_people mp, 
+                       people_upeople pup, 
+                       %s.upeople u 
+                  where m.message_ID = mp.message_id and 
+                        mp.email_address = pup.people_id and 
+                        pup.upeople_id = u.id 
+                  group by u.identifier 
+                  order by min(m.first_date) desc) t 
+            where t.first_date > date_sub(now(), interval %s day)
+            """ % (i_db, str(days))
+    return(ExecuteQuery(query))
+
+def NewComersSCR(days, i_db): 
+    # Returns a list of newcomers in the last "days"
+    # This is done at the review level, and not patch level.
+    query = """
+            select t.identifier as name, 
+                   t.first_date as first_date 
+            from 
+                 (select u.identifier as identifier,
+                         min(i.submitted_on) as first_date
+                  from issues i,
+                       people_upeople pup,
+                       %s.upeople u
+                  where i.submitted_by = pup.people_id and
+                        pup.upeople_id = u.id
+                  group by u.id
+                  order by min(i.submitted_on) desc) t 
+            where t.first_date > date_sub(now(), interval %s day)
+            """ % (i_db, str(days))
+    return(ExecuteQuery(query))
 
 
-#def NewComersSCR(): 
+
