@@ -75,27 +75,36 @@ def GetNewPeopleListSQL(period):
     return q_new_people
 
 # Total submissions for people in period
-def GetNewPeopleTotalListSQL(period):
+def GetNewPeopleTotalListSQL(period, filters=""):
+    if (filters != ""): filters  = " WHERE " + filters
     q_total_period = """
         SELECT COUNT(id) as total, submitted_by, MIN(submitted_on) AS first
         FROM issues
+        %s
         GROUP BY submitted_by
         HAVING DATEDIFF(NOW(), first)<%s
         ORDER BY total
-        """ % (period)
+        """ % (filters, period)
     return q_total_period
 
 # New people in period with 1 submission
 def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
                         order_by = ""):
 
+    # Adapt filters for total: use issues table only
+    filters_total = filters
+    if "new_value='ABANDONED'" in filters:
+        filters_total = "status='ABANDONED'"
+    if "new_value='MERGED'" in filters:
+        filters_total = "status='MERGED'"
+
+    q_new_people = GetNewPeopleListSQL(period)
+    q_total_period = GetNewPeopleTotalListSQL(period, filters_total)
+
     if (tables != ""): tables +=  ","
     if (filters != ""): filters  += " AND "
     if (fields != ""): fields  += ","
     if (order_by != ""): order_by  += ","
-
-    q_new_people = GetNewPeopleListSQL(period)
-    q_total_period = GetNewPeopleTotalListSQL(period)
 
     # Get the first submission for newcomers
     q= """
@@ -106,10 +115,12 @@ def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
           AND submitted_by IN (%s)
     ORDER BY %s submitted_on""" % \
         (fields, tables, filters, period, q_new_people, order_by)
-    # Order so the group by take the first submission
+    # Order so the group by take the first submission and add total
     q = """
-    SELECT * FROM ( %s ) t GROUP BY submitted_by
-    """ % (q)
+    SELECT * FROM ( %s ) nc, (%s) total 
+    WHERE total.submitted_by = nc.submitted_by
+    GROUP BY nc.submitted_by ORDER BY nc.submitted_on DESC
+    """ % (q, q_total_period)
     return q
 
 def GetNewSubmitters():
