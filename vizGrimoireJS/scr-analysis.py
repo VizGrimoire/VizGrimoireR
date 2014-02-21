@@ -210,7 +210,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
     repos  = SCR.GetReposSCRName(startdate, enddate)
     repos = repos["name"]
     # For repos aggregated data. Include metrics to sort in javascript.
-    repos_list = {"name":[],"review_time_days_median":[],"submitted":[]}
+    repos_list = {"name":[],"review_time_days_median":[],"submitted":[],"new":[]}
 
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
@@ -249,6 +249,9 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         data = SCR.StaticReviewsMerged(period, startdate, enddate, type_analysis)
         agg = dict(agg.items() + data.items())
         data = SCR.StaticReviewsAbandoned(period, startdate, enddate, type_analysis)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticReviewsNew(period, startdate, enddate, type_analysis)
+        repos_list["new"].append(data["new"])
         agg = dict(agg.items() + data.items())
         data = SCR.StaticReviewsPending(period, startok, enddate, type_analysis)
         agg = dict(agg.items() + data.items())
