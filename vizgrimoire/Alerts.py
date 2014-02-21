@@ -24,10 +24,45 @@ import GrimoireUtils
 import GrimoireSQL
 from GrimoireSQL import ExecuteQuery
 
-def NewComersSCM(days, i_db):
-    # Returns a list of newcomers in the last "days"
+
+class Alert(object):
+
+    def __init__ (self, output, destdir):
+        # Type of output, typically panel, email, 
+        # tweet and others to be defined.
+        # Probably to define object for each of the cases and to be
+        # provided by the customer
+        self.output = output # type of output: panel, email
+        self.destdir = destdir # directory of the output if needed
+
+    def push(self, data):
+        # Method to publish results of the alert
+        # Depending on the selected self.output, this
+        # method will publish results as an email,
+        # JSON file, etc.
+        print data
+        if self.output == "panel":
+            #GrimoireUtils.createJSON(data, self.destdir + "alert.json")
+            print self.destdir + "alert.json"
+        else:
+            print "No identified output"
+            pass
+
+class NewComers(Alert):
+    # Specific alert to obtain information about 
+    # new people in the several repositories.
+
+    def __init__ (self, output, destdir, days, identities_db):
+        self.days = days # days of analysis
+        self.i_db = identities_db # database of identities
+        self.output = output
+        self.destdir = destdir
+        
+
+    def NewComersSCM(self):
+        # Returns a list of newcomers in the last "days"
   
-    query = """
+        query = """
             select t.identifier as name, 
                    t.first_date as first_date 
             from 
@@ -41,14 +76,14 @@ def NewComersSCM(days, i_db):
                  group by u.id 
                  order by min(s.date) desc) t 
             where t.first_date > date_sub(now(), interval %s day)
-            """ % (i_db, str(days))
-    return(ExecuteQuery(query))         
+            """ % (self.i_db, str(self.days))
+        return(ExecuteQuery(query))         
 
 
-def NewComersITS(days, i_db):
-    # Returns a list of newcomers in the last "days"
-    # This is done at the issue level, and not comments/changes level.
-    query = """
+    def NewComersITS(self):
+        # Returns a list of newcomers in the last "days"
+        # This is done at the issue level, and not comments/changes level.
+        query = """
             select t.identifier as name, 
                    t.first_date as first_date 
             from 
@@ -62,14 +97,14 @@ def NewComersITS(days, i_db):
                   group by u.id
                   order by min(i.submitted_on) desc) t 
             where t.first_date > date_sub(now(), interval %s day)
-            """ % (i_db, str(days))
-    return(ExecuteQuery(query))
+            """ % (self.i_db, str(self.days))
+        return(ExecuteQuery(query))
 
 
 
-def NewComersMLS(days, i_db):
-    # Returns a list of newcomers in the last "days" 
-    query = """
+    def NewComersMLS(self):
+        # Returns a list of newcomers in the last "days" 
+        query = """
             select t.identifier as name, 
                    t.first_date as first_date 
             from 
@@ -85,13 +120,13 @@ def NewComersMLS(days, i_db):
                   group by u.identifier 
                   order by min(m.first_date) desc) t 
             where t.first_date > date_sub(now(), interval %s day)
-            """ % (i_db, str(days))
-    return(ExecuteQuery(query))
+            """ % (self.i_db, str(self.days))
+        return(ExecuteQuery(query))
 
-def NewComersSCR(days, i_db): 
-    # Returns a list of newcomers in the last "days"
-    # This is done at the review level, and not patch level.
-    query = """
+    def NewComersSCR(self): 
+        # Returns a list of newcomers in the last "days"
+        # This is done at the review level, and not patch level.
+        query = """
             select t.identifier as name, 
                    t.first_date as first_date 
             from 
@@ -105,8 +140,8 @@ def NewComersSCR(days, i_db):
                   group by u.id
                   order by min(i.submitted_on) desc) t 
             where t.first_date > date_sub(now(), interval %s day)
-            """ % (i_db, str(days))
-    return(ExecuteQuery(query))
+            """ % (self.i_db, str(self.days))
+        return(ExecuteQuery(query))
 
 
 

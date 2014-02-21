@@ -76,14 +76,17 @@ if __name__ == '__main__':
     logging.info("Starting Alerts analysis")
     opts = read_options()
     
+    alert = Alerts.NewComers('panel', '/tmp/', 180, opts.dbidentities)
     GrimoireSQL.SetDBChannel (database=opts.dbscm, user=opts.dbuser, password=opts.dbpassword)
-    print(Alerts.NewComersSCM(180, opts.dbidentities))
+    print(alert.NewComersSCM())
    
     GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword) 
-    print(Alerts.NewComersMLS(180, opts.dbidentities))
+    print(alert.NewComersMLS())
 
     GrimoireSQL.SetDBChannel (database=opts.dbits, user=opts.dbuser, password=opts.dbpassword) 
-    print(Alerts.NewComersITS(180, opts.dbidentities))
+    print(alert.NewComersITS())
 
     GrimoireSQL.SetDBChannel (database=opts.dbscr, user=opts.dbuser, password=opts.dbpassword) 
-    print(Alerts.NewComersSCR(180, opts.dbidentities))
+    result = alert.NewComersSCR()
+
+    alert.push(result)
