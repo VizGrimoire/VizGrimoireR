@@ -253,7 +253,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         data = SCR.StaticReviewsNew(period, startdate, enddate, type_analysis)
         repos_list["new"].append(data["new"])
         agg = dict(agg.items() + data.items())
-        data = SCR.StaticReviewsPending(period, startok, enddate, type_analysis)
+        data = SCR.StaticReviewsPending(period, startdate, enddate, type_analysis)
         agg = dict(agg.items() + data.items())
         data = SCR.StaticTimeToReviewSCR(startok, enddate, idb, type_analysis)
         val = data['review_time_days_avg']
