@@ -40,7 +40,7 @@ vizr = importr("vizgrimoire")
 
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds, completeTops
-from GrimoireUtils import valRtoPython, read_options, getPeriod
+from GrimoireUtils import valRtoPython, read_options, getPeriod, medianAndAvgByPeriod
 import ITS
 
 class Backend(object):
@@ -161,6 +161,7 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
 
     evol = dict(evol.items() +
                 ticketsStates(period, startdate, enddate, identities_db, backend).items())
+
     evol = dict(evol.items() +
                 ticketsTimeToResponse(period, startdate, enddate, identities_db, backend).items())
 
@@ -359,20 +360,27 @@ def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, f
     for field_value in values_set:
         field_condition = condition % field_value
 
-        fa_alias = 'avg_fa_%s' % field_value
-        time_to_fa = ITS.GetTimeToFirstAction(period, startdate, enddate, field_condition, fa_alias)
-        time_to_fa = completePeriodIds(time_to_fa)
+        fa_alias = 'tfa_%s' % field_value
+        data = ITS.GetTimeToFirstAction(period, startdate, enddate, field_condition, fa_alias)
+        time_to_fa = getMedianAndAvg(period, fa_alias, data['date'], data[fa_alias])
 
-        fc_alias = 'avg_fc_%s' % field_value
-        time_to_fc = ITS.GetTimeToFirstComment(period, startdate, enddate, field_condition, fc_alias)
-        time_to_fc = completePeriodIds(time_to_fc)
+        fc_alias = 'tfc_%s' % field_value
+        data = ITS.GetTimeToFirstComment(period, startdate, enddate, field_condition, fc_alias)
+        time_to_fc = getMedianAndAvg(period, fc_alias, data['date'], data[fc_alias])
 
-        closed_alias = 'avg_closed_%s' % field_value
-        time_to_closed = ITS.GetTimeToClosed (period, startdate, enddate, closed_condition, field_condition, closed_alias)
-        time_to_closed = completePeriodIds(time_to_closed)
+        topened_alias = 'topened_%s' % field_value
+        data = ITS.GetTimeOpened(period, startdate, enddate, closed_condition, field_condition, topened_alias)
+        time_opened = getMedianAndAvg(period, topened_alias, data['date'], data[topened_alias])
 
-        evol = dict(evol.items() + time_to_fa.items() + time_to_fc.items() + time_to_closed.items())
+        evol = dict(evol.items() + time_to_fa.items() + time_to_fc.items() + time_opened.items())
     return evol
+
+def getMedianAndAvg(period, alias, dates, values):
+    data = medianAndAvgByPeriod(period, dates, values)
+    result = {period : data[period],
+              'median_' + alias : data['median'],
+              'avg_' + alias : data['avg']}
+    return completePeriodIds(result)
 
 
 if __name__ == '__main__':

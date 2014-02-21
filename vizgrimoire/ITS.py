@@ -1098,55 +1098,71 @@ def CreateViewsITS():
 #########################
 
 def GetTimeToFirstAction (period, startdate, enddate, condition, alias=None) :
-    fields = " AVG(TIMESTAMPDIFF(SECOND, submitted_on, fa.date)/(24*3600)) AS %s"
-    if alias:
-        fields = fields % alias
-    else:
-        fields = fields % "action_avg_response"
-    tables = " first_action_per_issue fa, issues i "
-    filters = " i.id = fa.issue_id "
+    q = """SELECT submitted_on date, TIMESTAMPDIFF(SECOND, submitted_on, fa.date)/(24*3600) AS %(alias)s
+           FROM first_action_per_issue fa, issues i
+           WHERE i.id = fa.issue_id
+           AND submitted_on >= %(startdate)s AND submitted_on < %(enddate)s """
+
     if condition:
-        filters += condition
+        q += condition
+
+    q += """ ORDER BY date """
+
+    params = {'alias' : alias or 'time_to_action',
+              'startdate' : startdate,
+              'enddate' : enddate}
+    query = q % params
 
     CreateViewsITS()
-    q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
-                     startdate, enddate)
-    data = ExecuteQuery(q)
+
+    data = ExecuteQuery(query)
     return (data)
 
 def GetTimeToFirstComment (period, startdate, enddate, condition, alias=None) :
-    fields = " AVG(TIMESTAMPDIFF(SECOND, submitted_on, fc.date)/(24*3600)) AS %s "
-    if alias:
-        fields = fields % alias
-    else:
-        fields = fields % "comment_avg_response"
-    tables = " first_comment_per_issue fc, issues i "
-    filters = " i.id = fc.issue_id "
+    q = """SELECT submitted_on date, TIMESTAMPDIFF(SECOND, submitted_on, fc.date)/(24*3600) AS %(alias)s
+           FROM first_comment_per_issue fc, issues i
+           WHERE i.id = fc.issue_id
+           AND submitted_on >= %(startdate)s AND submitted_on < %(enddate)s """
+
     if condition:
-        filters += condition
+        q += condition
+
+    q += """ ORDER BY date """
+
+    params = {'alias' : alias or 'time_to_comment',
+              'startdate' : startdate,
+              'enddate' : enddate}
+    query = q % params
 
     CreateViewsITS()
-    q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
-                     startdate, enddate)
-    data = ExecuteQuery(q)
+
+    data = ExecuteQuery(query)
     return (data)
 
-def GetTimeToClosed (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
-    fields = " AVG(TIMESTAMPDIFF(SECOND, submitted_on, ch.changed_on)/(24*3600)) AS %s "
-    if alias:
-        fields = fields % alias
-    else:
-        fields = fields % "closed_avg"
-    tables = " issues i, changes ch "
-    filters = " i.id = ch.issue_id AND " + closed_condition
+def GetTimeOpened (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
+    q = """SELECT submitted_on date, TIMESTAMPDIFF(SECOND, submitted_on, ch.changed_on)/(24*3600) AS %(alias)s
+           FROM issues i, changes ch
+           WHERE i.id = ch.issue_id
+           AND submitted_on >= %(startdate)s AND submitted_on < %(enddate)s
+           AND """
+
+    q += closed_condition
 
     if ext_condition:
-        filters += ext_condition
+        q += ext_condition
 
-    q = GetSQLPeriod(period, 'changed_on', fields, tables, filters,
-                     startdate, enddate)
-    data = ExecuteQuery(q)
+    q += """ ORDER BY date """
+
+    params = {'alias' : alias or 'time_opened',
+              'startdate' : startdate,
+              'enddate' : enddate}
+    query = q % params
+
+    CreateViewsITS()
+
+    data = ExecuteQuery(query)
     return (data)
+
 
 #################
 # Micro studies
