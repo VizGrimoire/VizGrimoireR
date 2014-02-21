@@ -149,4 +149,56 @@ class NewComers(Alert):
         return(ExecuteQuery(query))
 
 
+class Turnover(Alert):
+    # Turnover can be expressed as the number of people
+    # leaving the community compared to the total workforce
 
+    def __init__ (self, output, destdir, days, identities_db, enddate):
+        self.days = days # After this number of days, a person becomes inactive
+        self.i_db = identities_db # database of identities
+        self.output = output
+        self.destdir = destdir
+        self.enddate = enddate # max date of analysis
+
+    def turnoverSCM(self):
+        # List of people that no committed anymore
+        query = """
+                select t.name, 
+                       t.date 
+                from 
+                     (select u.identifier as name, 
+                             max(s.date) as date 
+                      from %s.upeople u, 
+                           people_upeople pup, 
+                           scmlog s 
+                      where s.author_id = pup.people_id and 
+                            pup.upeople_id = u.id group by u.id) t 
+                where t.date < date_sub(%s, interval %s day) 
+                order by t.date desc
+                """ % (self.i_db, self.enddate, str(self.days))
+        return(ExecuteQuery(query))
+
+    def turnoverMLS(self):
+        # List of people that did not send emails anymore
+        query = """
+                select t.name,
+                       t.date
+                from
+                     (select u.identifier as name,
+                             max(m.first_date) as date
+                      from %s.upeople u,
+                           people_upeople pup,
+                           messages_people mp,
+                           messages m
+                      where m.message_ID = mp.message_id and 
+                            mp.email_address = pup.people_id and
+                            pup.upeople_id = u.id group by u.id) t 
+                where t.date < date_sub('%s', interval %s day)                 
+                      order by t.date desc
+                """ % (self.i_db, self.enddate, str(self.days))
+        return(ExecuteQuery(query))
+
+#    def turnoverITS(self):
+
+
+#    def turnoverSCR(self): 
