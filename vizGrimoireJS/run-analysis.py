@@ -135,7 +135,7 @@ def get_analysis_cmd(v, script, db):
     # This needs specific parameters, and not the common ones to the rest of
     # the scripts
     if script == "alerts.py":
-        cmd = "PYTHONPATH=%s LANG= ./%s -i %s --scm %s --mls %s --its %s --scr %s -u %s -p %s" % \
+        cmd = "PYTHONPATH=%s LANG= ./%s -t %s --scm %s --mls %s --its %s --scr %s -u %s -p %s" % \
         (v['python_libs'], script, v['db_identities'], v['db_cvsanaly'], v['db_mlstats'], v['db_bicho'], v['db_gerrit'], v['db_user'], v['db_password'])
 
 
