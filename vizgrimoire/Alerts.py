@@ -52,13 +52,13 @@ class NewComers(Alert):
     # Specific alert to obtain information about 
     # new people in the several repositories.
 
-    def __init__ (self, output, destdir, days, identities_db):
+    def __init__ (self, output, destdir, days, identities_db, enddate):
         self.days = days # days of analysis
         self.i_db = identities_db # database of identities
         self.output = output
         self.destdir = destdir
+        self.enddate = enddate
         
-
     def NewComersSCM(self):
         # Returns a list of newcomers in the last "days"
   
@@ -75,8 +75,9 @@ class NewComers(Alert):
                        pup.upeople_id = u.id 
                  group by u.id 
                  order by min(s.date) desc) t 
-            where t.first_date > date_sub(now(), interval %s day)
-            """ % (self.i_db, str(self.days))
+            where t.first_date > date_sub('%s', interval %s day) and
+                  t.first_date <= '%s'
+            """ % (self.i_db, self.enddate, str(self.days), self.enddate)
         return(ExecuteQuery(query))         
 
 
@@ -96,8 +97,9 @@ class NewComers(Alert):
                         pup.upeople_id = u.id
                   group by u.id
                   order by min(i.submitted_on) desc) t 
-            where t.first_date > date_sub(now(), interval %s day)
-            """ % (self.i_db, str(self.days))
+            where t.first_date > date_sub('%s', interval %s day) and
+                  t.first_date <= '%s'
+            """ % (self.i_db, self.enddate, str(self.days), self.enddate)
         return(ExecuteQuery(query))
 
 
@@ -119,8 +121,10 @@ class NewComers(Alert):
                         pup.upeople_id = u.id 
                   group by u.identifier 
                   order by min(m.first_date) desc) t 
-            where t.first_date > date_sub(now(), interval %s day)
-            """ % (self.i_db, str(self.days))
+            where t.first_date > date_sub('%s', interval %s day) and
+                  t.first_date <= '%s'
+            """ % (self.i_db, self.enddate, str(self.days), self.enddate)
+
         return(ExecuteQuery(query))
 
     def NewComersSCR(self): 
@@ -139,8 +143,9 @@ class NewComers(Alert):
                         pup.upeople_id = u.id
                   group by u.id
                   order by min(i.submitted_on) desc) t 
-            where t.first_date > date_sub(now(), interval %s day)
-            """ % (self.i_db, str(self.days))
+            where t.first_date > date_sub('%s', interval %s day) and
+                  t.first_date <= '%s'
+            """ % (self.i_db, self.enddate, str(self.days), self.enddate)
         return(ExecuteQuery(query))
 
 

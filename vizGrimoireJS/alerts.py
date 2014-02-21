@@ -75,18 +75,22 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
     logging.info("Starting Alerts analysis")
     opts = read_options()
-    
-    alert = Alerts.NewComers('panel', '/tmp/', 180, opts.dbidentities)
-    GrimoireSQL.SetDBChannel (database=opts.dbscm, user=opts.dbuser, password=opts.dbpassword)
-    print(alert.NewComersSCM())
    
-    GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword) 
-    print(alert.NewComersMLS())
+    #Specific dates of analysis
+    dates = ["2013-01-01", "2013-04-01", "2013-07-01", "2013-10-01"]
+ 
+    #Examples of use
+    for i in dates:
+        alert = Alerts.NewComers('panel', '/tmp/', 60, opts.dbidentities, i)
+        GrimoireSQL.SetDBChannel (database=opts.dbscm, user=opts.dbuser, password=opts.dbpassword)
+        print(alert.NewComersSCM())
+   
+        GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword) 
+        print(alert.NewComersMLS())
 
-    GrimoireSQL.SetDBChannel (database=opts.dbits, user=opts.dbuser, password=opts.dbpassword) 
-    print(alert.NewComersITS())
+        GrimoireSQL.SetDBChannel (database=opts.dbits, user=opts.dbuser, password=opts.dbpassword) 
+        print(alert.NewComersITS())
 
-    GrimoireSQL.SetDBChannel (database=opts.dbscr, user=opts.dbuser, password=opts.dbpassword) 
-    result = alert.NewComersSCR()
+        GrimoireSQL.SetDBChannel (database=opts.dbscr, user=opts.dbuser, password=opts.dbpassword) 
+        result = alert.NewComersSCR()
 
-    alert.push(result)
