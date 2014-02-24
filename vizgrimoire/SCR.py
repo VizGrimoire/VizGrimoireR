@@ -34,7 +34,7 @@ from numpy import median, average
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
-from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray, convertDecimals
+from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray, convertDecimals, medianAndAvgByPeriod
 import GrimoireUtils
 
 
@@ -731,8 +731,6 @@ def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_anal
         filter_bots = filter_bots + " people.name<>'"+bot+"' and "
 
     # Subquery to get the time to review for all reviews
-    # fields = "DATEDIFF(changed_on,submitted_on) AS revtime, changed_on "
-    # fields = "TIMEDIFF(changed_on,submitted_on)/(24*3600) AS revtime, changed_on "
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime, changed_on "
     tables = "issues i, changes, people "
     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
@@ -800,68 +798,27 @@ def EvolTimeToReviewPendingSCR (period, startdate, enddate, identities_db = None
 
 def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = [], pending=False):
 
-    time_field = "changed_on"
-    metrics_list = {"month":[],"review_time_days_median":[],"review_time_days_avg":[]}
+    metrics_list = {}
+
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
 
     if (pending):
         q = GetTimeToReviewPendingQuerySCR (startdate, enddate, identities_db, type_analysis)
-        metrics_list = {"month":[],"review_time_pending_days_median":[],
-                        "review_time_pending_days_avg":[]}
-        time_field = "submitted_on"
-
 
     review_list = ExecuteQuery(q)
     checkListArray(review_list)
 
-    review_list_len = len(review_list[time_field])
-    if len(review_list[time_field]) == 0: return metrics_list
-    start = review_list[time_field][0]
-    end = review_list[time_field][review_list_len-1]
-    start_month = start.year*12 + start.month
-    end_month = end.year*12 + end.month
-    month = start_month
+    if (pending):
+        med_avg_list = medianAndAvgByPeriod(period, review_list['submitted_on'], review_list['revtime'])
+        metrics_list['review_time_pending_days_median'] = med_avg_list['median']
+        metrics_list['review_time_pending_days_avg'] = med_avg_list['avg']
+    else:
+        med_avg_list = medianAndAvgByPeriod(period, review_list['changed_on'], review_list['revtime'])
+        metrics_list['review_time_days_median'] = med_avg_list['median']
+        metrics_list['review_time_days_avg'] = med_avg_list['avg']
 
-    metrics_data = []
-    for i in range (0,review_list_len):
-        date = review_list[time_field][i]
-        if (date.year*12 + date.month) > month:
-            metrics_list['month'].append(month)
-            if review_list_len == 1: 
-                metrics_data.append (review_list['revtime'][i])
-            if len(metrics_data) == 0: 
-                ttr_median = float('nan')
-                ttr_avg = float('nan')
-            else: 
-                ttr_median = median(convertDecimals(metrics_data))
-                ttr_avg = average(convertDecimals(metrics_data))
-            # avg = sum(median) / float(len(median))
-            # metrics_list['review_time_avg'].append(avg)
-            if (pending):
-                metrics_list['review_time_pending_days_median'].append(ttr_median)
-                metrics_list['review_time_pending_days_avg'].append(ttr_avg)
-            else:
-                metrics_list['review_time_days_median'].append(ttr_median)
-                metrics_list['review_time_days_avg'].append(ttr_avg)
-            metrics_data = [review_list['revtime'][i]]
-            month = date.year*12 + date.month
-        if  i == review_list_len-1:
-            month = date.year*12 + date.month
-            # Close last month also
-            if (date.year*12 + date.month) > month:
-                metrics_data = [review_list['revtime'][i]]
-            elif (date.year*12 + date.month) == month:
-                metrics_data.append (review_list['revtime'][i])
-            metrics_list['month'].append(month)
-            ttr_median = median(convertDecimals(metrics_data))
-            ttr_avg = average(convertDecimals(metrics_data))
-            if (pending):
-                metrics_list['review_time_pending_days_median'].append(ttr_median)
-                metrics_list['review_time_pending_days_avg'].append(ttr_avg)
-            else:
-                metrics_list['review_time_days_median'].append(ttr_median)
-                metrics_list['review_time_days_avg'].append(ttr_avg)
-        else: metrics_data.append (review_list['revtime'][i])
+    metrics_list['month'] = med_avg_list['month']
+
     return metrics_list
 
 ##############
