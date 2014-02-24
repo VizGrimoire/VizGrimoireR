@@ -495,11 +495,14 @@ def medianAndAvgByPeriod(period, dates, values):
 
     result = {period  : [],
               'median' : [],
-              'avg'    : []}
+              'median_acc' : [],
+              'avg'    : [],
+              'avg_acc'    : [],}
 
     start = dates[0]
     current_period = get_period(period, start)
     period_values = []
+    period_values_acc = []
     ndates = len(dates)
 
     for i in range(0, ndates):
@@ -510,6 +513,10 @@ def medianAndAvgByPeriod(period, dates, values):
             result[period].append(current_period)
             result['median'].append(get_median(period_values))
             result['avg'].append(get_avg(period_values))
+            # Accumulated values
+            period_values_acc += period_values
+            result['median_acc'].append(get_median(period_values_acc))
+            result['avg_acc'].append(get_avg(period_values_acc))
 
             current_period = date_period
             period_values = []
@@ -520,5 +527,8 @@ def medianAndAvgByPeriod(period, dates, values):
         if i == ndates - 1:
             result[period].append(current_period)
             result['median'].append(get_median(period_values))
-            result['avg'].append(get_avg(period_values))
+            result['avg'].append(get_avg(period_values))                        # Accumulated values
+            period_values_acc += period_values
+            result['median_acc'].append(get_median(period_values_acc))
+            result['avg_acc'].append(get_avg(period_values_acc))
     return result

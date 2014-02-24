@@ -157,17 +157,17 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     evol = dict(evol.items() + completePeriodIds(data).items())
     # Time to Review info
     data = SCR.EvolTimeToReviewSCR (period, startok, enddate)
-    for i in range(0,len(data['review_time_days_avg'])):
-        val = data['review_time_days_avg'][i] 
-        data['review_time_days_avg'][i] = float(val)
-        if (val == 0): data['review_time_days_avg'][i] = 0
+#    for i in range(0,len(data['review_time_days_avg'])):
+#        val = data['review_time_days_avg'][i]
+#        data['review_time_days_avg'][i] = float(val)
+#        if (val == 0): data['review_time_days_avg'][i] = 0
     evol = dict(evol.items() + completePeriodIds(data).items())
 
     data = SCR.EvolTimeToReviewPendingSCR (period, startok, enddate)
-    for i in range(0,len(data['review_time_pending_days_avg'])):
-        val = data['review_time_pending_days_avg'][i]
-        data['review_time_pending_days_avg'][i] = float(val)
-        if (val == 0): data['review_time_pending_days_avg'][i] = 0
+#    for i in range(0,len(data['review_time_pending_days_avg'])):
+#        val = data['review_time_pending_days_avg'][i]
+#        data['review_time_pending_days_avg'][i] = float(val)
+#        if (val == 0): data['review_time_pending_days_avg'][i] = 0
     evol = dict(evol.items() + completePeriodIds(data).items())
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
@@ -215,9 +215,10 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for repo in repos:
+        # repo = "gerrit.wikimedia.org_mediawiki/extensions/Validator"
         repo_file = repo.replace("/","_")
         repos_list["name"].append(repo_file)
-        logging.info("Repo: " + repo_file)
+        logging.info("Repo: " + repo)
         type_analysis = ['repository', repo]
 
         evol = {}
