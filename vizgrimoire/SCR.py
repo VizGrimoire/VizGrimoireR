@@ -814,7 +814,7 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
             metrics_list['review_time_pending_days_median'] = med_avg_list['median']
             metrics_list['review_time_pending_days_acc_median'] = med_avg_list['median_acc']
             metrics_list['review_time_pending_days_avg'] = med_avg_list['avg']
-            metrics_list['review_time_pending_days_avg_acc'] = med_avg_list['avg_acc']
+            metrics_list['review_time_pending_days_acc_avg'] = med_avg_list['avg_acc']
             metrics_list['month'] = med_avg_list['month']
         else:
             metrics_list['review_time_pending_days_median'] = []
