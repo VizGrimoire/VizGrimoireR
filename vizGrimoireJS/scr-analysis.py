@@ -38,7 +38,7 @@ import logging
 import sys
 from Wikimedia import GetCompaniesQuartersSCR, GetPeopleQuartersSCR
 from Wikimedia import GetNewSubmitters, GetNewMergers, GetNewAbandoners
-from Wikimedia import GetNewSubmittersActivity, GetPeopleLeaving
+from Wikimedia import GetNewSubmittersActivity, GetPeopleLeaving, GetPeopleIntakeSQL
 
 # isoweek = importr("ISOweek")
 # vizr = importr("vizgrimoire")
@@ -429,6 +429,14 @@ def CodeContribKPI(destdir):
 
     data = GetPeopleLeaving()
     createJSON(data, destdir+"/leaving-people-scr.json")
+
+    evol = {}
+    data = GetPeopleIntakeSQL(0,1)
+    evol['month'] = data['monthid']
+    evol['num_people_1'] = data['people']
+    evol['num_people_1_5'] = GetPeopleIntakeSQL(1,5)['people']
+    evol['num_people_5_10'] = GetPeopleIntakeSQL(5,10)['people']
+    createJSON(completePeriodIds(evol), destdir+"/scr-people-intake-evolutionary.json")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')

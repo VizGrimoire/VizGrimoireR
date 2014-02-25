@@ -206,3 +206,22 @@ def GetPeopleLeaving():
     data["leaving"] = ExecuteQuery(q_leaving)
 
     return data
+
+def GetPeopleIntakeSQL(min, max):
+    q_people_num_submissions_evol = """
+        SELECT COUNT(*) AS total, submitted_by,
+            YEAR(submitted_on) as year, MONTH(submitted_on) as month
+        FROM issues
+        GROUP BY submitted_by, year, month
+        HAVING total > %i AND total <= %i
+        ORDER BY submitted_on DESC
+        """ % (min, max)
+
+
+    q_people_num_evol = """
+        SELECT COUNT(*) as people, year*12+month AS monthid
+        FROM (%s) t
+        GROUP BY year, month
+        """ % (q_people_num_submissions_evol)
+
+    return ExecuteQuery(q_people_num_evol)
