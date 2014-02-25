@@ -323,7 +323,7 @@ def removeDecimals(data):
 
 # Until we use VizPy we will create JSON python files with _py
 def createJSON(data, filepath, check=True, skip_fields = []):
-    # check = False # for production mode
+    check = False # for production mode
     filepath_tokens = filepath.split(".json")
     filepath_py = filepath_tokens[0]+"_py.json"
     filepath_r = filepath_tokens[0]+"_r.json"
