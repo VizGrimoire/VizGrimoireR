@@ -55,9 +55,10 @@ def read_main_conf(config_file):
 
 # Top people for all data sources. Wikimedia specific
 def topPeople(startdate, enddate, idb, bots):
-    npeople = "500"
+    npeople = "10000" # max limit, all people included
     tops = {}
     all_top = {}
+    all_top_all_ds = {}
     db = automator['generic']['db_gerrit']
     GrimoireSQL.SetDBChannel (database=db, user=opts.dbuser, password=opts.dbpassword)
     tops["scr"] = SCR.GetTopOpenersSCR(0, startdate, enddate, idb, bots, npeople)
@@ -91,7 +92,9 @@ def topPeople(startdate, enddate, idb, bots):
             pos += 1
 
     for id in all_top:
-        if len(all_top[id])>3: print all_top[id]
+        if len(all_top[id])>5: all_top_all_ds[id] = all_top[id]
+
+    createJSON(all_top_all_ds, opts.destdir+"/all_top.json")
 
 def createPeopleIdentifiers(startdate, enddate):
     people_data = {}
