@@ -109,13 +109,20 @@ class MLSTopics(object):
         if self.crowded == None:
             # variable was not initialize
             pass
+        
 
     def longest_list (self):
         # Returns the longest thread
         if self.longest == None:
             # variable was not initialize
-            pass
+            longest = 0
+            for message_id in self.threads.keys():
+                if len(self.threads[message_id]) > longest:
+                    longest = len(self.threads[message_id])
+                    self.longest = message_id
 
+        return self.longest
+  
     def verbose_list (self):
         # Returns the most verbose thread (the biggest emails)
         if self.verbose == None:
