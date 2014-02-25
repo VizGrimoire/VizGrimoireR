@@ -91,6 +91,10 @@ def read_options():
                       dest="npeople",
                       default="10",
                       help="Limit for people analysis")
+    parser.add_option("--config_file",
+                      action="store",
+                      dest="config_file",
+                      help="Automator project config file path")
 
 
     (opts, args) = parser.parse_args()
