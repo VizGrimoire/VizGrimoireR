@@ -33,24 +33,24 @@ class MLSTopics(object):
 
     def __init__ (self, date):
         self.date = date
-        # Initialize data structure
         self.list_message_id = []
         self.list_is_response_of = []
         self.threads = {}
-        self._init_threads()
         self.crowded = None # the thread with most people participating
         self.longest = None # the thread with the longest queue of emails
         self.verbose = None # the thread with the most verbose emails.
 
-    
+        self._init_threads()    
+        print self.threads
 
     def _build_threads (self, message_id):
         sons = []
         messages = []
+        print "    * build threads for message_id: " + message_id
         if message_id not in self.list_is_response_of:
             # this a leaf of the tree!
-            print "Leaf of the tree: message_id = " + message_id
-            return [message_id]
+            print "        - Leaf of the tree: message_id = " + message_id
+            return []
 
         else:
             cont = 0
@@ -59,8 +59,15 @@ class MLSTopics(object):
                 if msg == message_id:
                     sons.append(self.list_message_id[cont])
                 cont = cont + 1
+            print "        - Sons of the message_id: " 
+            print sons
             for msg in sons:
+                print "            - son: " + msg
+                messages.extend([msg])
                 messages.extend(self._build_threads(msg))            
+                print "            - list of messages: " 
+                print messages
+               
 
         return messages          
             
@@ -68,28 +75,32 @@ class MLSTopics(object):
     def _init_threads(self):
         # Returns dictionary of message_id threads. Each key contains a list
         # of emails associated to that thread (not ordered).
+       
+        # Retrieving all of the messages. 
         query = """
                 select message_ID, is_response_of from messages 
-                where is_response_of is not NULL
                 """
-        msg_couples = ExecuteQuery(query)
-        self.list_message_id = msg_couples["message_ID"]
-        self.list_is_response_of = msg_couples["is_response_of"]
-
+        list_messages = ExecuteQuery(query)
+        self.list_message_id = list_messages["message_ID"]
+        self.list_is_response_of = list_messages["is_response_of"]
+        
         messages = {}
         for message_id in self.list_message_id:
             # Looking for messages in the thread
-            messages[message_id] = self._build_threads(message_id)
+            index = self.list_message_id.index(message_id)
+            
+            # Only analyzing those whose is_response_of is None, 
+            # those are the message 'root' of each thread.
+            if self.list_is_response_of[index] is None:
+                print "STARTING THE PROCESS FOR A MESSAGE: " + message_id
+                messages[message_id] = self._build_threads(message_id)
+                print "Final message_id: " + message_id
+                print "Final sons: " 
+                print messages[message_id]
+                print "ENDING THE PROCESS FOR THAT MESSAGE"
 
-        query = """
-                select message_ID from messages where is_response_of is NULL
-                """
-        result = ExecuteQuery(query)
-        msgs = result["message_ID"]
-        for msg in msgs:
-            messages[msg] = []
 
-
+        self.threads = messages
 
     def crowded_list (self):
         # Returns the most crowded thread.
