@@ -119,7 +119,6 @@ if __name__ == '__main__':
     startdate = "'"+opts.startdate+"'"
     enddate = "'"+opts.enddate+"'"
 
-    automator = read_main_conf(opts.config_file)
 
     bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot','L10n-bot']
 
@@ -128,6 +127,9 @@ if __name__ == '__main__':
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     createPeopleIdentifiers(startdate, enddate)
-    topPeople(startdate, enddate, opts.identities_db, bots)
+
+    if opts.config_file:
+        automator = read_main_conf(opts.config_file)
+        topPeople(startdate, enddate, opts.identities_db, bots)
 
     logging.info("People data source analysis OK")
