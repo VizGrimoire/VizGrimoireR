@@ -211,7 +211,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
     repos  = SCR.GetReposSCRName(startdate, enddate)
     repos = repos["name"]
     # For repos aggregated data. Include metrics to sort in javascript.
-    repos_list = {"name":[],"review_time_days_median":[],"submitted":[],"new":[]}
+    repos_list = {"name":[],"review_time_days_median":[],"review_time_pending_days_median":[],"submitted":[],"new":[]}
 
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
@@ -267,10 +267,10 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         if (not val or val == 0): data['review_time_days_median'] = 0
         else: data['review_time_days_median'] = float(val)
         agg = dict(agg.items() + data.items())
+        repos_list["review_time_days_median"].append(data['review_time_days_median'])
         data = SCR.StaticTimeToReviewPendingSCR(startok, enddate, idb, type_analysis, bots)
         agg = dict(agg.items() + data.items())
-        repos_list["review_time_days_median"].append(data['review_time_days_median'])
-        repos_list["review_time_pending_days_acc_median"].append(data['review_time_pending_days_acc_median'])
+        repos_list["review_time_pending_days_median"].append(data['review_time_pending_days_median'])
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
     createJSON(repos_list, destdir+"/scr-repos.json")
