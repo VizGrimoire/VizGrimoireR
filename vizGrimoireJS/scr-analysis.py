@@ -88,6 +88,7 @@ def aggData(period, startdate, enddate, idb, destdir, bots):
     data = SCR.StaticTimeToReviewSCR(startok, enddate, idb, [], bots)
     data['review_time_days_avg'] = float(data['review_time_days_avg'])
     data['review_time_days_median'] = float(data['review_time_days_median'])
+    agg = dict(agg.items() + data.items())
     data = SCR.StaticTimeToReviewPendingSCR(startok, enddate, idb, [], bots)
     data['review_time_pending_days_avg'] = float(data['review_time_pending_days_avg'])
     data['review_time_pending_days_median'] = float(data['review_time_pending_days_median'])
@@ -240,6 +241,8 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
         data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolTimeToReviewPendingSCR (period, startok, enddate, idb, type_analysis)
+        evol = dict(evol.items() + completePeriodIds(data).items())
         createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
 
         # Static
@@ -264,7 +267,10 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         if (not val or val == 0): data['review_time_days_median'] = 0
         else: data['review_time_days_median'] = float(val)
         agg = dict(agg.items() + data.items())
+        data = SCR.StaticTimeToReviewPendingSCR(startok, enddate, idb, type_analysis, bots)
+        agg = dict(agg.items() + data.items())
         repos_list["review_time_days_median"].append(data['review_time_days_median'])
+        repos_list["review_time_pending_days_acc_median"].append(data['review_time_pending_days_acc_median'])
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
     createJSON(repos_list, destdir+"/scr-repos.json")
@@ -296,6 +302,8 @@ def companiesData(period, startdate, enddate, idb, destdir):
         data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
         data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
         evol = dict(evol.items() + completePeriodIds(data).items())
+        data = SCR.EvolTimeToReviewPendingSCR (period, startok, enddate, idb, type_analysis)
+        evol = dict(evol.items() + completePeriodIds(data).items())
         createJSON(evol, destdir+ "/"+company_file+"-scr-com-evolutionary.json")
         # Static
         agg = {}
@@ -314,6 +322,8 @@ def companiesData(period, startdate, enddate, idb, destdir):
         val = data['review_time_days_median']
         if (not val or val == 0): data['review_time_days_median'] = 0
         else: data['review_time_days_median'] = float(val)
+        agg = dict(agg.items() + data.items())
+        data = SCR.StaticTimeToReviewPendingSCR(startok, enddate, idb, type_analysis, bots)
         agg = dict(agg.items() + data.items())
         createJSON(agg, destdir+"/"+company_file+"-scr-com-static.json")
 
