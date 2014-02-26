@@ -40,7 +40,7 @@ vizr = importr("vizgrimoire")
 
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds, completeTops
-from GrimoireUtils import valRtoPython, read_options, getPeriod, medianAndAvgByPeriod
+from GrimoireUtils import valRtoPython, read_options, getPeriod, medianAndAvgByPeriod, get_median, get_avg
 import ITS
 
 class Backend(object):
@@ -139,8 +139,6 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
            conf, backend):
 
     closed_condition = backend.closed_condition
-#    data = vizr.EvolITSInfo(period, startdate, enddate, identities_db, closed_condition = closed_condition)
-#    evol = completePeriodIds(dataFrame2Dict(data))
     data = ITS.EvolITSInfo(period, startdate, enddate, identities_db, [], closed_condition)
     evol = completePeriodIds(data)
     if ('companies' in reports) :
@@ -164,6 +162,9 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
 
     evol = dict(evol.items() +
                 ticketsTimeToResponse(period, startdate, enddate, identities_db, backend).items())
+
+    evol = dict(evol.items() +
+                ticketsTimeOpened(period, startdate, enddate, identities_db, backend).items())
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 
@@ -350,7 +351,20 @@ def ticketsTimeToResponse(period, startdate, enddate, identities_db, backend):
     time_to_response_severity = ticketsTimeToResponseByField(period, startdate, enddate,
                                                              backend.closed_condition,
                                                              'type', backend.severity)
+
     evol = dict(time_to_response_priority.items() + time_to_response_severity.items())
+    return evol
+
+def ticketsTimeOpened(period, startdate, enddate, identities_db, backend):
+    log_close_condition_mediawiki = "(status = 'RESOLVED' OR status = 'CLOSED' OR priority = 'Lowest')"
+
+    time_opened_priority = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
+                                                    'priority', backend.priority)
+
+    time_opened_severity = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
+                                                    'type', backend.severity)
+
+    evol = dict(time_opened_priority.items() + time_opened_severity.items())
     return evol
 
 def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, field, values_set):
@@ -368,11 +382,58 @@ def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, f
         data = ITS.GetTimeToFirstComment(period, startdate, enddate, field_condition, fc_alias)
         time_to_fc = getMedianAndAvg(period, fc_alias, data['date'], data[fc_alias])
 
-        topened_alias = 'topened_%s' % field_value
-        data = ITS.GetTimeOpened(period, startdate, enddate, closed_condition, field_condition, topened_alias)
-        time_opened = getMedianAndAvg(period, topened_alias, data['date'], data[topened_alias])
+        tclosed_alias = 'ttc_%s' % field_value
+        data = ITS.GetTimeClosed(period, startdate, enddate, closed_condition, field_condition, tclosed_alias)
+        time_closed = getMedianAndAvg(period, tclosed_alias, data['date'], data[tclosed_alias])
 
-        evol = dict(evol.items() + time_to_fa.items() + time_to_fc.items() + time_opened.items())
+        evol = dict(evol.items() + time_to_fa.items() + time_to_fc.items() + time_closed.items())
+    return evol
+
+def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_set):
+    condition = "AND i." + field + " = '%s'"
+    evol = {}
+
+    # Build a set of dates
+    dates = completePeriodIds({period : []})[period]
+    dates.append(dates[-1] + 1) # add one more month
+    first_period = dates.pop(0)  # The first month there aren't remaining issues opened
+
+    for field_value in values_set:
+        field_condition = condition % field_value
+
+        alias = "topened_%s" % field_value
+
+        period_dates = []
+        median_values = []
+        avg_values = []
+        current_period = first_period
+
+        for dt in dates:
+            # Convert dates to readable format (YY-MM-DD)
+            year = dt / 12
+            month = dt % 12
+            if month == 0:
+                year = year - 1
+                month = 12
+            enddate = "'" + str(year) + "-" + str(month) + "-1'"
+
+            open_issues = ITS.GetIssuesOpenedAt(period, startdate, enddate, closed_condition,
+                                                field_condition, alias)[alias]
+
+            m = get_median(open_issues)
+            avg = get_avg(open_issues)
+
+            period_dates.append(current_period)
+            median_values.append(m)
+            avg_values.append(avg)
+            current_period = dt
+
+        time_opened = {period : period_dates,
+                       'median_' + alias : median_values,
+                       'avg_' + alias : avg_values}
+        time_opened = completePeriodIds(time_opened)
+        evol = dict(evol.items() + time_opened.items())
+
     return evol
 
 def getMedianAndAvg(period, alias, dates, values):

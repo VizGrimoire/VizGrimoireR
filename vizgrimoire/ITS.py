@@ -930,6 +930,7 @@ def GetTopIssuesWithoutResolution(startdate, enddate, closed_condition, limit):
         "FROM issues " +\
         "WHERE NOT ( " + closed_condition + ") " +\
         "AND submitted_on >= " + startdate + " AND submitted_on < " + enddate +\
+        "GROUP BY issue_id " +\
         "ORDER BY time DESC " +\
         "LIMIT " + limit
     data = ExecuteQuery(q)
@@ -1139,7 +1140,7 @@ def GetTimeToFirstComment (period, startdate, enddate, condition, alias=None) :
     data = ExecuteQuery(query)
     return (data)
 
-def GetTimeOpened (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
+def GetTimeClosed (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
     q = """SELECT submitted_on date, TIMESTAMPDIFF(SECOND, submitted_on, ch.changed_on)/(24*3600) AS %(alias)s
            FROM issues i, changes ch
            WHERE i.id = ch.issue_id
@@ -1152,6 +1153,34 @@ def GetTimeOpened (period, startdate, enddate, closed_condition, ext_condition=N
         q += ext_condition
 
     q += """ ORDER BY date """
+
+    params = {'alias' : alias or 'time_opened',
+              'startdate' : startdate,
+              'enddate' : enddate}
+    query = q % params
+
+    CreateViewsITS()
+
+    data = ExecuteQuery(query)
+    return (data)
+
+
+def GetIssuesOpenedAt (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
+    q = """SELECT i.id issue_id, TIMESTAMPDIFF(SECOND, submitted_on, %(enddate)s)/(24*3600) AS %(alias)s
+           FROM issues i
+           WHERE submitted_on >= %(startdate)s AND submitted_on < %(enddate)s
+           AND i.id NOT IN
+               (SELECT DISTINCT(issue_id)
+                FROM issues_log_bugzilla
+                WHERE date >= %(startdate)s AND date < %(enddate)s
+                AND """
+
+    q += closed_condition + ")"
+
+    if ext_condition:
+        q += ext_condition
+
+    q += """ GROUP BY issue_id ORDER BY submitted_on """
 
     params = {'alias' : alias or 'time_opened',
               'startdate' : startdate,

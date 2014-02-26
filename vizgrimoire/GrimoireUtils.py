@@ -34,6 +34,7 @@ from optparse import OptionParser
 import rpy2.rinterface as rinterface
 from rpy2.robjects.vectors import StrVector
 import os,sys
+from numpy import average, median
 
 def read_options():
     parser = OptionParser(usage="usage: %prog [options]",
@@ -475,26 +476,36 @@ def buildIssueURL(tracker_url, issue_id, backend='bugzilla'):
     return url
 
 
+def get_median(period_values):
+    # No data for this period
+    if not period_values:
+        return float('nan')
+    if not isinstance(period_values, list):
+        return period_values
+    return median(convertDecimals(period_values))
+
+
+def get_avg(period_values):
+    # No data for this period
+    if not period_values:
+        return float('nan')
+    if not isinstance(period_values, list):
+        return period_values
+    return average(convertDecimals(period_values))
+
+
 def medianAndAvgByPeriod(period, dates, values):
-    from numpy import average, median
 
     def get_period(period, date):
         if period == 'month':
             return date.year * 12 + date.month
 
-    def get_median(period_values):
-        # No data for this period
-        if not period_values:
-            return float('nan')
-        return median(convertDecimals(period_values))
-
-    def get_avg(period_values):
-        # No data for this period
-        if not period_values:
-            return float('nan')
-        return average(convertDecimals(period_values))
-
     if len(dates) == 0: return None
+    if not values: return None
+
+    if not isinstance(values, list):
+        values = [values]
+
     if len(dates) != len(values): return None
 
     result = {period  : [],
