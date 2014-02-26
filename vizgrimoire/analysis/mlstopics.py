@@ -31,8 +31,9 @@ class MLSTopics(object):
     # of view of threads. The main topics are those with the longest,
     # the most crowded or the thread with the most verbose emails.
 
-    def __init__ (self, date):
-        self.date = date
+    def __init__ (self, initdate, enddate):
+        self.initdate = initdate
+        self.enddate = enddate
         self.list_message_id = []
         self.list_is_response_of = []
         self.threads = {}
@@ -78,8 +79,10 @@ class MLSTopics(object):
        
         # Retrieving all of the messages. 
         query = """
-                select message_ID, is_response_of from messages 
-                """
+                select message_ID, is_response_of 
+                from messages 
+                where first_date > '%s' and first_date <= '%s'
+                """ % (self.initdate, self.enddate)
         list_messages = ExecuteQuery(query)
         self.list_message_id = list_messages["message_ID"]
         self.list_is_response_of = list_messages["is_response_of"]
@@ -123,6 +126,14 @@ class MLSTopics(object):
                     self.longest = message_id
 
         return self.longest
+
+    def topLongestList(self):
+        # Returns list ordered by the longest threads
+        threads_aux = self.threads
+        values = threads.aux.values()
+        # sorted(values, lambda x,y: 1 if len(x)>len(y) else -1 if len(x)<len(y) else 0)
+        values = sorted(values, key = len)
+        
   
     def verbose_list (self):
         # TODO: at some point these numbers should be calculated when
