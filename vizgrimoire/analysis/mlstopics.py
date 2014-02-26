@@ -115,6 +115,7 @@ class MLSTopics(object):
         # Returns the longest thread
         if self.longest == None:
             # variable was not initialize
+            self.longest = ""
             longest = 0
             for message_id in self.threads.keys():
                 if len(self.threads[message_id]) > longest:
@@ -124,17 +125,37 @@ class MLSTopics(object):
         return self.longest
   
     def verbose_list (self):
+        # TODO: at some point these numbers should be calculated when
+        # retrieving the initial list of message_id, is_response_of values
         # Returns the most verbose thread (the biggest emails)
         if self.verbose == None:
             # variable was not initialize
-            pass
+            self.verbose = "" 
+            current_len = 0
+            # iterating through the root messages
+            for message_id in self.threads.keys():
+                total_len_bodies = 0 # len of all of the body messages
+                # iterating through each of the messages of the thread
+                for msg in self.threads[message_id]:
+                    query = """
+                            select length(message_body) as length
+                            from messages
+                            where message_ID = '%s'
+                            """ % (msg)
+                    result = ExecuteQuery(query)
+                    length = int(result["length"])
+                    total_len_bodies = total_len_bodies + length
+                    if total_len_bodies > current_len:
+                        # New bigger thread found
+                        self.verbose = message_id
+                        current_len = total_len_bodies
+        return self.verbose
+
 
     def threads (self):
         # Returns the whole data structure
-        if self.threads == None:
-            # variable was not initialize
-            pass
-
         return self.threads
 
-
+    def numThreads (self):
+        # Returns number of threads
+        return len(self.threads)

@@ -66,4 +66,7 @@ if __name__ == '__main__':
    
     GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword)
     main_topics = MLSTopics('2014-01-01')
+    print "The most verbose list: "  + main_topics.verbose_list()
+    print "The longest list: " + main_topics.longest_list()
+    print "Number of threads: "  + str(main_topics.numThreads())
 
