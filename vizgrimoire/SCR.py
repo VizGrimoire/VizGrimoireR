@@ -819,20 +819,29 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
 def EvolTimeToReviewPendingSCR(period, startdate, enddate, identities_db = None, type_analysis=[]):
 
     def get_sql(month):
-        # List of pending reviews before a date
-        fields = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS revtime,"
+        # List of pending reviews before a date: time from new time and from last update
+        fields  = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS newtime,"
+        fields += "TIMESTAMPDIFF(SECOND, mod_date, NOW())/(24*3600) AS updatetime,"
         fields += " YEAR(submitted_on)*12+MONTH(submitted_on) as month"
-        tables = "issues i, people "
+        tables = "issues i, people, issues_ext_gerrit ie "
         tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
         filters = " people.id = i.submitted_by "
         filters += GetSQLReportWhereSCR(type_analysis)
         filters += " AND status<>'MERGED' AND status<>'ABANDONED' "
+        filters += " AND ie.issue_id  = i.id "
         # All reviews before the month: accumulated key point
         filters += " HAVING month<= " + str(month)
         filters += " ORDER BY  submitted_on"
         q = GetSQLGlobal('submitted_on', fields, tables, filters,
                     startdate,enddate)
         return q
+
+    def get_values_median(values):
+        if not isinstance(values, list): values = [values]
+        values = GrimoireUtils.convertDecimals(values)
+        if (len(values) == 0): values = float('nan')
+        else: values = median(values)
+        return values
 
     start = datetime.strptime(startdate, "'%Y-%m-%d'")
     end = datetime.strptime(enddate, "'%Y-%m-%d'")
@@ -844,17 +853,19 @@ def EvolTimeToReviewPendingSCR(period, startdate, enddate, identities_db = None,
     start_month = start.year*12 + start.month
     end_month = end.year*12 + end.month
     months = end_month - start_month
-    acc_pending_time_median = {"month":[],"review_time_pending_days_acc_median":[]}
+    acc_pending_time_median = {"month":[],
+                               "review_time_pending_days_acc_median":[],
+                               "review_time_pending_update_days_acc_median":[]}
 
     for i in range(0, months+1):
         pending_period = ExecuteQuery(get_sql(start_month+i))
         acc_pending_time_median['month'].append(start_month+i)
-        values = pending_period['revtime']
-        if not isinstance(values, list): values = [values]
-        values = GrimoireUtils.convertDecimals(values)
-        if (len(values) == 0): values = float('nan')
-        else: values = median(values)
+
+        values = get_values_median(pending_period['newtime'])
         acc_pending_time_median['review_time_pending_days_acc_median'].append(values)
+
+        values = get_values_median(pending_period['updatetime'])
+        acc_pending_time_median['review_time_pending_update_days_acc_median'].append(values)
 
     return acc_pending_time_median
 
