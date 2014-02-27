@@ -69,5 +69,14 @@ if __name__ == '__main__':
     print "The most verbose thread: "  + main_topics.verboseThread()
     print "The longest list: " + main_topics.longestThread()
     print "Number of threads: "  + str(main_topics.numThreads())
-    print "Top longest threads: " + str(main_topics.topLongestThread(10))
+    
+    longest_threads = main_topics.topLongestThread(10)
+    print "Top longest threads: " 
+    for email in longest_threads:
+        print """
+              message_id: %s
+              subject: %s
+              date: %s
+              body: %s
+              """ % (email.message_id, email.subject, email.date, email.body)
 
