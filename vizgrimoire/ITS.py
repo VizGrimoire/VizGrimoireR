@@ -1140,6 +1140,7 @@ def GetTimeToFirstComment (period, startdate, enddate, condition, alias=None) :
     data = ExecuteQuery(query)
     return (data)
 
+
 def GetTimeClosed (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
     q = """SELECT submitted_on date, TIMESTAMPDIFF(SECOND, submitted_on, ch.changed_on)/(24*3600) AS %(alias)s
            FROM issues i, changes ch
@@ -1164,26 +1165,76 @@ def GetTimeClosed (period, startdate, enddate, closed_condition, ext_condition=N
     data = ExecuteQuery(query)
     return (data)
 
-
-def GetIssuesOpenedAt (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
-    q = """SELECT i.id issue_id, TIMESTAMPDIFF(SECOND, submitted_on, %(enddate)s)/(24*3600) AS %(alias)s
-           FROM issues i
-           WHERE submitted_on >= %(startdate)s AND submitted_on < %(enddate)s
-           AND i.id NOT IN
-               (SELECT DISTINCT(issue_id)
-                FROM issues_log_bugzilla
-                WHERE date >= %(startdate)s AND date < %(enddate)s
-                AND """
-
-    q += closed_condition + ")"
+def GetIssuesOpenedAtQuery (startdate, enddate, closed_condition, ext_condition=None):
+    q = """SELECT issue_id
+           FROM issues_log_bugzilla log,
+             (SELECT MAX(id) id
+              FROM issues_log_bugzilla
+              WHERE date >= %(startdate)s AND date < %(enddate)s
+              GROUP BY issue_id) g
+           WHERE log.id = g.id  AND NOT """
+    q += closed_condition
 
     if ext_condition:
         q += ext_condition
 
-    q += """ GROUP BY issue_id ORDER BY submitted_on """
+    q += """ ORDER BY issue_id """
+
+    params = {'startdate' : startdate,
+              'enddate' : enddate}
+    query = q % params
+    return query
+
+def GetIssuesWithoutFirstActionAt (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
+    q = """SELECT i.id issue_id, TIMESTAMPDIFF(SECOND, submitted_on, %(enddate)s)/(24*3600) AS %(alias)s
+           FROM issues i, ("""
+    q += GetIssuesOpenedAtQuery(startdate, enddate, closed_condition, ext_condition)
+    q += """ ) log
+            WHERE i.id = log.issue_id AND i.id NOT IN
+            (SELECT issue_id
+             FROM first_action_per_issue
+             WHERE date >= %(startdate)s AND date < %(enddate)s)"""
 
     params = {'alias' : alias or 'time_opened',
               'startdate' : startdate,
+              'enddate' : enddate}
+    query = q % params
+
+    CreateViewsITS()
+
+    data = ExecuteQuery(query)
+    return (data)
+
+
+def GetIssuesWithoutFirstCommentAt (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
+    q = """SELECT i.id issue_id, TIMESTAMPDIFF(SECOND, submitted_on, %(enddate)s)/(24*3600) AS %(alias)s
+           FROM issues i, ("""
+    q += GetIssuesOpenedAtQuery(startdate, enddate, closed_condition, ext_condition)
+    q += """ ) log
+            WHERE i.id = log.issue_id AND i.id NOT IN
+            (SELECT issue_id
+             FROM first_comment_per_issue
+             WHERE date >= %(startdate)s AND date < %(enddate)s)"""
+
+    params = {'alias' : alias or 'time_opened',
+              'startdate' : startdate,
+              'enddate' : enddate}
+    query = q % params
+
+    CreateViewsITS()
+
+    data = ExecuteQuery(query)
+    return (data)
+
+
+def GetIssuesOpenedAt (period, startdate, enddate, closed_condition, ext_condition=None, alias=None):
+    q = """SELECT i.id issue_id, TIMESTAMPDIFF(SECOND, submitted_on, %(enddate)s)/(24*3600) AS %(alias)s
+           FROM issues i, ("""
+    q += GetIssuesOpenedAtQuery(startdate, enddate, closed_condition, ext_condition)
+    q += """ ) log
+            WHERE i.id = log.issue_id"""
+
+    params = {'alias' : alias or 'time_opened',
               'enddate' : enddate}
     query = q % params
 
