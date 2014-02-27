@@ -26,7 +26,7 @@ import GrimoireUtils
 import GrimoireSQL
 from GrimoireSQL import ExecuteQuery
 
-class MLSTopics(object):
+class Threads(object):
     # This class contains the analysis of the mailing list from the point
     # of view of threads. The main topics are those with the longest,
     # the most crowded or the thread with the most verbose emails.
@@ -97,6 +97,8 @@ class MLSTopics(object):
             if self.list_is_response_of[index] is None:
                 print "STARTING THE PROCESS FOR A MESSAGE: " + message_id
                 messages[message_id] = self._build_threads(message_id)
+                # Adding the root message to the list in first place
+                messages[message_id].insert(0, message_id)
                 print "Final message_id: " + message_id
                 print "Final sons: " 
                 print messages[message_id]
@@ -105,7 +107,7 @@ class MLSTopics(object):
 
         self.threads = messages
 
-    def crowded_list (self):
+    def crowdedThread (self):
         # Returns the most crowded thread.
         # This is defined as the thread with the highest number of different
         # participants
@@ -114,7 +116,7 @@ class MLSTopics(object):
             pass
         
 
-    def longest_list (self):
+    def longestThread (self):
         # Returns the longest thread
         if self.longest == None:
             # variable was not initialize
@@ -127,15 +129,31 @@ class MLSTopics(object):
 
         return self.longest
 
-    def topLongestList(self):
+    def topLongestThread(self, numTop):
         # Returns list ordered by the longest threads
-        threads_aux = self.threads
-        values = threads.aux.values()
+        top_threads = []
+        top_root_msgs = []
+
+        # Retrieving the lists of threads
+        values = self.threads.values()
         # sorted(values, lambda x,y: 1 if len(x)>len(y) else -1 if len(x)<len(y) else 0)
-        values = sorted(values, key = len)
+        values = sorted(values, key = len, reverse = True)
+
+        # Checks if numTop is higher than len of the list
+        if numTop > len(values):
+            top_threads = values
+        else:
+            top_threads = values[0:numTop]
+            
+        for thread in top_threads:
+            # the root message is the first of the list 
+            # (the rest of them are not ordered)
+            top_root_msgs.append(thread[0])
+
+        return top_root_msgs
         
   
-    def verbose_list (self):
+    def verboseThread (self):
         # TODO: at some point these numbers should be calculated when
         # retrieving the initial list of message_id, is_response_of values
         # Returns the most verbose thread (the biggest emails)

@@ -65,8 +65,9 @@ if __name__ == '__main__':
     opts = read_options()
    
     GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword)
-    main_topics = MLSTopics('2014-01-01')
-    print "The most verbose list: "  + main_topics.verbose_list()
-    print "The longest list: " + main_topics.longest_list()
+    main_topics = Threads('2010-01-01', '2013-12-31')
+    print "The most verbose thread: "  + main_topics.verboseThread()
+    print "The longest list: " + main_topics.longestThread()
     print "Number of threads: "  + str(main_topics.numThreads())
+    print "Top longest threads: " + str(main_topics.topLongestThread(10))
 
