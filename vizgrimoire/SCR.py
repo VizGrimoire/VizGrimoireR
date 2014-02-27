@@ -28,15 +28,15 @@
 ##   Alvaro del Castillo San Felix <acs@bitergia.com>
 
 import time
+from datetime import datetime, timedelta
+import logging
 from numpy import median, average
-
-
+import sys
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, GetSQLReportFrom
 from GrimoireSQL import GetSQLReportWhere, ExecuteQuery, BuildQuery
 from GrimoireUtils import GetPercentageDiff, GetDates, completePeriodIds, checkListArray, convertDecimals, medianAndAvgByPeriod
 import GrimoireUtils
-
 
 ##########
 # Specific FROM and WHERE clauses per type of report
@@ -793,50 +793,70 @@ def StaticTimeToReviewPendingSCR (startdate, enddate, identities_db = None, type
         ttr_avg = average(convertDecimals(data))
     return {"review_time_pending_days_median":ttr_median, "review_time_pending_days_avg":ttr_avg}
 
-def EvolTimeToReviewPendingSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
-    return EvolTimeToReviewSCR (period, startdate, enddate, identities_db, type_analysis, True)
 
-def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = [], pending=False):
+def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
 
     metrics_list = {}
 
     q = GetTimeToReviewQuerySCR (startdate, enddate, identities_db, type_analysis)
 
-    if (pending):
-        q = GetTimeToReviewPendingQuerySCR (startdate, enddate, identities_db, type_analysis)
-
     review_list = ExecuteQuery(q)
     checkListArray(review_list)
 
-    if (pending):
-        med_avg_list = medianAndAvgByPeriod(period, review_list['submitted_on'], review_list['revtime'])
-        if (med_avg_list != None):
-            metrics_list['review_time_pending_days_median'] = med_avg_list['median']
-            metrics_list['review_time_pending_days_acc_median'] = med_avg_list['median_acc']
-            metrics_list['review_time_pending_days_avg'] = med_avg_list['avg']
-            metrics_list['review_time_pending_days_acc_avg'] = med_avg_list['avg_acc']
-            metrics_list['month'] = med_avg_list['month']
-        else:
-            metrics_list['review_time_pending_days_median'] = []
-            metrics_list['review_time_pending_days_acc_median'] = []
-            metrics_list['review_time_pending_days_avg'] = []
-            metrics_list['review_time_pending_days_acc_avg'] = []
-            metrics_list['month'] = []
+    med_avg_list = medianAndAvgByPeriod(period, review_list['changed_on'], review_list['revtime'])
+    if (med_avg_list != None):
+        metrics_list['review_time_days_median'] = med_avg_list['median']
+        metrics_list['review_time_days_avg'] = med_avg_list['avg']
+        metrics_list['month'] = med_avg_list['month']
     else:
-        med_avg_list = medianAndAvgByPeriod(period, review_list['changed_on'], review_list['revtime'])
-        if (med_avg_list != None):
-            metrics_list['review_time_days_median'] = med_avg_list['median']
-            metrics_list['review_time_days_acc_median'] = med_avg_list['median_acc']
-            metrics_list['review_time_days_avg'] = med_avg_list['avg']
-            metrics_list['review_time_days_acc_avg'] = med_avg_list['avg_acc']
-            metrics_list['month'] = med_avg_list['month']
-        else:
-            metrics_list['review_time_days_median'] = []
-            metrics_list['review_time_days_acc_median'] = []
-            metrics_list['review_time_days_avg'] = []
-            metrics_list['review_time_days_acc_avg'] = []
-            metrics_list['month'] = []
+        metrics_list['review_time_days_median'] = []
+        metrics_list['review_time_days_avg'] = []
+        metrics_list['month'] = []
     return metrics_list
+
+# Get all reviews pending time for each month and compute the median.
+# Return a list with all the medians for all months
+def EvolTimeToReviewPendingSCR(period, startdate, enddate, identities_db = None, type_analysis=[]):
+
+    def get_sql(month):
+        # List of pending reviews before a date
+        fields = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS revtime,"
+        fields += " YEAR(submitted_on)*12+MONTH(submitted_on) as month"
+        tables = "issues i, people "
+        tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
+        filters = " people.id = i.submitted_by "
+        filters += GetSQLReportWhereSCR(type_analysis)
+        filters += " AND status<>'MERGED' AND status<>'ABANDONED' "
+        # All reviews before the month: accumulated key point
+        filters += " HAVING month<= " + str(month)
+        filters += " ORDER BY  submitted_on"
+        q = GetSQLGlobal('submitted_on', fields, tables, filters,
+                    startdate,enddate)
+        return q
+
+    start = datetime.strptime(startdate, "'%Y-%m-%d'")
+    end = datetime.strptime(enddate, "'%Y-%m-%d'")
+
+    if (period != "month"):
+        logging.error("Period not supported in accPendingReviewsByPeriod "+ period)
+        return None
+
+    start_month = start.year*12 + start.month
+    end_month = end.year*12 + end.month
+    months = end_month - start_month
+    acc_pending_time_median = {"month":[],"review_time_pending_days_acc_median":[]}
+
+    for i in range(0, months+1):
+        pending_period = ExecuteQuery(get_sql(start_month+i))
+        acc_pending_time_median['month'].append(start_month+i)
+        values = pending_period['revtime']
+        if not isinstance(values, list): values = [values]
+        values = GrimoireUtils.convertDecimals(values)
+        if (len(values) == 0): values = float('nan')
+        else: values = median(values)
+        acc_pending_time_median['review_time_pending_days_acc_median'].append(values)
+
+    return acc_pending_time_median
 
 ##############
 # Microstudies
