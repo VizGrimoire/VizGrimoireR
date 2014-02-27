@@ -26,6 +26,15 @@ import GrimoireUtils
 import GrimoireSQL
 from GrimoireSQL import ExecuteQuery
 
+class Email(object):
+    # This class contains the main attributes of an email
+    def __init__(self, message_id, subject, body, date):
+        self.message_id = message_id
+        self.subject = subject
+        self.body = body
+        self.date = date
+        
+
 class Threads(object):
     # This class contains the analysis of the mailing list from the point
     # of view of threads. The main topics are those with the longest,
@@ -133,6 +142,7 @@ class Threads(object):
         # Returns list ordered by the longest threads
         top_threads = []
         top_root_msgs = []
+        top_threads_emails = []
 
         # Retrieving the lists of threads
         values = self.threads.values()
@@ -150,7 +160,22 @@ class Threads(object):
             # (the rest of them are not ordered)
             top_root_msgs.append(thread[0])
 
-        return top_root_msgs
+
+        for message_id in top_root_msgs:
+            # Create a list of emails
+            query = """
+                    select message_ID, 
+                           subject, 
+                           message_body,
+                           first_date
+                    from messages
+                    where message_ID = '%s'
+                    """  % (message_id)
+            results = ExecuteQuery(query)
+            email = Email(results["message_ID"], results["subject"], results["message_body"], results["first_date"])
+            top_threads_emails.append(email)
+
+        return top_threads_emails
         
   
     def verboseThread (self):
