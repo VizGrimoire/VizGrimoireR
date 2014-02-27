@@ -49,6 +49,14 @@ def read_options():
                       action="store",
                       dest="dbidentities",
                       help="Identities database")
+    parser.add_option("-d", "--initdate",
+                      action="store",
+                      dest="initdate",
+                      help="Identities database")
+    parser.add_option("-e", "--enddate",
+                      action="store",
+                      dest="enddate",
+                      help="Identities database")
     (opts, args) = parser.parse_args()
 
     if len(args) != 0:
@@ -65,9 +73,24 @@ if __name__ == '__main__':
     opts = read_options()
    
     GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword)
-    main_topics = Threads('2010-01-01', '2013-12-31')
-    print "The most verbose thread: "  + main_topics.verboseThread()
-    print "The longest list: " + main_topics.longestThread()
+    main_topics = Threads(opts.initdate, opts.enddate)
+    email = main_topics.verboseThread()
+    print "The most verbose thread: "
+    print """
+              message_id: %s
+              subject: %s
+              date: %s
+              body: %s
+              """ % (email.message_id, email.subject, email.date, email.body)
+    email = main_topics.longestThread()
+    print "The longest list: " 
+    print """
+              message_id: %s
+              subject: %s
+              date: %s
+              body: %s
+              """ % (email.message_id, email.subject, email.date, email.body)
+
     print "Number of threads: "  + str(main_topics.numThreads())
     
     longest_threads = main_topics.topLongestThread(10)
@@ -75,8 +98,9 @@ if __name__ == '__main__':
     for email in longest_threads:
         print """
               message_id: %s
+              lenght: %s
               subject: %s
               date: %s
               body: %s
-              """ % (email.message_id, email.subject, email.date, email.body)
+              """ % (email.message_id, main_topics.lenThread(email.message_id), email.subject, email.date, email.body)
 

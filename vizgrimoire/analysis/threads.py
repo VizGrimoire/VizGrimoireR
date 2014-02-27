@@ -28,12 +28,29 @@ from GrimoireSQL import ExecuteQuery
 
 class Email(object):
     # This class contains the main attributes of an email
-    def __init__(self, message_id, subject, body, date):
+
+    def __init__(self, message_id):
         self.message_id = message_id
-        self.subject = subject
-        self.body = body
-        self.date = date
-        
+        self.subject = None
+        self.body = None
+        self.date = None
+        self._buildEmail()
+               
+    def _buildEmail(self):
+        query = """
+                select message_ID, 
+                       subject, 
+                       message_body,
+                       first_date
+                from messages
+                where message_ID = '%s'
+                """  % (self.message_id)
+        results = ExecuteQuery(query)
+
+        self.subject = results["subject"]
+        self.body = results["message_body"]
+        self.date = results["first_date"]
+
 
 class Threads(object):
     # This class contains the analysis of the mailing list from the point
@@ -41,11 +58,12 @@ class Threads(object):
     # the most crowded or the thread with the most verbose emails.
 
     def __init__ (self, initdate, enddate):
-        self.initdate = initdate
-        self.enddate = enddate
-        self.list_message_id = []
-        self.list_is_response_of = []
-        self.threads = {}
+        self.initdate = initdate # initial date of analysis
+        self.enddate = enddate  # final date of analysis
+        self.list_message_id = [] # list of messages id
+        self.list_is_response_of = [] #list of 'father' messages
+        self.threads = {} # General structure, keys = root message_id,
+                          # values = list of messages in that thread
         self.crowded = None # the thread with most people participating
         self.longest = None # the thread with the longest queue of emails
         self.verbose = None # the thread with the most verbose emails.
@@ -136,7 +154,7 @@ class Threads(object):
                     longest = len(self.threads[message_id])
                     self.longest = message_id
 
-        return self.longest
+        return Email(self.longest)
 
     def topLongestThread(self, numTop):
         # Returns list ordered by the longest threads
@@ -160,19 +178,9 @@ class Threads(object):
             # (the rest of them are not ordered)
             top_root_msgs.append(thread[0])
 
-
         for message_id in top_root_msgs:
             # Create a list of emails
-            query = """
-                    select message_ID, 
-                           subject, 
-                           message_body,
-                           first_date
-                    from messages
-                    where message_ID = '%s'
-                    """  % (message_id)
-            results = ExecuteQuery(query)
-            email = Email(results["message_ID"], results["subject"], results["message_body"], results["first_date"])
+            email = Email(message_id)
             top_threads_emails.append(email)
 
         return top_threads_emails
@@ -203,7 +211,7 @@ class Threads(object):
                         # New bigger thread found
                         self.verbose = message_id
                         current_len = total_len_bodies
-        return self.verbose
+        return Email(self.verbose) 
 
 
     def threads (self):
@@ -213,3 +221,10 @@ class Threads(object):
     def numThreads (self):
         # Returns number of threads
         return len(self.threads)
+
+    def lenThread(self, message_id):
+        # Returns the number of message in a given thread
+        # Each thread is identified by the message_id of the 
+        # root message
+        return len(self.threads[message_id])
+
