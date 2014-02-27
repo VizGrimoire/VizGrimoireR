@@ -26,7 +26,7 @@ import sys
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from optparse import OptionParser
-from mlstopics import MLSTopics
+from threads import Threads
 
 def read_options():
     parser = OptionParser(usage="usage: %prog [options]",
