@@ -113,6 +113,7 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     startok = "'2013-04-30'"
 
     evol = {}
+
     # data = vizr.EvolReviewsSubmitted(period, startdate, enddate)
     # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
     data = SCR.EvolReviewsSubmitted(period, startdate, enddate)
@@ -164,7 +165,8 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
 #        if (val == 0): data['review_time_days_avg'][i] = 0
     evol = dict(evol.items() + completePeriodIds(data).items())
 
-    data = SCR.EvolTimeToReviewPendingSCR (period, startok, enddate)
+    data = SCR.EvolTimeToReviewPendingSCR(period, startdate, enddate)
+
 #    for i in range(0,len(data['review_time_pending_days_avg'])):
 #        val = data['review_time_pending_days_avg'][i]
 #        data['review_time_pending_days_avg'][i] = float(val)
@@ -434,19 +436,20 @@ def CodeContribKPI(destdir):
         evol['people'][upeople_id] = {"changes":pdata['changes']}
         # Just to have the time series data
         evol = dict(evol.items() + pdata.items())
-    del evol['changes'] # closed (metrics) is included in people
+    if 'changes' in evol:
+        del evol['changes'] # closed (metrics) is included in people
     createJSON(evol, destdir+"/new-people-activity-scr-evolutionary.json")
 
     data = GetPeopleLeaving()
     createJSON(data, destdir+"/leaving-people-scr.json")
 
     evol = {}
-    data = GetPeopleIntakeSQL(0,1)
-    evol['month'] = data['monthid']
+    data = completePeriodIds(GetPeopleIntakeSQL(0,1))
+    evol['month'] = data['month']
     evol['num_people_1'] = data['people']
-    evol['num_people_1_5'] = GetPeopleIntakeSQL(1,5)['people']
-    evol['num_people_5_10'] = GetPeopleIntakeSQL(5,10)['people']
-    createJSON(completePeriodIds(evol), destdir+"/scr-people-intake-evolutionary.json")
+    evol['num_people_1_5'] = completePeriodIds(GetPeopleIntakeSQL(1,5))['people']
+    evol['num_people_5_10'] = completePeriodIds(GetPeopleIntakeSQL(5,10))['people']
+    createJSON(evol, destdir+"/scr-people-intake-evolutionary.json")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
