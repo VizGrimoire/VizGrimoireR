@@ -47,3 +47,21 @@ def AggDownloads(period, startdate, enddate):
     # Agg number of downloads
     return GetDownloads(period, startdate, enddate, False)
 
+def GetPackages(period, startdate, enddate, evolutionary):
+    # Generic function to obtain number of packages
+    fields = "count(distinct(package)) as packages"
+    tables = "downloads"
+    filters = ""
+
+    query = BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)
+    return(ExecuteQuery(query))
+
+
+def EvolPackages(period, startdate, enddate):
+    # Evolution of different packages per period
+    return GetPackages(period, startdate, enddate, True)
+
+def AggPackages(period, startdate, enddate):
+    # Agg number of packages in a given period
+    return GetPackages(period, startdate, enddate, False)
+

@@ -45,3 +45,6 @@ if __name__ == '__main__':
     print EvolDownloads(period, startdate, enddate)
     print AggDownloads(period, startdate, enddate)
 
+    print EvolPackages(period, startdate, enddate)
+    print AggPackages(period, startdate, enddate)
+
