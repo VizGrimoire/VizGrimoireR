@@ -59,3 +59,9 @@ if __name__ == '__main__':
 
     print "Top 20"
     print TopIPs(startdate, enddate, 20)
+
+    print "Top 10 downloaded packages"
+    print TopPackages(startdate, enddate, 10)
+    
+    print "Top 20 downloaded packages"
+    print TopPackages(startdate, enddate, 20)

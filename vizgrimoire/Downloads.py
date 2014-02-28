@@ -115,4 +115,16 @@ def TopIPs(startdate, enddate, numTop):
             """ % (startdate, enddate, str(numTop))
     return ExecuteQuery(query)
 
+def TopPackages(startdate, enddate, numTop):
+    # Top Packages bein downloaded in a given period
+    query = """
+            select package, count(*) as downloads
+            from downloads
+            where date >= %s and
+                  date < %s
+            group by package
+            order by downloads desc
+            limit %s
+            """ % (startdate, enddate, str(numTop))
+    return ExecuteQuery(query)
 
