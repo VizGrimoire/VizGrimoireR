@@ -64,7 +64,7 @@ class Backend(object):
             #Pretty specific states in Red Hat's Bugzilla
             Backend.statuses = ["ASSIGNED", "CLOSED", "MODIFIED", "NEW", "ON_DEV", \
                     "ON_QA", "POST", "RELEASE_PENDING", "VERIFIED"]
-            Backend.priority = ["Unprioritized", "Lowest", "Low", "Normal", "High", "Highest", "Immediate"]
+            Backend.priority = ["Unprioritized", "Low", "Normal", "High", "Highest", "Immediate"]
             Backend.severity = ["trivial", "minor", "normal", "major", "blocker", "critical", "enhancement"]
 
         if (its_type == 'github'):
@@ -358,13 +358,16 @@ def ticketsTimeToResponse(period, startdate, enddate, identities_db, backend):
 def ticketsTimeOpened(period, startdate, enddate, identities_db, backend):
     log_close_condition_mediawiki = "(status = 'RESOLVED' OR status = 'CLOSED' OR priority = 'Lowest')"
 
-    time_opened_priority = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
-                                                    'priority', backend.priority)
+    evol = {}
 
-    time_opened_severity = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
-                                                    'type', backend.severity)
+    for result_type in ['action', 'comment', 'open']:
+        time_opened_priority = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
+                                                        'priority', backend.priority, result_type)
 
-    evol = dict(time_opened_priority.items() + time_opened_severity.items())
+        time_opened_severity = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
+                                                        'type', backend.severity, result_type)
+
+        evol = dict(evol.items() + time_opened_priority.items() + time_opened_severity.items())
     return evol
 
 def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, field, values_set):
@@ -389,8 +392,8 @@ def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, f
         evol = dict(evol.items() + time_to_fa.items() + time_to_fc.items() + time_closed.items())
     return evol
 
-def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_set):
-    condition = "AND i." + field + " = '%s'"
+def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_set, result_type):
+    condition = "AND " + field + " = '%s'"
     evol = {}
 
     # Build a set of dates
@@ -401,7 +404,12 @@ def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_
     for field_value in values_set:
         field_condition = condition % field_value
 
-        alias = "topened_%s" % field_value
+        if result_type == 'action':
+            alias = "topened_tfa_%s" % field_value
+        elif result_type == 'comment':
+            alias = "topened_tfc_%s" % field_value
+        else:
+            alias = "topened_%s" % field_value
 
         period_dates = []
         median_values = []
@@ -417,8 +425,15 @@ def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_
                 month = 12
             enddate = "'" + str(year) + "-" + str(month) + "-1'"
 
-            open_issues = ITS.GetIssuesOpenedAt(period, startdate, enddate, closed_condition,
-                                                field_condition, alias)[alias]
+            if result_type == 'action':
+                open_issues = ITS.GetIssuesWithoutFirstActionAt(period, startdate, enddate, closed_condition,
+                                                            field_condition, alias)[alias]
+            elif result_type == 'comment':
+                open_issues = ITS.GetIssuesWithoutFirstCommentAt(period, startdate, enddate, closed_condition,
+                                                                 field_condition, alias)[alias]
+            else:
+                open_issues = ITS.GetIssuesOpenedAt(period, startdate, enddate, closed_condition,
+                                                    field_condition, alias)[alias]
 
             m = get_median(open_issues)
             avg = get_avg(open_issues)
