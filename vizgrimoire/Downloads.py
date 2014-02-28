@@ -65,3 +65,41 @@ def AggPackages(period, startdate, enddate):
     # Agg number of packages in a given period
     return GetPackages(period, startdate, enddate, False)
 
+def GetProtocols(period, startdate, enddate, evolutionary):
+    # Generic function to obtain number of protocols
+    fields = "count(distinct(protocol)) as protocols"
+    tables = "downloads"
+    filters = ""
+
+    query = BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)
+    return(ExecuteQuery(query))
+
+
+def EvolProtocols(period, startdate, enddate):
+    # Evolution of different protocols per period
+    return GetProtocols(period, startdate, enddate, True)
+
+def AggProtocols(period, startdate, enddate):
+    # Agg number of protocols in a given period
+    return GetProtocols(period, startdate, enddate, False)
+
+def GetIPs(period, startdate, enddate, evolutionary):
+    # Generic function to obtain number of IPs
+    fields = "count(distinct(ip)) as ips"
+    tables = "downloads"
+    filters = ""
+
+    query = BuildQuery(period, startdate, enddate, " date ", fields, tables, filters, evolutionary)
+    return(ExecuteQuery(query))
+
+
+def EvolIPs(period, startdate, enddate):
+    # Evolution of different IPs per period
+    return GetIPs(period, startdate, enddate, True)
+
+def AggIPs(period, startdate, enddate):
+    # Agg number of IPs in a given period
+    return GetIPs(period, startdate, enddate, False)
+
+
+

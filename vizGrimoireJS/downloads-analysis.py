@@ -47,4 +47,10 @@ if __name__ == '__main__':
 
     print EvolPackages(period, startdate, enddate)
     print AggPackages(period, startdate, enddate)
+    
+    print EvolProtocols(period, startdate, enddate)
+    print AggProtocols(period, startdate, enddate)
+
+    print EvolIPs(period, startdate, enddate)
+    print AggIPs(period, startdate, enddate)
 
