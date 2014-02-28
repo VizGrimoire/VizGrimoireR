@@ -54,3 +54,8 @@ if __name__ == '__main__':
     print EvolIPs(period, startdate, enddate)
     print AggIPs(period, startdate, enddate)
 
+    print "Top 10 IPs downloading all history"
+    print TopIPs(startdate, enddate, 10)
+
+    print "Top 20"
+    print TopIPs(startdate, enddate, 20)
