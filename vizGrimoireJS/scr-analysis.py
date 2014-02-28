@@ -446,6 +446,7 @@ def CodeContribKPI(destdir):
     evol = {}
     data = completePeriodIds(GetPeopleIntakeSQL(0,1))
     evol['month'] = data['month']
+    evol['id'] = data['id']
     evol['num_people_1'] = data['people']
     evol['num_people_1_5'] = completePeriodIds(GetPeopleIntakeSQL(1,5))['people']
     evol['num_people_5_10'] = completePeriodIds(GetPeopleIntakeSQL(5,10))['people']
