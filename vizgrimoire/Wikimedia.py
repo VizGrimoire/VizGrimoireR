@@ -154,8 +154,6 @@ def GetNewGoneSubmittersSQL(period, fields = "", tables = "", filters = "",
     GROUP BY nc.submitted_by ORDER BY nc.submitted_on DESC
     """ % (date_field, q, q_total_period)
 
-    print(q)
-
     return q
 
 def GetNewGoneSubmitters(gone = False):
