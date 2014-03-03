@@ -433,7 +433,7 @@ def CodeContribKPI(destdir):
     for upeople_id in data['upeople_id']:
         pdata = SCR.GetPeopleEvolSCR(upeople_id, period, startdate, enddate)
         pdata = completePeriodIds(pdata)
-        evol['people'][upeople_id] = {"changes":pdata['changes']}
+        evol['people'][upeople_id] = {"submissions":pdata['submissions']}
         # Just to have the time series data
         evol = dict(evol.items() + pdata.items())
     if 'changes' in evol:
