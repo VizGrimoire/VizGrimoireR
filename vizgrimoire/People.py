@@ -27,5 +27,16 @@
 from GrimoireSQL import ExecuteQuery
 
 def GetPersonIdentifiers (upeople_id):
-    q = "select identity,type from identities where upeople_id='"+str(upeople_id)+"'"
+    q = """
+        SELECT identity, type, cou.name, com.name, up.identifier
+        FROM upeople up, identities i,
+            companies com, upeople_companies upcom,
+            countries cou, upeople_countries upcou
+        WHERE up.id ='%s' AND
+            up.id = i.upeople_id AND
+            upcom.upeople_id= up.id AND
+            com.id = upcom.company_id AND
+            upcou.upeople_id= up.id AND
+            cou.id = upcou.country_id
+        """ % (upeople_id)
     return (ExecuteQuery(q))
