@@ -38,7 +38,9 @@ import logging
 import sys
 from Wikimedia import GetCompaniesQuartersSCR, GetPeopleQuartersSCR
 from Wikimedia import GetNewSubmitters, GetNewMergers, GetNewAbandoners
-from Wikimedia import GetNewSubmittersActivity, GetPeopleLeaving, GetPeopleIntakeSQL
+from Wikimedia import GetGoneSubmitters, GetGoneMergers, GetGoneAbandoners
+from Wikimedia import GetNewSubmittersActivity, GetGoneSubmittersActivity
+from Wikimedia import GetPeopleIntakeSQL
 
 # isoweek = importr("ISOweek")
 # vizr = importr("vizgrimoire")
@@ -425,7 +427,14 @@ def CodeContribKPI(destdir):
     code_contrib["submitters"] = GetNewSubmitters()
     code_contrib["mergers"] = GetNewMergers()
     code_contrib["abandoners"] = GetNewAbandoners()
-    createJSON(code_contrib, destdir+"/scr-code-contrib.json")
+    createJSON(code_contrib, destdir+"/scr-code-contrib-new.json")
+
+    code_contrib = {}
+    code_contrib["submitters"] = GetGoneSubmitters()
+    code_contrib["mergers"] = GetGoneMergers()
+    code_contrib["abandoners"] = GetGoneAbandoners()
+    createJSON(code_contrib, destdir+"/scr-code-contrib-gone.json")
+
 
     data = GetNewSubmittersActivity()
     evol = {}
@@ -440,8 +449,21 @@ def CodeContribKPI(destdir):
         del evol['changes'] # closed (metrics) is included in people
     createJSON(evol, destdir+"/new-people-activity-scr-evolutionary.json")
 
-    data = GetPeopleLeaving()
-    createJSON(data, destdir+"/leaving-people-scr.json")
+    data = GetGoneSubmittersActivity()
+    evol = {}
+    evol['people'] = {}
+    for upeople_id in data['upeople_id']:
+        pdata = SCR.GetPeopleEvolSCR(upeople_id, period, startdate, enddate)
+        pdata = completePeriodIds(pdata)
+        evol['people'][upeople_id] = {"submissions":pdata['submissions']}
+        # Just to have the time series data
+        evol = dict(evol.items() + pdata.items())
+    if 'changes' in evol:
+        del evol['changes'] # closed (metrics) is included in people
+    createJSON(evol, destdir+"/gone-people-activity-scr-evolutionary.json")
+
+    # data = GetPeopleLeaving()
+    # createJSON(data, destdir+"/leaving-people-scr.json")
 
     evol = {}
     data = completePeriodIds(GetPeopleIntakeSQL(0,1))
