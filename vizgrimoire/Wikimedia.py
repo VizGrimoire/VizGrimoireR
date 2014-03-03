@@ -107,6 +107,7 @@ def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
     if (order_by != ""): order_by  += ","
 
     # Get the first submission for newcomers
+    # SELECT %s url, submitted_by, name, email, submitted_on, status
     q= """
     SELECT %s url, submitted_by, name, email, submitted_on, status
     FROM %s people, issues_ext_gerrit, issues
@@ -116,18 +117,22 @@ def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
     ORDER BY %s submitted_on""" % \
         (fields, tables, filters, period, q_new_people, order_by)
     # Order so the group by take the first submission and add total
+    # SELECT * FROM ( %s ) nc, (%s) total
     q = """
-    SELECT * FROM ( %s ) nc, (%s) total 
-    WHERE total.submitted_by = nc.submitted_by
+    SELECT revtime, url,  nc.submitted_by, name, email, submitted_on, status, total, first, upeople_id
+    FROM ( %s ) nc, (%s) total, people_upeople pup
+    WHERE total.submitted_by = nc.submitted_by AND pup.people_id =  nc.submitted_by
     GROUP BY nc.submitted_by ORDER BY nc.submitted_on DESC
     """ % (q, q_total_period)
+
     return q
 
 def GetNewSubmitters():
     period = 90 # period of days to be analyzed
-    fields = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS revtime_pending"
+    fields = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS revtime"
     tables = ""
-    filters = "status<>'MERGED' AND status<>'ABANDONED'"
+    filters = ""
+    # filters = "status<>'MERGED' AND status<>'ABANDONED'"
     q = GetNewSubmittersSQL(period, fields, tables, filters)
     return(ExecuteQuery(q))
 
@@ -154,9 +159,7 @@ def GetNewAbandoners():
 # New people activity patterns
 
 def GetNewSubmittersActivity():
-    period = 90 # days
-    min_submissions = 3 # to have enough data
-    max_submissions = 20 # to detect new people
+    period = 90 # days people activity recorded
 
     # Submissions total activity in period 
     q_total_period = GetNewPeopleTotalListSQL(period)
@@ -167,11 +170,11 @@ def GetNewSubmittersActivity():
     q = """
         SELECT total, name, email, first, people_upeople.upeople_id
         FROM (%s) total_period, people, people_upeople
-        WHERE submitted_by = people.id AND total>%s AND total < %s
+        WHERE submitted_by = people.id
           AND people.id = people_upeople.people_id
           AND submitted_by IN (%s)
         ORDER BY total DESC
-        """ % (q_total_period, min_submissions, max_submissions, q_new_people)
+        """ % (q_total_period, q_new_people)
     return(ExecuteQuery(q))
 
 # People leaving the project
