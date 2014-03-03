@@ -678,7 +678,7 @@ def GetPeopleListSCR (startdate, enddate, bots):
     return(ExecuteQuery(q))
 
 
-def GetPeopleQuerySCR (developer_id, period, startdate, enddate, evol):
+def GetPeopleQuerySCRChanges (developer_id, period, startdate, enddate, evol):
     fields = "COUNT(c.id) AS changes"
     tables = GetTablesOwnUniqueIdsSCR()
     filters = GetFiltersOwnUniqueIdsSCR()+ " AND pup.upeople_id = "+ str(developer_id)
@@ -694,13 +694,30 @@ def GetPeopleQuerySCR (developer_id, period, startdate, enddate, evol):
                 startdate, enddate)
     return (q)
 
+def GetPeopleQuerySCRSubmissions (developer_id, period, startdate, enddate, evol):
+    fields = "COUNT(i.id) AS submissions"
+    tables = GetTablesOwnUniqueIdsSCR('issues')
+    filters = GetFiltersOwnUniqueIdsSCR('issues')+ " AND pup.upeople_id = "+ str(developer_id)
+
+    if (evol):
+        q = GetSQLPeriod(period,'submitted_on', fields, tables, filters,
+                startdate, enddate)
+    else:
+        fields = fields + \
+                ",DATE_FORMAT (min(submitted_on),'%Y-%m-%d') as first_date, "+\
+                "  DATE_FORMAT (max(submitted_on),'%Y-%m-%d') as last_date"
+        q = GetSQLGlobal('submitted_on', fields, tables, filters,
+                startdate, enddate)
+    return (q)
+
+
 
 def GetPeopleEvolSCR (developer_id, period, startdate, enddate):
-    q = GetPeopleQuerySCR(developer_id, period, startdate, enddate, True)
+    q = GetPeopleQuerySCRSubmissions(developer_id, period, startdate, enddate, True)
     return(ExecuteQuery(q))
 
 def GetPeopleStaticSCR (developer_id, startdate, enddate):
-    q = GetPeopleQuerySCR(developer_id, None, startdate, enddate, False)
+    q = GetPeopleQuerySCRSubmissions(developer_id, None, startdate, enddate, False)
     return(ExecuteQuery(q))
 
 ################
