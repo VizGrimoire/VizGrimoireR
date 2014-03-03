@@ -218,7 +218,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for repo in repos:
-        # repo = "gerrit.wikimedia.org_mediawiki/extensions/Validator"
+        # repo = "gerrit.wikimedia.org_mediawiki/extensions/TorBlock"
         repo_file = repo.replace("/","_")
         repos_list["name"].append(repo_file)
         logging.info("Repo: " + repo)
@@ -275,6 +275,8 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         repos_list["review_time_pending_days_median"].append(data['review_time_pending_days_median'])
         createJSON(agg, destdir + "/"+repo_file + "-scr-rep-static.json")
 
+        # sys.exit()
+
     createJSON(repos_list, destdir+"/scr-repos.json")
 
 def companiesData(period, startdate, enddate, idb, destdir):
@@ -288,6 +290,7 @@ def companiesData(period, startdate, enddate, idb, destdir):
     # missing information from the rest of type of reviews, patches and
     # number of patches waiting for reviewer and submitter 
     for company in companies:
+        logging.info("Company: " + company)
         company_file = company.replace("/","_")
         type_analysis = ['company', company]
         # Evol
@@ -447,6 +450,7 @@ def CodeContribKPI(destdir):
     data = completePeriodIds(GetPeopleIntakeSQL(0,1))
     evol['month'] = data['month']
     evol['id'] = data['id']
+    evol['date'] = data['date']
     evol['num_people_1'] = data['people']
     evol['num_people_1_5'] = completePeriodIds(GetPeopleIntakeSQL(1,5))['people']
     evol['num_people_5_10'] = completePeriodIds(GetPeopleIntakeSQL(5,10))['people']
@@ -468,6 +472,8 @@ if __name__ == '__main__':
     # Working at the same time with VizR and VizPy yet
     # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
+    # reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
+    # sys.exit()
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
