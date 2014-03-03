@@ -68,11 +68,18 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
 # People Code Contrib New and Gone KPI
 
 def GetNewPeopleListSQL(period):
-    q_new_people = """
+    q_people = """
         SELECT submitted_by FROM (SELECT MIN(submitted_on) AS first, submitted_by
         FROM issues GROUP BY submitted_by
-        HAVING DATEDIFF(NOW(), first)<%s) plist """ % (period)
-    return q_new_people
+        HAVING DATEDIFF(NOW(), first) <= %s) plist """ % (period)
+    return q_people
+
+def GetGonePeopleListSQL(period):
+    q_people = """
+        SELECT submitted_by FROM (SELECT MAX(submitted_on) AS last, submitted_by
+        FROM issues GROUP BY submitted_by
+        HAVING DATEDIFF(NOW(), last)>%s) plist """ % (period)
+    return q_people
 
 # Total submissions for people in period
 def GetNewPeopleTotalListSQL(period, filters=""):
@@ -82,14 +89,27 @@ def GetNewPeopleTotalListSQL(period, filters=""):
         FROM issues
         %s
         GROUP BY submitted_by
-        HAVING DATEDIFF(NOW(), first)<%s
+        HAVING DATEDIFF(NOW(), first) <= %s
         ORDER BY total
         """ % (filters, period)
     return q_total_period
 
-# New people in period with 1 submission
-def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
-                        order_by = ""):
+# Total submissions for people in period
+def GetGonePeopleTotalListSQL(period, filters=""):
+    if (filters != ""): filters  = " WHERE " + filters
+    q_total_period = """
+        SELECT COUNT(id) as total, submitted_by, MAX(submitted_on) AS last
+        FROM issues
+        %s
+        GROUP BY submitted_by
+        HAVING DATEDIFF(NOW(), last)>%s
+        ORDER BY total
+        """ % (filters, period)
+    return q_total_period
+
+# New/Gone people using period as analysis time frame
+def GetNewGoneSubmittersSQL(period, fields = "", tables = "", filters = "",
+                            order_by = "", gone = False):
 
     # Adapt filters for total: use issues table only
     filters_total = filters
@@ -98,63 +118,101 @@ def GetNewSubmittersSQL(period, fields = "", tables = "", filters = "",
     if "new_value='MERGED'" in filters:
         filters_total = "status='MERGED'"
 
-    q_new_people = GetNewPeopleListSQL(period)
+    q_people = GetNewPeopleListSQL(period)
     q_total_period = GetNewPeopleTotalListSQL(period, filters_total)
+    if (gone):
+        q_people = GetGonePeopleListSQL(period)
+        q_total_period = GetGonePeopleTotalListSQL(period, filters_total)
+
 
     if (tables != ""): tables +=  ","
     if (filters != ""): filters  += " AND "
     if (fields != ""): fields  += ","
     if (order_by != ""): order_by  += ","
 
+    newgone = "<=";
+    if (gone): newgone = ">";
+
     # Get the first submission for newcomers
     # SELECT %s url, submitted_by, name, email, submitted_on, status
     q= """
     SELECT %s url, submitted_by, name, email, submitted_on, status
     FROM %s people, issues_ext_gerrit, issues
-    WHERE %s submitted_by = people.id AND DATEDIFF(NOW(), submitted_on)<%s
+    WHERE %s submitted_by = people.id AND DATEDIFF(NOW(), submitted_on) %s %s
           AND issues_ext_gerrit.issue_id = issues.id
           AND submitted_by IN (%s)
     ORDER BY %s submitted_on""" % \
-        (fields, tables, filters, period, q_new_people, order_by)
+        (fields, tables, filters, newgone, period, q_people, order_by)
     # Order so the group by take the first submission and add total
     # SELECT * FROM ( %s ) nc, (%s) total
+    date_field = "first"
+    if (gone): date_field = "last";
     q = """
-    SELECT revtime, url,  nc.submitted_by, name, email, submitted_on, status, total, first, upeople_id
+    SELECT revtime, url,  nc.submitted_by, name, email, submitted_on, status, total, %s, upeople_id
     FROM ( %s ) nc, (%s) total, people_upeople pup
     WHERE total.submitted_by = nc.submitted_by AND pup.people_id =  nc.submitted_by
     GROUP BY nc.submitted_by ORDER BY nc.submitted_on DESC
-    """ % (q, q_total_period)
+    """ % (date_field, q, q_total_period)
+
+    print(q)
 
     return q
 
-def GetNewSubmitters():
+def GetNewGoneSubmitters(gone = False):
     period = 90 # period of days to be analyzed
+    if (gone): period = 180
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS revtime"
     tables = ""
     filters = ""
     # filters = "status<>'MERGED' AND status<>'ABANDONED'"
-    q = GetNewSubmittersSQL(period, fields, tables, filters)
+    q = GetNewGoneSubmittersSQL(period, fields, tables, filters)
+    if gone:
+        q = GetNewGoneSubmittersSQL(period, fields, tables, filters, "", gone)
     return(ExecuteQuery(q))
 
-def GetNewMergers():
+def GetNewSubmitters():
+    return GetNewGoneSubmitters()
+
+def GetGoneSubmitters():
+    return GetNewGoneSubmitters(True)
+
+def GetNewGoneMergers(gone = False):
     period = 90 # period of days to be analyzed
+    if (gone): period = 180
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime"
     tables = "changes"
     filters = " changes.issue_id = issues.id "
     filters += "AND field='status' AND new_value='MERGED'"
     order_by = "revtime DESC"
-    q = GetNewSubmittersSQL(period, fields, tables, filters, order_by)
+    q = GetNewGoneSubmittersSQL(period, fields, tables, filters, order_by)
+    if (gone):
+        q = GetNewGoneSubmittersSQL(period, fields, tables, filters, order_by, gone)
     return(ExecuteQuery(q))
 
-def GetNewAbandoners():
+def GetNewMergers():
+    return GetNewGoneMergers()
+
+def GetGoneMergers():
+    return GetNewGoneMergers(True)
+
+def GetNewGoneAbandoners(gone = False):
     period = 90 # period of days to be analyzed
+    if (gone): period = 180
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, changed_on)/(24*3600) AS revtime"
     tables = "changes"
     filters = " changes.issue_id = issues.id "
     filters += "AND field='status' AND new_value='ABANDONED'"
     order_by = "revtime DESC"
-    q = GetNewSubmittersSQL(period, fields, tables, filters, order_by)
+    q = GetNewGoneSubmittersSQL(period, fields, tables, filters, order_by)
+    if (gone):
+        q = GetNewGoneSubmittersSQL(period, fields, tables, filters, order_by, gone)
     return(ExecuteQuery(q))
+
+def GetNewAbandoners():
+    return GetNewGoneAbandoners()
+
+def GetGoneAbandoners():
+    return GetNewGoneAbandoners(True)
 
 # New people activity patterns
 
@@ -164,7 +222,7 @@ def GetNewSubmittersActivity():
     # Submissions total activity in period 
     q_total_period = GetNewPeopleTotalListSQL(period)
 
-    q_new_people = GetNewPeopleListSQL(period)
+    q_people = GetNewPeopleListSQL(period)
 
     # Total submissions for new people in period
     q = """
@@ -174,11 +232,11 @@ def GetNewSubmittersActivity():
           AND people.id = people_upeople.people_id
           AND submitted_by IN (%s)
         ORDER BY total DESC
-        """ % (q_total_period, q_new_people)
+        """ % (q_total_period, q_people)
     return(ExecuteQuery(q))
 
 # People leaving the project
-def GetPeopleLeaving():
+def GetGoneSubmittersActivity():
     date_leaving = 90 # last contrib 3 months ago
     date_gone = 180 # last contrib 6 months ago
 
@@ -190,23 +248,23 @@ def GetPeopleLeaving():
        GROUP BY submitted_by ORDER BY total
        """
 
-    q_leaving = """
-        SELECT name, submitted_by, email, submitted_on, total from
-          (%s) t
-        WHERE DATEDIFF(NOW(),submitted_on)>%s and DATEDIFF(NOW(),submitted_on)<=%s
-        ORDER BY submitted_on, total DESC
-        """ % (q_all_people,date_leaving,date_gone)
+#    q_leaving = """
+#        SELECT total, name, email, submitted_on, people_upeople.upeople_id  from
+#          (%s) t, people_upeople
+#        WHERE DATEDIFF(NOW(),submitted_on)>%s and DATEDIFF(NOW(),submitted_on)<=%s
+#            AND people_upeople.people_id = submitted_by
+#        ORDER BY submitted_on, total DESC
+#        """ % (q_all_people,date_leaving,date_gone)
 
     q_gone  = """
-        SELECT name, submitted_by, email, submitted_on, total from
-          (%s) t
+        SELECT total, name, email, submitted_on, people_upeople.upeople_id from
+          (%s) t, people_upeople
         WHERE DATEDIFF(NOW(),submitted_on)>%s
+            AND people_upeople.people_id = submitted_by
         ORDER BY submitted_on, total DESC
         """ % (q_all_people, date_gone)
 
-    data = {"leaving":{},"mia":{}}
-    data["gone"] = ExecuteQuery(q_gone)
-    data["leaving"] = ExecuteQuery(q_leaving)
+    data = ExecuteQuery(q_gone)
 
     return data
 
