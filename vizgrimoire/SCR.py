@@ -771,8 +771,8 @@ def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_anal
     filters += " ORDER BY changed_on "
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
-    min_days_for_review = 0.042 # one hour
-    q = "SELECT revtime, changed_on FROM ("+q+") qrevs WHERE revtime>"+str(min_days_for_review)
+    # min_days_for_review = 0.042 # one hour
+    # q = "SELECT revtime, changed_on FROM ("+q+") qrevs WHERE revtime>"+str(min_days_for_review)
     return (q)
 
 # Average can be calculate directly from SQL. But not used.
