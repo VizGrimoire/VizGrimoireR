@@ -33,14 +33,18 @@ from GrimoireSQL import ExecuteQuery
 # No use of generic query because changes table is not used
 # COMPANIES
 def GetCompaniesQuartersSCR (year, quarter, identities_db, limit = 25):
-    q = "  SELECT COUNT(i.id) AS total, c.name, c.id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year "+\
-        "   FROM issues i, people p , people_upeople pup,  "+\
-        "     "+identities_db+".upeople_companies upc,"+identities_db+".companies c "+\
-        "   WHERE i.submitted_by=p.id AND pup.people_id=p.id  "+\
-        "     AND pup.upeople_id = upc.upeople_id AND upc.company_id = c.id "+\
-        "     AND status='merged' "+\
-        "     AND QUARTER(submitted_on) = "+str(quarter)+" AND YEAR(submitted_on) = "+str(year)+" "+\
-        "  GROUP BY year, quarter, c.id ORDER BY year, quarter, total DESC, c.name LIMIT "+str(limit)
+    q = """
+        SELECT COUNT(i.id) AS total, c.name, c.id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year
+        FROM issues i, people p , people_upeople pup, %s.upeople_companies upc,%s.companies c
+        WHERE i.submitted_by=p.id AND pup.people_id=p.id
+            AND pup.upeople_id = upc.upeople_id AND upc.company_id = c.id
+            AND status='merged'
+            AND QUARTER(submitted_on) = %s AND YEAR(submitted_on) = %s
+          GROUP BY year, quarter, c.id
+          ORDER BY year, quarter, total DESC, c.name
+          LIMIT %s
+        """ % (identities_db, identities_db, quarter, year, limit)
+
     return (ExecuteQuery(q))
 
 
@@ -49,16 +53,20 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
 
     filter_bots = ''
     for bot in bots:
-        filter_bots = filter_bots + " up.identifier<>'"+bot+"' and "
+        filter_bots = filter_bots + " up.identifier<>'"+bot+"' AND "
 
+    q = """
+        SELECT COUNT(i.id) AS total, p.name, pup.upeople_id as id,
+            QUARTER(submitted_on) as quarter, YEAR(submitted_on) year
+        FROM issues i, people p , people_upeople pup, %s.upeople up
+        WHERE %s i.submitted_by=p.id AND pup.people_id=p.id AND pup.upeople_id = up.id
+            AND status='merged'
+            AND QUARTER(submitted_on) = %s AND YEAR(submitted_on) = %s
+       GROUP BY year, quarter, pup.upeople_id
+       ORDER BY year, quarter, total DESC, id
+       LIMIT %s
+       """ % (identities_db, filter_bots, quarter, year, limit)
 
-    q = "SELECT COUNT(i.id) AS total, p.name, pup.upeople_id as id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year "+\
-           " FROM issues i, people p , people_upeople pup, "+ identities_db+".upeople up "+\
-           " WHERE "+ filter_bots+ " "+\
-           "  i.submitted_by=p.id AND pup.people_id=p.id AND pup.upeople_id = up.id "+\
-           "  AND status='merged' "+\
-           "  AND QUARTER(submitted_on) = "+str(quarter)+" AND YEAR(submitted_on) = "+str(year)+" "+\
-           " GROUP BY year, quarter, pup.upeople_id ORDER BY year, quarter, total DESC, id LIMIT "+str(limit)
     return (ExecuteQuery(q))
 
 ################
