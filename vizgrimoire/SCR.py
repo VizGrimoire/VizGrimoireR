@@ -57,7 +57,6 @@ def GetSQLCompaniesFromSCR (identities_db):
             identities_db+".upeople_companies upc,"+\
             identities_db+".companies c")
 
-
 def GetSQLCompaniesWhereSCR (company):
     #fields necessaries to match info among tables
     return ("and i.submitted_by = pup.people_id "+\
@@ -203,6 +202,9 @@ def GetReviews (period, startdate, enddate, type, type_analysis, evolutionary, i
     elif type == "abandoned": filters = " i.status = 'ABANDONED' "
     filters = filters + GetSQLReportWhereSCR(type_analysis)
 
+    from Wikimedia import GetIssuesFiltered
+    if (GetIssuesFiltered() != ""): filters += "AND " + GetIssuesFiltered()
+
     #Adding dates filters (and evolutionary or static analysis)
     if (evolutionary):
         q = GetSQLPeriod(period, "i.submitted_on", fields, tables, filters,
@@ -272,7 +274,6 @@ def EvolReviewsAbandoned(period, startdate, enddate, type_analysis = [], identit
 def EvolReviewsAbandonedChanges(period, startdate, enddate, type_analysis = [], identities_db=None):
     return (GetReviewsChanges(period, startdate, enddate, "abandoned", type_analysis, True, identities_db))
 
-
 def EvolReviewsPending(period, startdate, enddate, config, type_analysis = [], identities_db=None):
     data = EvolReviewsSubmitted(period, startdate, enddate, type_analysis, identities_db)
     data = completePeriodIds(data)
@@ -282,7 +283,6 @@ def EvolReviewsPending(period, startdate, enddate, config, type_analysis = [], i
     data2 = completePeriodIds(data2)
     evol = dict(data.items() + data1.items() + data2.items())
     pending = {"pending":[]}
-
     for i in range(0, len(data['merged'])):
         pending_val = evol["submitted"][i] - evol["merged"][i] - evol["abandoned"][i]
         pending["pending"].append(pending_val)
