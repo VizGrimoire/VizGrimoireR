@@ -203,7 +203,7 @@ def GetReviews (period, startdate, enddate, type, type_analysis, evolutionary, i
     filters = filters + GetSQLReportWhereSCR(type_analysis)
 
     from Wikimedia import GetIssuesFiltered
-    if (GetIssuesFiltered() != ""): filters += "AND " + GetIssuesFiltered()
+    if (GetIssuesFiltered() != ""): filters += " AND " + GetIssuesFiltered()
 
     #Adding dates filters (and evolutionary or static analysis)
     if (evolutionary):
