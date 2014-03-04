@@ -140,7 +140,8 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     evol = dict(evol.items() + completePeriodIds(data).items())
     # TODO: We can not use this R API because Python conf can't be pass to R  
     # data = dataFrame2Dict(vizr.EvolReviewsPendingChanges(period, startdate, enddate, conf))
-    data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, [])
+    # data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, [])
+    data = SCR.EvolReviewsPending(period, startdate, enddate, conf, [])
     evol = dict(evol.items() + completePeriodIds(data).items())
     #Patches info
     data = SCR.EvolPatchesVerified(period, startdate, enddate)
@@ -239,7 +240,8 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
 
         # data = vizr.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis)
         # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
+        # data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
+        data = SCR.EvolReviewsPending(period, startdate, enddate, conf, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolTimeToReviewSCR(period, startok, enddate, idb, type_analysis)
         data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
@@ -494,8 +496,6 @@ if __name__ == '__main__':
     # Working at the same time with VizR and VizPy yet
     # vizr.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    # reposData (period, startdate, enddate, opts.identities_db, opts.destdir, opts)
-    # sys.exit()
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
     aggData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
