@@ -286,9 +286,10 @@ def EvolReviewsPending(period, startdate, enddate, config, type_analysis = [], i
     data2 = completePeriodIds(data2)
     evol = dict(data.items() + data1.items() + data2.items())
     pending = {"pending":[]}
-    for i in range(0, len(data['merged'])):
+    for i in range(0, len(data['submitted'])):
         pending_val = evol["submitted"][i] - evol["merged"][i] - evol["abandoned"][i]
         pending["pending"].append(pending_val)
+    pending["month"] = evol["month"]
     pending = completePeriodIds(pending)
     return pending
 
