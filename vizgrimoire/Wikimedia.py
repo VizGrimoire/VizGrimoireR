@@ -31,7 +31,6 @@ def _init_filter_submitter_id():
     people_userid = 'l10n-bot'
     q = "SELECT id FROM people WHERE user_id = '%s'" % (people_userid)
     globals()['_filter_submitter_id'] = ExecuteQuery(q)['id']
-    print(_filter_submitter_id)
 
 # To be used for issues table
 def GetIssuesFiltered():
