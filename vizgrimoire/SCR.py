@@ -223,7 +223,7 @@ def GetReviewsChanges(period, startdate, enddate, type, type_analysis, evolution
     filters = "c.issue_id = i.id AND new_value='"+type+"'"
     filters = filters + GetSQLReportWhereSCR(type_analysis)
 
-    from Wikimedia import GetIssuesFiltered
+    from Wikimedia import GetChangesFiltered
     if (GetChangesFiltered() != ""): filters += " AND " + GetChangesFiltered()
 
     #Adding dates filters (and evolutionary or static analysis)
