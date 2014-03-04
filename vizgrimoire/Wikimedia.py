@@ -26,6 +26,25 @@
 
 from GrimoireSQL import ExecuteQuery
 
+# _filter_submitter_id as a static global var to avoid SQL re-execute
+def _init_filter_submitter_id():
+    people_userid = 'l10n-bot'
+    q = "SELECT id FROM people WHERE user_id = '%s'" % (people_userid)
+    globals()['_filter_submitter_id'] = ExecuteQuery(q)['id']
+    print(_filter_submitter_id)
+
+# To be used for issues table
+def GetIssuesFiltered():
+    if ('_filter_submitter_id' not in globals()): _init_filter_submitter_id()
+    filters = "submitted_by <> %s" % (globals()['_filter_submitter_id'])
+    return filters
+
+# To be used for changes table
+def GetChangesFiltered():
+    if ('_filter_submitter_id' not in globals()): _init_filter_submitter_id()
+    filters = "changed_by <> %s" % (globals()['_filter_submitter_id'])
+    return filters
+
 ########################################
 # Quarter analysis: Companies and People
 ########################################
@@ -33,17 +52,19 @@ from GrimoireSQL import ExecuteQuery
 # No use of generic query because changes table is not used
 # COMPANIES
 def GetCompaniesQuartersSCR (year, quarter, identities_db, limit = 25):
+    filters = GetIssuesFiltered()
+    if (filters != ""): filters  += " AND "
     q = """
         SELECT COUNT(i.id) AS total, c.name, c.id, QUARTER(submitted_on) as quarter, YEAR(submitted_on) year
         FROM issues i, people p , people_upeople pup, %s.upeople_companies upc,%s.companies c
-        WHERE i.submitted_by=p.id AND pup.people_id=p.id
+        WHERE %s i.submitted_by=p.id AND pup.people_id=p.id
             AND pup.upeople_id = upc.upeople_id AND upc.company_id = c.id
             AND status='merged'
             AND QUARTER(submitted_on) = %s AND YEAR(submitted_on) = %s
           GROUP BY year, quarter, c.id
           ORDER BY year, quarter, total DESC, c.name
           LIMIT %s
-        """ % (identities_db, identities_db, quarter, year, limit)
+        """ % (identities_db, identities_db, filters,  quarter, year, limit)
 
     return (ExecuteQuery(q))
 
@@ -55,6 +76,10 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
     for bot in bots:
         filter_bots = filter_bots + " up.identifier<>'"+bot+"' AND "
 
+    filters = GetIssuesFiltered()
+    if (filters != ""): filters  = filter_bots + filters + " AND "
+    else: filters = filter_bots
+
     q = """
         SELECT COUNT(i.id) AS total, p.name, pup.upeople_id as id,
             QUARTER(submitted_on) as quarter, YEAR(submitted_on) year
@@ -65,7 +90,7 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
        GROUP BY year, quarter, pup.upeople_id
        ORDER BY year, quarter, total DESC, id
        LIMIT %s
-       """ % (identities_db, filter_bots, quarter, year, limit)
+       """ % (identities_db, filters, quarter, year, limit)
 
     return (ExecuteQuery(q))
 
@@ -76,21 +101,35 @@ def GetPeopleQuartersSCR (year, quarter, identities_db, limit = 25, bots = []) :
 # People Code Contrib New and Gone KPI
 
 def GetNewPeopleListSQL(period):
+    filters = GetIssuesFiltered()
+    if (filters != ""): filters  = " WHERE " + filters
     q_people = """
         SELECT submitted_by FROM (SELECT MIN(submitted_on) AS first, submitted_by
-        FROM issues GROUP BY submitted_by
-        HAVING DATEDIFF(NOW(), first) <= %s) plist """ % (period)
+        FROM issues
+        %s
+        GROUP BY submitted_by
+        HAVING DATEDIFF(NOW(), first) <= %s) plist """ % (filters, period)
     return q_people
 
 def GetGonePeopleListSQL(period):
+    filters = GetIssuesFiltered()
+    if (filters != ""): filters  = " WHERE " + filters
     q_people = """
         SELECT submitted_by FROM (SELECT MAX(submitted_on) AS last, submitted_by
-        FROM issues GROUP BY submitted_by
-        HAVING DATEDIFF(NOW(), last)>%s) plist """ % (period)
+        FROM issues
+        %s
+        GROUP BY submitted_by
+        HAVING DATEDIFF(NOW(), last)>%s) plist """ % (filters, period)
     return q_people
 
 # Total submissions for people in period
 def GetNewPeopleTotalListSQL(period, filters=""):
+
+    issues_filters = GetIssuesFiltered()
+    if (filters != ""):
+        if issues_filters != "": filters += " AND " + issues_filters
+    else: filters = issues_filters
+
     if (filters != ""): filters  = " WHERE " + filters
     q_total_period = """
         SELECT COUNT(id) as total, submitted_by, MIN(submitted_on) AS first
@@ -104,6 +143,12 @@ def GetNewPeopleTotalListSQL(period, filters=""):
 
 # Total submissions for people in period
 def GetGonePeopleTotalListSQL(period, filters=""):
+
+    issues_filters = GetIssuesFiltered()
+    if (filters != ""):
+        if issues_filters != "": filters += " AND " + issues_filters
+    else: filters = issues_filters
+
     if (filters != ""): filters  = " WHERE " + filters
     q_total_period = """
         SELECT COUNT(id) as total, submitted_by, MAX(submitted_on) AS last
@@ -135,6 +180,7 @@ def GetNewGoneSubmittersSQL(period, fields = "", tables = "", filters = "",
 
     if (tables != ""): tables +=  ","
     if (filters != ""): filters  += " AND "
+    if (GetIssuesFiltered() != ""): filters += GetIssuesFiltered() + " AND "
     if (fields != ""): fields  += ","
     if (order_by != ""): order_by  += ","
 
@@ -230,15 +276,18 @@ def GetNewSubmittersActivity():
 
     q_people = GetNewPeopleListSQL(period)
 
+    filters = GetIssuesFiltered()
+    if (filters != ""): filters  += " AND "
+
     # Total submissions for new people in period
     q = """
         SELECT total, name, email, first, people_upeople.upeople_id
         FROM (%s) total_period, people, people_upeople
-        WHERE submitted_by = people.id
+        WHERE %s submitted_by = people.id
           AND people.id = people_upeople.people_id
           AND submitted_by IN (%s)
         ORDER BY total DESC
-        """ % (q_total_period, q_people)
+        """ % (q_total_period, filters, q_people)
     return(ExecuteQuery(q))
 
 # People leaving the project
@@ -262,27 +311,35 @@ def GetGoneSubmittersActivity():
 #        ORDER BY submitted_on, total DESC
 #        """ % (q_all_people,date_leaving,date_gone)
 
+    filters = GetIssuesFiltered()
+    if (filters != ""): filters  += " AND "
+
     q_gone  = """
         SELECT total, name, email, submitted_on, people_upeople.upeople_id from
           (%s) t, people_upeople
-        WHERE DATEDIFF(NOW(),submitted_on)>%s
+        WHERE %s DATEDIFF(NOW(),submitted_on)>%s
             AND people_upeople.people_id = submitted_by
         ORDER BY submitted_on, total DESC
-        """ % (q_all_people, date_gone)
+        """ % (q_all_people, filters, date_gone)
 
     data = ExecuteQuery(q_gone)
 
     return data
 
 def GetPeopleIntakeSQL(min, max):
+
+    filters = GetIssuesFiltered()
+    if (filters != ""): filters  = " WHERE " + filters
+
     q_people_num_submissions_evol = """
         SELECT COUNT(*) AS total, submitted_by,
             YEAR(submitted_on) as year, MONTH(submitted_on) as monthid
         FROM issues
+        %s
         GROUP BY submitted_by, year, monthid
         HAVING total > %i AND total <= %i
         ORDER BY submitted_on DESC
-        """ % (min, max)
+        """ % (filters, min, max)
 
 
     q_people_num_evol = """
