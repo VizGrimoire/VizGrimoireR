@@ -739,6 +739,10 @@ def GetTimeToReviewPendingQuerySCR (startdate, enddate, identities_db = None, ty
     filters = filter_bots + " people.id = i.submitted_by "
     filters += GetSQLReportWhereSCR(type_analysis)
     filters += " AND status<>'MERGED' AND status<>'ABANDONED' "
+
+    from Wikimedia import GetIssuesFiltered
+    if (GetIssuesFiltered() != ""): filters += " AND " + GetIssuesFiltered()
+
     filters += " ORDER BY  submitted_on"
     q = GetSQLGlobal('submitted_on', fields, tables, filters,
                     startdate, enddate)
@@ -760,6 +764,10 @@ def GetTimeToReviewQuerySCR (startdate, enddate, identities_db = None, type_anal
     filters += " AND field='status' AND new_value='MERGED' "
     # remove autoreviews
     filters += " AND i.submitted_by<>changes.changed_by "
+
+    from Wikimedia import GetIssuesFiltered
+    if (GetIssuesFiltered() != ""): filters += " AND " + GetIssuesFiltered()
+
     filters += " ORDER BY changed_on "
     q = GetSQLGlobal('changed_on', fields, tables, filters,
                     startdate, enddate)
@@ -849,6 +857,10 @@ def EvolTimeToReviewPendingSCR(period, startdate, enddate, identities_db = None,
         filters += GetSQLReportWhereSCR(type_analysis)
         filters += " AND status<>'MERGED' AND status<>'ABANDONED' "
         filters += " AND ie.issue_id  = i.id "
+
+        from Wikimedia import GetIssuesFiltered
+        if (GetIssuesFiltered() != ""): filters += " AND " + GetIssuesFiltered()
+
         # All reviews before the month: accumulated key point
         filters += " HAVING month<= " + str(month)
         filters += " ORDER BY  submitted_on"
