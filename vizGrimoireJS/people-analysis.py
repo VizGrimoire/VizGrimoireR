@@ -100,7 +100,7 @@ def createPeopleIdentifiers(startdate, enddate):
     people_data = {}
     people = GetPeopleListSCM(startdate, enddate)
     people = people['pid']
-    limit = 100
+    limit = 550
     if (len(people)<limit): limit = len(people);
     people = people[0:limit]
 

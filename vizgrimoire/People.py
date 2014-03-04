@@ -28,7 +28,7 @@ from GrimoireSQL import ExecuteQuery
 
 def GetPersonIdentifiers (upeople_id):
     q = """
-        SELECT identity, type, cou.name, com.name, up.identifier
+        SELECT identity, type, cou.name as country, com.name as affiliation, up.identifier
         FROM upeople up, identities i,
             companies com, upeople_companies upcom,
             countries cou, upeople_countries upcou
