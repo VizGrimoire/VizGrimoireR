@@ -35,13 +35,13 @@ def _init_filter_submitter_id():
 # To be used for issues table
 def GetIssuesFiltered():
     if ('_filter_submitter_id' not in globals()): _init_filter_submitter_id()
-    filters = "submitted_by <> %s" % (globals()['_filter_submitter_id'])
+    filters = " submitted_by <> %s" % (globals()['_filter_submitter_id'])
     return filters
 
 # To be used for changes table
 def GetChangesFiltered():
     if ('_filter_submitter_id' not in globals()): _init_filter_submitter_id()
-    filters = "changed_by <> %s" % (globals()['_filter_submitter_id'])
+    filters = " changed_by <> %s" % (globals()['_filter_submitter_id'])
     return filters
 
 ########################################
