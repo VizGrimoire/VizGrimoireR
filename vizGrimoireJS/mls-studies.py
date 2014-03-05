@@ -52,11 +52,11 @@ def read_options():
     parser.add_option("-d", "--initdate",
                       action="store",
                       dest="initdate",
-                      help="Identities database")
+                      help="Initial date of analysis")
     parser.add_option("-e", "--enddate",
                       action="store",
                       dest="enddate",
-                      help="Identities database")
+                      help="Final date of analysis")
     (opts, args) = parser.parse_args()
 
     if len(args) != 0:
