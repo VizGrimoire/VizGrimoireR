@@ -34,6 +34,7 @@ if __name__ == '__main__':
     opts = read_options()
     period = getPeriod(opts.granularity)
     nperiod = getPeriod(opts.granularity, True)
+    destdir = opts.destdir
 
     startdate = "'"+opts.startdate+"'"
     enddate = "'"+opts.enddate+"'"
@@ -42,26 +43,24 @@ if __name__ == '__main__':
     logging.info("Starting Downloads analysis")
    
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
-    print EvolDownloads(period, startdate, enddate)
-    print AggDownloads(period, startdate, enddate)
-
-    print EvolPackages(period, startdate, enddate)
-    print AggPackages(period, startdate, enddate)
     
-    print EvolProtocols(period, startdate, enddate)
-    print AggProtocols(period, startdate, enddate)
+    downloads = EvolDownloads(period, startdate, enddate)
+    packages = EvolPackages(period, startdate, enddate)
+    protocols = EvolProtocols(period, startdate, enddate)
+    ips = EvolIPs(period, startdate, enddate)
+    evol = dict(downloads.items() + packages.items() + protocols.items() + ips.items())
+    evol = completePeriodIds(evol)
+    createJSON (evol, destdir+"/downs-evolutionary.json")
 
-    print EvolIPs(period, startdate, enddate)
-    print AggIPs(period, startdate, enddate)
+    downloads = AggDownloads(period, startdate, enddate)
+    packages = AggPackages(period, startdate, enddate)
+    protocols = AggProtocols(period, startdate, enddate)
+    ips = AggIPs(period, startdate, enddate)
+    agg = dict(downloads.items() + packages.items() + protocols.items() + ips.items())
+    createJSON(agg, destdir+"/downs-static.json")
 
-    print "Top 10 IPs downloading all history"
-    print TopIPs(startdate, enddate, 10)
+    top20ips = TopIPs(startdate, enddate, 20)
+    createJSON(top20ips, destdir+"downs-top-ips.json")
+    top20packages = TopPackages(startdate, enddate, 20)
+    createJSON(top20packages, destdir+"downs-top-packages.json")
 
-    print "Top 20"
-    print TopIPs(startdate, enddate, 20)
-
-    print "Top 10 downloaded packages"
-    print TopPackages(startdate, enddate, 10)
-    
-    print "Top 20 downloaded packages"
-    print TopPackages(startdate, enddate, 20)
