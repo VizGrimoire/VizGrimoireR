@@ -112,12 +112,21 @@ class TestMLSStatic(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        set_db_channel(database=DB_MLS_TEST)
+        set_db_channel(database=DB_MLS_TEST, password='root')
 
     def test_agg_companies_month(self):
         result = AggMLSCompanies('month', "'2012-01-01'", "'2013-01-01'", DB_IDENTITIES_TEST)
         self.assertEqual(24, result['companies'])
 
+    def test_static_num_active_people_7(self):
+        result = GetActivePeopleMLS(7, "'2013-01-01'")
+        self.assertEqual(1466, len(result))
+        result = GetActivePeopleMLS(30, "'2013-01-01'")
+        self.assertEqual(1493, len(result))
+        result = GetActivePeopleMLS(180, "'2013-01-01'")
+        self.assertEqual(1659, len(result))
+        result = GetActivePeopleMLS(365, "'2013-01-01'")
+        self.assertEqual(1718, len(result))
 
 if __name__ == "__main__":
     unittest.main()
