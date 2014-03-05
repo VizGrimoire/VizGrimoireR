@@ -141,12 +141,13 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     data = SCR.EvolReviewers(period, startdate, enddate)
     evol = dict(evol.items() + completePeriodIds(data).items())
     # Time to Review info
-    data = SCR.EvolTimeToReviewSCR (period, startdate, enddate)
-    for i in range(0,len(data['review_time_days_avg'])):
-        val = data['review_time_days_avg'][i] 
-        data['review_time_days_avg'][i] = float(val)
-        if (val == 0): data['review_time_days_avg'][i] = 0
-    evol = dict(evol.items() + completePeriodIds(data).items())
+    if period == "month": # only month supported now
+        data = SCR.EvolTimeToReviewSCR (period, startdate, enddate)
+        for i in range(0,len(data['review_time_days_avg'])):
+            val = data['review_time_days_avg'][i] 
+            data['review_time_days_avg'][i] = float(val)
+            if (val == 0): data['review_time_days_avg'][i] = 0
+        evol = dict(evol.items() + completePeriodIds(data).items())
     # Create JSON
     createJSON(evol, destdir+"/scr-evolutionary.json")
 
@@ -210,10 +211,11 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
         data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
-        data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
-        data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
-        data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
-        evol = dict(evol.items() + completePeriodIds(data).items())
+        if (period == "month"):
+            data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
+            data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
+            data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
+            evol = dict(evol.items() + completePeriodIds(data).items())
         createJSON(evol, destdir+ "/"+repo_file+"-scr-rep-evolutionary.json")
 
         # Static
@@ -262,10 +264,11 @@ def companiesData(period, startdate, enddate, idb, destdir):
         evol = dict(evol.items() + completePeriodIds(data).items())
         data = SCR.EvolReviewsAbandoned(period, startdate, enddate, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
-        data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
-        data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
-        data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
-        evol = dict(evol.items() + completePeriodIds(data).items())
+        if (period == "month"):
+            data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
+            data['review_time_days_avg'] = checkFloatArray(data['review_time_days_avg'])
+            data['review_time_days_median'] = checkFloatArray(data['review_time_days_median'])
+            evol = dict(evol.items() + completePeriodIds(data).items())
         createJSON(evol, destdir+ "/"+company_file+"-scr-com-evolutionary.json")
         # Static
         agg = {}
@@ -368,7 +371,7 @@ if __name__ == '__main__':
     GrimoireSQL.SetDBChannel (database=opts.dbname, user=opts.dbuser, password=opts.dbpassword)
 
     tsData (period, startdate, enddate, opts.identities_db, opts.destdir, opts.granularity, opts)
-    aggData(period, startdate, enddate, opts.identities_db, opts.destdir, bots)
+    aggData(period, startdate, enddate, opts.identities_db, opts.destdir)
     top = topData(period, startdate, enddate, opts.identities_db, opts.destdir, bots, opts.npeople)
 
     if ('people' in reports):
