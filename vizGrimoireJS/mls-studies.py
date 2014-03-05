@@ -20,6 +20,10 @@
 #
 ## Authors:
 ## Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
+#
+# Example of use: PYTHONPATH=../vizgrimoire:../vizgrimoire/analysis LANG= ./mls-studies.py 
+#                  --identities <database> --mls <database> -d 2013-01-01 -e 2013-01-31
+#
 
 import logging
 import sys
@@ -57,6 +61,10 @@ def read_options():
                       action="store",
                       dest="enddate",
                       help="Final date of analysis")
+    parser.add_option("-o", "--destdir",
+                      action="store", 
+                      dest="destdir",
+                      help="Output dir of JSON files")
     (opts, args) = parser.parse_args()
 
     if len(args) != 0:
@@ -74,33 +82,29 @@ if __name__ == '__main__':
    
     GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword)
     main_topics = Threads(opts.initdate, opts.enddate)
-    email = main_topics.verboseThread()
-    print "The most verbose thread: "
-    print """
-              message_id: %s
-              subject: %s
-              date: %s
-              body: %s
-              """ % (email.message_id, email.subject, email.date, email.body)
-    email = main_topics.longestThread()
-    print "The longest list: " 
-    print """
-              message_id: %s
-              subject: %s
-              date: %s
-              body: %s
-              """ % (email.message_id, email.subject, email.date, email.body)
 
-    print "Number of threads: "  + str(main_topics.numThreads())
-    
+    # Example of use for the most verbose thread
+    #email = main_topics.verboseThread()
+    #print "The most verbose thread: "
+    #print """
+    #          message_id: %s
+    #          subject: %s
+    #          date: %s
+    #          """ % (email.message_id, email.subject, email.date)
+
+    # Top longest threads during the whole life of the project
     longest_threads = main_topics.topLongestThread(10)
     print "Top longest threads: " 
+    l_threads = {}
+    l_threads['message_id'] = []
+    l_threads['length'] = []
+    l_threads['subject'] = []
+    l_threads['date'] = []
     for email in longest_threads:
-        print """
-              message_id: %s
-              lenght: %s
-              subject: %s
-              date: %s
-              body: %s
-              """ % (email.message_id, main_topics.lenThread(email.message_id), email.subject, email.date, email.body)
+        l_threads['message_id'].append(email.message_id)
+        l_threads['length'].append(main_topics.lenThread(email.message_id))
+        l_threads['subject'].append(email.subject)
+        l_threads['date'].append(str(email.date))
 
+    createJSON(l_threads, opts.destdir+"/mls-top-threads.json")
+    
