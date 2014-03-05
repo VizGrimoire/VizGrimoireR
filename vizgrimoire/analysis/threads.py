@@ -69,15 +69,12 @@ class Threads(object):
         self.verbose = None # the thread with the most verbose emails.
 
         self._init_threads()    
-        print self.threads
 
     def _build_threads (self, message_id):
         sons = []
         messages = []
-        print "    * build threads for message_id: " + message_id
         if message_id not in self.list_is_response_of:
             # this a leaf of the tree!
-            print "        - Leaf of the tree: message_id = " + message_id
             return []
 
         else:
@@ -87,14 +84,9 @@ class Threads(object):
                 if msg == message_id:
                     sons.append(self.list_message_id[cont])
                 cont = cont + 1
-            print "        - Sons of the message_id: " 
-            print sons
             for msg in sons:
-                print "            - son: " + msg
                 messages.extend([msg])
                 messages.extend(self._build_threads(msg))            
-                print "            - list of messages: " 
-                print messages
                
 
         return messages          
@@ -122,14 +114,9 @@ class Threads(object):
             # Only analyzing those whose is_response_of is None, 
             # those are the message 'root' of each thread.
             if self.list_is_response_of[index] is None:
-                print "STARTING THE PROCESS FOR A MESSAGE: " + message_id
                 messages[message_id] = self._build_threads(message_id)
                 # Adding the root message to the list in first place
                 messages[message_id].insert(0, message_id)
-                print "Final message_id: " + message_id
-                print "Final sons: " 
-                print messages[message_id]
-                print "ENDING THE PROCESS FOR THAT MESSAGE"
 
 
         self.threads = messages
