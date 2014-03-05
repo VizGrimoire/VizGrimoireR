@@ -64,7 +64,7 @@ if __name__ == '__main__':
     createJSON(agg, destdir+"/downs-static.json")
 
     top20ips = TopIPs(startdate, enddate, 20)
-    createJSON(top20ips, destdir+"downs-top-ips.json")
+    createJSON(top20ips, destdir+"/downs-top-ips.json")
     top20packages = TopPackages(startdate, enddate, 20)
-    createJSON(top20packages, destdir+"downs-top-packages.json")
+    createJSON(top20packages, destdir+"/downs-top-packages.json")
 
