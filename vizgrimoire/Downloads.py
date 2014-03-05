@@ -24,7 +24,7 @@
 # All of the functions found in this file expect to find a database
 # with the followin format:
 # Table: downloads
-#       Fields:
+#       Fields: date (datetime), ip (varchar), package (varchar), protocol (varchar)
 #       
 
 from GrimoireSQL import GetSQLGlobal, GetSQLPeriod, ExecuteQuery, BuildQuery

@@ -20,6 +20,10 @@
 #
 ## Authors:
 ## Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
+#
+#
+# Example of use: PYTHONPATH=../vizgrimoire:../vizgrimoire/analysis LANG= ./downloads-analysis.py 
+#                            -d testing -u root -p "" -s 2014-01-19 -e 2014-02-21 -i fake -o "./data/"
 
 import logging
 import sys
