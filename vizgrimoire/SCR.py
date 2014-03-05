@@ -847,10 +847,22 @@ def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_
 # Return a list with all the medians for all months
 def EvolTimeToReviewPendingSCR(period, startdate, enddate, identities_db = None, type_analysis=[]):
 
-    def get_sql(month):
+    def get_date_from_month(monthid):
+        # month format: year*12+month
+        year = (monthid-1) / 12
+        month = monthid - year*12
+        # We need the last day of the month
+        import calendar
+        last_day = calendar.monthrange(year, month)[1]
+        current = str(year)+"-"+str(month)+"-"+str(last_day)
+        return (current)
+
+    def get_sql(month, updated=False):
+        current = get_date_from_month(month)
         # List of pending reviews before a date: time from new time and from last update
-        fields  = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS newtime,"
-        fields += "TIMESTAMPDIFF(SECOND, mod_date, NOW())/(24*3600) AS updatetime,"
+        fields  = "TIMESTAMPDIFF(SECOND, submitted_on, '"+current+"')/(24*3600) AS newtime,"
+        if (updated):
+            fields = "TIMESTAMPDIFF(SECOND, mod_date, '"+current+"')/(24*3600) AS updatetime,"
         fields += " YEAR(submitted_on)*12+MONTH(submitted_on) as month"
         tables = "issues i, people, issues_ext_gerrit ie "
         tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
@@ -864,6 +876,11 @@ def EvolTimeToReviewPendingSCR(period, startdate, enddate, identities_db = None,
 
         # All reviews before the month: accumulated key point
         filters += " HAVING month<= " + str(month)
+        # Not include future submissions for current month analysis
+        if (updated):
+            filters += " AND updatetime >= 0"
+        else:
+            filters += " AND newtime >= 0"
         filters += " ORDER BY  submitted_on"
         q = GetSQLGlobal('submitted_on', fields, tables, filters,
                     startdate,enddate)
@@ -897,6 +914,7 @@ def EvolTimeToReviewPendingSCR(period, startdate, enddate, identities_db = None,
         values = get_values_median(pending_period['newtime'])
         acc_pending_time_median['review_time_pending_days_acc_median'].append(values)
 
+        pending_period = ExecuteQuery(get_sql(start_month+i, True))
         values = get_values_median(pending_period['updatetime'])
         acc_pending_time_median['review_time_pending_update_days_acc_median'].append(values)
 
