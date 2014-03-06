@@ -1500,7 +1500,7 @@ def GetCommitsSummaryCompanies (period, startdate, enddate, identities_db, num_c
         commits[company] = commits["commits"]
         del commits['commits']
 
-        if (count <= num_companies -1):
+        if (count <= num_companies):
             #Case of companies with entity in the dataset
             first_companies = dict(first_companies.items() + commits.items())
         else :
