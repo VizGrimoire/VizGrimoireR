@@ -121,7 +121,8 @@ def tsData(period, startdate, enddate, idb, destdir, granularity, conf):
     evol = dict(evol.items() + completePeriodIds(data).items())
     # TODO: We can not use this R API because Python conf can't be pass to R  
     # data = dataFrame2Dict(vizr.EvolReviewsPendingChanges(period, startdate, enddate, conf))
-    data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, [])
+    # data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, [])
+    data = SCR.EvolReviewsPending(period, startdate, enddate, conf, [])
     evol = dict(evol.items() + completePeriodIds(data).items())
     #Patches info
     data = SCR.EvolPatchesVerified(period, startdate, enddate)
@@ -209,7 +210,7 @@ def reposData(period, startdate, enddate, idb, destdir, conf):
         evol = dict(evol.items() + completePeriodIds(data).items())
         # data = vizr.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis)
         # evol = dict(evol.items() + completePeriodIds(dataFrame2Dict(data)).items())
-        data = SCR.EvolReviewsPendingChanges(period, startdate, enddate, conf, type_analysis, idb)
+        data = SCR.EvolReviewsPending(period, startdate, enddate, conf, type_analysis, idb)
         evol = dict(evol.items() + completePeriodIds(data).items())
         if (period == "month"):
             data = SCR.EvolTimeToReviewSCR(period, startdate, enddate, idb, type_analysis)
