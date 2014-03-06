@@ -950,7 +950,6 @@ def EvolBMIIndex(period, startdate, enddate, identities_db, type_analysis, close
 def GetClosedSummaryCompanies (period, startdate, enddate, identities_db, closed_condition, num_companies):
     count = 1
     first_companies = {}
-    first = True
 
     companies = GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, ["-Bot", "-Individual", "-Unknown"])
     companies = companies['name']
