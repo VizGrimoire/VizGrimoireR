@@ -172,7 +172,8 @@ def companiesData(period, startdate, enddate, identities_db, destdir, bots, npeo
             data = SCM.company_top_authors_year(company_name, i, npeople)
             createJSON(data, destdir+"/"+company+"-scm-top-authors_"+str(i)+".json", False)
 
-    pass
+    commits =  SCM.GetCommitsSummaryCompanies(period, startdate, enddate, opts.identities_db, 10)
+    createJSON (commits, destdir+"/scm-companies-commits-summary.json")
 
 def countriesData(period, startdate, enddate, identities_db, destdir):
     countries  = SCM.scm_countries_names(identities_db,startdate, enddate)

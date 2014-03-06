@@ -861,36 +861,30 @@ def GetDiffSendersDays (period, init_date, days):
     return (data)
 
 def GetSentSummaryCompanies (period, startdate, enddate, identities_db, num_companies):
-    # This function provides the top <num_companies> sending messages to the mailing
-    # lists
-
-    companies  = companiesNames(identities_db, startdate, enddate, c("-Bot", "-Individual", "-Unknown"))
-
-    first = True
-    first_companies = {}
     count = 1
+    first_companies = {}
+
+    companies  = companiesNames(identities_db, startdate, enddate, ["-Bot", "-Individual", "-Unknown"])
+
     for company in companies:
-
-        sent = EvolMessagesSentCompanies(company, identities_db, period, startdate, enddate)
+        type_analysis = ["company", "'"+company+"'"]
+        sent = EvolEmailsSent(period, startdate, enddate, identities_db, type_analysis)
         sent = completePeriodIds(sent)
+        # Rename field sent to company name
+        sent[company] = sent["sent"]
+        del sent['sent']
 
-        if (count <= num_companies -1):
+        if (count <= num_companies):
             #Case of companies with entity in the dataset
-            if (first):
-                first = False
-                first_companies = sent
-            first_companies = dict(first_companies.keys(), sent.keys())
-            # colnames(first_companies)[colnames(first_companies)=="sent"] = company
-        else:
+            first_companies = dict(first_companies.items() + sent.items())
+        else :
             #Case of companies that are aggregated in the field Others
-            if (first==False):
-                first = True
-                first_companies['Others'] = sent['sent']
+            if 'Others' not in first_companies:
+                first_companies['Others'] = sent[company]
             else:
-                first_companies['Others'] += sent['sent']
+                first_companies['Others'] = [a+b for a, b in zip(first_companies['Others'],sent[company])]
         count = count + 1
 
-    #TODO: remove global variables...
     first_companies = completePeriodIds(first_companies)
 
     return(first_companies)

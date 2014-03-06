@@ -174,6 +174,9 @@ def companiesData(period, startdate, enddate, identities_db, destdir, npeople):
         data = MLS.StaticMLSInfo(period, startdate, enddate, identities_db, rfield, ["company", company_name])
         createJSON(data, destdir+"/"+company+"-mls-com-static.json")
 
+    sent = MLS.GetSentSummaryCompanies(period, startdate, enddate, opts.identities_db, 10)
+    createJSON (sent, opts.destdir+"/mls-sent-companies-summary.json")
+
 def countriesData(period, startdate, enddate, identities_db, destdir, npeople):
 
     countries = MLS.countriesNames(identities_db, startdate, enddate) 

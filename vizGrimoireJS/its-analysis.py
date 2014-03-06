@@ -229,6 +229,9 @@ def companiesData(period, startdate, enddate, identities_db, destdir, closed_con
         top = ITS.GetCompanyTopClosers(company_name, startdate, enddate, identities_db, bots, closed_condition, npeople)
         createJSON(top, destdir+"/"+company+"-its-com-top-closers.json", False)
 
+    closed = ITS.GetClosedSummaryCompanies(period, startdate, enddate, identities_db, closed_condition, 10)
+    createJSON (closed, opts.destdir+"/its-closed-companies-summary.json")
+
 def countriesData(period, startdate, enddate, identities_db, destdir, closed_condition):
     # countries  = dataFrame2Dict(vizr.GetCountriesNamesITS(startdate, enddate, identities_db, closed_condition))
     countries  = ITS.GetCountriesNamesITS(startdate, enddate, identities_db, closed_condition)

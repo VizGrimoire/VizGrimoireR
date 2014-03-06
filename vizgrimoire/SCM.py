@@ -1476,3 +1476,42 @@ def GetCodeCommunityStructure (period, startdate, enddate, identities_db):
   community['occasional'] = occasional
 
   return(community)
+
+
+def GetCommitsSummaryCompanies (period, startdate, enddate, identities_db, num_companies):
+    # This function returns the following dataframe structrure
+    # unixtime, date, week/month/..., company1, company2, ... company[num_companies -1], others
+    # The 3 first fields are used for data and ordering purposes
+    # The "companyX" fields are those that provide info about that company
+    # The "Others" field is the aggregated value of the rest of the companies
+    # Companies above num_companies will be aggregated in Others
+
+    companies  = companies_name_wo_affs(["-Bot", "-Individual", "-Unknown"], startdate, enddate)
+    companies = companies['name']
+
+    first_companies = {}
+    count = 1
+    for company in companies:
+        company_name = "'"+company+"'"
+
+        commits = EvolCommits(period, startdate, enddate, identities_db, ["company", company_name])
+        commits = completePeriodIds(commits)
+        # Rename field commits to company name
+        commits[company] = commits["commits"]
+        del commits['commits']
+
+        if (count <= num_companies):
+            #Case of companies with entity in the dataset
+            first_companies = dict(first_companies.items() + commits.items())
+        else :
+            #Case of companies that are aggregated in the field Others
+            if 'Others' not in first_companies:
+                first_companies['Others'] = commits[company]
+            else:
+                first_companies['Others'] = [a+b for a, b in zip(first_companies['Others'],commits[company])]
+        count = count + 1
+
+    #TODO: remove global variables...
+    first_companies = completePeriodIds(first_companies)
+
+    return(first_companies)

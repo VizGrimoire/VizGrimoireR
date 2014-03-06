@@ -946,3 +946,32 @@ def EvolBMIIndex(period, startdate, enddate, identities_db, type_analysis, close
     return {'closed' : closed['closed'],
             'opened' : opened['opened'],
             'bmi' : evol_bmi}
+
+def GetClosedSummaryCompanies (period, startdate, enddate, identities_db, closed_condition, num_companies):
+    count = 1
+    first_companies = {}
+
+    companies = GetCompaniesNameITS(startdate, enddate, identities_db, closed_condition, ["-Bot", "-Individual", "-Unknown"])
+    companies = companies['name']
+
+    for company in companies:
+        type_analysis = ["company", "'"+company+"'"]
+        closed = EvolIssuesClosed(period, startdate, enddate, identities_db, type_analysis, closed_condition)
+        closed = completePeriodIds(closed)
+        # Rename field closed to company name
+        closed[company] = closed["closed"]
+        del closed['closed']
+
+        if (count <= num_companies):
+            #Case of companies with entity in the dataset
+            first_companies = dict(first_companies.items() + closed.items())
+        else :
+            #Case of companies that are aggregated in the field Others
+            if 'Others' not in first_companies:
+                first_companies['Others'] = closed[company]
+            else:
+                first_companies['Others'] = [a+b for a, b in zip(first_companies['Others'],closed[company])]
+        count = count + 1
+    first_companies = completePeriodIds(first_companies)
+
+    return(first_companies)

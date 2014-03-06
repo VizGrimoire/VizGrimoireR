@@ -1001,7 +1001,7 @@ GetDiffSendersDays <- function(period, init_date, days){
 
 }
 
-
+# Broken: Use the Python version - acs
 GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, num_companies){
     # This function provides the top <num_companies> sending messages to the mailing
     # lists
