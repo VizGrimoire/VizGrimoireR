@@ -37,6 +37,7 @@ from GrimoireUtils import createJSON  # , completePeriodIds
 from SCM import GetPeopleListSCM, GetActivePeopleSCM, GetCommunityMembers
 from MLS import GetActivePeopleMLS
 from ITS import GetActivePeopleITS
+from IRC import GetPeopleIRC
 import People
 
 from optparse import OptionParser
@@ -176,8 +177,9 @@ def community_members(people_static):
     GrimoireSQL.SetDBChannel(database=env['db_cvsanaly'],
                              user=dbuser, password=dbpassword)
     members_ids = GetCommunityMembers()
-    n_members = len(members_ids)
-    print("n_members = %s" % (n_members))
+    irc_members_ids = GetPeopleIRC()
+    members_ids = list(set(members_ids) - set(irc_members_ids))
+    n_members = len(members_ids)    
     people_static["members"] = n_members
     return(people_static)
 
