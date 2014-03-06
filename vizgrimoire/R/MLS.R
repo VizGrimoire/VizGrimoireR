@@ -1013,7 +1013,9 @@ GetSentSummaryCompanies <- function(period, startdate, enddate, identities_db, n
     count = 1
     for (company in companies){
 
-        sent = EvolMessagesSentCompanies(company, identities_db, period, startdate, enddate)
+#        sent = EvolMessagesSentCompanies(company, identities_db, period, startdate, enddate)
+        company_name = paste("'", company, "'", sep='')
+        sent = EvolEmailsSent(period, startdate, enddate, identities_db, list('company', company_name))
         sent <- completePeriodIds(sent, conf$granularity, conf)
         sent <- sent[order(sent$id), ]
         sent[is.na(sent)] <- 0
