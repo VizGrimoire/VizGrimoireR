@@ -71,6 +71,10 @@ class TestIRCtatic(unittest.TestCase):
         result = StaticNumSendersIRC('month', "'2012-01-01'", "'2012-02-01'", None, [])
         self.assertEqual(0, result['senders'])
 
+    def test_static_num_people():
+        result = GetPeopleIRC()
+        self.assertEqual(0, result['members'])
+
 
 if __name__ == "__main__":
     unittest.main()
