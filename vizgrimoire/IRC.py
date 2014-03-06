@@ -327,6 +327,12 @@ def GetStaticPeopleIRC (developer_id, startdate, enddate) :
     q = GetQueryPeopleIRC(developer_id, None, startdate, enddate, False)
     return(ExecuteQuery(q))
 
+def GetPeopleIRC():
+    # Returns the ids of the IRC participants
+    q = "SELECT DISTINCT(upeople_id) AS members FROM people_upeople"
+    data = ExecuteQuery(q)
+    return(data['members'])    
+
 ##############
 # Microstudies
 ##############
