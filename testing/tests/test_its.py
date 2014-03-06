@@ -295,6 +295,23 @@ class TestITSMicroStudies(unittest.TestCase):
         results = EvolBMIIndex('month', "'2012-01-01'", "'2013-01-01'", DB_IDENTITIES_TEST, [], CLOSED_COND)
         self.assertEqual(12, len(results['bmi']))
 
+        
+class TestITSPeople(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        set_db_channel(database=DB_ITS_TEST, password='root')
+
+    def test_static_num_active_people(self):
+        result = GetActivePeopleITS(7, "'2013-01-01'")
+        self.assertEqual(2875, len(result))
+        result = GetActivePeopleITS(30, "'2013-01-01'")
+        self.assertEqual(2931, len(result))
+        result = GetActivePeopleITS(180, "'2013-01-01'")
+        self.assertEqual(3326, len(result))
+        result = GetActivePeopleITS(365, "'2013-01-01'")
+        self.assertEqual(3673, len(result))
+
 
 if __name__ == "__main__":
     unittest.main()
