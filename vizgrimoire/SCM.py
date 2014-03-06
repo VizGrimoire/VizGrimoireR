@@ -844,6 +844,41 @@ def GetStaticPeopleSCM (developer_id, startdate, enddate) :
     data = ExecuteQuery(q)
     return (data)
 
+def GetActiveAuthorsSCM(days, enddate):
+    #return unique ids of active authors during "days" day
+    # FIXME parameters should be: startdate and enddate
+    q0 = "SELECT distinct(pup.upeople_id) as active_authors "+\
+        "FROM scmlog s, people_upeople pup " +\
+        "WHERE pup.people_id = s.author_id and " +\
+        "s.date >= (%s - INTERVAL %s day)"
+    q1 = q0 % (enddate, days)
+    data = ExecuteQuery(q1)
+    return(data)
+
+def GetActiveCommittersSCM(days, enddate):
+    #return unique ids of active committers during "days" day
+    # FIXME parameters should be: startdate and enddate
+    q0 = "SELECT distinct(pup.upeople_id) as active_committers "+\
+         "FROM scmlog s, people_upeople pup " +\
+         "WHERE pup.people_id = s.committer_id and " + \
+         "s.date >= (%s - INTERVAL %s day)"
+    q1 = q0 % (enddate, days)
+    data = ExecuteQuery(q1)
+    return(data)
+
+def GetActivePeopleSCM(days, enddate):
+    #Gets IDs of active people on the repository during last x days
+    authors = GetActiveAuthorsSCM(days, enddate)
+    committers = GetActiveCommittersSCM(days, enddate)
+    people_scm = authors['active_authors'] + committers['active_committers']
+    people_scm = list(set(people_scm))
+    return(people_scm)
+
+def GetCommunityMembers():
+    #Gets IDs of all community members with no filter
+    q = "SELECT DISTINCT(id) as members FROM upeople"
+    data = ExecuteQuery(q)
+    return(data['members'])
 
 # 
 # Legacy and non legacy code - Cleanup
