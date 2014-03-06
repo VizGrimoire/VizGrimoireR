@@ -703,6 +703,49 @@ def GetLastActivityITS (days, closed_condition):
 
     return (agg_data)
 
+
+def GetActiveChangersITS(days, enddate):
+    # FIXME parameters should be: startdate and enddate
+    q0 = "SELECT distinct(pup.upeople_id) as active_changers"+\
+        " FROM changes, people_upeople pup "+\
+        " WHERE pup.people_id = changes.changed_by and "+\
+        " changed_on >= ( %s - INTERVAL %s day)"
+    q1 = q0 % (enddate, days)
+    data = ExecuteQuery(q1)
+    return(data)
+
+def GetActiveCommentersITS(days, enddate):
+    # FIXME parameters should be: startdate and enddate
+    q0 = "SELECT DISTINCT(pup.upeople_id) AS active_commenters"+\
+        " FROM comments c, people_upeople pup"+\
+        " WHERE pup.people_id = c.submitted_by AND"+\
+        " submitted_on >= (%s - INTERVAL %s day)"
+    q1 = q0 % (enddate, days)
+    data = ExecuteQuery(q1)
+    return(data)
+
+def GetActiveSubmittersITS(days, enddate):
+    # FIXME parameters should be: startdate and enddate
+    q0 = "SELECT DISTINCT(pup.upeople_id) AS active_submitters"+\
+      " FROM issues i, people_upeople pup"+\
+      " WHERE pup.people_id = i.submitted_by AND"+\
+      " submitted_on >= ( %s - INTERVAL %s day)"
+    q1 = q0 % (enddate, days)
+    data = ExecuteQuery(q1)
+    return(data)
+
+def GetActivePeopleITS(days, enddate):
+    #Gets the IDs of the active people during the last days (until enddate)
+    # for comments, issue creation and changes
+    submitters = GetActiveSubmittersITS(days, enddate)
+    changers = GetActiveChangersITS(days, enddate)
+    commenters = GetActiveCommentersITS(days, enddate)
+    people_its = submitters['active_submitters'] + changers['active_changers'] +\
+        commenters['active_commenters']
+    people_its = list(set(people_its))
+    return(people_its)
+
+
 ################
 # Top functions
 ################

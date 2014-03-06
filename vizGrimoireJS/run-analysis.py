@@ -129,6 +129,7 @@ def get_analysis_cmd(v, script, db):
     else:
         cmd += " >> %s 2>&1" % (v['log_file'])
 
+
     if (get_options().debug): print(cmd)
     return (cmd)
 
@@ -151,6 +152,14 @@ def execute_people_script(env):
     os.system(cmd)
     print("People analysis finished")
 
+def execute_people_experimental_script(env):
+    # this proc doesn't use the get_analysis_cmd function
+    print("Starting People EXPERIMENTAL analysis ..")
+    cmd = "PYTHONPATH=%s ./%s -f %s 2>&1 %s" % (env['python_libs'], 'people-analysis-experimental.py', opt.config_file, env['log_file'])
+    print(cmd)
+    #use subprocess or popen instead of os which is very old fashion
+    os.system(cmd)
+    print("People EXPERIMENTAL analysis finished")
 
 def execute_its_script(env):
     if not 'db_bicho' in env:
@@ -201,6 +210,7 @@ def execute_mediawiki_script(env):
 tasks_section = {
     'scm':execute_scm_script,
     'people':execute_people_script,
+    'people_experimental':execute_people_experimental_script,
     'its':execute_its_script,
     'mls':execute_mls_script,
     'scr':execute_scr_script,
@@ -208,6 +218,7 @@ tasks_section = {
     'irc': execute_irc_script,
 }
 tasks_order = ['scm','people','its','mls','scr','mediawiki','irc']
+#tasks_order = ['scm','people','its','mls','scr','mediawiki','irc','people_experimental']
 
 
 

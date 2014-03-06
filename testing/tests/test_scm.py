@@ -151,6 +151,20 @@ class TestSCMStatic(unittest.TestCase):
     def test_static_avg_files_author(self):
         result = StaticAvgFilesAuthor('week', "'2012-01-01'", "'2013-01-01'", DB_IDENTITIES_TEST, [])
         self.assertEqual(Decimal('25.7411'), result['avg_files_author'])
+        
+    def test_static_num_active_people_7(self):
+        result = GetActivePeopleSCM(7, "'2013-01-01'")
+        self.assertEqual(709, len(result))
+        result = GetActivePeopleSCM(30, "'2013-01-01'")
+        self.assertEqual(728, len(result))
+        result = GetActivePeopleSCM(180, "'2013-01-01'")
+        self.assertEqual(874, len(result))
+        result = GetActivePeopleSCM(365, "'2013-01-01'")
+        self.assertEqual(969, len(result))
+
+    def test_static_num_community_members(self):
+        result = GetCommunityMembers()
+        self.assertEqual(3605, len(result))
 
 
 if __name__ == "__main__":
