@@ -296,6 +296,29 @@ def AggMLSSenders (period, startdate, enddate, identities_db, type_analysis = []
     # Agg of people sending emails
     return(GetMLSSenders(period, startdate, enddate, identities_db, type_analysis , False))
 
+def GetActiveSendersMLS(days, enddate):
+    # FIXME parameters should be: startdate and enddate
+    #Gets people sending messages during last days
+    q0 = "SELECT distinct(pup.upeople_id) as active_senders" +\
+    " FROM messages m,  messages_people mp, people_upeople pup" +\
+    " WHERE m.message_ID = mp.message_id AND" +\
+    " mp.email_address = pup.people_id AND" +\
+    " mp.type_of_recipient='From' AND "+\
+    " m.first_date >= (%s - INTERVAL %s day)"    
+    q1 = q0 % (enddate, days)
+    data = ExecuteQuery(q1)
+    return(data)
+
+def GetActivePeopleMLS(days, enddate):
+    #Gets list of IDs of people active during last days until enddate
+    senders = GetActiveSendersMLS(days, enddate)
+    aux = senders['active_senders']
+    if not isinstance(aux, list):
+        active_people = [aux]
+    else:
+        active_people = aux
+    return(active_people)
+
 # People answering in a thread
 
 def GetMLSSendersResponse (period, startdate, enddate, identities_db, type_analysis, evolutionary):
