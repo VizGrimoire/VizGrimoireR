@@ -217,8 +217,8 @@ tasks_section = {
     'mediawiki':execute_mediawiki_script,
     'irc': execute_irc_script,
 }
-#tasks_order = ['scm','people','its','mls','scr','mediawiki','irc']
-tasks_order = ['people_experimental']
+tasks_order = ['scm','people','its','mls','scr','mediawiki','irc']
+#tasks_order = ['scm','people','its','mls','scr','mediawiki','irc','people_experimental']
 
 
 
