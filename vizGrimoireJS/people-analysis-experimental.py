@@ -177,6 +177,8 @@ def community_members(people_static):
     GrimoireSQL.SetDBChannel(database=env['db_cvsanaly'],
                              user=dbuser, password=dbpassword)
     members_ids = GetCommunityMembers()
+    GrimoireSQL.SetDBChannel(database=env['db_irc'],
+                            user=dbuser, password=dbpassword)        
     irc_members_ids = GetPeopleIRC()
     members_ids = list(set(members_ids) - set(irc_members_ids))
     n_members = len(members_ids)    
