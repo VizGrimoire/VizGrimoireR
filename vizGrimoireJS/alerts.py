@@ -82,15 +82,29 @@ if __name__ == '__main__':
     #Examples of use
     for i in dates:
         alert = Alerts.NewComers('panel', '/tmp/', 60, opts.dbidentities, i)
+        alert_turn = Alerts.Turnover('panel', '/tmp', 60, opts.dbidentities, i)
         GrimoireSQL.SetDBChannel (database=opts.dbscm, user=opts.dbuser, password=opts.dbpassword)
+        print "NewComers SCM"
         print(alert.NewComersSCM())
+        print "Turnover SCM"
+        print(alert_turn.turnoverSCM())
    
         GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword) 
+        print "NewComers MLS"
         print(alert.NewComersMLS())
+        print "Turnover MLS"
+        print(alert_turn.turnoverMLS())
 
         GrimoireSQL.SetDBChannel (database=opts.dbits, user=opts.dbuser, password=opts.dbpassword) 
+        print "Newcomers ITS"
         print(alert.NewComersITS())
+        print "Turnover ITS"
+        print(alert_turn.turnoverITS())
 
         GrimoireSQL.SetDBChannel (database=opts.dbscr, user=opts.dbuser, password=opts.dbpassword) 
-        result = alert.NewComersSCR()
+        print "Newcomers SCR"
+        print(alert.NewComersSCR())
+        print "Turnover SCR"
+        print(alert_turn.turnoverSCR())
 
+        

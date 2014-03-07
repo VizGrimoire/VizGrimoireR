@@ -40,7 +40,6 @@ class Alert(object):
         # Depending on the selected self.output, this
         # method will publish results as an email,
         # JSON file, etc.
-        print data
         if self.output == "panel":
             #GrimoireUtils.createJSON(data, self.destdir + "alert.json")
             print self.destdir + "alert.json"
@@ -198,7 +197,27 @@ class Turnover(Alert):
                 """ % (self.i_db, self.enddate, str(self.days))
         return(ExecuteQuery(query))
 
-#    def turnoverITS(self):
+    def turnoverITS(self):
+        # List of people that did not open issues anymore
+        query = """
+                select t.name, 
+                       t.date
+                from
+                     (select u.identifier as name, 
+                             max(i.submitted_on) as date
+                      from %s.upeople u,
+                           people_upeople pup,
+                           issues i
+                      where i.submitted_by = pup.people_id and 
+                            pup.upeople_id = u.id
+                      group by u.id) t
+                 where t.date < date_sub('%s', interval %s day)                 
+                      order by t.date desc
+                """ % (self.i_db, self.enddate, str(self.days))
+        return(ExecuteQuery(query))
 
 
-#    def turnoverSCR(self): 
+    def turnoverSCR(self): 
+        # List of people that did not opened a review anymore
+        return(self.turnoverITS())
+
