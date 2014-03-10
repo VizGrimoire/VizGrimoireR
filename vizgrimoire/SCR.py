@@ -728,18 +728,21 @@ def GetPeopleStaticSCR (developer_id, startdate, enddate):
 # Time to review
 ################
 
-# Time to review accumulated for pending submissions
-def GetTimeToReviewPendingQuerySCR (startdate, enddate, identities_db = None, type_analysis = [], bots = []):
+# Time to review accumulated for pending submissions using submit date or update date
+def GetTimeToReviewPendingQuerySCR (startdate, enddate, identities_db = None, type_analysis = [], bots = [], updated = False):
     filter_bots = ''
     for bot in bots:
         filter_bots = filter_bots + " people.name<>'"+bot+"' AND "
 
     fields = "TIMESTAMPDIFF(SECOND, submitted_on, NOW())/(24*3600) AS revtime, submitted_on "
-    tables = "issues i, people "
+    if (updated):
+        fields = "TIMESTAMPDIFF(SECOND, mod_date, NOW())/(24*3600) AS revtime, submitted_on "
+    tables = "issues i, people, issues_ext_gerrit ie "
     tables = tables + GetSQLReportFromSCR(identities_db, type_analysis)
     filters = filter_bots + " people.id = i.submitted_by "
     filters += GetSQLReportWhereSCR(type_analysis)
     filters += " AND status<>'MERGED' AND status<>'ABANDONED' "
+    filters += " AND ie.issue_id  = i.id "
 
     from Wikimedia import GetIssuesFiltered
     if (GetIssuesFiltered() != ""): filters += " AND " + GetIssuesFiltered()
@@ -820,7 +823,21 @@ def StaticTimeToReviewPendingSCR (startdate, enddate, identities_db = None, type
     else:
         ttr_median = median(convertDecimals(data))
         ttr_avg = average(convertDecimals(data))
-    return {"review_time_pending_days_median":ttr_median, "review_time_pending_days_avg":ttr_avg}
+    # Update time
+    data = ExecuteQuery(GetTimeToReviewPendingQuerySCR (startdate, enddate, identities_db, type_analysis, bots, True))
+    data = data['revtime']
+    if (isinstance(data, list) == False): data = [data]
+    if (len(data) == 0):
+        ttr_median_update = float("nan")
+        ttr_avg_update = float("nan")
+    else:
+        ttr_median_update = median(convertDecimals(data))
+        ttr_avg_update = average(convertDecimals(data))
+    time_to = {"review_time_pending_days_median":ttr_median, 
+               "review_time_pending_days_avg":ttr_avg,
+               "review_time_pending_update_days_median":ttr_median_update,
+               "review_time_pending_update_days_avg":ttr_avg_update}
+    return time_to
 
 
 def EvolTimeToReviewSCR (period, startdate, enddate, identities_db = None, type_analysis = []):
