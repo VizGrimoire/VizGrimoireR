@@ -80,7 +80,8 @@ class Backend(object):
         if (its_type == 'launchpad'):
             #Backend.closed_condition = "(new_value='Fix Released' or new_value='Invalid' or new_value='Expired' or new_value='Won''t Fix')"
             Backend.closed_condition = "(new_value='Fix Committed')"
-            Backend.statuses = ["Fix Committed"]
+            Backend.statuses = ["Confirmed", "Fix Committed", "New", "In Progress", "Triaged", "Incomplete", "Invalid", "Won\\'t Fix", "Fix Released", "Opinion", "Unknown", "Expired"]
+            Backend.name_log_table = 'issues_log_launchpad'
 
         if (its_type == 'redmine'):
             Backend.statuses = ["New", "Verified", "Need More Info", "In Progress", "Feedback",
