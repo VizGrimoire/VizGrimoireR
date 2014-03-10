@@ -264,7 +264,7 @@ GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.lo
 
     if (period == "month") {
         samples <- GetMonthsBetween(start, end, extra=TRUE)
-        pending.tickets <- CountBacklogTickets(samples, res, statuses)
+        pending.tickets <- CountBacklogTickets(samples, res, statuses, period)
         # FIXME: month_unix is wrong. Just exists for compatibility. Remove!
         colnames(pending.tickets) <- c('month_unix', 'pending_tickets', 'month')
         posixdates = as.POSIXlt(as.numeric(pending.tickets$month), origin="1970-01-01")
@@ -274,8 +274,8 @@ GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.lo
     }
     else if (period == "week"){
         samples <- GetWeeksBetween(start, end, extra=TRUE)
-        pending.tickets <- CountBacklogTickets(samples, res, statuses)
-        colnames(pending.tickets) <- c('week', 'pending_tickets')
+        pending.tickets <- CountBacklogTickets(samples, res, statuses, period)
+        colnames(pending.tickets) <- c('week_unix', 'pending_tickets','week')
         posixdates = as.POSIXlt(as.numeric(pending.tickets$week), origin="1970-01-01")
         dates = as.Date(posixdates)
         #It's needed in this case to call a function to build the correct
@@ -289,7 +289,7 @@ GetEvolBacklogTickets <- function (period, startdate, enddate, statuses, name.lo
 }
 
 
-CountBacklogTickets <- function(samples, res, statuses){
+CountBacklogTickets <- function(samples, res, statuses, period){
     # return number of tickets in status = statuses per period of time
     #
     # Warning: heavy algorithm, it could be improved if the backlog is
@@ -327,7 +327,12 @@ CountBacklogTickets <- function(samples, res, statuses){
         }else{
             total <- 0
         }
-        aux_df <- data.frame(month=samples$unixtime[p], backlog_tickets = total, month_real=samples$month[p])
+        if (period == "month") {
+            aux_df <- data.frame(month=samples$unixtime[p], backlog_tickets = total, month_real=samples$month[p])
+        }
+        else if (period == "week"){
+            aux_df <- data.frame(week=samples$unixtime[p], backlog_tickets = total, week_real=samples$week[p])
+        }
         if (nrow(backlog_tickets)){
             backlog_tickets <- merge(backlog_tickets,aux_df, all=TRUE)
         }else{
