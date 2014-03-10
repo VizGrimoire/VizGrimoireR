@@ -361,13 +361,15 @@ def ticketsTimeOpened(period, startdate, enddate, identities_db, backend):
     evol = {}
 
     for result_type in ['action', 'comment', 'open']:
+        time_opened = ticketsTimeOpenedByType(period, startdate, log_close_condition_mediawiki, result_type)
+
         time_opened_priority = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
                                                         'priority', backend.priority, result_type)
 
         time_opened_severity = ticketsTimeOpenedByField(period, startdate, log_close_condition_mediawiki,
                                                         'type', backend.severity, result_type)
 
-        evol = dict(evol.items() + time_opened_priority.items() + time_opened_severity.items())
+        evol = dict(evol.items() + time_opened.items() + time_opened_priority.items() + time_opened_severity.items())
     return evol
 
 def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, field, values_set):
@@ -392,6 +394,21 @@ def ticketsTimeToResponseByField(period, startdate, enddate, closed_condition, f
         evol = dict(evol.items() + time_to_fa.items() + time_to_fc.items() + time_closed.items())
     return evol
 
+def ticketsTimeOpenedByType(period, startdate, closed_condition, result_type):
+    # Build a set of dates
+    dates = completePeriodIds({period : []})[period]
+    dates.append(dates[-1] + 1) # add one more month
+
+    if result_type == 'action':
+        alias = "topened_tfa"
+    elif result_type == 'comment':
+        alias = "topened_tfc"
+    else:
+        alias = "topened"
+
+    time_opened = getTicketsTimeOpened(period, dates, closed_condition, result_type, alias)
+    return time_opened
+
 def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_set, result_type):
     condition = "AND " + field + " = '%s'"
     evol = {}
@@ -399,7 +416,6 @@ def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_
     # Build a set of dates
     dates = completePeriodIds({period : []})[period]
     dates.append(dates[-1] + 1) # add one more month
-    first_period = dates.pop(0)  # The first month there aren't remaining issues opened
 
     for field_value in values_set:
         field_condition = condition % field_value
@@ -411,45 +427,49 @@ def ticketsTimeOpenedByField(period, startdate, closed_condition, field, values_
         else:
             alias = "topened_%s" % field_value
 
-        period_dates = []
-        median_values = []
-        avg_values = []
-        current_period = first_period
-
-        for dt in dates:
-            # Convert dates to readable format (YY-MM-DD)
-            year = dt / 12
-            month = dt % 12
-            if month == 0:
-                year = year - 1
-                month = 12
-            enddate = "'" + str(year) + "-" + str(month) + "-1'"
-
-            if result_type == 'action':
-                open_issues = ITS.GetIssuesWithoutFirstActionAt(period, startdate, enddate, closed_condition,
-                                                            field_condition, alias)[alias]
-            elif result_type == 'comment':
-                open_issues = ITS.GetIssuesWithoutFirstCommentAt(period, startdate, enddate, closed_condition,
-                                                                 field_condition, alias)[alias]
-            else:
-                open_issues = ITS.GetIssuesOpenedAt(period, startdate, enddate, closed_condition,
-                                                    field_condition, alias)[alias]
-
-            m = get_median(open_issues)
-            avg = get_avg(open_issues)
-
-            period_dates.append(current_period)
-            median_values.append(m)
-            avg_values.append(avg)
-            current_period = dt
-
-        time_opened = {period : period_dates,
-                       'median_' + alias : median_values,
-                       'avg_' + alias : avg_values}
-        time_opened = completePeriodIds(time_opened)
+        time_opened = getTicketsTimeOpened(period, dates, closed_condition, result_type, alias, field_condition)
         evol = dict(evol.items() + time_opened.items())
 
     return evol
+
+def getTicketsTimeOpened(period, dates, closed_condition, result_type, alias, field_condition=None):
+    period_dates = []
+    median_values = []
+    avg_values = []
+    current_period = dates[0]  # The first month there aren't remaining issues opened
+
+    for dt in dates[1:]:
+        # Convert dates to readable format (YY-MM-DD)
+        year = dt / 12
+        month = dt % 12
+        if month == 0:
+            year = year - 1
+            month = 12
+        enddate = "'" + str(year) + "-" + str(month) + "-1'"
+
+        if result_type == 'action':
+            open_issues = ITS.GetIssuesWithoutFirstActionAt(period, startdate, enddate, closed_condition,
+                                                            field_condition, alias)[alias]
+        elif result_type == 'comment':
+            open_issues = ITS.GetIssuesWithoutFirstCommentAt(period, startdate, enddate, closed_condition,
+                                                             field_condition, alias)[alias]
+        else:
+            open_issues = ITS.GetIssuesOpenedAt(period, startdate, enddate, closed_condition,
+                                                field_condition, alias)[alias]
+
+        m = get_median(open_issues)
+        avg = get_avg(open_issues)
+
+        period_dates.append(current_period)
+        median_values.append(m)
+        avg_values.append(avg)
+        current_period = dt
+
+    time_opened = {period : period_dates,
+                   'median_' + alias : median_values,
+                   'avg_' + alias : avg_values}
+    time_opened = completePeriodIds(time_opened)
+    return time_opened
 
 def getMedianAndAvg(period, alias, dates, values):
     data = medianAndAvgByPeriod(period, dates, values)
