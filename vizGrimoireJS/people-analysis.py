@@ -77,10 +77,11 @@ def topPeople(startdate, enddate, idb, bots):
     db = automator['generic']['db_mediawiki']
     GrimoireSQL.SetDBChannel (database=db, user=opts.dbuser, password=opts.dbpassword)
     tops["mediawiki"] = Mediawiki.GetTopAuthorsMediaWiki(0, startdate, enddate, idb, bots, npeople)
+    # SCR and SCM are the same. Don't use both for Tops
     # TODO: include in "-Bot" company all the bots
-    db = automator['generic']['db_cvsanaly']
-    GrimoireSQL.SetDBChannel (database=db, user=opts.dbuser, password=opts.dbpassword)
-    tops["scm"] = SCM.top_people(0, startdate, enddate, "author" , ["-Bot"] , npeople)
+    # db = automator['generic']['db_cvsanaly']
+    # GrimoireSQL.SetDBChannel (database=db, user=opts.dbuser, password=opts.dbpassword)
+    # tops["scm"] = SCM.top_people(0, startdate, enddate, "author" , ["-Bot"] , npeople)
 
     # Build the consolidated top list using all data sources data
     # Only people in all data sources is used
