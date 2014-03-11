@@ -158,8 +158,8 @@ def tsData(period, startdate, enddate, identities_db, destdir, granularity,
         data = ITS.EvolIssuesDomains(period, startdate, enddate, identities_db)
         evol = dict(evol.items() + completePeriodIds(data).items())
 
-    evol = dict(evol.items() +
-                ticketsStates(period, startdate, enddate, identities_db, backend).items())
+    data = ticketsStates(period, startdate, enddate, identities_db, backend)
+    evol = dict(evol.items() + data.items())
 
     createJSON (evol, destdir+"/its-evolutionary.json")
 
@@ -310,7 +310,8 @@ def ticketsStates(period, startdate, enddate, identities_db, backend):
         print ("Working with ticket status: " + status)
         #Evolution of the backlog
         tickets_status = vizr.GetEvolBacklogTickets(period, startdate, enddate, status, backend.name_log_table)
-        tickets_status = completePeriodIds(dataFrame2Dict(tickets_status))
+        tickets_status = dataFrame2Dict(tickets_status)
+        tickets_status = completePeriodIds(tickets_status)
         # rename key
         tickets_status[status] = tickets_status.pop("pending_tickets")
         #Issues per status
