@@ -29,8 +29,9 @@ from GrimoireSQL import ExecuteQuery
 class Email(object):
     # This class contains the main attributes of an email
 
-    def __init__(self, message_id):
+    def __init__(self, message_id, i_db):
         self.message_id = message_id
+        self.i_db = i_db # Identities database
         self.subject = None
         self.body = None
         self.date = None
@@ -38,18 +39,28 @@ class Email(object):
                
     def _buildEmail(self):
         query = """
-                select message_ID, 
-                       subject, 
-                       message_body,
-                       first_date
-                from messages
-                where message_ID = '%s'
-                """  % (self.message_id)
+                select m.message_ID, 
+                       m.subject, 
+                       m.message_body,
+                       m.first_date,
+                       u.identifier as initiator_name,
+                       u.id as initiator_id
+                from messages m,
+                     messages_people mp,
+                     people_upeople pup,
+                     %s.upeople u
+                where m.message_ID = '%s' and
+                      m.message_ID = mp.message_id and
+                      mp.email_address = pup.people_id and
+                      pup.upeople_id = u.id 
+                """  % (self.i_db, self.message_id)
         results = ExecuteQuery(query)
 
         self.subject = results["subject"]
         self.body = results["message_body"]
         self.date = results["first_date"]
+        self.initiator_name = results["initiator_name"]
+        self.initiator_id = results["initiator_id"]
 
 
 class Threads(object):
@@ -57,9 +68,10 @@ class Threads(object):
     # of view of threads. The main topics are those with the longest,
     # the most crowded or the thread with the most verbose emails.
 
-    def __init__ (self, initdate, enddate):
+    def __init__ (self, initdate, enddate, i_db):
         self.initdate = initdate # initial date of analysis
         self.enddate = enddate  # final date of analysis
+        self.i_db = i_db
         self.list_message_id = [] # list of messages id
         self.list_is_response_of = [] #list of 'father' messages
         self.threads = {} # General structure, keys = root message_id,
@@ -141,7 +153,7 @@ class Threads(object):
                     longest = len(self.threads[message_id])
                     self.longest = message_id
 
-        return Email(self.longest)
+        return Email(self.longest, self.i_db)
 
     def topLongestThread(self, numTop):
         # Returns list ordered by the longest threads
@@ -167,7 +179,7 @@ class Threads(object):
 
         for message_id in top_root_msgs:
             # Create a list of emails
-            email = Email(message_id)
+            email = Email(message_id, self.i_db)
             top_threads_emails.append(email)
 
         return top_threads_emails
@@ -198,7 +210,7 @@ class Threads(object):
                         # New bigger thread found
                         self.verbose = message_id
                         current_len = total_len_bodies
-        return Email(self.verbose) 
+        return Email(self.verbose, self.i_db) 
 
 
     def threads (self):

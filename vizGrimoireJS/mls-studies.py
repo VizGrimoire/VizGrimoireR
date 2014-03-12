@@ -31,6 +31,7 @@ import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
 from optparse import OptionParser
 from threads import Threads
+import MLS
 
 def read_options():
     parser = OptionParser(usage="usage: %prog [options]",
@@ -81,7 +82,11 @@ if __name__ == '__main__':
     opts = read_options()
    
     GrimoireSQL.SetDBChannel (database=opts.dbmls, user=opts.dbuser, password=opts.dbpassword)
-    main_topics = Threads(opts.initdate, opts.enddate)
+    startdate = opts.initdate
+    enddate = opts.enddate
+    identities_db = opts.dbidentities
+
+    main_topics = Threads(startdate, enddate, identities_db)
 
     # Example of use for the most verbose thread
     #email = main_topics.verboseThread()
@@ -92,6 +97,16 @@ if __name__ == '__main__':
     #          date: %s
     #          """ % (email.message_id, email.subject, email.date)
 
+    # WARNING: This code for senders overwrite previous mls-top.json file
+    bots = ['wikibugs','gerrit-wm','wikibugs_','wm-bot','','Translation updater bot','jenkins-bot']
+
+    top_data = {}
+    print startdate
+    top_data['senders.'] = MLS.top_senders(0, "'"+startdate+"'", "'"+enddate+"'", identities_db, bots, "30")
+    top_data['senders.last year'] = MLS.top_senders(365, "'"+startdate+"'", "'"+enddate+"'", identities_db, bots, "30")
+    top_data['senders.last month'] = MLS.top_senders(31, "'"+startdate+"'", "'"+enddate+"'", identities_db, bots, "30")
+
+
     # Top longest threads during the whole life of the project
     longest_threads = main_topics.topLongestThread(10)
     print "Top longest threads: " 
@@ -100,11 +115,17 @@ if __name__ == '__main__':
     l_threads['length'] = []
     l_threads['subject'] = []
     l_threads['date'] = []
+    l_threads['initiator_name'] = []
+    l_threads['initiator_id'] = []
     for email in longest_threads:
         l_threads['message_id'].append(email.message_id)
         l_threads['length'].append(main_topics.lenThread(email.message_id))
         l_threads['subject'].append(email.subject)
         l_threads['date'].append(str(email.date))
+        l_threads['initiator_name'].append(email.initiator_name)
+        l_threads['initiator_id'].append(email.initiator_id)
 
-    createJSON(l_threads, opts.destdir+"/mls-top-threads.json")
+    top_data['threads.'] = l_threads
+
+    createJSON(top_data, opts.destdir+"/mls-top.json")
     
