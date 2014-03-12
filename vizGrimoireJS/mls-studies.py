@@ -26,6 +26,7 @@
 #
 
 import logging
+import datetime
 import sys
 import GrimoireUtils, GrimoireSQL
 from GrimoireUtils import dataFrame2Dict, createJSON, completePeriodIds
@@ -75,6 +76,29 @@ def read_options():
         parser.error("--dbuser and --dbidentities are needed")
     return opts
 
+def getLongestThreads(startdate, enddate, identities_db):
+
+    main_topics = Threads(startdate, enddate, identities_db)
+
+    longest_threads = main_topics.topLongestThread(10)
+    print "Top longest threads: "
+    l_threads = {}
+    l_threads['message_id'] = []
+    l_threads['length'] = []
+    l_threads['subject'] = []
+    l_threads['date'] = []
+    l_threads['initiator_name'] = []
+    l_threads['initiator_id'] = []
+    for email in longest_threads:
+        l_threads['message_id'].append(email.message_id)
+        l_threads['length'].append(main_topics.lenThread(email.message_id))
+        l_threads['subject'].append(email.subject)
+        l_threads['date'].append(str(email.date))
+        l_threads['initiator_name'].append(email.initiator_name)
+        l_threads['initiator_id'].append(email.initiator_id)
+
+    return l_threads
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
@@ -108,24 +132,13 @@ if __name__ == '__main__':
 
 
     # Top longest threads during the whole life of the project
-    longest_threads = main_topics.topLongestThread(10)
-    print "Top longest threads: " 
-    l_threads = {}
-    l_threads['message_id'] = []
-    l_threads['length'] = []
-    l_threads['subject'] = []
-    l_threads['date'] = []
-    l_threads['initiator_name'] = []
-    l_threads['initiator_id'] = []
-    for email in longest_threads:
-        l_threads['message_id'].append(email.message_id)
-        l_threads['length'].append(main_topics.lenThread(email.message_id))
-        l_threads['subject'].append(email.subject)
-        l_threads['date'].append(str(email.date))
-        l_threads['initiator_name'].append(email.initiator_name)
-        l_threads['initiator_id'].append(email.initiator_id)
+    top_data['threads.'] = getLongestThreads(startdate, enddate, identities_db)
+    startdate = datetime.date.today() - datetime.timedelta(days=365)
+    top_data['threads.last year'] = getLongestThreads(startdate, enddate, identities_db) 
+    startdate = datetime.date.today() - datetime.timedelta(days=30)
+    top_data['threads.last month'] = getLongestThreads(startdate, enddate, identities_db)
 
-    top_data['threads.'] = l_threads
+    
 
     createJSON(top_data, opts.destdir+"/mls-top.json")
     
