@@ -292,7 +292,7 @@ def topData(period, startdate, enddate, identities_db, destdir, bots, closed_con
 
     # Closed condition for MediaWiki
     top_close_condition_mediawiki = "(status = 'RESOLVED' OR status = 'CLOSED' OR priority = 'Lowest')"
-    nissues = "20"
+    nissues = "40"
 
     issues_details = ITS.GetIssuesDetails()
 
