@@ -57,7 +57,7 @@ class Backend(object):
         if (its_type == 'allura'):
             Backend.closed_condition = "new_value='CLOSED'"
         if (its_type == 'bugzilla'):
-            Backend.closed_condition = "(new_value='RESOLVED' OR new_value='CLOSED' OR new_value='Lowest')"
+            Backend.closed_condition = "(new_value='RESOLVED' OR new_value='CLOSED' OR new_value='VERIFIED' OR new_value='Lowest')"
             Backend.reopened_condition = "new_value='NEW'"
             Backend.name_log_table = 'issues_log_bugzilla'
             Backend.statuses = ["NEW", "ASSIGNED"]
@@ -356,7 +356,7 @@ def ticketsTimeToResponse(period, startdate, enddate, identities_db, backend):
     return evol
 
 def ticketsTimeOpened(period, startdate, enddate, identities_db, backend):
-    log_close_condition_mediawiki = "(status = 'RESOLVED' OR status = 'CLOSED' OR priority = 'Lowest')"
+    log_close_condition_mediawiki = "(status = 'RESOLVED' OR status = 'CLOSED' OR status = 'VERIFIED' OR priority = 'Lowest')"
 
     evol = {}
 
