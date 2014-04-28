@@ -7,4 +7,4 @@ Author: Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 Maintainer: Jesus M. Gonzalez-Barahona <jgb@bitergia.com>
 Description: R library for the MetricsGrimoire and vizGrimoire systems
 License: GPL (>= 3)
-Depends: RMySQL, rjson, RColorBrewer, ggplot2, rgl, optparse
+Depends: RMySQL, rjson, RColorBrewer, ggplot2, optparse, ISOweek, rgl, zoo
