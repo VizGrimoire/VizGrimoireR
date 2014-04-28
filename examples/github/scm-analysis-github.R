@@ -179,6 +179,7 @@ createJSON (top_authors_data, paste(destdir,"/scm-top.json", sep=''))
 # Top files
 top_files_modified_data = top_files_modified()
 
+reports <- "repositories"
 if ('repositories' %in% reports) {
     repos  <- repos_name(conf$startdate, conf$enddate)
     repos <- repos$name
@@ -194,7 +195,10 @@ if ('repositories' %in% reports) {
         ###########
         #1- Retrieving data
   
-        evol_data = GetSCMEvolutionaryData(period, conf$startdate, conf$enddate, conf$identities_db, repo_name, NA, NA)
+        evol_data <- GetSCMEvolutionaryData(period,
+                                            conf$startdate, conf$enddate,
+                                            conf$identities_db,
+                                            list ("repository", repo_name))
         evol_data <- completePeriodIds(evol_data, conf$granularity, conf)
         evol_data <- evol_data[order(evol_data$id), ]
         evol_data[is.na(evol_data)] <- 0
@@ -206,7 +210,9 @@ if ('repositories' %in% reports) {
         #STATIC DATA
         ##########
         # 1- Retrieving information
-        static_data = GetSCMStaticData(period, conf$startdate, conf$enddate, conf$identities_db, repo_name, NA, NA)
+        static_data <- GetSCMStaticData(period, conf$startdate, conf$enddate,
+                                        conf$identities_db,
+                                        list ("repository", repo_name))
 
         #3- Creating JSON
         #static_info <- evol_info_data_repo(repo_name, period, conf$startdate, conf$enddate)

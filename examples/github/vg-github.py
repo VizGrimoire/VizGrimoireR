@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2013 Bitergia
+# Copyright (C) 2013 Jesus M. Gonzalez-Barahona
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import MySQLdb
 import os
 import shutil
 import errno
-from subprocess import call
+from subprocess import call, Popen, PIPE
 import urllib2
 import json
 import string
@@ -163,6 +163,19 @@ def run_mgtools (tools, projects, dbprefix):
         for project in projects:
             run_mgtool (tool, project, dbname)
 
+def create_rlib (libdir):
+    """Create directory for the R library
+
+    -  libdir: directory to install R libraries
+    """
+
+    try:
+        os.makedirs(libdir)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(libdir):
+            pass
+        else: 
+            raise
 
 def install_vizgrimoirer (libdir, vizgrimoirer_pkgdir):
     """Install the appropriate vizgrimorer R package in a specific location
@@ -171,22 +184,57 @@ def install_vizgrimoirer (libdir, vizgrimoirer_pkgdir):
     - vizgrimoirer_pkgdir: directory with the source code for the
         VizGrimoireR R package
 
-    Installing the package is to ensure it is properly installed,
+    Installing the package to ensure it is properly installed,
     even if it is not available from the standard R librdirs,
     or the version there is not the right one.
+    Installs R dependencias, only if libdir is created.
 
     """
-    try:
-        os.makedirs(libdir)
-    except OSError as e:
-        if e.errno == errno.EEXIST and os.path.isdir(libdir):
-            pass
-        else: 
-            raise
+
     env = os.environ.copy()
     env ["R_LIBS"] = libdir
     call (["R", "CMD", "INSTALL", vizgrimoirer_pkgdir], env=env)
 
+def install_rdependencies (libdir, vizgrimoirer_pkgdir):
+    """Install R dependencies in a specific location
+
+    - libdir: directory to install R libraries
+    - vizgrimoirer_pkgdir: directory with the source code for the
+        VizGrimoireR R package
+
+    Installing R dependencies, obtained by reading the DESCRIPTION
+    file in the source package for VizGrimoire R.
+
+    """
+
+    # Extract dependant R packages from Depends line in DESCRIPTION
+    descFile = open(vizgrimoirer_pkgdir + "/DESCRIPTION")
+    lines = descFile.readlines()
+    for line in lines:
+        (field, content) = line.split(":")
+        if field == "Depends":
+            pkgList = content.split(",")
+            break
+    # Build R vector with packages to install
+    pkgVector = 'c('
+    first = True
+    for pkg in pkgList:
+        if first:
+            first = False
+        else:
+            pkgVector = pkgVector + ','
+        pkgVector = pkgVector + '"' + pkg.strip() + '"'
+    pkgVector = pkgVector + ')'
+    # Run R to install all packages
+    # rcode = 'install.packages(' + pkgVector + ', lib="' + \
+    #        libdir + '", repos="http://cran.rstudio.com/", ' + \
+    #        'dependencies=c("Depends"))\n'
+    rcode = 'install.packages(' + pkgVector + ', lib="' + \
+           libdir + '", repos="http://cran.rstudio.com/")\n'
+    env = os.environ.copy()
+    env ["R_LIBS"] = libdir
+    p = Popen(["R", "--vanilla"], stdin=PIPE)
+    p.communicate(rcode)
 
 def unique_ids (dbprefix):
     """Run unique identities stuff
@@ -349,6 +397,9 @@ misc/metricsgrimoire-setup.py""")
         parser.add_argument("--noinstvgr",
                             help="Don't install vizgrimoire R package",
                             action="store_true")
+        parser.add_argument("--nordep",
+                            help="Don't install R dependencies",
+                            action="store_true")
         parser.add_argument("--noanalysis",
                             help="Don't run vizGrimoireR analysis",
                             action="store_true")
@@ -418,8 +469,13 @@ misc/metricsgrimoire-setup.py""")
 
     # Install vizgrimoire R package, just in case
     if not args.noinstvgr:
-        install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
+        create_rlib (rConf["libdir"])
 
+    if not args.noinstvgr and not args.nordep:
+        install_rdependencies (rConf["libdir"], rConf["vgrpkg"])
+
+    if not args.noinstvgr:
+        install_vizgrimoirer (rConf["libdir"], rConf["vgrpkg"])
 
     if not args.noanalysis:
         run_analysis ([rConf["scm-analysis"], rConf["its-analysis"]],
