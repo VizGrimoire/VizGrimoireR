@@ -337,13 +337,12 @@ def produce_dashboard (vizgrimoirejs_dir, example_dir,
     """
 
     # Files from vizGrimoireJS to copy:
-    vgjsFiles = ["vizgrimoire.min.js",
-                 "lib/jquery-1.7.1.min.js",
-                 "bootstrap/js/bootstrap.min.js",
-                 "vizgrimoire.css",
-                 "browser/custom.css",
-                 "bootstrap/css/bootstrap.min.css",
-                 "bootstrap/css/bootstrap-responsive.min.css",
+    vgjsFiles = ["browser/lib/vizgrimoire.min.js",
+                 "browser/lib/jquery-1.11.1.min.js",
+                 "browser/lib/bootstrap-3.1.1.min.js",
+                 "browser/css/vizgrimoire.css",
+                 "browser/css/custom.css",
+                 "browser/css/bootstrap.min.css",
                  "browser/favicon.ico"]
     # Files specific to this GitHub example:
     ghBrowserfiles = ["index.html",
